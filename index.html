@@ -683,8 +683,10 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
 
 <!-- ── Firebase SDK (modular v10+) ─────────────────────────────── -->
 <script type="module">
+  // 1. TÄRKEÄT IMPORTIT (Tässä on mukana Google-työkalut)
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';  import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyBHYckayJPQq7rsa609Si07RAz8BGvWT8U",
@@ -695,7 +697,7 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
     appId: "1:15493800957:web:df81346e3165c10d9aaf94"
   };
 
-  // Alusta Firebase
+  // 2. ALUSTUS
   const app = initializeApp(firebaseConfig);
   console.log('✅ Firebase alustettu');
 
@@ -768,7 +770,7 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
     return null;
   };
 
-  // ── Auth ───────────────────────────────────────────────────────
+  // ── Auth (Tarkistus & Datan lataus) ────────────────────────────
   function initAuth() {
     const auth = window._firebaseAuth;
 
@@ -778,21 +780,16 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
         console.log('✅ Kirjautuminen onnistui:', user.uid);
 
         const wsId = localStorage.getItem('fap_active_ws') || 'work';
-
-        // Näytä synkroinointi-ilmoitus
         var statusEl = document.getElementById('fs-sync-status');
         if (statusEl) { statusEl.style.display = 'inline'; }
 
         const fsData = await loadFromFirestore(user.uid, wsId);
 
         if (fsData && Array.isArray(fsData.tasks) && fsData.tasks.length > 0) {
-          // Firestore-data löytyi ja on käyttökelpoinen — päivitä localStorage
           console.log('☁️ Data ladattu Firestoresta (' + fsData.tasks.length + ' tehtävää)');
           localStorage.setItem('eis_v5_' + wsId, JSON.stringify(fsData));
         } else if (fsData) {
-          // Firestore-data löytyi mutta on tyhjä — älä ylikirjoita localStoragea
           console.log('☁️ Firestore-data tyhjä, säilytetään localStorage-data');
-          // Migroi localStorage → Firestore jos siellä on dataa
           const localRaw2 = localStorage.getItem('eis_v5_' + wsId);
           if (localRaw2) {
             try {
@@ -804,7 +801,6 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
             } catch(e) { console.warn('⚠️ Palautus epäonnistui:', e); }
           }
         } else {
-          // Ei Firestore-dataa — migroi localStorage → Firestore
           const localRaw = localStorage.getItem('eis_v5_' + wsId);
           if (localRaw) {
             console.log('📦 Migraatio: localStorage → Firestore');
@@ -815,42 +811,35 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
           }
         }
 
-        // Piilota ilmoitus
         if (statusEl) { statusEl.style.display = 'none'; }
 
-        // Lataa data uudelleen pääskriptiin (päivittää render)
         if (typeof window._fsLoadComplete === 'function') {
           window._fsLoadComplete();
         }
 
       } else {
-        // Ei kirjautunut — odotetaan, että käyttäjä painaa Google-nappia
+        // Jos käyttäjä ei ole kirjautunut, ei tehdä mitään. Odotetaan että painetaan nappia.
         console.log('Odotetaan kirjautumista...');
-        
-        /* PIILOTETTU ANONYYMI KIRJAUTUMINEN (Otettu pois käytöstä)
-        signInAnonymously(auth)
-          .then(function(result) {
-            console.log('✅ Anonyymi kirjautuminen käynnistetty:', result.user.uid);
-          })
-          .catch(function(err) {
-            console.error('❌ Kirjautumisvirhe:', err.code, err.message);
-          });
-        */
       }
+    });
   }
-// ── Google-kirjautuminen ───────────────────────────────────────
+
+  // ── Google-kirjautumisen funktio ───────────────────────────────
+  // Liitetään 'window'-olioon, jotta HTML-nappi löytää sen module-skriptin sisältä!
   window.kirjauduGooglella = function() {
     const auth = window._firebaseAuth;
     const provider = new GoogleAuthProvider();
+    
     signInWithPopup(auth, provider)
       .then((result) => {
-        console.log("✅ Google-kirjautuminen onnistui!", result.user.uid);
-        // Huom: onAuthStateChanged (joka on ylempänä koodissasi) 
-        // huomaa kirjautumisen automaattisesti ja hoitaa datan latauksen!
+        console.log("✅ Google-popup onnistui!", result.user.uid);
+        // Huom: onAuthStateChanged() yläpuolella laukeaa nyt automaattisesti!
       }).catch((error) => {
         console.error("❌ Virhe Google-kirjautumisessa:", error.message);
       });
   };
+
+  // Käynnistetään kuuntelu
   initAuth();
 </script>
 </head>
