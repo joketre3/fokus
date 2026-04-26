@@ -684,8 +684,7 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
 <!-- ── Firebase SDK (modular v10+) ─────────────────────────────── -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-  import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';  import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyBHYckayJPQq7rsa609Si07RAz8BGvWT8U",
@@ -825,7 +824,10 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
         }
 
       } else {
-        // Ei kirjautunut — kirjaudu anonyymisti
+        // Ei kirjautunut — odotetaan, että käyttäjä painaa Google-nappia
+        console.log('Odotetaan kirjautumista...');
+        
+        /* PIILOTETTU ANONYYMI KIRJAUTUMINEN (Otettu pois käytöstä)
         signInAnonymously(auth)
           .then(function(result) {
             console.log('✅ Anonyymi kirjautuminen käynnistetty:', result.user.uid);
@@ -833,16 +835,36 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
           .catch(function(err) {
             console.error('❌ Kirjautumisvirhe:', err.code, err.message);
           });
+        */
       }
-    });
   }
-
+// ── Google-kirjautuminen ───────────────────────────────────────
+  window.kirjauduGooglella = function() {
+    const auth = window._firebaseAuth;
+    const provider = new GoogleAuthProvider();
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        console.log("✅ Google-kirjautuminen onnistui!", result.user.uid);
+        // Huom: onAuthStateChanged (joka on ylempänä koodissasi) 
+        // huomaa kirjautumisen automaattisesti ja hoitaa datan latauksen!
+      }).catch((error) => {
+        console.error("❌ Virhe Google-kirjautumisessa:", error.message);
+      });
+  };
   initAuth();
 </script>
 </head>
 <body>
 <div class="wrap">
-
+</script>
+</head>
+<body>
+<div class="wrap">
+    
+  <button onclick="window.kirjauduGooglella()" style="padding: 10px; background-color: #4285F4; color: white; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 20px; font-weight: bold;">
+    Kirjaudu sisään Googlella
+  </button>
+  
   <!-- Background tree decoration -->
   <div style="position:fixed;right:-40px;top:40px;opacity:.06;pointer-events:none;z-index:-1">
     <svg width="320" height="400" viewBox="0 0 160 200">
