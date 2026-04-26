@@ -1,28 +1,921 @@
-Fokus — Aamusuunnittelu 
-Fo🌲us 
-1 
-Tarkista Q1 
-2 
-Valitse Q2 
-3 
-Lukujärjestys 
-Tarkista Q1 
-Onko jokainen tehtävä edelleen sekä tärkeä että kiireinen? Ole rehellinen. 
-Ohita aamusuunnittelu Jatka → 
-Valitse Q2-tehtävät 
-Mitkä tärkeät (ei kiireelliset) tehtävät haluat edistää tänään? Valitse enintään 3. 
-Maksimi 3 valittuna — poista ensin yksi. 
-← Takaisin Jatka → 
-Lukujärjestys 
-Sijoita tehtävät päivän aikaikkunoihin. Työkalu laskee mahtuvatko ne aikatauluun. 
-🌅 Aamu 
-Ei tehtäviä 
-☀️ Iltapäivä 
-Ei tehtäviä 
-🌆 Päätös 
-Ei tehtäviä 
-⚠ Päivässä on enemmän tehtäviä kuin aikaa. Harkitse siirtämistä huomiseen. 
-← Takaisin Valmis — aloita päivä ✓ 
-🌲 
-Päivä suunniteltu. 
-Sulje ja siirry Fokukseen
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fokus — Aamusuunnittelu</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap');
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --ink:#1a1c18;--paper:#f2f0e8;--muted:#6b7060;--light:#dddbd0;
+  --accent:#c49a3a;--warm:#b8a882;
+  --q1:#a84c28;--q2:#2d5a3d;--q3:#7a6a50;--q4:#9a9a8e;
+  --pomo:#a84c28;
+}
+
+/* HAVUMETSÄ */
+html[data-theme="havu"]{
+  --ink:rgba(255,255,255,.93);--paper:#0a1a10;--muted:rgba(255,255,255,.5);
+  --light:#1a3525;--accent:#4fa870;--warm:#1e4028;
+  --q1:#c0432b;--q2:#4fa870;
+}
+html[data-theme="havu"] body{background:#0a1a10;}
+html[data-theme="havu"] .card{background:#0f2a1a;border-color:#1e4028;}
+html[data-theme="havu"] .slot-box{background:#0d2218;border-color:#1e4028;}
+html[data-theme="havu"] .slot-item{background:#0f2a1a;border-color:#1a3525;}
+html[data-theme="havu"] .btn-ghost{background:#0d2218;border-color:#1e4028;color:rgba(255,255,255,.7);}
+html[data-theme="havu"] .schedule-wrap{background:#0d2218;border-color:#1e4028;}
+html[data-theme="havu"] .q2-task{background:#0f2a1a;border-color:#1e4028;}
+html[data-theme="havu"] .q2-task.selected{border-color:#4fa870;background:rgba(79,168,112,.08);}
+html[data-theme="havu"] .step-num{background:#1a3525;color:rgba(255,255,255,.5);}
+html[data-theme="havu"] .step-num.active{background:#4fa870;color:white;}
+html[data-theme="havu"] .step-num.done{background:#2d5a3d;color:#4fa870;}
+
+/* AURINKO */
+html[data-theme="aurinko"]{
+  --ink:#2d2417;--paper:#fff8eb;--muted:#7a6a4a;--light:#e8d8b8;
+  --accent:#c4681e;--warm:#b48246;--q1:#c4681e;--q2:#3d6b30;
+}
+html[data-theme="aurinko"] body{background:#fff8eb;}
+html[data-theme="aurinko"] .card{background:#fffbf2;border-color:#e8d8b8;}
+html[data-theme="aurinko"] .slot-box{background:#fffbf2;border-color:#e8d8b8;}
+html[data-theme="aurinko"] .slot-item{background:#fff8eb;border-color:#e8d8b8;}
+html[data-theme="aurinko"] .btn-ghost{background:#fffbf2;border-color:#e8d8b8;}
+html[data-theme="aurinko"] .schedule-wrap{background:#fffbf2;border-color:#e8d8b8;}
+html[data-theme="aurinko"] .q2-task{background:#fffbf2;border-color:#e8d8b8;}
+html[data-theme="aurinko"] .q2-task.selected{border-color:#c4681e;background:rgba(196,104,30,.06);}
+
+body{
+  background:var(--paper);
+  font-family:'DM Sans',sans-serif;
+  color:var(--ink);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+/* PROGRESS STEPPER */
+.stepper{
+  display:flex;align-items:center;gap:.5rem;
+  padding:1.25rem 1.5rem .5rem;
+  width:100%;max-width:520px;
+}
+.step{display:flex;align-items:center;gap:.5rem;flex:1;}
+.step-num{
+  width:26px;height:26px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.72rem;font-weight:500;
+  background:var(--light);color:var(--muted);
+  flex-shrink:0;transition:all .25s;
+}
+.step-num.active{background:var(--accent);color:white;}
+.step-num.done{background:rgba(196,154,58,.15);color:var(--accent);}
+html[data-theme="aurinko"] .step-num.done{background:rgba(196,104,30,.12);color:var(--accent);}
+.step-label{font-size:.7rem;font-weight:300;color:var(--muted);white-space:nowrap;}
+.step-label.active{color:var(--ink);font-weight:400;}
+.step-divider{flex:1;height:1px;background:var(--light);max-width:30px;}
+
+/* SCREEN */
+.screen{
+  display:none;flex-direction:column;
+  width:100%;max-width:520px;
+  padding:1rem 1.5rem 2rem;
+  flex:1;
+}
+.screen.active{display:flex;}
+
+.screen-title{
+  font-family:'DM Serif Display',serif;font-style:italic;
+  font-size:1.5rem;letter-spacing:-.02em;margin-bottom:.3rem;
+  line-height:1.2;
+}
+.screen-sub{
+  font-size:.78rem;color:var(--muted);font-weight:300;
+  line-height:1.55;margin-bottom:1.5rem;
+}
+
+/* Q1 REVIEW */
+.card{
+  background:white;border-radius:14px;
+  border:1px solid var(--light);
+  border-top:3px solid var(--q1);
+  padding:1.25rem 1.4rem;
+  margin-bottom:1rem;
+  box-shadow:0 3px 16px rgba(0,0,0,.06);
+}
+.card-badge{
+  display:inline-flex;font-size:.58rem;font-weight:500;
+  letter-spacing:.07em;text-transform:uppercase;
+  padding:.18rem .45rem;border-radius:4px;
+  background:var(--q1);color:white;margin-bottom:.5rem;
+}
+.card-name{
+  font-family:'DM Serif Display',serif;font-style:italic;
+  font-size:1.2rem;line-height:1.3;margin-bottom:.75rem;
+}
+.card-meta{font-size:.7rem;color:var(--muted);font-weight:300;margin-bottom:1rem;}
+
+.card-actions{display:flex;gap:.5rem;flex-wrap:wrap;}
+.ca-btn{
+  font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:500;
+  padding:.45rem .9rem;border-radius:7px;border:none;cursor:pointer;
+  transition:all .15s;
+}
+.ca-keep{background:var(--q1);color:white;}
+.ca-move{background:rgba(196,154,58,.12);color:var(--q2);border:1.5px solid var(--q2);}
+html[data-theme="aurinko"] .ca-move{background:rgba(61,107,48,.1);color:#3d6b30;border-color:#3d6b30;}
+.ca-delegate{background:var(--light);color:var(--muted);}
+.ca-btn:hover{filter:brightness(.92);}
+
+.q1-counter{
+  font-size:.72rem;color:var(--muted);font-weight:300;
+  text-align:center;margin-bottom:1rem;
+}
+.q1-empty{
+  text-align:center;padding:2rem;
+  font-size:.82rem;color:var(--muted);font-weight:300;line-height:1.6;
+}
+
+/* Q2 SELECT */
+.q2-task{
+  background:white;border-radius:10px;
+  border:1.5px solid var(--light);
+  padding:.85rem 1rem;margin-bottom:.5rem;
+  cursor:pointer;transition:all .15s;
+  display:flex;align-items:flex-start;gap:.75rem;
+}
+.q2-task.selected{
+  border-color:var(--q2);
+  background:rgba(196,154,58,.06);
+}
+.q2-check{
+  width:18px;height:18px;border-radius:50%;
+  border:1.5px solid var(--light);
+  flex-shrink:0;margin-top:.1rem;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;font-size:.65rem;color:white;
+}
+.q2-task.selected .q2-check{background:var(--q2);border-color:var(--q2);}
+html[data-theme="aurinko"] .q2-task.selected .q2-check{background:var(--accent);border-color:var(--accent);}
+html[data-theme="aurinko"] .q2-task.selected{border-color:var(--accent);background:rgba(196,104,30,.05);}
+.q2-name{font-size:.88rem;font-weight:400;line-height:1.3;flex:1;}
+.q2-est{font-size:.68rem;color:var(--muted);font-weight:300;white-space:nowrap;margin-top:.15rem;}
+.select-limit{
+  font-size:.72rem;color:var(--pomo);font-weight:400;
+  text-align:center;padding:.5rem;
+  opacity:0;transition:opacity .2s;
+}
+.select-limit.on{opacity:1;}
+.q2-empty{
+  text-align:center;padding:2rem;
+  font-size:.82rem;color:var(--muted);font-weight:300;line-height:1.6;
+}
+
+/* FROG SELECT */
+.frog-card{
+  background:white;border-radius:12px;
+  border:2px solid var(--light);
+  padding:1rem 1.25rem;margin-bottom:.6rem;
+  cursor:pointer;transition:all .18s;
+  display:flex;align-items:center;gap:.85rem;
+  position:relative;
+}
+.frog-card:hover{border-color:var(--accent);transform:translateY(-1px);}
+.frog-card.selected{
+  border-color:#6b8a30;
+  background:rgba(107,138,48,.07);
+  box-shadow:0 0 0 3px rgba(107,138,48,.12);
+}
+html[data-theme="havu"] .frog-card{background:#0f2a1a;border-color:#1e4028;}
+html[data-theme="havu"] .frog-card.selected{border-color:#4fa870;background:rgba(79,168,112,.1);}
+html[data-theme="aurinko"] .frog-card{background:#fffbf2;border-color:#e8d8b8;}
+html[data-theme="aurinko"] .frog-card.selected{border-color:#3d6b30;background:rgba(61,107,48,.07);}
+.frog-icon{font-size:1.4rem;flex-shrink:0;line-height:1;}
+.frog-icon-empty{
+  width:32px;height:32px;border-radius:50%;
+  border:2px dashed var(--light);flex-shrink:0;
+}
+.frog-card.selected .frog-icon-empty{display:none;}
+.frog-card:not(.selected) .frog-icon{display:none;}
+.frog-name{font-size:.9rem;font-weight:400;line-height:1.35;flex:1;}
+.frog-meta{font-size:.68rem;color:var(--muted);font-weight:300;margin-top:.2rem;}
+.frog-badge{
+  font-size:.58rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;
+  padding:.15rem .4rem;border-radius:4px;color:white;flex-shrink:0;
+  align-self:flex-start;
+}
+.frog-badge.q1{background:var(--q1);}
+.frog-badge.q2{background:var(--q2);}
+.frog-hint{
+  font-size:.72rem;color:var(--muted);font-weight:300;font-style:italic;
+  text-align:center;padding:.5rem 0 1rem;line-height:1.5;
+}
+
+/* SCHEDULE */
+.schedule-wrap{
+  background:white;border-radius:12px;
+  border:1px solid var(--light);
+  overflow:hidden;margin-bottom:1rem;
+}
+.slot{border-bottom:1px solid var(--light);}
+.slot:last-child{border-bottom:none;}
+.slot-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.7rem 1rem;cursor:default;
+}
+.slot-title{
+  font-size:.78rem;font-weight:500;
+  display:flex;align-items:center;gap:.5rem;
+}
+.slot-icon{font-size:1rem;}
+.slot-pomo{font-size:.65rem;color:var(--muted);font-weight:300;}
+.slot-body{padding:.4rem .75rem .75rem;}
+.slot-box{
+  min-height:52px;border-radius:7px;
+  background:var(--paper);border:1.5px dashed var(--light);
+  padding:.4rem .5rem;
+  display:flex;flex-direction:column;gap:.3rem;
+}
+.slot-empty{
+  font-size:.68rem;color:var(--muted);font-weight:300;font-style:italic;
+  padding:.3rem .25rem;
+}
+.slot-item{
+  display:flex;align-items:center;justify-content:space-between;
+  background:white;border-radius:5px;border:1px solid var(--light);
+  padding:.35rem .6rem;gap:.5rem;
+}
+.si-name{font-size:.75rem;font-weight:400;flex:1;line-height:1.3;}
+.si-badge{
+  font-size:.58rem;font-weight:500;letter-spacing:.04em;text-transform:uppercase;
+  padding:.1rem .3rem;border-radius:3px;color:white;flex-shrink:0;
+}
+.si-badge.q1{background:var(--q1);}
+.si-badge.q2{background:var(--q2);}
+.si-rm{
+  background:none;border:none;cursor:pointer;
+  color:var(--light);font-size:.85rem;padding:0;line-height:1;
+  flex-shrink:0;
+}
+.si-rm:hover{color:var(--pomo);}
+
+.slot-picker{
+  display:flex;gap:.35rem;flex-wrap:wrap;
+  padding:.3rem .75rem .75rem;
+}
+.sp-btn{
+  font-family:'DM Sans',sans-serif;font-size:.7rem;font-weight:400;
+  padding:.3rem .7rem;border-radius:5px;
+  border:1.5px solid var(--light);background:none;
+  color:var(--muted);cursor:pointer;transition:all .12s;
+  display:flex;align-items:center;gap:.3rem;
+}
+.sp-btn:hover{border-color:var(--accent);color:var(--accent);}
+html[data-theme="aurinko"] .sp-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+.overload-warn{
+  font-size:.72rem;color:var(--pomo);font-weight:400;
+  padding:.4rem .75rem;text-align:center;
+  opacity:0;transition:opacity .2s;
+}
+.overload-warn.on{opacity:1;}
+
+/* VALMIS */
+.done-wrap{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;padding:2rem;gap:1rem;
+}
+.done-icon{font-size:2.5rem;}
+.done-title{
+  font-family:'DM Serif Display',serif;font-style:italic;
+  font-size:1.5rem;
+}
+.done-sub{font-size:.8rem;color:var(--muted);font-weight:300;line-height:1.6;max-width:280px;}
+.done-summary{
+  background:white;border-radius:10px;border:1px solid var(--light);
+  padding:1rem 1.25rem;width:100%;max-width:320px;text-align:left;
+}
+html[data-theme="havu"] .done-summary{background:#0f2a1a;border-color:#1e4028;}
+html[data-theme="aurinko"] .done-summary{background:#fffbf2;border-color:#e8d8b8;}
+.ds-row{
+  display:flex;align-items:flex-start;gap:.5rem;
+  font-size:.75rem;font-weight:300;line-height:1.4;
+  padding:.3rem 0;border-bottom:1px solid var(--light);
+}
+.ds-row:last-child{border-bottom:none;}
+.ds-slot{font-size:.65rem;font-weight:500;color:var(--muted);min-width:75px;padding-top:.1rem;}
+.ds-tasks{flex:1;color:var(--ink);}
+
+/* BOTTOM NAV */
+.bottom-nav{
+  width:100%;max-width:520px;
+  padding:.75rem 1.5rem 1.25rem;
+  display:flex;justify-content:space-between;align-items:center;
+  border-top:1px solid var(--light);
+  margin-top:auto;
+}
+.btn-main{
+  font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;
+  padding:.65rem 1.5rem;border-radius:9px;border:none;
+  background:var(--accent);color:white;cursor:pointer;transition:all .15s;
+}
+.btn-main:hover{filter:brightness(.9);}
+.btn-main:disabled{opacity:.4;cursor:not-allowed;}
+.btn-ghost{
+  font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:400;
+  padding:.55rem .9rem;border-radius:8px;
+  border:1.5px solid var(--light);background:white;
+  color:var(--muted);cursor:pointer;transition:all .15s;
+}
+.btn-ghost:hover{border-color:var(--muted);}
+
+.logo-bar{
+  width:100%;max-width:520px;
+  padding:.9rem 1.5rem .3rem;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.logo{
+  font-family:'DM Serif Display',serif;font-style:italic;
+  font-size:.95rem;color:var(--accent);
+}
+.time-badge{
+  font-size:.68rem;color:var(--muted);font-weight:300;
+}
+</style>
+</head>
+<body>
+
+<div class="logo-bar">
+  <div class="logo">Fo🌲us</div>
+  <div class="time-badge" id="timeBadge"></div>
+</div>
+
+<!-- STEPPER -->
+<div class="stepper">
+  <div class="step">
+    <div class="step-num active" id="sn1">1</div>
+    <div class="step-label active" id="sl1">Tarkista Q1</div>
+  </div>
+  <div class="step-divider"></div>
+  <div class="step">
+    <div class="step-num" id="sn2">2</div>
+    <div class="step-label" id="sl2">Valitse Q2</div>
+  </div>
+  <div class="step-divider"></div>
+  <div class="step">
+    <div class="step-num" id="sn3">3</div>
+    <div class="step-label" id="sl3">Sammakko</div>
+  </div>
+  <div class="step-divider"></div>
+  <div class="step">
+    <div class="step-num" id="sn4">4</div>
+    <div class="step-label" id="sl4">Lukujärjestys</div>
+  </div>
+</div>
+
+<!-- SCREEN 1: Q1 REVIEW -->
+<div class="screen active" id="s1">
+  <div class="screen-title">Tarkista Q1</div>
+  <div class="screen-sub">Onko jokainen tehtävä edelleen sekä <strong>tärkeä</strong> että <strong>kiireinen</strong>? Ole rehellinen.</div>
+  <div class="q1-counter" id="q1Counter"></div>
+  <div id="q1Area"></div>
+</div>
+<div class="bottom-nav" id="nav1">
+  <button class="btn-ghost" onclick="skipToEnd()">Ohita aamusuunnittelu</button>
+  <button class="btn-main" id="btn1" onclick="goStep2()" disabled>Jatka →</button>
+</div>
+
+<!-- SCREEN 2: Q2 SELECT -->
+<div class="screen" id="s2">
+  <div class="screen-title">Valitse Q2-tehtävät</div>
+  <div class="screen-sub">Mitkä tärkeät (ei kiireelliset) tehtävät haluat edistää <strong>tänään</strong>? Valitse enintään 3.</div>
+  <div class="select-limit" id="selectLimit">Maksimi 3 valittuna — poista ensin yksi.</div>
+  <div id="q2Area"></div>
+</div>
+<div class="bottom-nav" id="nav2" style="display:none">
+  <button class="btn-ghost" onclick="goStep1()">← Takaisin</button>
+  <button class="btn-main" id="btn2" onclick="goStep3()">Jatka →</button>
+</div>
+
+<!-- SCREEN 3: SAMMAKKO -->
+<div class="screen" id="s3">
+  <div class="screen-title">Päivän sammakko 🐸</div>
+  <div class="screen-sub">Mikä on tämän päivän tärkein tehtävä? Se tulee ensin — tee se ennen kaikkea muuta.</div>
+  <div class="frog-hint" id="frogHint"></div>
+  <div id="frogArea"></div>
+</div>
+<div class="bottom-nav" id="nav3" style="display:none">
+  <button class="btn-ghost" onclick="goStep2fromFrog()">← Takaisin</button>
+  <button class="btn-main" id="btn3" onclick="goStep4()" disabled>Jatka →</button>
+</div>
+
+<!-- SCREEN 4: SCHEDULE -->
+<div class="screen" id="s4">
+  <div class="screen-title">Lukujärjestys</div>
+  <div class="screen-sub">Sijoita tehtävät päivän aikaikkunoihin. Työkalu laskee mahtuvatko ne aikatauluun.</div>
+  <div class="schedule-wrap">
+    <div class="slot" id="slot-aamu">
+      <div class="slot-hdr">
+        <div class="slot-title"><span class="slot-icon">🌅</span> Aamu</div>
+        <div class="slot-pomo" id="pomo-aamu"></div>
+      </div>
+      <div class="slot-body"><div class="slot-box" id="box-aamu"><div class="slot-empty">Ei tehtäviä</div></div></div>
+      <div class="slot-picker" id="pick-aamu"></div>
+    </div>
+    <div class="slot" id="slot-paiva">
+      <div class="slot-hdr">
+        <div class="slot-title"><span class="slot-icon">☀️</span> Iltapäivä</div>
+        <div class="slot-pomo" id="pomo-paiva"></div>
+      </div>
+      <div class="slot-body"><div class="slot-box" id="box-paiva"><div class="slot-empty">Ei tehtäviä</div></div></div>
+      <div class="slot-picker" id="pick-paiva"></div>
+    </div>
+    <div class="slot" id="slot-loppu">
+      <div class="slot-hdr">
+        <div class="slot-title"><span class="slot-icon">🌆</span> Päätös</div>
+        <div class="slot-pomo" id="pomo-loppu"></div>
+      </div>
+      <div class="slot-body"><div class="slot-box" id="box-loppu"><div class="slot-empty">Ei tehtäviä</div></div></div>
+      <div class="slot-picker" id="pick-loppu"></div>
+    </div>
+  </div>
+  <div class="overload-warn" id="overloadWarn">⚠ Päivässä on enemmän tehtäviä kuin aikaa. Harkitse siirtämistä huomiseen.</div>
+</div>
+<div class="bottom-nav" id="nav4" style="display:none">
+  <button class="btn-ghost" onclick="goStep3fromSchedule()">← Takaisin</button>
+  <button class="btn-main" onclick="finish()">Valmis — aloita päivä ✓</button>
+</div>
+
+<!-- SCREEN 5: DONE -->
+<div class="screen" id="s5">
+  <div class="done-wrap">
+    <div class="done-icon">🌲</div>
+    <div class="done-title">Päivä suunniteltu.</div>
+    <div class="done-sub" id="doneSubText"></div>
+    <div class="done-summary" id="doneSummary"></div>
+    <button class="btn-main" style="margin-top:.5rem" onclick="window.close()">Sulje ja siirry Fokukseen</button>
+  </div>
+</div>
+
+<script>
+var POMO_MIN = 25;
+var MAX_Q2 = 3;
+
+// Slots: max pomodoros per slot (rough workday estimate)
+var SLOT_MAX = { aamu: 4, paiva: 4, loppu: 3 };
+var slots = { aamu: [], paiva: [], loppu: [] };
+var q1Tasks = [], q2Tasks = [], selectedQ2 = [];
+var allTasks = [], queue = [], active = null, turn = [];
+
+// ── INIT ──────────────────────────────────────────────
+(function(){
+  var t = localStorage.getItem('fap_theme') || 'usva';
+  document.documentElement.setAttribute('data-theme', t);
+  updateClock();
+  setInterval(updateClock, 60000);
+  loadData();
+  renderQ1();
+})();
+
+function updateClock(){
+  var now = new Date();
+  var h = now.getHours(), m = now.getMinutes();
+  document.getElementById('timeBadge').textContent =
+    h + ':' + (m < 10 ? '0'+m : m) + ' · ' + now.toLocaleDateString('fi-FI',{weekday:'long',day:'numeric',month:'numeric'});
+}
+
+function getStorageKey(){
+  // Sama logiikka kuin eisenhower.html: wsStorageKey = 'eis_v5_' + (fap_active_ws || 'work')
+  var wsId = localStorage.getItem('fap_active_ws') || 'work';
+  return 'eis_v5_' + wsId;
+}
+
+function loadData(){
+  var key = getStorageKey();
+  var raw = localStorage.getItem(key);
+  if(!raw){ allTasks=[]; queue=[]; active=null; turn=[]; return; }
+  var d = JSON.parse(raw);
+  allTasks = (d.tasks||[]).filter(function(t){ return t && !t.done; });
+  // Migraatio: vanha queue[] → active+turn
+  if(d.active!==undefined){
+    active = d.active;
+    turn = (d.turn||[]).map(function(id){ return parseInt(id,10); }).filter(function(id){ return !isNaN(id); });
+  } else {
+    var oldQ = (d.queue||[]).map(function(id){ return parseInt(id,10); }).filter(function(id){ return !isNaN(id); });
+    active = oldQ.length>0 ? oldQ[0] : null;
+    turn = oldQ.slice(1);
+  }
+  queue = (active?[active]:[]).concat(turn);
+  var today = new Date(); today.setHours(0,0,0,0);
+  allTasks = allTasks.filter(function(t){
+    if(!t.scheduledDate) return true;
+    return new Date(t.scheduledDate) <= today;
+  });
+  q1Tasks = allTasks.filter(function(t){ return t.quad==='q1'; });
+  q2Tasks = allTasks.filter(function(t){ return t.quad==='q2'; });
+}
+
+function saveData(){
+  var key = getStorageKey();
+  var raw = localStorage.getItem(key); if(!raw) return;
+  var d = JSON.parse(raw);
+  // Apply quad changes
+  allTasks.forEach(function(t){
+    var o = d.tasks.find(function(u){ return u.id===t.id; });
+    if(o){ o.quad=t.quad; o.important=t.important; o.urgent=t.urgent; }
+  });
+  // Apply frog selection: clear all, set selected
+  d.tasks.forEach(function(t){ t.frog=false; });
+  if(selectedFrog){
+    var ft = d.tasks.find(function(t){ return t.id===selectedFrog; });
+    if(ft) ft.frog=true;
+  }
+  // Rebuild queue: frog first, then scheduled, then rest
+  // Order: Q1+frog → Q1 → Q2+frog → Q2 (from scheduled slots)
+  var scheduled = [];
+  ['aamu','paiva','loppu'].forEach(function(s){
+    slots[s].forEach(function(id){ if(scheduled.indexOf(id)<0) scheduled.push(id); });
+  });
+  // Sort scheduled: frog first
+  scheduled.sort(function(a,b){
+    var af = a===selectedFrog ? 1 : 0;
+    var bf = b===selectedFrog ? 1 : 0;
+    return bf-af;
+  });
+  // If frog not in scheduled but exists, prepend it
+  if(selectedFrog && scheduled.indexOf(selectedFrog)<0){
+    scheduled.unshift(selectedFrog);
+  }
+  // Merge: scheduled first, then existing turn items not in scheduled
+  var newQueue = scheduled.slice();
+  queue.forEach(function(id){ if(newQueue.indexOf(id)<0) newQueue.push(id); });
+  // Tallenna active+turn rakenteella
+  d.active = newQueue.length>0 ? newQueue[0] : null;
+  d.turn = newQueue.slice(1);
+  delete d.queue; // poistetaan vanha kenttä
+  localStorage.setItem(key, JSON.stringify(d));
+}
+
+// ── STEP 1: Q1 ────────────────────────────────────────
+var q1Index = 0;
+
+function renderQ1(){
+  if(isNaN(q1Index)||q1Index<0) q1Index=0;
+  var area = document.getElementById('q1Area');
+  var counter = document.getElementById('q1Counter');
+  if(q1Tasks.length===0){
+    area.innerHTML='<div class="q1-empty">Q1-listalla ei ole tehtäviä.<br>Hyvä merkki — voit siirtyä suoraan eteenpäin.</div>';
+    document.getElementById('btn1').disabled = false;
+    return;
+  }
+  if(q1Index >= q1Tasks.length){
+    area.innerHTML='<div class="q1-empty" style="color:var(--accent)">✓ Kaikki Q1-tehtävät käyty läpi.</div>';
+    document.getElementById('btn1').disabled = false;
+    counter.textContent = '';
+    return;
+  }
+  var t = q1Tasks[q1Index];
+  if(!t){ q1Index=0; renderQ1(); return; }
+  counter.textContent = (q1Index+1) + ' / ' + q1Tasks.length;
+  area.innerHTML = '';
+  var card = document.createElement('div');
+  card.className = 'card';
+  var est = t.est||1;
+  card.innerHTML =
+    '<div class="card-badge">TEE HETI</div>' +
+    '<div class="card-name">' + esc(t.text) + '</div>' +
+    '<div class="card-meta">' + fe(est) + ' 🍅 &nbsp;·&nbsp; Tärkeä + kiireinen</div>' +
+    '<div class="card-actions">' +
+      '<button class="ca-btn ca-keep" onclick="q1Keep()">✓ Kyllä, on Q1</button>' +
+      '<button class="ca-btn ca-move" onclick="q1Move()">→ Siirrä Q2:een</button>' +
+      '<button class="ca-btn ca-delegate" onclick="q1Delegate()">Delegoi / Poista</button>' +
+    '</div>';
+  area.appendChild(card);
+}
+
+function q1Keep(){ q1Index++; renderQ1(); }
+
+function q1Move(){
+  var t = q1Tasks[q1Index];
+  t.quad='q2'; t.important=true; t.urgent=false;
+  q2Tasks.push(t);
+  q1Tasks.splice(q1Index, 1);
+  renderQ1();
+}
+
+function q1Delegate(){
+  var t = q1Tasks[q1Index];
+  t.quad='q3'; t.important=false; t.urgent=true;
+  q1Tasks.splice(q1Index, 1);
+  renderQ1();
+}
+
+function goStep2(){
+  setStep(2);
+  document.getElementById('s1').classList.remove('active');
+  document.getElementById('nav1').style.display='none';
+  document.getElementById('s2').classList.add('active');
+  document.getElementById('nav2').style.display='flex';
+  renderQ2();
+}
+
+// ── STEP 2: Q2 ────────────────────────────────────────
+function renderQ2(){
+  var area = document.getElementById('q2Area');
+  area.innerHTML = '';
+  if(q2Tasks.length===0){
+    area.innerHTML='<div class="q2-empty">Q2-listalla ei ole tehtäviä tällä hetkellä.</div>';
+    return;
+  }
+  q2Tasks.forEach(function(t){
+    var sel = selectedQ2.indexOf(t.id)>=0;
+    var row = document.createElement('div');
+    row.className='q2-task'+(sel?' selected':'');
+    row.id='q2-'+t.id;
+    row.innerHTML=
+      '<div class="q2-check">'+(sel?'✓':'')+'</div>'+
+      '<div style="flex:1">'+
+        '<div class="q2-name">'+esc(t.text)+'</div>'+
+        '<div class="q2-est">'+fe(t.est||1)+' 🍅 &nbsp;·&nbsp; Tärkeä, ei kiireinen</div>'+
+      '</div>';
+    row.onclick=(function(tid){ return function(){ toggleQ2(tid); }; })(t.id);
+    area.appendChild(row);
+  });
+}
+
+function toggleQ2(id){
+  var idx = selectedQ2.indexOf(id);
+  if(idx>=0){
+    selectedQ2.splice(idx,1);
+  } else {
+    if(selectedQ2.length>=MAX_Q2){
+      var lim=document.getElementById('selectLimit');
+      lim.classList.add('on');
+      setTimeout(function(){lim.classList.remove('on');},2000);
+      return;
+    }
+    selectedQ2.push(id);
+  }
+  renderQ2();
+}
+
+function goStep3(){
+  setStep(3);
+  document.getElementById('s2').classList.remove('active');
+  document.getElementById('nav2').style.display='none';
+  document.getElementById('s3').classList.add('active');
+  document.getElementById('nav3').style.display='flex';
+  selectedFrog = null;
+  renderFrog();
+}
+
+function goStep2fromFrog(){
+  setStep(2);
+  document.getElementById('s3').classList.remove('active');
+  document.getElementById('nav3').style.display='none';
+  document.getElementById('s2').classList.add('active');
+  document.getElementById('nav2').style.display='flex';
+}
+
+// ── STEP 3: SAMMAKKO ──────────────────────────────────
+var selectedFrog = null;
+
+function getFrogCandidates(){
+  var cands = [];
+  q1Tasks.forEach(function(t){ cands.push(t); });
+  selectedQ2.forEach(function(id){
+    var t = q2Tasks.find(function(u){ return u.id===id; });
+    if(t) cands.push(t);
+  });
+  return cands;
+}
+
+function renderFrog(){
+  var area = document.getElementById('frogArea');
+  var hint = document.getElementById('frogHint');
+  var cands = getFrogCandidates();
+  if(cands.length===0){
+    area.innerHTML='<div class="q1-empty">Ei tehtäviä valittuna. Palaa takaisin ja valitse tehtäviä.</div>';
+    hint.textContent='';
+    document.getElementById('btn3').disabled=true;
+    return;
+  }
+  hint.textContent = selectedFrog ? 'Hyvä valinta. Sammakko menee jonoon ensimmäiseksi.' : 'Klikkaa yksi tehtävä.';
+  area.innerHTML='';
+  cands.forEach(function(t){
+    var isSel = selectedFrog===t.id;
+    var card = document.createElement('div');
+    card.className='frog-card'+(isSel?' selected':'');
+    card.innerHTML=
+      '<span class="frog-icon">🐸</span>'+
+      '<div class="frog-icon-empty"></div>'+
+      '<div style="flex:1">'+
+        '<div class="frog-name">'+esc(t.text)+'</div>'+
+        '<div class="frog-meta">'+fe(t.est||1)+' 🍅</div>'+
+      '</div>'+
+      '<span class="frog-badge '+(t.quad||'q1')+'">'+((t.quad==='q1')?'Q1':'Q2')+'</span>';
+    card.onclick=(function(tid){ return function(){ selectFrog(tid); }; })(t.id);
+    area.appendChild(card);
+  });
+  document.getElementById('btn3').disabled = selectedFrog===null;
+}
+
+function selectFrog(id){
+  selectedFrog = (selectedFrog===id) ? null : id;
+  renderFrog();
+}
+
+function goStep4(){
+  setStep(4);
+  document.getElementById('s3').classList.remove('active');
+  document.getElementById('nav3').style.display='none';
+  document.getElementById('s4').classList.add('active');
+  document.getElementById('nav4').style.display='flex';
+  renderSchedule();
+}
+
+function goStep3fromSchedule(){
+  setStep(3);
+  document.getElementById('s4').classList.remove('active');
+  document.getElementById('nav4').style.display='none';
+  document.getElementById('s3').classList.add('active');
+  document.getElementById('nav3').style.display='flex';
+  renderFrog();
+}
+
+function goStep1(){
+  setStep(1);
+  document.getElementById('s2').classList.remove('active');
+  document.getElementById('nav2').style.display='none';
+  document.getElementById('s1').classList.add('active');
+  document.getElementById('nav1').style.display='flex';
+}
+
+// ── STEP 4: SCHEDULE ──────────────────────────────────
+function getSchedulableTasks(){
+  var tasks = [];
+  // Q1 first
+  q1Tasks.forEach(function(t){ tasks.push(t); });
+  // Selected Q2
+  selectedQ2.forEach(function(id){
+    var t = q2Tasks.find(function(u){ return u.id===id; });
+    if(t) tasks.push(t);
+  });
+  return tasks;
+}
+
+function isScheduled(id){
+  return slots.aamu.indexOf(id)>=0 || slots.paiva.indexOf(id)>=0 || slots.loppu.indexOf(id)>=0;
+}
+
+function slotMinutes(slotName){
+  var key = getStorageKey();
+  var raw = localStorage.getItem(key);
+  var dtasks = raw ? JSON.parse(raw).tasks : [];
+  return slots[slotName].reduce(function(s,id){
+    var t = getSchedulableTasks().find(function(u){return u.id===id;}) ||
+            dtasks.find(function(u){return u.id===id;});
+    return s + (t ? (t.est||1)*POMO_MIN : POMO_MIN);
+  },0);
+}
+
+function renderSchedule(){
+  ['aamu','paiva','loppu'].forEach(function(s){ renderSlot(s); });
+  renderPickers();
+  checkOverload();
+}
+
+function renderSlot(slotName){
+  var box = document.getElementById('box-'+slotName);
+  var pomoEl = document.getElementById('pomo-'+slotName);
+  box.innerHTML = '';
+  var m = slotMinutes(slotName);
+  var max = SLOT_MAX[slotName]*POMO_MIN;
+  pomoEl.textContent = m>0 ? (m+' / '+max+' min') : '';
+  if(m>max) pomoEl.style.color='var(--pomo)'; else pomoEl.style.color='var(--muted)';
+  if(!slots[slotName].length){
+    box.innerHTML='<div class="slot-empty">Ei tehtäviä</div>';
+    return;
+  }
+  var key = getStorageKey();
+  var raw = localStorage.getItem(key);
+  var dtasks = raw ? JSON.parse(raw).tasks : [];
+  slots[slotName].forEach(function(id){
+    var t = getSchedulableTasks().find(function(u){return u.id===id;}) ||
+            dtasks.find(function(u){return u.id===id;});
+    if(!t) return;
+    var item = document.createElement('div');
+    item.className='slot-item';
+    item.innerHTML=
+      '<div class="si-name">'+esc(t.text)+'</div>'+
+      '<span class="si-badge '+(t.quad||'q2')+'">'+((t.quad==='q1')?'Q1':'Q2')+'</span>'+
+      '<button class="si-rm" onclick="removeFromSlot(\''+slotName+'\','+id+')">×</button>';
+    box.appendChild(item);
+  });
+}
+
+function renderPickers(){
+  var all = getSchedulableTasks().filter(Boolean);
+  ['aamu','paiva','loppu'].forEach(function(s){
+    var pick = document.getElementById('pick-'+s);
+    pick.innerHTML='';
+    all.forEach(function(t){
+      if(!t || !t.text) return;
+      if(isScheduled(t.id)) return;
+      var btn = document.createElement('button');
+      btn.className='sp-btn';
+      var label = t.text.length>28 ? t.text.substr(0,27)+'\u2026' : t.text;
+      btn.innerHTML='+ '+esc(label)+
+        ' <span style="color:var(--muted);font-size:.62rem">'+fe(t.est||1)+'\uD83C\uDF45</span>';
+      btn.onclick=(function(slotN,tid){ return function(){ addToSlot(slotN,tid); }; })(s,t.id);
+      pick.appendChild(btn);
+    });
+  });
+}
+
+function addToSlot(slotName, id){
+  id = parseInt(id, 10);
+  if(isNaN(id)) return;
+  if(isScheduled(id)) return;
+  slots[slotName].push(id);
+  renderSchedule();
+}
+
+function removeFromSlot(slotName, id){
+  id = parseInt(id, 10);
+  slots[slotName]=slots[slotName].filter(function(i){return i!==id;});
+  renderSchedule();
+}
+
+function checkOverload(){
+  var over = false;
+  ['aamu','paiva','loppu'].forEach(function(s){
+    if(slotMinutes(s) > SLOT_MAX[s]*POMO_MIN) over=true;
+  });
+  var w = document.getElementById('overloadWarn');
+  if(over) w.classList.add('on'); else w.classList.remove('on');
+}
+
+// ── FINISH ────────────────────────────────────────────
+function finish(){
+  saveData();
+  setStep(5);
+  document.getElementById('s4').classList.remove('active');
+  document.getElementById('nav4').style.display='none';
+  document.getElementById('s5').classList.add('active');
+  renderDone();
+}
+
+function renderDone(){
+  var q1count = q1Tasks.length;
+  var q2count = selectedQ2.length;
+  var frogTask = selectedFrog ? getFrogCandidates().find(function(t){ return t.id===selectedFrog; }) : null;
+  var frogText = frogTask ? ' Sammakko: ' + frogTask.text.substring(0,40) + (frogTask.text.length>40?'…':'') + '.' : '';
+  document.getElementById('doneSubText').textContent =
+    'Jonoon lisätty ' + (q1count+q2count) + ' tehtävää.' + frogText;
+
+  var slotNames = {aamu:'🌅 Aamu',paiva:'☀️ Iltapäivä',loppu:'🌆 Päätös'};
+  var key = getStorageKey();
+  var raw = localStorage.getItem(key);
+  var dtasks = raw ? JSON.parse(raw).tasks : [];
+  var html='';
+  ['aamu','paiva','loppu'].forEach(function(s){
+    if(!slots[s].length) return;
+    var names = slots[s].map(function(id){
+      var t = getSchedulableTasks().find(function(u){return u.id===id;}) ||
+              dtasks.find(function(u){return u.id===id;});
+      return t ? (t.frog?'🐸 ':'')+t.text : '';
+    }).filter(Boolean).join(', ');
+    html+='<div class="ds-row"><div class="ds-slot">'+slotNames[s]+'</div><div class="ds-tasks">'+esc(names)+'</div></div>';
+  });
+  if(!html) html='<div class="ds-row"><div class="ds-tasks" style="color:var(--muted)">Ei tehtäviä aikataulutettu.</div></div>';
+  document.getElementById('doneSummary').innerHTML=html;
+}
+
+function skipToEnd(){
+  saveData();
+  window.close();
+}
+
+// ── STEPPER UI ────────────────────────────────────────
+function setStep(n){
+  for(var i=1;i<=4;i++){
+    var sn=document.getElementById('sn'+i);
+    var sl=document.getElementById('sl'+i);
+    if(!sn) continue;
+    sn.className='step-num'+(i<n?' done':(i===n?' active':''));
+    sl.className='step-label'+(i===n?' active':'');
+    if(i<n) sn.textContent='✓'; else sn.textContent=String(i);
+  }
+}
+
+// ── UTILS ─────────────────────────────────────────────
+function fe(v){ if(v===0.5)return'½'; if(v%1!==0)return Math.floor(v)+'½'; return String(v); }
+function esc(s){ var d=document.createElement('div');d.textContent=s;return d.innerHTML; }
+</script>
+</body>
+</html>

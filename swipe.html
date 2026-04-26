@@ -1,27 +1,508 @@
-Fokus — Selaa tehtäviä 
-Fokus 
-Tehtävien selaus 
-Paljonko aikaa sinulla on?
-Työkalu ilmoittaa kun jonosi on täynnä. 
-30 min 1 h 1,5 h 2 h 3 h 4 h 
-Tai kirjoita: min Aloita selaus → Ohita — selaa ilman aikarajaa 
-← Sulje Fokus 
-— Valmis ✓ 
-✕ Ohita 
-pyyhkäise tai vedä 
-Jonoon ✓ 
-✕
-Ohita 
-🐸
-Sammakko 
-✓
-Jonoon 
-🌲 
-Kaikki selattu 
-Jono on valmis. Sulje ja siirry ajastimeen 
-Jono
-Ei tehtäviä 
-Muokkaa tehtävää 
-Tärkeä Kiireinen 
-🍅 ‹ › 1 
-Tallenna Peruuta
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Fokus — Selaa tehtäviä</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--ink:#1a1c18;--paper:#f2f0e8;--warm:#b8a882;--accent:#c49a3a;--muted:#6b7060;--light:#dddbd0;--pomo:#a84c28;--q1:#a84c28;--q2:#2d5a3d;--q3:#7a6a50;--q4:#9a9a8e}
+body{background:var(--paper);font-family:'DM Sans',sans-serif;color:var(--ink);min-height:100vh;display:flex;flex-direction:column;overflow:hidden;user-select:none}
+#setup{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;gap:1.5rem;text-align:center}
+#setup h2{font-family:'DM Serif Display',serif;font-size:1.5rem;font-style:italic}
+#setup p{font-size:.82rem;color:var(--muted);font-weight:300;line-height:1.6;max-width:280px}
+.time-opts{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center}
+.time-opt{font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;padding:.55rem 1.1rem;border-radius:8px;border:1.5px solid var(--light);background:white;color:var(--muted);cursor:pointer;transition:all .15s}
+.time-opt.on,.time-opt:hover{border-color:var(--accent);color:var(--accent);background:rgba(196,154,58,.06)}
+.custom-time{display:flex;align-items:center;gap:.5rem}
+.custom-time input{width:64px;font-family:'DM Sans',sans-serif;font-size:.85rem;padding:.45rem .6rem;border-radius:6px;border:1.5px solid var(--light);outline:none;text-align:center}
+.custom-time input:focus{border-color:var(--accent)}
+.start-btn{font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:500;padding:.75rem 2rem;border-radius:10px;border:none;background:var(--accent);color:white;cursor:pointer;width:100%;max-width:280px}
+.skip-setup{font-size:.72rem;color:var(--muted);background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline;text-underline-offset:2px}
+#main{flex:1;display:none;flex-direction:row;overflow:hidden}
+#swipe-area{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.25rem .6rem;border-bottom:1px solid var(--light);flex-shrink:0}
+.hdr-logo{font-family:'DM Serif Display',serif;font-size:1rem;font-style:italic;color:var(--accent)}
+.hdr-back{font-size:.72rem;color:var(--muted);font-weight:300;background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif}
+.hdr-count{font-size:.7rem;color:var(--muted);font-weight:300}
+.progress{height:3px;background:var(--light);flex-shrink:0}
+.progress-fill{height:100%;background:var(--accent);transition:width .3s ease}
+.hints{display:flex;justify-content:space-between;align-items:center;padding:.45rem 1.5rem;flex-shrink:0}
+.hint{font-size:.65rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;opacity:.3;transition:opacity .2s}
+.hint.left{color:var(--q4)}.hint.right{color:var(--accent)}.hint.active{opacity:1}
+.stack{flex:1;display:flex;align-items:center;justify-content:center;padding:.75rem 1.25rem;position:relative;overflow:hidden}
+.card-wrap{position:absolute;width:100%;max-width:320px;transition:none;cursor:grab}
+.card-wrap.animating{transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .3s ease}
+.task-card{background:white;border-radius:14px;border:1px solid var(--light);padding:1.4rem;box-shadow:0 4px 20px rgba(0,0,0,.08);min-height:200px;display:flex;flex-direction:column;gap:.8rem;position:relative;overflow:hidden}
+.task-card.q1{border-top:3px solid var(--q1)}.task-card.q2{border-top:3px solid var(--q2)}.task-card.q3{border-top:3px solid var(--q3)}.task-card.q4{border-top:3px solid var(--q4)}
+.tint{position:absolute;inset:0;border-radius:14px;opacity:0;transition:opacity .1s;pointer-events:none}
+.tint.yes{background:rgba(196,154,58,.1)}.tint.no{background:rgba(154,154,142,.1)}
+.card-hdr{display:flex;flex-direction:column;gap:.18rem}
+.q-badge{display:inline-flex;font-size:.58rem;font-weight:500;letter-spacing:.07em;text-transform:uppercase;padding:.18rem .45rem;border-radius:4px;color:white;align-self:flex-start}
+.q-badge.q1{background:var(--q1)}.q-badge.q2{background:var(--q2)}.q-badge.q3{background:var(--q3)}.q-badge.q4{background:var(--q4)}
+.q-criteria{font-size:.62rem;color:var(--muted);font-weight:300;font-style:italic}
+.task-name{font-family:'DM Serif Display',serif;font-size:1.3rem;font-style:italic;line-height:1.3;letter-spacing:-.02em;color:var(--ink);flex:1}
+.meta{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-top:auto}
+.meta-item{font-size:.68rem;color:var(--muted);font-weight:300}
+.chip{font-size:.6rem;font-weight:500;padding:.12rem .35rem;border-radius:4px}
+.chip.frog{color:#4a6e22;background:rgba(74,110,34,.1)}.chip.inq{color:var(--accent);background:rgba(196,154,58,.1)}.chip.wait{color:#3a6b8a;background:rgba(58,107,138,.1)}
+.shadow-card{position:absolute;width:100%;max-width:320px;pointer-events:none}
+.shadow-card .task-card{opacity:.4;transform:scale(.94);box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.shadow-card.back2 .task-card{opacity:.18;transform:scale(.88)}
+.actions{display:flex;justify-content:center;align-items:flex-end;gap:1.25rem;padding:.65rem 1rem 1.1rem;flex-shrink:0}
+.act-wrap{display:flex;flex-direction:column;align-items:center;gap:.22rem}
+.act-btn{width:50px;height:50px;border-radius:50%;border:2px solid;background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.15rem;transition:transform .1s,box-shadow .1s;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.act-btn:hover{transform:scale(1.08)}.act-btn:active{transform:scale(.95)}
+.act-btn.skip{border-color:var(--light);color:var(--muted)}.act-btn.qbtn{border-color:var(--accent);color:var(--accent)}.act-btn.fbtn{border-color:#4a6e22;color:#4a6e22}
+.act-label{font-size:.57rem;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+#queue-panel{width:190px;border-left:1px solid var(--light);background:white;display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.qp-hdr{padding:.85rem .9rem .6rem;border-bottom:1px solid var(--light);flex-shrink:0}
+.qp-title{font-family:'DM Serif Display',serif;font-size:.92rem;font-style:italic;color:var(--ink)}
+.qp-budget{font-size:.63rem;color:var(--muted);font-weight:300;margin-top:.12rem}
+.qp-budget.full{color:var(--pomo);font-weight:500}
+.budget-warn{margin:.4rem .5rem 0;padding:.45rem .65rem;background:rgba(168,76,40,.07);border:1px solid rgba(168,76,40,.18);border-radius:6px;font-size:.64rem;color:var(--pomo);line-height:1.45;display:none}
+.budget-warn.on{display:block}
+.qp-list{flex:1;overflow-y:auto;padding:.4rem .5rem}
+.qp-empty{font-size:.7rem;color:var(--light);font-style:italic;padding:.65rem .4rem;text-align:center}
+.qp-item{display:flex;align-items:flex-start;gap:.35rem;padding:.35rem .3rem;border-radius:5px;margin-bottom:.15rem;background:var(--paper)}
+.qp-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:.38rem}
+.qp-dot.q1{background:var(--q1)}.qp-dot.q2{background:var(--q2)}.qp-dot.q3{background:var(--q3)}.qp-dot.q4{background:var(--q4)}
+.qp-name{font-size:.67rem;font-weight:300;color:var(--ink);flex:1;line-height:1.3;word-break:break-word}
+.qp-est{font-size:.58rem;color:var(--muted);flex-shrink:0;white-space:nowrap;margin-top:.08rem}
+.qp-rm{background:none;border:none;cursor:pointer;color:var(--light);font-size:.8rem;padding:0;flex-shrink:0;line-height:1}
+.qp-rm:hover{color:var(--pomo)}
+.qp-total{padding:.45rem .85rem;border-top:1px solid var(--light);font-size:.66rem;color:var(--muted);font-weight:300;flex-shrink:0}
+.qp-total strong{color:var(--ink);font-weight:500}
+#done-screen{display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;padding:2rem;gap:1rem;text-align:center}
+#done-screen h2{font-family:'DM Serif Display',serif;font-size:1.3rem;font-style:italic}
+#done-screen p{font-size:.8rem;color:var(--muted);font-weight:300;line-height:1.6;max-width:260px}
+.done-btn{font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;padding:.6rem 1.4rem;border-radius:8px;border:1.5px solid var(--accent);color:var(--accent);background:white;cursor:pointer}
+.done-btn:hover{background:var(--accent);color:white}
+.nt{position:fixed;bottom:1.25rem;left:50%;transform:translateX(-50%);background:var(--ink);color:white;border-radius:8px;padding:.55rem 1.1rem;font-size:.78rem;box-shadow:0 4px 14px rgba(0,0,0,.2);opacity:0;pointer-events:none;transition:opacity .25s;white-space:nowrap;z-index:200}
+.nt.on{opacity:1}
+
+/* ── TEEMA — swipe.html ──────────────────────────────── */
+/* Usvametsä = oletus (nykyinen vaalea tyyli) */
+
+/* HAVUMETSÄ */
+html[data-theme="havu"]{--ink:rgba(255,255,255,.95);--paper:#0d2218;--warm:#1e4028;--accent:#4fa870;--muted:rgba(255,255,255,.52);--light:#1a3525;--pomo:#c0432b;--q1:#c0432b;--q2:#2d6b3d;--q3:#7a6a50;--q4:#555f52}
+html[data-theme="havu"] body{background:#0a1a10;color:rgba(255,255,255,.95)}
+html[data-theme="havu"] .task-card{background:#0f2a1a;border-color:#1e4028}
+html[data-theme="havu"] #queue-panel{background:#0a1a10;border-left-color:#1a3525}
+html[data-theme="havu"] .qp-hdr,.qp-total{border-color:#1e4028}
+html[data-theme="havu"] .qp-item{background:#0d2218}
+html[data-theme="havu"] .hdr{border-bottom-color:#1e4028}
+html[data-theme="havu"] .act-btn{background:#0d2218;border-color:#1e4028}
+html[data-theme="havu"] .act-btn.skip{border-color:#1e4028;color:rgba(255,255,255,.45)}
+html[data-theme="havu"] .act-btn.qbtn{border-color:#4fa870;color:#4fa870}
+html[data-theme="havu"] .act-btn.fbtn{border-color:#6aaa30;color:#6aaa30}
+html[data-theme="havu"] .time-opt{background:#0d2218;border-color:#1e4028;color:rgba(255,255,255,.55)}
+html[data-theme="havu"] .time-opt.on{border-color:#4fa870;color:#4fa870;background:rgba(79,168,112,.08)}
+html[data-theme="havu"] .start-btn{background:#4fa870}
+html[data-theme="havu"] .done-btn{background:#0d2218;color:#4fa870;border-color:#4fa870}
+html[data-theme="havu"] .done-btn:hover{background:#4fa870;color:white}
+html[data-theme="havu"] .progress{background:#1e4028}
+html[data-theme="havu"] .nt{background:rgba(255,255,255,.1);backdrop-filter:blur(8px);color:rgba(255,255,255,.9)}
+html[data-theme="havu"] .custom-time input{background:#0d2218;border-color:#1e4028;color:rgba(255,255,255,.85)}
+
+/* AURINKO */
+html[data-theme="aurinko"]{--ink:#2d2417;--paper:#fff8eb;--warm:#b48246;--accent:#c4681e;--muted:#7a6a4a;--light:#e8d8b8;--pomo:#c4681e;--q1:#c4681e;--q2:#3d6b30;--q3:#8a7a5a;--q4:#a0988a}
+html[data-theme="aurinko"] body{background:#fff8eb}
+html[data-theme="aurinko"] .task-card{background:#fffbf2;border-color:#e8d8b8}
+html[data-theme="aurinko"] #queue-panel{background:#fffbf2;border-left-color:#e8d8b8}
+html[data-theme="aurinko"] .act-btn{background:#fffbf2}
+html[data-theme="aurinko"] .act-btn.skip{border-color:#e8d8b8}
+html[data-theme="aurinko"] .time-opt{background:#fffbf2;border-color:#e8d8b8}
+html[data-theme="aurinko"] .time-opt.on{border-color:#c4681e;color:#c4681e;background:rgba(196,104,30,.06)}
+html[data-theme="aurinko"] .start-btn{background:#c4681e}
+html[data-theme="aurinko"] .done-btn{background:#fffbf2;color:#c4681e;border-color:#c4681e}
+html[data-theme="aurinko"] .done-btn:hover{background:#c4681e;color:white}
+html[data-theme="aurinko"] .chip.inq{color:#c4681e;background:rgba(196,104,30,.10)}
+html[data-theme="aurinko"] .tint.yes{background:rgba(196,104,30,.08)}
+
+</style>
+</head>
+<body>
+
+<div id="setup">
+  <div>
+    <div style="font-family:'DM Serif Display',serif;font-size:1.4rem;font-style:italic;color:var(--accent);margin-bottom:.2rem">Fokus</div>
+    <div style="font-size:.7rem;color:var(--muted);font-weight:300;letter-spacing:.08em;text-transform:uppercase">Tehtävien selaus</div>
+  </div>
+  <div><h2>Paljonko aikaa sinulla on?</h2><p>Työkalu ilmoittaa kun jonosi on täynnä.</p></div>
+  <div class="time-opts" id="timeOpts">
+    <button class="time-opt" data-min="30">30 min</button>
+    <button class="time-opt" data-min="60">1 h</button>
+    <button class="time-opt" data-min="90">1,5 h</button>
+    <button class="time-opt" data-min="120">2 h</button>
+    <button class="time-opt" data-min="180">3 h</button>
+    <button class="time-opt" data-min="240">4 h</button>
+  </div>
+  <div class="custom-time">
+    <span style="font-size:.75rem;color:var(--muted);font-weight:300">Tai kirjoita:</span>
+    <input type="number" id="customMin" min="15" max="480" placeholder="min">
+    <span style="font-size:.75rem;color:var(--muted);font-weight:300">min</span>
+  </div>
+  <button class="start-btn" onclick="startSwipe()">Aloita selaus →</button>
+  <button class="skip-setup" onclick="startSwipe(0)">Ohita — selaa ilman aikarajaa</button>
+</div>
+
+<div id="main">
+  <div id="swipe-area">
+    <div class="hdr">
+      <button class="hdr-back" onclick="window.close()">← Sulje</button>
+      <span class="hdr-logo">Fokus</span>
+      <div style="display:flex;align-items:center;gap:.5rem">
+        <span class="hdr-count" id="counter">—</span>
+        <button onclick="finishSwipe()" style="font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;padding:.35rem .8rem;border-radius:6px;border:1.5px solid var(--accent);color:var(--accent);background:white;cursor:pointer">Valmis ✓</button>
+      </div>
+    </div>
+    <div class="progress"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+    <div class="hints" id="hints">
+      <div class="hint left" id="hintLeft">✕ Ohita</div>
+      <div style="font-size:.62rem;color:var(--muted);font-weight:300">pyyhkäise tai vedä</div>
+      <div class="hint right" id="hintRight">Jonoon ✓</div>
+    </div>
+    <div class="stack" id="stack"></div>
+    <div class="actions" id="actions">
+      <div class="act-wrap"><button class="act-btn skip" onclick="swipeLeft()">✕</button><div class="act-label">Ohita</div></div>
+      <div class="act-wrap"><button class="act-btn fbtn" id="frogBtn" onclick="swipeFrog()">🐸</button><div class="act-label">Sammakko</div></div>
+      <div class="act-wrap"><button class="act-btn qbtn" onclick="swipeRight()">✓</button><div class="act-label">Jonoon</div></div>
+    </div>
+    <div id="done-screen">
+      <div style="font-size:2rem">🌲</div>
+      <h2>Kaikki selattu</h2>
+      <p id="done-msg">Jono on valmis.</p>
+      <button class="done-btn" onclick="window.close()">Sulje ja siirry ajastimeen</button>
+    </div>
+  </div>
+  <div id="queue-panel">
+    <div class="qp-hdr"><div class="qp-title">Jono</div><div class="qp-budget" id="qpBudget"></div></div>
+    <div class="budget-warn" id="budgetWarn"></div>
+    <div class="qp-list" id="qpList"><div class="qp-empty">Ei tehtäviä</div></div>
+    <div class="qp-total" id="qpTotal"></div>
+  </div>
+</div>
+
+<div class="nt" id="nt"></div>
+
+<!-- EDIT PANEL -->
+<div id="edit-panel" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:100;align-items:flex-end;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:#f2f0e8;border-radius:14px 14px 0 0;padding:1.5rem;width:100%;max-width:480px;display:flex;flex-direction:column;gap:.85rem">
+    <input type="hidden" id="edit-id">
+    <div style="font-family:'DM Serif Display',serif;font-size:1rem;font-style:italic;color:#1a1c18">Muokkaa tehtävää</div>
+    <input id="edit-name" type="text" style="width:100%;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:300;padding:.6rem .85rem;border-radius:8px;border:1.5px solid #dddbd0;outline:none;color:#1a1c18;background:white">
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+      <label style="display:flex;align-items:center;gap:.35rem;font-size:.78rem;font-weight:300;cursor:pointer"><input type="checkbox" id="edit-important" style="accent-color:#c49a3a"> Tärkeä</label>
+      <label style="display:flex;align-items:center;gap:.35rem;font-size:.78rem;font-weight:300;cursor:pointer"><input type="checkbox" id="edit-urgent" style="accent-color:#a84c28"> Kiireinen</label>
+      <div style="display:flex;align-items:center;gap:.4rem;margin-left:.5rem">
+        <span style="font-size:.72rem;color:#6b7060">🍅</span>
+        <button onclick="var s=document.getElementById('edit-est');s.value=Math.max(.5,parseFloat(s.value)-.5);document.getElementById('edit-est-val').textContent=fe(parseFloat(s.value))" style="background:none;border:none;cursor:pointer;color:#6b7060;font-size:.9rem;padding:0 .1rem">‹</button>
+        <input type="range" id="edit-est" min="0.5" max="8" step="0.5" value="1" oninput="document.getElementById('edit-est-val').textContent=fe(parseFloat(this.value))" style="-webkit-appearance:none;width:80px;height:4px;border-radius:2px;background:#dddbd0;outline:none;cursor:pointer">
+        <button onclick="var s=document.getElementById('edit-est');s.value=Math.min(8,parseFloat(s.value)+.5);document.getElementById('edit-est-val').textContent=fe(parseFloat(s.value))" style="background:none;border:none;cursor:pointer;color:#6b7060;font-size:.9rem;padding:0 .1rem">›</button>
+        <span id="edit-est-val" style="font-size:.78rem;font-weight:500;color:#a84c28;min-width:1.5rem">1</span>
+      </div>
+    </div>
+    <textarea id="edit-notes" rows="2" placeholder="💬 Lisätiedot..." style="width:100%;box-sizing:border-box;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:300;padding:.55rem .85rem;border-radius:8px;border:1.5px solid #dddbd0;outline:none;color:#1a1c18;background:white;resize:vertical;min-height:48px"></textarea>
+    <input id="edit-link" type="url" placeholder="🔗 Linkki (https://...)" style="width:100%;box-sizing:border-box;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:300;padding:.55rem .85rem;border-radius:8px;border:1.5px solid #dddbd0;outline:none;color:#1a1c18;background:white">
+    <div style="display:flex;gap:.5rem">
+      <button onclick="saveEditCard()" style="font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;padding:.6rem 1.2rem;border-radius:8px;border:none;background:#c49a3a;color:white;cursor:pointer;flex:1">Tallenna</button>
+      <button onclick="document.getElementById('edit-panel').style.display='none'" style="font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:400;padding:.6rem .9rem;border-radius:8px;border:1.5px solid #dddbd0;color:#6b7060;background:white;cursor:pointer">Peruuta</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var QL={q1:'TEE HETI',q2:'AIKATAULUTA',q3:'DELEGOI',q4:'POISTA'};
+var QC={q1:'Tärkeä + kiireinen',q2:'Tärkeä, ei kiireinen',q3:'Kiireinen, ei tärkeä',q4:'Ei tärkeä, ei kiireinen'};
+var tasks=[],queue=[],active=null,turn=[],idx=0,total=0,budgetMin=0;
+var POMO_MIN=25;
+function fe(v){if(v===0.5)return'½';if(v%1!==0)return Math.floor(v)+'½';return String(v);}
+
+document.querySelectorAll('.time-opt').forEach(function(b){
+  b.addEventListener('click',function(){
+    document.querySelectorAll('.time-opt').forEach(function(x){x.classList.remove('on')});
+    b.classList.add('on');document.getElementById('customMin').value='';
+  });
+});
+
+function getSelectedMin(){
+  var c=parseInt(document.getElementById('customMin').value);if(c>0)return c;
+  var s=document.querySelector('.time-opt.on');return s?parseInt(s.dataset.min):0;
+}
+
+function startSwipe(override){
+  budgetMin=(override===0)?0:getSelectedMin();
+  loadData();
+  document.getElementById('setup').style.display='none';
+  document.getElementById('main').style.display='flex';
+  renderStack();renderQueuePanel();
+}
+
+function loadData(){
+  var wsId=localStorage.getItem('fap_active_ws')||'work';
+  var raw=localStorage.getItem('eis_v5_'+wsId)||localStorage.getItem('eis_v5');
+  if(!raw){tasks=[];queue=[];active=null;turn=[];return;}
+  var d=JSON.parse(raw);
+  tasks=JSON.parse(JSON.stringify(d.tasks||[])).filter(function(t){return !t.done});
+  // Migraatio: vanha queue[] → active+turn
+  if(d.active!==undefined){
+    active=d.active;
+    turn=(d.turn||[]).slice();
+  } else {
+    var oldQ=(d.queue||[]);
+    active=oldQ.length>0?oldQ[0]:null;
+    turn=oldQ.slice(1);
+  }
+  // Sisäinen queue = [active, ...turn] helpottamaan swipe-logiikkaa
+  queue=(active?[active]:[]).concat(turn).filter(function(id){
+    return tasks.find(function(t){return t.id===id});
+  });
+  var qo={q1:0,q2:1,q3:2,q4:3};
+  tasks.sort(function(a,b){
+    if(a.frog&&!b.frog)return -1;if(!a.frog&&b.frog)return 1;
+    return (qo[a.quad]||3)-(qo[b.quad]||3);
+  });
+  total=tasks.length;
+}
+
+function saveQueue(){
+  var wsId=localStorage.getItem('fap_active_ws')||'work';
+  var key='eis_v5_'+wsId;
+  var raw=localStorage.getItem(key)||localStorage.getItem('eis_v5');
+  if(!raw)return;
+  var d=JSON.parse(raw);
+  // Synkronoi sisäinen queue → active+turn
+  active=queue.length>0?queue[0]:null;
+  turn=queue.slice(1);
+  d.active=active;
+  d.turn=turn;
+  delete d.queue; // poistetaan vanha kenttä
+  tasks.forEach(function(t){var o=d.tasks.find(function(u){return u.id===t.id});if(o)o.frog=t.frog;});
+  localStorage.setItem(key,JSON.stringify(d));
+}
+
+function fe(v){if(v===0.5)return'½';if(v%1!==0)return Math.floor(v)+'½';return String(v);}
+
+function queueTotalMin(){
+  var raw=localStorage.getItem('eis_v5');
+  var dtasks=(raw?JSON.parse(raw).tasks:[])||[];
+  return queue.reduce(function(s,id){
+    var t=tasks.find(function(u){return u.id===id})||dtasks.find(function(u){return u.id===id});
+    return s+(t?(t.est||1)*POMO_MIN:POMO_MIN);
+  },0);
+}
+
+function renderStack(){
+  var stack=document.getElementById('stack');stack.innerHTML='';
+  if(idx>=tasks.length){showDone();return;}
+  if(idx+2<tasks.length)stack.appendChild(buildCard(tasks[idx+2],2));
+  if(idx+1<tasks.length)stack.appendChild(buildCard(tasks[idx+1],1));
+  var wrap=buildCard(tasks[idx],0);wrap.id='active-card';stack.appendChild(wrap);
+  setupDrag(wrap);
+  var anyFrog=tasks.some(function(t){return t.frog});
+  var fb=document.getElementById('frogBtn');if(fb)fb.style.opacity=(anyFrog&&!tasks[idx].frog)?'0.35':'1';
+  document.getElementById('counter').textContent=(tasks.length-idx)+' tehtävää';
+  document.getElementById('prog').style.width=(total>0?Math.round(idx/total*100):0)+'%';
+}
+
+function buildCard(t,shadow){
+  var wrap=document.createElement('div');
+  wrap.className='card-wrap'+(shadow?(' shadow-card'+(shadow===2?' back2':'')):'');
+  var card=document.createElement('div');card.className='task-card '+(t.quad||'q4');
+  card.appendChild(Object.assign(document.createElement('div'),{className:'tint yes'}));
+  card.appendChild(Object.assign(document.createElement('div'),{className:'tint no'}));
+  var hdr=document.createElement('div');hdr.className='card-hdr';
+  var badge=document.createElement('span');badge.className='q-badge '+(t.quad||'q4');badge.textContent=QL[t.quad||'q4'];
+  var crit=document.createElement('div');crit.className='q-criteria';crit.textContent=QC[t.quad||'q4'];
+  hdr.appendChild(badge);hdr.appendChild(crit);card.appendChild(hdr);
+  var name=document.createElement('div');name.className='task-name';name.textContent=t.text;card.appendChild(name);
+  var meta=document.createElement('div');meta.className='meta';
+  var pi=document.createElement('div');pi.className='meta-item';pi.textContent='🍅 '+fe(t.est||1)+' pomodoro'+((t.est||1)>1?'a':'');meta.appendChild(pi);
+  if(queue.indexOf(t.id)>=0){var c=document.createElement('span');c.className='chip inq';c.textContent='Jonossa';meta.appendChild(c);}
+  if(t.frog){var c2=document.createElement('span');c2.className='chip frog';c2.textContent='🐸';meta.appendChild(c2);}
+  if(t.waiting){var c3=document.createElement('span');c3.className='chip wait';c3.textContent='⏳';meta.appendChild(c3);}
+  card.appendChild(meta);
+  // Tags row
+  if(t.tags&&t.tags.length){
+    var tagsRow=document.createElement('div');
+    tagsRow.style.cssText='display:flex;flex-wrap:wrap;gap:.2rem;margin-top:.3rem';
+    t.tags.forEach(function(tag){
+      var tg=document.createElement('span');
+      tg.style.cssText='font-size:.58rem;font-weight:500;padding:.1rem .32rem;border-radius:4px;background:rgba(196,154,58,.1);color:var(--muted);border:1px solid rgba(196,154,58,.18)';
+      tg.textContent='#'+tag;
+      tagsRow.appendChild(tg);
+    });
+    card.appendChild(tagsRow);
+  }
+
+  // Edit button (only on active card)
+  if(!shadow){
+    var editBtn=document.createElement('button');
+    editBtn.style.cssText='font-family:\'DM Sans\',sans-serif;font-size:.65rem;font-weight:400;padding:.2rem .55rem;border-radius:4px;border:1px solid var(--light);color:var(--muted);background:white;cursor:pointer;margin-top:.35rem;align-self:flex-start';
+    editBtn.textContent='✎ Muokkaa';
+    editBtn.onclick=function(e){e.stopPropagation();openEditCard(t.id);};
+    card.appendChild(editBtn);
+  }
+
+  wrap.appendChild(card);return wrap;
+}
+
+function openEditCard(id){
+  var t=tasks.find(function(u){return u.id===id});if(!t)return;
+  document.getElementById('edit-name').value=t.text;
+  document.getElementById('edit-important').checked=!!t.important;
+  document.getElementById('edit-urgent').checked=!!t.urgent;
+  document.getElementById('edit-est').value=t.est||1;
+  document.getElementById('edit-est-val').textContent=fe(t.est||1);
+  document.getElementById('edit-notes').value=t.lisatiedot||'';
+  document.getElementById('edit-link').value=t.linkki||'';
+  document.getElementById('edit-id').value=id;
+  document.getElementById('edit-panel').style.display='flex';
+}
+
+function saveEditCard(){
+  var id=parseInt(document.getElementById('edit-id').value);
+  var t=tasks.find(function(u){return u.id===id});if(!t)return;
+  t.text=document.getElementById('edit-name').value.trim()||t.text;
+  t.important=document.getElementById('edit-important').checked;
+  t.urgent=document.getElementById('edit-urgent').checked;
+  t.est=parseFloat(document.getElementById('edit-est').value)||1;
+  t.lisatiedot=document.getElementById('edit-notes').value.trim()||null;
+  t.linkki=document.getElementById('edit-link').value.trim()||null;
+  if(t.important&&t.urgent)t.quad='q1';
+  else if(t.important&&!t.urgent)t.quad='q2';
+  else if(!t.important&&t.urgent)t.quad='q3';
+  else t.quad='q4';
+  saveQueue();
+  document.getElementById('edit-panel').style.display='none';
+  renderStack();renderQueuePanel();
+  notify('Muutokset tallennettu ✓');
+}
+
+function finishSwipe(){
+  saveQueue();
+  showDone();
+}
+
+function showDone(){
+  document.getElementById('stack').style.display='none';
+  document.getElementById('actions').style.display='none';
+  document.getElementById('hints').style.display='none';
+  document.getElementById('done-screen').style.display='flex';
+  document.getElementById('prog').style.width='100%';
+  document.getElementById('counter').textContent='Valmis';
+  var q=queue.length,m=queueTotalMin();
+  document.getElementById('done-msg').textContent=q>0?(q+' tehtävää jonossa ('+m+' min). Sulje ja käynnistä ajastin.'):'Ei tehtäviä jonossa.';
+  saveQueue();
+}
+
+function renderQueuePanel(){
+  var list=document.getElementById('qpList');list.innerHTML='';
+  var m=queueTotalMin();
+  var bEl=document.getElementById('qpBudget');
+  var wEl=document.getElementById('budgetWarn');
+  if(budgetMin>0){
+    bEl.textContent=m+' / '+budgetMin+' min';
+    bEl.className='qp-budget'+(m>=budgetMin?' full':'');
+    if(m>=budgetMin){wEl.textContent='Jono täynnä ('+m+'/'+budgetMin+' min). Ohita loput tai poista jonosta.';wEl.classList.add('on');}
+    else wEl.classList.remove('on');
+  } else {
+    bEl.textContent=m>0?m+' min':'';wEl.classList.remove('on');
+  }
+  if(!queue.length){list.innerHTML='<div class="qp-empty">Ei tehtäviä</div>';document.getElementById('qpTotal').textContent='';return;}
+  var raw=localStorage.getItem('eis_v5');
+  var dtasks=raw?JSON.parse(raw).tasks:[];
+  queue.forEach(function(id){
+    var t=tasks.find(function(u){return u.id===id})||dtasks.find(function(u){return u.id===id});
+    if(!t)return;
+    var item=document.createElement('div');item.className='qp-item';
+    var dot=document.createElement('div');dot.className='qp-dot '+(t.quad||'q4');
+    var nm=document.createElement('div');nm.className='qp-name';nm.textContent=(t.frog?'🐸 ':'')+t.text;
+    var est=document.createElement('div');est.className='qp-est';est.textContent=fe(t.est||1)+'🍅';
+    var rm=document.createElement('button');rm.className='qp-rm';rm.textContent='×';
+    rm.onclick=(function(tid){return function(){
+      queue=queue.filter(function(i){return i!==tid});
+      saveQueue();renderQueuePanel();renderStack();
+    }})(id);
+    item.appendChild(dot);item.appendChild(nm);item.appendChild(est);item.appendChild(rm);
+    list.appendChild(item);
+  });
+  var h=Math.floor(m/60),mi=m%60;
+  document.getElementById('qpTotal').innerHTML='Yhteensä: <strong>'+(h>0?h+'h '+(mi?mi+'min':''):mi+'min')+'</strong>';
+}
+
+function checkBudget(){return budgetMin>0&&queueTotalMin()>=budgetMin;}
+
+function swipeRight(){
+  var t=tasks[idx];if(!t)return;
+  if(checkBudget()){notify('Jono täynnä! Poista ensin tai ohita.');return;}
+  if(queue.indexOf(t.id)<0){queue.push(t.id);saveQueue();notify('✓ Lisätty jonoon');}
+  else notify('Jo jonossa');
+  renderQueuePanel();animateCard('right');
+}
+
+function swipeLeft(){notify('Ohitettu');animateCard('left');}
+
+function swipeFrog(){
+  var t=tasks[idx];if(!t)return;
+  tasks.forEach(function(u){u.frog=false;});t.frog=true;
+  if(queue.indexOf(t.id)<0)queue.unshift(t.id);
+  else{queue=queue.filter(function(i){return i!==t.id});queue.unshift(t.id);}
+  saveQueue();renderQueuePanel();notify('🐸 Sammakko — jonon kärkeen');animateCard('right');
+}
+
+function animateCard(dir){
+  var wrap=document.getElementById('active-card');if(!wrap)return;
+  wrap.classList.add('animating');
+  wrap.style.transform='translateX('+(dir==='right'?window.innerWidth*1.2:-window.innerWidth*1.2)+'px) rotate('+(dir==='right'?16:-16)+'deg)';
+  wrap.style.opacity='0';
+  setTimeout(function(){idx++;renderStack();renderQueuePanel();},300);
+}
+
+function setupDrag(wrap){
+  var startX=0,curX=0,dragging=false;
+  var tyes=wrap.querySelector('.tint.yes'),tno=wrap.querySelector('.tint.no');
+  function onStart(e){dragging=true;startX=e.touches?e.touches[0].clientX:e.clientX;wrap.style.transition='none';wrap.classList.remove('animating');}
+  function onMove(e){
+    if(!dragging)return;e.preventDefault();
+    curX=(e.touches?e.touches[0].clientX:e.clientX)-startX;
+    wrap.style.transform='translateX('+curX+'px) rotate('+(curX*0.07)+'deg)';
+    var f=Math.min(Math.abs(curX)/100,1);
+    if(curX>15){tyes.style.opacity=f*.55;tno.style.opacity=0;document.getElementById('hintRight').classList.add('active');document.getElementById('hintLeft').classList.remove('active');}
+    else if(curX<-15){tno.style.opacity=f*.55;tyes.style.opacity=0;document.getElementById('hintLeft').classList.add('active');document.getElementById('hintRight').classList.remove('active');}
+    else{tyes.style.opacity=0;tno.style.opacity=0;document.getElementById('hintLeft').classList.remove('active');document.getElementById('hintRight').classList.remove('active');}
+  }
+  function onEnd(){
+    if(!dragging)return;dragging=false;
+    document.getElementById('hintLeft').classList.remove('active');document.getElementById('hintRight').classList.remove('active');
+    if(curX>80)swipeRight();else if(curX<-80)swipeLeft();
+    else{wrap.classList.add('animating');wrap.style.transform='';wrap.style.opacity='1';tyes.style.opacity=0;tno.style.opacity=0;}
+    curX=0;
+  }
+  wrap.addEventListener('touchstart',onStart,{passive:true});
+  wrap.addEventListener('touchmove',onMove,{passive:false});
+  wrap.addEventListener('touchend',onEnd);
+  wrap.addEventListener('mousedown',onStart);
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('mouseup',onEnd);
+}
+
+document.addEventListener('keydown',function(e){
+  if(e.key==='ArrowRight'||e.key==='d')swipeRight();
+  else if(e.key==='ArrowLeft'||e.key==='a')swipeLeft();
+  else if(e.key==='f')swipeFrog();
+});
+
+function notify(msg){var e=document.getElementById('nt');e.textContent=msg;e.classList.add('on');clearTimeout(notify._t);notify._t=setTimeout(function(){e.classList.remove('on')},2200);}
+
+/* Teema-init */
+(function(){
+  var t=localStorage.getItem('fap_theme')||'usva';
+  document.documentElement.setAttribute('data-theme',t);
+})();
+
+</script>
+</body>
+</html>

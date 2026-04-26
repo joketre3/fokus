@@ -115,18 +115,10 @@ input[type=date]{font-family:'DM Sans',sans-serif;font-size:var(--text-sm);color
 
 /* info section */
 .pinfo{min-width:0}
-.pinfo-empty{font-size:.8rem;color:var(--light);font-style:italic}
-.pstatus{font-size:.72rem;font-weight:500;color:var(--muted);margin-bottom:.3rem;letter-spacing:.02em}
+.pstatus{font-size:.72rem;font-weight:500;color:var(--muted);letter-spacing:.02em}
 .pbox.work .pstatus{color:var(--pomo)}
 .pbox.sbrk .pstatus{color:var(--brk)}
 .pbox.lbrk .pstatus{color:var(--lbrk)}
-.pactive-name{font-size:.9rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;margin-bottom:.2rem}
-.pest{font-size:.72rem;color:var(--muted);font-weight:300;margin-bottom:.4rem}
-.pnext{display:flex;gap:.35rem;flex-wrap:wrap}
-.chip{font-size:.68rem;color:var(--muted);background:var(--paper);border:1px solid var(--border);border-radius:20px;padding:.15rem .55rem;display:flex;align-items:center;gap:.3rem;max-width:140px}
-.chip span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
-.chipx{cursor:pointer;color:var(--light);font-size:.75rem;flex-shrink:0}
-.chipx:hover{color:var(--pomo)}
 
 /* controls */
 .pctrl{display:flex;flex-direction:column;gap:.4rem;align-items:flex-end}
@@ -187,8 +179,9 @@ input[type=date]{font-family:'DM Sans',sans-serif;font-size:var(--text-sm);color
 .iemp{text-align:center;padding:2rem;color:var(--light);font-size:var(--text-base);font-style:italic}
 
 /* TASK CARD */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:.7rem 1rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;transition:box-shadow .15s}
-.card:hover{box-shadow:0 2px 10px rgba(0,0,0,.07)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:.7rem 1rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;transition:box-shadow .15s,transform .15s;will-change:transform}
+.card:hover{box-shadow:0 6px 20px rgba(0,0,0,.18);transform:scale(1.02) translateY(-2px)}
+.card:active{transform:scale(1.00) translateY(0)}
 .card.qd{border-color:rgba(192,57,43,.4)}
 .card.qa{border-color:var(--pomo);box-shadow:0 0 0 2px rgba(192,57,43,.08)}
 .card.frog{border-color:#6b8a30;box-shadow:0 0 0 2px rgba(107,138,48,.1)}
@@ -287,6 +280,61 @@ input[type=date]{font-family:'DM Sans',sans-serif;font-size:var(--text-sm);color
 .qti:hover .qdnb{opacity:1} .qdnb:hover{background:var(--accent);color:white}
 .qemp{font-size:var(--text-sm);color:var(--light);font-style:italic}
 
+/* EISENHOWER MODAL (Vaihe 9) */
+.eise-overlay{position:fixed;inset:0;background:rgba(15,25,20,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);z-index:200;opacity:0;pointer-events:none;transition:opacity .2s ease}
+.eise-overlay.on{opacity:1;pointer-events:auto}
+.eise-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.95);width:min(880px,94vw);max-height:88vh;background:var(--paper);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:0 20px 60px rgba(0,0,0,.3);z-index:201;padding:1.5rem 1.5rem 1.75rem;opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;overflow-y:auto;display:flex;flex-direction:column;gap:1rem}
+.eise-modal.on{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:auto}
+.eise-hdr{position:relative;padding-right:2rem}
+.eise-ttl{font-family:'DM Serif Display',serif;font-size:1.2rem;font-style:italic;color:var(--ink);line-height:1.2}
+.eise-sub{font-size:var(--text-xs);color:var(--muted);font-weight:300;margin-top:.3rem}
+.eise-close{position:absolute;top:-.2rem;right:-.3rem;background:none;border:none;font-size:1.6rem;line-height:1;color:var(--muted);cursor:pointer;padding:.2rem .5rem;border-radius:var(--r-sm);transition:color .15s,background .15s;font-family:'DM Sans',sans-serif}
+.eise-close:hover{color:var(--ink);background:var(--surface-strong,var(--surface))}
+.eise-grid{display:grid;grid-template-columns:22px 1fr 1fr;grid-template-rows:auto auto auto;gap:.6rem}
+.eise-clbl{font-size:var(--text-xs);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:500;text-align:center;padding-bottom:.1rem}
+.eise-rlbl{font-size:var(--text-xs);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:500;writing-mode:vertical-rl;transform:rotate(180deg);display:flex;align-items:center;justify-content:center}
+.eise-quad{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:.7rem .8rem;transition:border-color .15s,background .15s}
+.eise-quad.eise-q1q{border-top:2px solid var(--q1)}
+.eise-quad.eise-q2q{border-top:2px solid var(--q2)}
+.eise-quad.eise-q3q{border-top:2px solid var(--q3)}
+.eise-quad.eise-q4q{border-top:2px solid var(--q4)}
+.eise-quad.eise-drop-hover{background:var(--surface-strong,var(--surface));border-color:var(--accent)!important;box-shadow:inset 0 0 0 1px var(--accent)}
+.eise-qhdr{display:flex;align-items:center;gap:.4rem;margin-bottom:.5rem}
+.eise-qdot{width:7px;height:7px;border-radius:var(--r-full);flex-shrink:0}
+.eise-q1q .eise-qdot{background:var(--q1)}
+.eise-q2q .eise-qdot{background:var(--q2)}
+.eise-q3q .eise-qdot{background:var(--q3)}
+.eise-q4q .eise-qdot{background:var(--q4)}
+.eise-quad h4{font-size:var(--text-sm);font-weight:500;margin:0}
+.eise-q1q h4{color:var(--q1)}
+.eise-q2q h4{color:var(--q2)}
+.eise-q3q h4{color:var(--q3)}
+.eise-q4q h4{color:var(--q4)}
+.eise-qlist{display:flex;flex-direction:column;gap:.3rem}
+.eise-card{display:flex;align-items:center;gap:.4rem;padding:.35rem .55rem;background:var(--paper);border:1px solid var(--border);border-radius:var(--r-sm);font-size:var(--text-sm);font-weight:300;cursor:grab;user-select:none;transition:opacity .15s,box-shadow .15s;position:relative}
+.eise-card:hover{box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.eise-card:active{cursor:grabbing}
+.eise-card.eise-dragging{opacity:.3}
+.eise-card-txt{flex:1;word-break:break-word;min-width:0}
+.eise-card-ind{flex-shrink:0;font-size:.7rem;color:var(--muted);display:flex;align-items:center;gap:.2rem}
+.eise-qemp{font-size:var(--text-xs);color:var(--light);font-style:italic;padding:.4rem .2rem}
+
+/* Move-valikko (klikkauspohjainen, erityisesti mobiili) */
+.eise-move-menu{position:absolute;z-index:210;background:var(--paper);border:1px solid var(--border);border-radius:var(--r-md);box-shadow:0 6px 20px rgba(0,0,0,.18);min-width:160px;padding:.3rem 0;pointer-events:auto}
+.eise-move-item{display:flex;align-items:center;gap:.5rem;padding:.45rem .85rem;font-size:var(--text-sm);font-weight:400;cursor:pointer;transition:background .1s;white-space:nowrap;color:var(--ink)}
+.eise-move-item:hover{background:var(--surface)}
+.eise-move-item .eise-move-dot{width:7px;height:7px;border-radius:var(--r-full);flex-shrink:0}
+html[data-theme="aurinko"] .eise-move-menu{background:rgba(255,245,220,.98)!important;border-color:rgba(180,130,70,.3)!important}
+html[data-theme="aurinko"] .eise-move-item:hover{background:rgba(180,130,70,.1)!important}
+
+@media(max-width:640px){
+  .eise-modal{width:96vw;max-height:92vh;padding:1rem 1rem 1.25rem}
+  .eise-grid{grid-template-columns:18px 1fr 1fr;gap:.4rem}
+  .eise-quad{padding:.55rem .6rem}
+  .eise-ttl{font-size:1.05rem}
+  .eise-sub{font-size:.7rem}
+}
+
 /* DONE */
 .demp{text-align:center;padding:2rem;color:var(--light);font-size:var(--text-base);font-style:italic}
 .qbdg{font-size:var(--text-xs);font-weight:500;padding:.15rem .45rem;border-radius:var(--r-sm);color:white;white-space:nowrap;flex-shrink:0}
@@ -324,7 +372,7 @@ input[type=date]{font-family:'DM Sans',sans-serif;font-size:var(--text-sm);color
 /* Override specific components */
 .pbox{background:var(--surface);backdrop-filter:blur(18px) saturate(1.3);-webkit-backdrop-filter:blur(18px);border-color:rgba(255,255,255,.28) !important}
 .card{background:var(--surface) !important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-color:rgba(255,255,255,.22) !important;box-shadow:none}
-.card:hover{box-shadow:0 2px 12px rgba(0,0,0,.15) !important}
+.card:hover{box-shadow:0 6px 20px rgba(0,0,0,.22) !important;transform:scale(1.02) translateY(-2px)}
 .quad{background:var(--surface) !important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-color:rgba(255,255,255,.2) !important}
 .hdr{border-color:rgba(255,255,255,.2) !important}
 .tabs{border-color:rgba(255,255,255,.2) !important}
@@ -394,15 +442,9 @@ button[onclick*="exportData"],label[title*="kopio"],button[onclick*="openAI"],bu
 .pbox.sbrk{border-color:rgba(100,160,200,.5) !important;box-shadow:0 0 0 2px rgba(100,160,200,.08) !important}
 .pbox.idle{opacity:.88}
 .pstatus{color:rgba(255,255,255,.6) !important}
-.pactive-name{color:white !important}
-
-/* Queue chips */
-.chip,.pnext .chip{background:rgba(255,255,255,.15) !important;border:1px solid rgba(255,255,255,.22) !important;color:rgba(255,255,255,.8) !important}
-.chipx{color:rgba(255,255,255,.4) !important}
-.chipx:hover{color:rgba(255,120,100,.8) !important}
 
 /* Modals */
-#proj-modal,#profile-panel,#schedule-modal{background:rgba(15,40,25,.9) !important;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-color:rgba(255,255,255,.2) !important}
+#proj-modal,#profile-panel,#schedule-modal,#eise-modal{background:rgba(15,40,25,.9) !important;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-color:rgba(255,255,255,.2) !important}
 #schedule-modal .sched-day-btn{background:rgba(255,255,255,.12) !important;border-color:rgba(255,255,255,.22) !important;color:rgba(255,255,255,.7) !important}
 #schedule-modal .sched-day-btn.on{background:rgba(196,154,58,.65) !important;border-color:rgba(220,190,100,.5) !important;color:white !important}
 
@@ -496,7 +538,7 @@ html[data-theme="havu"] body::before {
   background:linear-gradient(to bottom,rgba(4,16,9,.85) 0%,rgba(4,14,8,.70) 30%,rgba(3,12,7,.75) 100%) !important;
 }
 html[data-theme="havu"] .pbox{background:rgba(12,35,22,.90)!important;border-color:rgba(255,255,255,.15)!important}
-html[data-theme="havu"] #proj-modal,html[data-theme="havu"] #profile-panel,html[data-theme="havu"] #schedule-modal{background:rgba(6,22,13,.97)!important;border-color:rgba(255,255,255,.15)!important}
+html[data-theme="havu"] #proj-modal,html[data-theme="havu"] #profile-panel,html[data-theme="havu"] #schedule-modal,html[data-theme="havu"] #eise-modal,html[data-theme="havu"] #edit-modal{background:rgba(6,22,13,.97)!important;border-color:rgba(255,255,255,.15)!important}
 html[data-theme="havu"] #ai-panel{background:rgba(4,18,10,.97)!important;border-color:rgba(255,255,255,.13)!important}
 html[data-theme="havu"] .pbtn{background:rgba(12,35,22,.80)!important;border-color:rgba(255,255,255,.28)!important;color:rgba(255,255,255,.88)!important}
 html[data-theme="havu"] .notif{background:rgba(6,22,13,.97)!important}
@@ -505,7 +547,6 @@ html[data-theme="havu"] .ws-btn,.ws-btn button{background:rgba(255,255,255,.09)!
 html[data-theme="havu"] .proj-card{background:rgba(12,35,22,.82)!important;border-color:rgba(255,255,255,.16)!important}
 html[data-theme="havu"] .tag-input-wrap,html[data-theme="havu"] .tag-suggestions{background:rgba(6,22,13,.95)!important;border-color:rgba(255,255,255,.16)!important}
 html[data-theme="havu"] #onboarding{background:rgba(12,35,22,.80)!important;border-color:rgba(255,255,255,.18)!important}
-html[data-theme="havu"] .chip,html[data-theme="havu"] .pnext .chip{background:rgba(255,255,255,.12)!important;border:1px solid rgba(255,255,255,.18)!important}
 
 /* ── AURINKO (vaalea, lämmin) ──────────────────────────── */
 html[data-theme="aurinko"] {
@@ -532,17 +573,21 @@ html[data-theme="aurinko"] body::before {
 }
 /* Panels */
 html[data-theme="aurinko"] .pbox{background:rgba(255,248,230,.90)!important;border-color:rgba(180,130,70,.30)!important;color:#2d2417!important}
-html[data-theme="aurinko"] #proj-modal,html[data-theme="aurinko"] #profile-panel,html[data-theme="aurinko"] #schedule-modal{background:rgba(255,245,220,.98)!important;border-color:rgba(180,130,70,.30)!important;color:#2d2417!important;backdrop-filter:blur(20px)}
+html[data-theme="aurinko"] #proj-modal,html[data-theme="aurinko"] #profile-panel,html[data-theme="aurinko"] #schedule-modal,html[data-theme="aurinko"] #eise-modal,html[data-theme="aurinko"] #edit-modal{background:rgba(255,245,220,.98)!important;border-color:rgba(180,130,70,.30)!important;color:#2d2417!important;backdrop-filter:blur(20px)}
+html[data-theme="aurinko"] #eise-overlay{background:rgba(80,50,10,.35)!important}
+html[data-theme="aurinko"] .eise-quad{background:rgba(255,248,230,.75)!important;border-color:rgba(180,130,70,.25)!important}
+html[data-theme="aurinko"] .eise-card{background:rgba(255,250,235,.95)!important;border-color:rgba(180,130,70,.28)!important;color:#2d2417!important}
+html[data-theme="aurinko"] .eise-card:hover{box-shadow:0 2px 8px rgba(120,80,30,.12)}
+html[data-theme="aurinko"] .eise-ttl{color:#3d2d15!important}
+html[data-theme="aurinko"] .eise-sub{color:rgba(61,45,21,.65)!important}
+html[data-theme="aurinko"] .eise-close{color:rgba(61,45,21,.55)!important}
+html[data-theme="aurinko"] .eise-close:hover{color:#3d2d15!important;background:rgba(180,130,70,.15)!important}
 html[data-theme="aurinko"] #ai-panel{background:rgba(255,242,215,.98)!important;border-color:rgba(180,130,70,.30)!important;color:#2d2417!important}
 html[data-theme="aurinko"] #onboarding{background:rgba(255,245,220,.92)!important;border-color:rgba(180,130,70,.30)!important;color:#2d2417!important}
 /* Buttons */
 html[data-theme="aurinko"] .pbtn{background:rgba(255,248,230,.92)!important;border-color:rgba(180,130,70,.40)!important;color:#4a3a20!important}
 html[data-theme="aurinko"] .pbtn.nxt{border-color:rgba(196,104,30,.60)!important;color:rgba(196,104,30,.90)!important}
 html[data-theme="aurinko"] .pbtn.dnx{border-color:rgba(196,104,30,.60)!important;color:rgba(196,104,30,.90)!important}
-/* Queue chips */
-html[data-theme="aurinko"] .chip,html[data-theme="aurinko"] .pnext .chip{background:rgba(196,104,30,.12)!important;border:1px solid rgba(196,104,30,.28)!important;color:#4a3a20!important}
-html[data-theme="aurinko"] .chipx{color:rgba(100,80,50,.45)!important}
-html[data-theme="aurinko"] .chipx:hover{color:rgba(180,60,40,.75)!important}
 /* Badges & stats */
 html[data-theme="aurinko"] .demp,.iemp,.qemp{color:rgba(45,36,23,.22)!important}
 html[data-theme="aurinko"] .qbdg.q1{background:rgba(196,104,30,.75)!important}
@@ -595,6 +640,44 @@ html[data-theme="aurinko"] .pring .phase-txt{fill:#7a6a4a!important}
 html[data-theme="aurinko"] input[type=date]{background:rgba(255,248,230,.85)!important;border-color:rgba(180,130,70,.30)!important;color:#4a3a20!important}
 /* Profile chips */
 html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color:#c4681e!important;background:rgba(196,104,30,.06)!important}
+
+/* ── Vaihe 10: Animaatiot ─────────────────────────────────────── */
+@keyframes card-enter{
+  from{opacity:0;transform:translateY(-6px) scale(.97)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+@keyframes card-exit{
+  from{opacity:1;transform:translateY(0) scale(1)}
+  to{opacity:0;transform:translateY(20px) scale(.96)}
+}
+.card-entering{animation:card-enter .2s ease-out both}
+.card-exiting{animation:card-exit .4s ease-in both;pointer-events:none}
+
+/* Modaalit — avaus (eise-modal jo määritetty, tämä on yleinen helper) */
+.modal-entering{animation:card-enter .2s ease-out both}
+
+/* Profile + ajastinasetusten modaalit */
+#profile-overlay,#tset-overlay{
+  opacity:0;pointer-events:none;transition:opacity .2s ease
+}
+#profile-overlay.fap-open,#tset-overlay.fap-open{opacity:1;pointer-events:auto}
+#profile-panel,#tset-panel{
+  opacity:0;pointer-events:none;
+  transform:translate(-50%,-50%) scale(.95);
+  transition:opacity .2s ease,transform .2s ease
+}
+#profile-panel.fap-open,#tset-panel.fap-open{
+  opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)
+}
+
+/* prefers-reduced-motion: kaikki animaatiot ja transitionit pois */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+  }
+}
 
 </style>
 
@@ -662,6 +745,30 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
     }, 500);
   };
 
+  // ── Firestore: timer-asetukset ─────────────────────────────────
+  window._saveTimerToFs = async function(work, sbrk, lbrk) {
+    if (!window.currentUser) return;
+    try {
+      const ref = doc(db, 'users', window.currentUser.uid, 'settings', 'timer');
+      await setDoc(ref, {work: work, sbrk: sbrk, lbrk: lbrk});
+      console.log('⏱️ Timer-asetukset tallennettu Firestoreen');
+    } catch(e) {
+      console.warn('⚠️ Timer-asetusten tallennus epäonnistui:', e.message);
+    }
+  };
+
+  window._loadTimerFromFs = async function() {
+    if (!window.currentUser) return null;
+    try {
+      const ref = doc(db, 'users', window.currentUser.uid, 'settings', 'timer');
+      const snap = await getDoc(ref);
+      if (snap.exists()) return snap.data();
+    } catch(e) {
+      console.warn('⚠️ Timer-asetusten lataus epäonnistui:', e.message);
+    }
+    return null;
+  };
+
   // ── Auth ───────────────────────────────────────────────────────
   function initAuth() {
     const auth = window._firebaseAuth;
@@ -679,10 +786,24 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
 
         const fsData = await loadFromFirestore(user.uid, wsId);
 
-        if (fsData) {
-          // Firestore-data löytyi — päivitä localStorage
-          console.log('☁️ Data ladattu Firestoresta');
+        if (fsData && Array.isArray(fsData.tasks) && fsData.tasks.length > 0) {
+          // Firestore-data löytyi ja on käyttökelpoinen — päivitä localStorage
+          console.log('☁️ Data ladattu Firestoresta (' + fsData.tasks.length + ' tehtävää)');
           localStorage.setItem('eis_v5_' + wsId, JSON.stringify(fsData));
+        } else if (fsData) {
+          // Firestore-data löytyi mutta on tyhjä — älä ylikirjoita localStoragea
+          console.log('☁️ Firestore-data tyhjä, säilytetään localStorage-data');
+          // Migroi localStorage → Firestore jos siellä on dataa
+          const localRaw2 = localStorage.getItem('eis_v5_' + wsId);
+          if (localRaw2) {
+            try {
+              const localParsed = JSON.parse(localRaw2);
+              if (localParsed.tasks && localParsed.tasks.length > 0) {
+                console.log('📦 Palautetaan localStorage-data Firestoreen');
+                await saveToFirestore(user.uid, wsId, localParsed);
+              }
+            } catch(e) { console.warn('⚠️ Palautus epäonnistui:', e); }
+          }
         } else {
           // Ei Firestore-dataa — migroi localStorage → Firestore
           const localRaw = localStorage.getItem('eis_v5_' + wsId);
@@ -762,54 +883,12 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
       </div>
       <button onclick="exportData()" style="font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;padding:.4rem .8rem;border-radius:6px;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer" title="Tallenna varmuuskopio">↑ Vie</button>
       <button onclick="window._swipeWin=window.open('swipe.html','FokusSwipe','width=420,height=700')" style="font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;padding:.4rem .8rem;border-radius:6px;border:1.5px solid var(--accent);background:var(--surface);color:var(--accent);cursor:pointer" title="Selaa tehtäviä swipe-näkymässä">⇄ Selaa</button>
+      <button onclick="openEisenhower()" style="font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;padding:.4rem .8rem;border-radius:6px;border:1.5px solid var(--accent);background:var(--surface);color:var(--accent);cursor:pointer" title="Eisenhower-matriisi pikakatselu ja kvadrantin vaihto">▦ Eisenhower</button>
       <button onclick="openAI()" style="font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;padding:.4rem .8rem;border-radius:6px;border:1.5px solid var(--accent);background:var(--accent);color:white;cursor:pointer" title="Tekoälyanalyysi">✦ Analysoi</button>
     </div>
   </div>
 
-  <!-- POMODORO PANEL -->
-  <div class="pbox" id="pb">
-    <div class="prow">
-
-      <!-- CLOCK -->
-      <div class="pclock">
-        <div id="ttime" style="font-family:'DM Serif Display',serif;font-size:1.3rem;letter-spacing:-0.02em;line-height:1;text-align:center;margin-bottom:.3rem">25:00</div>
-        <svg class="pring" viewBox="0 0 80 80" style="cursor:pointer" onclick="toggleTimer()">
-          <circle cx="40" cy="40" r="34" fill="none" stroke="#e8e2d6" stroke-width="4"/>
-          <circle id="ring" cx="40" cy="40" r="34" fill="none" stroke="#c0392b" stroke-width="4"
-            stroke-dasharray="213.6" stroke-dashoffset="0" stroke-linecap="round"
-            transform="rotate(-90 40 40)" style="transition:stroke-dashoffset .8s linear,stroke .4s"/>
-          <!-- phase label -->
-          <text id="tphase" x="40" y="44" style="font-family:'DM Sans',sans-serif;font-size:6.5px;text-transform:uppercase;letter-spacing:.08em;dominant-baseline:middle;text-anchor:middle;fill:#8a8278"></text>
-          <!-- play triangle -->
-          <polygon id="iconPlay" points="33,27 33,53 57,40" fill="#c0392b" opacity="0.7"/>
-          <!-- stop square -->
-          <rect id="iconStop" x="28" y="28" width="24" height="24" rx="4" fill="#c0392b" opacity="0" style="transition:opacity .15s"/>
-        </svg>
-        <div style="display:flex;align-items:center;gap:.4rem">
-          <div class="pomo-dots" id="pdots"></div>
-          <button onclick="resetCycle()" title="Nollaa kierros" style="background:none;border:none;cursor:pointer;font-size:.65rem;color:var(--light);padding:.1rem .2rem;font-family:'DM Sans',sans-serif;line-height:1;transition:color .15s" onmouseover="this.style.color='var(--muted)'" onmouseout="this.style.color='var(--light)'">↺</button>
-        </div>
-      </div>
-
-      <!-- INFO -->
-      <div class="pinfo" id="pinfo">
-        <div class="pinfo-empty">Lisää tehtäviä jonoon 🍅-napilla</div>
-      </div>
-
-      <!-- CONTROLS -->
-      <div class="pctrl">
-        <button class="pbtn nxt" id="btnNx" onclick="doNext()" style="display:none">→ Seuraava</button>
-        <button class="pbtn dnx" id="btnDn" onclick="doneActive()" style="display:none">✓ Tehty</button>
-        <button class="pbtn" id="btnWt" onclick="waitActive()" style="display:none;border-color:var(--wait);color:var(--wait)">⏳ Odottaa</button>
-        <button class="pbtn" onclick="popoutTimer()" title="Avaa ajastin erilliseen ikkunaan" style="border-color:var(--border);color:var(--muted);font-size:.68rem;padding:.3rem .6rem">↗ Nosta</button>
-      </div>
-    </div>
-
-    <!-- RULE STRIP -->
-    <div class="prule" id="prule">
-      <strong>Pomodoro:</strong> 25 min työ → 5 min tauko. Neljän pomoderon jälkeen 20 min pitkä tauko. Keskeytys katkaisee pomoderon.
-    </div>
-  </div>
+  <!-- POMODORO PANEL siirretty inbox-view:hin areenan yläpuolelle (vaihe 6b) -->
 
   <!-- TABS -->
   <div class="tabs">
@@ -931,6 +1010,78 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
       </div>
 
     </div>
+    <!-- Vaihe 6b: Pomodoro-kello areenan yläpuolella -->
+    <div class="pbox pbox--arena" id="pb">
+      <div class="prow">
+
+        <!-- CLOCK -->
+        <div class="pclock">
+          <div id="ttime" style="font-family:'DM Serif Display',serif;font-size:2.2rem;letter-spacing:-0.02em;line-height:1;text-align:center;margin-bottom:.4rem">25:00</div>
+          <svg class="pring" viewBox="0 0 80 80" style="cursor:pointer" onclick="toggleTimer()" role="button" tabindex="0" id="pringBtn" aria-label="Aloita pomodoro" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleTimer();}"
+>
+            <circle cx="40" cy="40" r="34" fill="none" stroke="#e8e2d6" stroke-width="4"/>
+            <circle id="ring" cx="40" cy="40" r="34" fill="none" stroke="#c0392b" stroke-width="4"
+              stroke-dasharray="213.6" stroke-dashoffset="0" stroke-linecap="round"
+              transform="rotate(-90 40 40)" style="transition:stroke-dashoffset 1s linear,stroke .4s"/>
+            <!-- phase label -->
+            <text id="tphase" x="40" y="44" style="font-family:'DM Sans',sans-serif;font-size:6.5px;text-transform:uppercase;letter-spacing:.08em;dominant-baseline:middle;text-anchor:middle;fill:#8a8278"></text>
+            <!-- play triangle -->
+            <polygon id="iconPlay" points="33,27 33,53 57,40" fill="#c0392b" opacity="0.7"/>
+            <!-- stop square -->
+            <rect id="iconStop" x="28" y="28" width="24" height="24" rx="4" fill="#c0392b" opacity="0" style="transition:opacity .15s"/>
+          </svg>
+          <div style="display:flex;align-items:center;gap:.5rem;margin-top:.2rem">
+            <div class="pomo-dots" id="pdots"></div>
+            <button onclick="resetCycle()" title="Nollaa kierros" aria-label="Nollaa pomodoro-kierros" style="background:none;border:none;cursor:pointer;font-size:.75rem;color:var(--light);padding:.1rem .2rem;font-family:'DM Sans',sans-serif;line-height:1;transition:color .15s" onmouseover="this.style.color='var(--muted)'" onmouseout="this.style.color='var(--light)'">↺</button>
+          </div>
+        </div>
+
+        <!-- INFO -->
+        <div class="pinfo" id="pinfo">
+          
+        </div>
+
+        <!-- CONTROLS -->
+        <div class="pctrl">
+          <button class="pbtn nxt" id="btnNx" onclick="doNext()" style="display:none" aria-label="Seuraava tehtävä">→ Seuraava</button>
+          <button class="pbtn dnx" id="btnDn" onclick="doneActive()" style="display:none" aria-label="Merkitse tehty">✓ Tehty</button>
+          <button class="pbtn" id="btnWt" onclick="waitActive()" style="display:none;border-color:var(--wait);color:var(--wait)" aria-label="Siirrä odottamaan">⏳ Odottaa</button>
+          <button class="pbtn" onclick="popoutTimer()" title="Avaa ajastin erilliseen ikkunaan" aria-label="Avaa ajastin erilliseen ikkunaan" style="border-color:var(--border);color:var(--muted);font-size:.68rem;padding:.3rem .6rem">↗ Nosta</button>
+          <button class="pbtn" onclick="openTimerSettings()" title="Ajastimen asetukset" aria-label="Ajastimen asetukset" style="border-color:var(--border);color:var(--muted);font-size:.85rem;padding:.3rem .55rem;min-width:0">⚙</button>
+        </div>
+      </div>
+
+      <!-- RULE STRIP -->
+      <div class="prule" id="prule">
+        <strong>Pomodoro:</strong> 25 min työ → 5 min tauko. Neljän pomoderon jälkeen 20 min pitkä tauko. Keskeytys katkaisee pomoderon.
+      </div>
+    </div>
+    <!-- Vaihe 6c: placeholder varaa tilaa kun pb on fixed-tilassa -->
+    <div id="pb-ph"></div>
+
+    <!-- Vaihe 11: Mobiili-välilehtinavigaatio -->
+    <div id="zone-tabs" aria-label="Vyöhykkeen valinta">
+      <button class="ztab ztab--active" data-zone="arena" onclick="switchZone('arena')" aria-current="page" aria-label="Areena — aktiivinen tehtävä">★ Areena</button>
+      <button class="ztab" data-zone="hand" onclick="switchZone('hand')" aria-label="Käsi — jonossa olevat tehtävät">🎴 Käsi</button>
+      <button class="ztab" data-zone="deck" onclick="switchZone('deck')" aria-label="Pakka — kaikki tehtävät">📦 Pakka</button>
+    </div>
+
+    <!-- Vaihe 6a: Areena — aktiivinen tehtävä queue[0] -->
+    <!-- Vaihe 16: Areena-rivi sisältää aktiivisen + vuoron vierekkäin -->
+    <div id="arena-row" class="arena-row">
+      <div id="arena" data-zone-panel="arena" role="region" aria-label="Areena — aktiivinen tehtävä"></div>
+      <div id="turn-panel" class="turn-panel" role="region" aria-label="Vuoro — seuraavat tehtävät">
+        <div class="turn-panel__header">
+          <span class="turn-panel__title">Vuoro</span>
+          <span class="turn-panel__count" id="turn-count"></span>
+        </div>
+        <div id="turn-list" class="turn-list"></div>
+        <div id="turn-empty" class="turn-empty" style="display:none">Ei kortteja vuorossa</div>
+      </div>
+    </div>
+    <div id="waiting-panel" class="waiting-panel" role="region" aria-label="Odottavat tehtävät" style="display:none"></div>
+    <div id="hand" data-zone-panel="hand" role="region" aria-label="Käsi — jonossa olevat tehtävät"></div>
+    <div id="deck" data-zone-panel="deck" role="region" aria-label="Pakka — kaikki tehtävät"></div>
     <div class="ilist" id="il"></div>
     <div class="iemp" id="ie">Ei tehtäviä. Lisää ylhäältä.</div>
 
@@ -1070,6 +1221,42 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
 </style>
 <div class="notif" id="nt"></div>
 
+<!-- Vaihe 12D: aria-live -ilmoitukset ruudunlukijoille -->
+<div id="a11y-live" aria-live="polite" aria-atomic="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden"></div>
+
+<!-- EISENHOWER MODAL (Vaihe 9) -->
+<div class="eise-overlay" id="eise-overlay" onclick="if(event.target===this)closeEisenhower()"></div>
+<div class="eise-modal" id="eise-modal" role="dialog" aria-label="Eisenhower-matriisi" aria-modal="true">
+  <div class="eise-hdr">
+    <div class="eise-ttl">Eisenhower-matriisi</div>
+    <div class="eise-sub">Raahaa tehtävä toiseen ruutuun vaihtaaksesi kvadrantin.</div>
+    <button class="eise-close" onclick="closeEisenhower()" aria-label="Sulje">×</button>
+  </div>
+  <div class="eise-grid">
+    <div></div>
+    <div class="eise-clbl">Kiireinen</div>
+    <div class="eise-clbl">Ei kiireinen</div>
+    <div class="eise-rlbl">Tärkeä</div>
+    <div class="eise-quad eise-q1q" data-quad="q1">
+      <div class="eise-qhdr"><div class="eise-qdot"></div><h4>TEE HETI</h4></div>
+      <div class="eise-qlist" id="eq1"></div>
+    </div>
+    <div class="eise-quad eise-q2q" data-quad="q2">
+      <div class="eise-qhdr"><div class="eise-qdot"></div><h4>AIKATAULUTA</h4></div>
+      <div class="eise-qlist" id="eq2"></div>
+    </div>
+    <div class="eise-rlbl">Ei tärkeä</div>
+    <div class="eise-quad eise-q3q" data-quad="q3">
+      <div class="eise-qhdr"><div class="eise-qdot"></div><h4>DELEGOI</h4></div>
+      <div class="eise-qlist" id="eq3"></div>
+    </div>
+    <div class="eise-quad eise-q4q" data-quad="q4">
+      <div class="eise-qhdr"><div class="eise-qdot"></div><h4>POISTA</h4></div>
+      <div class="eise-qlist" id="eq4"></div>
+    </div>
+  </div>
+</div>
+
 <!-- PROJECT MODAL -->
 <div id="proj-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)" onclick="if(event.target===this)closeProjectModal()"></div>
 <div id="proj-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(400px,96vw);background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.15);z-index:201;padding:1.5rem">
@@ -1142,9 +1329,981 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
 <style>
 .sched-day-btn{font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;width:36px;height:36px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:all .15s}
 .sched-day-btn.on{border-color:var(--accent);background:var(--accent);color:white}
+
+/* ── Vaihe 16: Areena-rivi + vuoro-panel ──────────────────────── */
+.arena-row{
+  display:flex;
+  flex-direction:row;
+  gap:.85rem;
+  align-items:flex-start;
+  margin-bottom:1rem;
+  padding-bottom:.75rem;
+  border-bottom:1px solid var(--light);
+}
+.turn-panel{
+  flex:0 0 220px;
+  width:220px;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:.35rem;
+}
+.turn-panel__header{
+  display:flex;
+  align-items:center;
+  gap:.4rem;
+  margin-bottom:.1rem;
+}
+.turn-panel__title{
+  font-size:var(--text-xs);
+  font-weight:500;
+  color:var(--muted);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.turn-panel__count{
+  font-size:var(--text-xs);
+  color:var(--muted);
+  background:var(--surface-md);
+  border-radius:10px;
+  padding:.05rem .4rem;
+  min-width:1.2rem;
+  text-align:center;
+}
+.turn-list{
+  display:flex;
+  flex-direction:column;
+  gap:.3rem;
+}
+.turn-empty{
+  font-size:var(--text-xs);
+  color:var(--muted);
+  padding:.6rem .5rem;
+  font-style:italic;
+  opacity:.7;
+}
+/* Mini-kortti vuorossa */
+.turn-card{
+  display:flex;
+  align-items:center;
+  gap:.45rem;
+  padding:.38rem .55rem;
+  border-radius:var(--r-md);
+  background:var(--surface-md);
+  border:1px solid var(--border);
+  cursor:grab;
+  user-select:none;
+  transition:background .12s, border-color .12s;
+  min-width:0;
+}
+.turn-card:hover{background:var(--surface-strong);border-color:var(--muted)}
+.turn-card.dragging{opacity:.45;cursor:grabbing}
+.turn-card.drag-over{border-color:var(--accent);background:var(--surface-strong)}
+.turn-card__quad{
+  width:6px;height:6px;border-radius:50%;flex-shrink:0;
+}
+.turn-card__name{
+  flex:1;min-width:0;
+  font-size:var(--text-xs);
+  color:var(--ink);
+  white-space:normal;
+  word-break:break-word;
+  line-height:1.3;
+}
+.turn-card__pips{
+  display:flex;gap:.1rem;align-items:center;flex-shrink:0;
+}
+.turn-card__remove{
+  background:transparent;border:none;cursor:pointer;
+  color:var(--muted);padding:.1rem;border-radius:3px;
+  display:flex;align-items:center;flex-shrink:0;
+  font-size:.75rem;line-height:1;
+  transition:color .1s,background .1s;
+}
+.turn-card__remove:hover{color:var(--ink);background:var(--light)}
+.turn-card__edit{
+  background:transparent;border:none;cursor:pointer;
+  color:var(--muted);padding:.1rem;border-radius:3px;
+  display:flex;align-items:center;flex-shrink:0;
+  font-size:.7rem;line-height:1;
+  transition:color .1s,background .1s;
+}
+.turn-card__edit:hover{color:var(--accent);background:var(--light)}
+/* Mobiili: vertikaalipino */
+@media(max-width:600px){
+  .arena-row{flex-direction:column;gap:.6rem;}
+  #arena{flex:none;width:100%;}
+  .card-new--arena{transform:none;}
+  .card-new--arena:hover{transform:none;}
+  .turn-panel{flex:none;width:100%;}
+}
+
+/* Edit-modaali mobiilissa: lähes fullscreen */
+@media(max-width:600px){
+  #edit-modal{
+    top:0!important;left:0!important;
+    transform:none!important;
+    width:100%!important;
+    max-width:100%!important;
+    height:100%!important;
+    max-height:100%!important;
+    border-radius:0!important;
+    border-left:none!important;
+    border-right:none!important;
+    border-top:none!important;
+  }
+  #edit-modal .edit-modal-footer{
+    position:sticky;
+    bottom:0;
+    background:var(--paper);
+    border-top:1px solid var(--border);
+    z-index:1;
+  }
+}
+
+/* ── Vaihe 6a: Areena-vyöhyke ───────────────────────────────── */
+#arena{
+  flex:0 0 50%;
+  min-width:0;
+}
+.card-new--arena{
+  width:100%;
+  box-sizing:border-box;
+}
+#arena-label{
+  font-size:var(--text-xs);
+  font-weight:500;
+  color:var(--muted);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  margin-bottom:.5rem;
+  display:flex;
+  align-items:center;
+  gap:.45rem;
+}
+#arena-label::before{
+  content:'★';
+  color:var(--accent);
+  font-size:.85rem;
+}
+#arena-empty{
+  padding:1.5rem 1rem;
+  text-align:center;
+  font-size:var(--text-sm);
+  font-weight:300;
+  color:var(--muted);
+  font-style:italic;
+  background:var(--surface);
+  border:1px dashed var(--border);
+  border-radius:var(--r-md);
+}
+
+/* ── Odottavat tehtävät ─────────────────────────────────────── */
+.waiting-panel{
+  margin-bottom:.6rem;
+}
+.waiting-panel__header{
+  display:flex;
+  align-items:center;
+  gap:.4rem;
+  font-size:var(--text-xs);
+  font-weight:500;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  margin-bottom:.35rem;
+}
+.waiting-panel__count{
+  font-weight:400;
+  opacity:.7;
+}
+.waiting-item{
+  display:flex;
+  align-items:center;
+  gap:.5rem;
+  padding:.3rem .55rem;
+  border-radius:var(--r-sm);
+  border:1px solid var(--border);
+  background:var(--surface);
+  font-size:var(--text-xs);
+  color:var(--muted);
+  margin-bottom:.22rem;
+  opacity:.82;
+}
+.waiting-item__quad{
+  width:.45rem;
+  height:.45rem;
+  border-radius:50%;
+  flex-shrink:0;
+}
+.waiting-item__text{
+  flex:1;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-style:italic;
+}
+.waiting-item__restore{
+  background:none;
+  border:none;
+  cursor:pointer;
+  font-size:.7rem;
+  color:var(--muted);
+  padding:.1rem .3rem;
+  border-radius:var(--r-sm);
+  opacity:.7;
+  flex-shrink:0;
+}
+.waiting-item__restore:hover{
+  opacity:1;
+  background:var(--surface-md);
+}
+
+/* ── Vaihe 7: Käsi-vyöhyke ─────────────────────────────────── */
+#hand{
+  margin-bottom:1rem;
+  padding-bottom:.85rem;
+  border-bottom:1px solid var(--light);
+}
+#hand-label{
+  font-size:var(--text-xs);
+  font-weight:500;
+  color:var(--muted);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  margin-bottom:.5rem;
+  display:flex;
+  align-items:center;
+  gap:.45rem;
+}
+#hand-label::before{content:'🎴';font-size:.85rem;}
+#hand-empty{
+  padding:.75rem 1rem;
+  font-size:var(--text-xs);
+  font-weight:300;
+  color:var(--muted);
+  font-style:italic;
+  text-align:center;
+}
+#hand-cards{
+  display:flex;
+  gap:.5rem;
+  overflow-x:auto;
+  padding-bottom:.25rem;
+  scrollbar-width:thin;
+  scrollbar-color:var(--border) transparent;
+}
+#hand-cards::-webkit-scrollbar{height:4px;}
+#hand-cards::-webkit-scrollbar-track{background:transparent;}
+#hand-cards::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+/* Käsikortti — keskikoko (arena < käsi > pakka) */
+.card-new--hand{
+  padding:.65rem .8rem;
+  display:flex;
+  flex-direction:column;
+  gap:.3rem;
+  min-width:130px;
+  max-width:180px;
+  flex-shrink:0;
+  position:relative;
+  overflow:hidden;
+}
+.card-new--hand:hover{
+  transform:translateY(-4px) scale(1.04);
+  box-shadow:0 8px 22px rgba(0,0,0,.22);
+  border-color:var(--accent);
+  z-index:2;
+}
+.card-new--hand .card-new__title{
+  font-size:.8rem;
+  line-height:1.35;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.card-new--hand .card-new__verb{font-size:.55rem;}
+.card-new--hand .card-new__bg-icon{font-size:2.4rem;opacity:.07;}
+/* Käsikortin alaosa: badge + tomaatit */
+.card-new--hand__meta{
+  display:flex;align-items:center;gap:.25rem;flex-wrap:wrap;margin-top:.1rem;
+}
+/* Frog-korostus kädessä */
+.card-new--hand.is-frog{
+  border-color:#3d7a52;
+  box-shadow:0 0 0 1px rgba(61,122,82,.25);
+}
+/* Tooltip-vihje klikkaamista varten */
+.card-new--hand::after{
+  content:'→ Nosta';
+  position:absolute;
+  bottom:0;left:0;right:0;
+  background:rgba(196,154,58,.9);
+  color:white;
+  font-size:.6rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;
+  text-align:center;padding:.2rem;
+  opacity:0;transition:opacity .15s;
+  pointer-events:none;
+}
+.card-new--hand:hover::after{opacity:1;}
+
+/* ── Vaihe 8: Pakka-vyöhyke ─────────────────────────────────── */
+#deck{margin-bottom:1rem;}
+#deck-label{
+  font-size:var(--text-xs);font-weight:500;color:var(--muted);
+  letter-spacing:.08em;text-transform:uppercase;
+  margin-bottom:.6rem;display:flex;align-items:center;gap:.45rem;
+}
+#deck-label::before{content:'📚';font-size:.85rem;}
+#deck-controls{
+  display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;margin-bottom:.65rem;
+}
+.deck-group-btn,.deck-filter-btn{
+  font-family:'DM Sans',sans-serif;font-size:.62rem;font-weight:500;
+  padding:.25rem .6rem;border-radius:20px;
+  border:1px solid var(--border);background:transparent;
+  color:var(--muted);cursor:pointer;transition:background .12s,color .12s,border-color .12s;
+  white-space:nowrap;
+}
+.deck-group-btn:hover,.deck-filter-btn:hover{background:var(--surface-md);color:var(--ink);}
+.deck-group-btn.active,.deck-filter-btn.active{
+  background:var(--accent);color:white;border-color:var(--accent);
+}
+.deck-filter-btn.q1.active{background:#8b1d1d;border-color:#8b1d1d;}
+.deck-filter-btn.q2.active{background:#2D5A3D;border-color:#2D5A3D;}
+.deck-filter-btn.q3.active{background:#444;border-color:#444;}
+.deck-filter-btn.q4.active{background:#222;border-color:#222;}
+#deck-search-wrap{
+  display:flex;align-items:center;gap:.35rem;
+  background:var(--surface-md);border:1px solid var(--border);
+  border-radius:20px;padding:.22rem .65rem;
+  margin-left:auto;
+}
+#deck-search-inp{
+  font-family:'DM Sans',sans-serif;font-size:.62rem;font-weight:300;
+  background:transparent;border:none;outline:none;color:var(--ink);width:100px;
+}
+#deck-search-inp::placeholder{color:var(--muted);}
+#deck-piles{display:flex;flex-wrap:wrap;gap:1.4rem;padding:.5rem 0;}
+
+/* ── Pinokortti ── */
+.deck-pile{
+  position:relative;
+  width:110px;min-height:145px;
+  display:flex;flex-direction:column;justify-content:flex-end;
+  padding:.7rem .75rem .65rem;
+  background:var(--surface-md);
+  border:1px solid var(--border);
+  border-radius:10px;
+  cursor:pointer;
+  user-select:none;
+  transition:transform .15s,box-shadow .15s;
+  box-shadow:0 4px 12px rgba(0,0,0,.18);
+}
+/* Pinon 2. kerros */
+.deck-pile::before{
+  content:'';position:absolute;
+  inset:0;border-radius:10px;
+  background:var(--surface-md);border:1px solid var(--border);
+  transform:rotate(-3deg) translateY(4px);
+  z-index:-1;
+  transition:transform .15s;
+}
+/* Pinon 3. kerros */
+.deck-pile::after{
+  content:'';position:absolute;
+  inset:0;border-radius:10px;
+  background:var(--surface);border:1px solid var(--border);
+  transform:rotate(-6deg) translateY(8px);
+  z-index:-2;
+}
+@media(prefers-reduced-motion:reduce){
+  .deck-pile,.deck-pile::before,.deck-pile::after{transition:none;}
+}
+.deck-pile:hover{transform:translateY(-5px) rotate(1deg);box-shadow:0 10px 28px rgba(0,0,0,.30);}
+.deck-pile:hover::before{transform:rotate(-4deg) translateY(6px);}
+
+/* Väristripe pino-kortin yläreunassa */
+.deck-pile__stripe{
+  position:absolute;top:0;left:0;right:0;height:5px;
+  border-radius:10px 10px 0 0;
+  background:var(--dp-color,var(--border));
+}
+.deck-pile__dot{display:none;} /* piilotettu, väri tulee stripestä */
+.deck-pile__name{
+  font-size:.72rem;font-weight:600;color:var(--ink);
+  line-height:1.3;word-break:break-word;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+  margin-bottom:.3rem;
+}
+.deck-pile__count{
+  font-size:.58rem;font-weight:700;letter-spacing:.04em;
+  background:var(--surface-strong);color:var(--muted);
+  border-radius:10px;padding:.07rem .45rem;
+  display:inline-block;align-self:flex-start;
+  border:1px solid var(--border);
+}
+#deck-empty{
+  padding:.75rem 1rem;font-size:var(--text-xs);
+  font-weight:300;color:var(--muted);font-style:italic;text-align:center;
+}
+/* Pakka-overlay */
+#deck-overlay{
+  position:fixed;inset:0;z-index:9000;
+  background:rgba(0,0,0,.62);backdrop-filter:blur(3px);
+  display:flex;align-items:flex-start;justify-content:center;
+  padding:4rem 1rem 1rem;overflow-y:auto;
+}
+#deck-overlay-box{
+  background:var(--surface-md);border:1px solid var(--border);
+  border-radius:var(--r-lg);width:100%;max-width:720px;
+  padding:1.25rem 1.5rem;box-shadow:0 24px 64px rgba(0,0,0,.4);
+}
+#deck-overlay-header{
+  display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;
+}
+#deck-overlay-title{
+  font-size:var(--text-sm);font-weight:600;color:var(--ink);flex:1;
+}
+#deck-overlay-close{
+  background:transparent;border:none;color:var(--muted);cursor:pointer;
+  font-size:1.1rem;line-height:1;padding:.2rem .4rem;border-radius:4px;
+}
+#deck-overlay-close:hover{color:var(--ink);background:var(--surface-strong);}
+#deck-overlay-filters{
+  display:flex;gap:.35rem;flex-wrap:wrap;margin-bottom:.85rem;
+}
+#deck-overlay-search{
+  font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:300;
+  width:100%;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-md);padding:.45rem .85rem;outline:none;color:var(--ink);
+  margin-bottom:.85rem;
+}
+#deck-overlay-search::placeholder{color:var(--muted);}
+#deck-overlay-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(155px,1fr));
+  gap:.75rem;
+}
+.deck-mini-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:.7rem .8rem .6rem;
+  cursor:pointer;transition:transform .13s,box-shadow .13s,border-color .13s;
+  position:relative;overflow:hidden;
+  display:flex;flex-direction:column;gap:.3rem;
+  min-height:100px;
+  box-shadow:0 3px 10px rgba(0,0,0,.13);
+}
+.deck-mini-card:hover{
+  transform:translateY(-4px) scale(1.02);
+  box-shadow:0 10px 24px rgba(0,0,0,.28);
+  border-color:var(--accent);z-index:2;
+}
+@media(prefers-reduced-motion:reduce){.deck-mini-card{transition:none;}}
+.deck-mini-card__bg{
+  position:absolute;right:.5rem;top:.4rem;
+  font-size:2.2rem;opacity:.07;pointer-events:none;line-height:1;
+}
+.deck-mini-card__verb{
+  font-size:.52rem;font-weight:500;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--accent);
+}
+.deck-mini-card__title{
+  font-size:.8rem;font-weight:400;line-height:1.35;color:var(--ink);
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+}
+.deck-mini-card__meta{
+  display:flex;align-items:center;gap:.25rem;margin-top:auto;flex-wrap:wrap;
+}
+.deck-mini-card.is-frog{border-color:#3d7a52;box-shadow:0 0 0 1px rgba(61,122,82,.22);}
+/* Hover-nappirivi alareunassa */
+.deck-mini-card__actions{
+  position:absolute;bottom:0;left:0;right:0;
+  display:flex;
+  opacity:0;transition:opacity .13s;pointer-events:none;
+}
+.deck-mini-card:hover .deck-mini-card__actions{opacity:1;pointer-events:auto;}
+.deck-mini-card__action{
+  flex:1;border:none;cursor:pointer;
+  background:rgba(196,154,58,.93);color:white;
+  font-size:.52rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+  text-align:center;padding:.28rem .15rem;
+}
+.deck-mini-card__action+.deck-mini-card__action{border-left:1px solid rgba(255,255,255,.25);}
+.deck-mini-card__action:first-child{border-radius:0 0 0 9px;}
+.deck-mini-card__action:last-child{border-radius:0 0 9px 0;}
+.deck-mini-card__action.edit-btn{background:rgba(70,70,70,.93);}
+#deck-overlay-count{
+  font-size:.68rem;color:var(--muted);font-weight:300;margin-top:.65rem;text-align:right;
+}
+
+/* ── Vaihe 6b: Pomodoro-kello areenalla ─────────────────────── */
+.pbox--arena{
+  padding:1.25rem 1.5rem;
+  margin-bottom:1.25rem;
+  border-radius:var(--r-lg);
+  backdrop-filter:blur(18px) saturate(1.3);
+  -webkit-backdrop-filter:blur(18px);
+  will-change:transform;
+  transition:
+    padding .25s ease,
+    margin-bottom .25s ease,
+    border-radius .25s ease,
+    box-shadow .25s ease,
+    opacity .15s ease;
+}
+.pbox--arena .prow{
+  grid-template-columns:auto auto auto;
+  gap:1.2rem;
+  align-items:center;
+  justify-content:start;
+}
+.pbox--arena .pring{width:130px;height:130px}
+.pbox--arena .pring text{font-size:10px}
+.pbox--arena .pring .phase-txt{font-size:7px}
+.pbox--arena .pctrl{gap:.5rem}
+.pbox--arena .pbtn{min-width:110px;font-size:.78rem;padding:.55rem 1.2rem}
+
+/* ── Vaihe 6c: Minimoitu kello (kaikki leveydet) ───────────── */
+/* Placeholder varaa tilaa kun pb on fixed-tilassa */
+#pb-ph{display:none}
+#pb-ph.active{display:block}
+
+.pbox--arena.pbox--mini{
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  z-index:50;
+  max-width:800px;
+  margin:0 auto;
+  border-radius:0 0 var(--r-lg) var(--r-lg);
+  padding:.5rem .85rem;
+  margin-bottom:0;
+  box-shadow:0 4px 16px rgba(0,0,0,.18);
+  border-top:none;
+}
+/* Sisäelementtien vaiheistettu transitio */
+.pbox--arena .pring{transition:width .25s ease, height .25s ease;}
+.pbox--arena .pctrl{transition:gap .2s ease;}
+.pbox--arena #ttime{transition:font-size .2s ease;}
+.pbox--arena.pbox--mini .prow{
+  grid-template-columns:auto 1fr auto;
+  gap:.7rem;
+  align-items:center;
+}
+.pbox--arena.pbox--mini .pclock{
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  gap:.55rem;
+}
+.pbox--arena.pbox--mini .pring{width:42px;height:42px}
+.pbox--arena.pbox--mini .pring text{display:none}
+.pbox--arena.pbox--mini #ttime{
+  font-size:1.2rem !important;
+  margin-bottom:0 !important;
+  text-align:left;
+  order:2;
+}
+.pbox--arena.pbox--mini .pclock > div:last-child{display:none}
+.pbox--arena.pbox--mini .pinfo{
+  font-size:.72rem;
+  line-height:1.2;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  min-width:0;
+}
+.pbox--arena.pbox--mini .pctrl{
+  flex:0 0 auto;
+  gap:.3rem;
+}
+.pbox--arena.pbox--mini .pbtn{
+  padding:.3rem .55rem;
+  font-size:.7rem;
+  min-width:0;
+}
+/* Piilota sekundaariset napit minimoituna */
+.pbox--arena.pbox--mini .pctrl .pbtn[onclick*="popoutTimer"],
+.pbox--arena.pbox--mini .pctrl .pbtn[onclick*="openTimerSettings"],
+.pbox--arena.pbox--mini .pctrl .pbtn[onclick*="waitActive"]{
+  display:none;
+}
+.pbox--arena.pbox--mini .prule{display:none}
+
+/* Mobile: kapeampi täysikokoinen kello */
+@media (max-width:768px){
+  body{background-attachment:scroll}
+  .pbox--arena{padding:.85rem 1rem;margin-bottom:.85rem}
+  .pbox--arena .prow{grid-template-columns:auto 1fr;gap:.85rem}
+  .pbox--arena .pring{width:90px;height:90px}
+  .pbox--arena #ttime{font-size:1.5rem !important}
+  .pbox--arena .pctrl{grid-column:1/-1;flex-direction:row;flex-wrap:wrap;justify-content:flex-start;align-items:stretch}
+  .pbox--arena .pbtn{min-width:0;flex:1;font-size:.72rem;padding:.45rem .7rem}
+
+  /* Mobiilissa mini on vielä kompaktimpi */
+  .pbox--arena.pbox--mini{padding:.4rem .7rem}
+  .pbox--arena.pbox--mini .prow{gap:.55rem}
+  .pbox--arena.pbox--mini .pring{width:36px;height:36px}
+  .pbox--arena.pbox--mini #ttime{font-size:1.05rem !important}
+  .pbox--arena.pbox--mini .pbtn{padding:.28rem .5rem;font-size:.66rem}
+}
+
+/* ── Vaihe 5: Uusi korttinäkymä ─────────────────────────────── */
+.card-new{
+  position:relative;overflow:hidden;
+  background:var(--surface-md);
+  border:1px solid var(--border);
+  border-radius:var(--r-md);
+  font-family:'DM Sans',sans-serif;
+  cursor:pointer;
+  transition:transform .15s,box-shadow .15s,max-height .2s;
+  user-select:none;
+}
+/* Pakka — pieni tila */
+.card-new--deck{
+  padding:.55rem .75rem;
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:.25rem .5rem;
+  align-items:center;
+  margin-bottom:.35rem;
+}
+/* Areena — iso, glow */
+.card-new--arena{
+  padding:.85rem 1.1rem;
+  display:flex;
+  flex-direction:column;
+  gap:.4rem;
+  margin-bottom:0;
+  box-shadow:0 0 0 6px var(--accent),0 12px 36px rgba(196,154,58,.35),0 4px 16px rgba(0,0,0,.25);
+  border-color:var(--accent);
+  border-width:2px;
+  flex:none;     /* leveys tulee #arena-parentilta */
+  min-width:0;
+  transform:translateY(-4px);  /* pop ylös pinnasta */
+  transition:box-shadow .2s,transform .2s;
+  position:relative;
+  z-index:2;
+}
+.card-new--arena:hover{
+  transform:translateY(-6px);
+  box-shadow:0 0 0 6px var(--accent),0 18px 48px rgba(196,154,58,.4),0 6px 20px rgba(0,0,0,.3);
+}
+/* Areena-kortin isompi fontti */
+.card-new--arena .card-new__title{
+  font-size:1rem;
+  font-weight:500;
+  line-height:1.35;
+}
+.card-new--arena .card-new__verb{
+  font-size:.65rem;
+}
+/* 16a: piilota sekundäärit napit areenan toimintorivillä */
+.card-new--arena .arena-secondary{display:none}
+/* Taustaikoni (verbi) */
+.card-new__bg-icon{
+  position:absolute;
+  font-size:3.2rem;
+  opacity:.07;
+  right:.6rem;top:50%;
+  transform:translateY(-50%);
+  pointer-events:none;
+  line-height:1;
+}
+.card-new--arena .card-new__bg-icon{font-size:4rem;opacity:.09}
+/* Yläosa: verbi + nimi */
+.card-new__title{
+  font-size:var(--text-sm);
+  font-weight:400;
+  color:var(--ink);
+  line-height:1.3;
+  min-width:0;
+}
+.card-new__verb{
+  font-size:.6rem;
+  font-weight:500;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:var(--muted);
+  display:block;
+  margin-bottom:.12rem;
+}
+/* Symbolirivi oikealla (deck) */
+.card-new__symbols{
+  display:flex;align-items:center;gap:.2rem;flex-shrink:0;
+}
+/* Fakta + ominaisuusrivi (hover/areena) */
+.card-new__fact{
+  display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;
+  font-size:.62rem;color:var(--muted);
+}
+.card-new__quad-badge{
+  font-size:.58rem;font-weight:600;
+  padding:.1rem .4rem;border-radius:20px;
+  border:1px solid currentColor;letter-spacing:.04em;
+}
+.card-new__quad-badge.q1{color:#c49a3a;border-color:#c49a3a}
+.card-new__quad-badge.q2{color:#2d8a52;border-color:#2d8a52}
+.card-new__quad-badge.q3{color:var(--muted);border-color:var(--border)}
+.card-new__quad-badge.q4{color:var(--muted);border-color:var(--border)}
+/* Toimintorivi */
+.card-new__actions{
+  display:flex;align-items:center;gap:.3rem;flex-wrap:wrap;
+  margin-top:.15rem;
+}
+.card-new__btn{
+  background:transparent;border:none;cursor:pointer;
+  color:var(--muted);padding:.2rem;border-radius:4px;
+  display:flex;align-items:center;
+  transition:color .12s,background .12s;
+  font-size:inherit;font-family:inherit;
+}
+.card-new__btn:hover{color:var(--ink);background:var(--light)}
+.card-new__btn.imp-on{color:#c49a3a}
+.card-new__btn.urg-on{color:#a84c28}
+.card-new__btn.frog-on{color:#3d7a52}
+/* Tehty / poista-rivi */
+.card-new__footer{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:.1rem;border-top:1px solid var(--light);padding-top:.45rem;
+}
+.card-new__done-btn{
+  font-family:'DM Sans',sans-serif;font-size:var(--text-xs);font-weight:500;
+  padding:.3rem .75rem;border-radius:20px;border:1.5px solid var(--accent);
+  color:var(--accent);background:transparent;cursor:pointer;
+  transition:background .12s,color .12s;
+}
+.card-new__done-btn:hover{background:var(--accent);color:white}
+.card-new__del-btn{
+  background:transparent;border:none;cursor:pointer;
+  color:var(--muted);padding:.2rem;border-radius:4px;
+  display:flex;align-items:center;
+  transition:color .12s;font-size:inherit;
+}
+.card-new__del-btn:hover{color:#c45a3a}
+/* Projekti-chip (areena) */
+.card-new__proj-chip{
+  font-size:.58rem;font-weight:500;
+  padding:.08rem .38rem;border-radius:20px;
+  border:1px solid;white-space:nowrap;opacity:.85;
+}
+/* 16a: piilotetaan projekti-chip areena-kompaktissa */
+.card-new--arena .card-new__proj-chip{display:none}
+/* Tomaatit pikkuna */
+.card-new__pips{display:flex;gap:.1rem;align-items:center}
+/* Frog pip */
+.card-new__frog-pip{font-size:.8rem;line-height:1}
+
+/* ── Vaihe 6a+: Areena toimintorivi + muokkauspaneeli ── */
+.card-new__action-row{
+  display:flex;align-items:center;gap:.2rem;flex-wrap:wrap;
+  padding:.35rem 0;border-top:1px solid var(--light);margin-top:.2rem;
+}
+.card-new__action-btn{
+  background:transparent;border:1px solid transparent;cursor:pointer;
+  color:var(--muted);padding:.3rem .5rem;border-radius:var(--r-sm);
+  display:inline-flex;align-items:center;gap:.25rem;
+  font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:400;
+  transition:color .12s,background .12s,border-color .12s;
+  line-height:1;
+}
+.card-new__action-btn:hover{color:var(--ink);background:var(--light);border-color:var(--border)}
+.card-new__action-btn.active{color:var(--accent);border-color:var(--accent)}
+.card-new__action-btn.wait-on{color:var(--wait);border-color:var(--wait)}
+.card-new__action-btn .emoji{font-size:.95rem;line-height:1}
+/* Muokkauspaneeli */
+.card-new__editor{
+  display:flex;flex-direction:column;gap:.5rem;
+  padding:.65rem .75rem;margin-top:.35rem;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);
+}
+.card-new__editor-row{
+  display:flex;align-items:center;gap:.5rem;
+}
+.card-new__editor-lbl{
+  font-size:.7rem;color:var(--muted);min-width:1.2rem;flex-shrink:0;
+}
+.card-new__editor-input{
+  flex:1;font-family:'DM Sans',sans-serif;font-size:var(--text-xs);font-weight:300;
+  padding:.4rem .6rem;border-radius:var(--r-sm);border:1px solid var(--border);
+  background:var(--surface-md);color:var(--ink);outline:none;
+}
+.card-new__editor-input:focus{border-color:var(--accent)}
+
+/* ── Vaihe 11: Responsiivisuus ──────────────────────────────── */
+
+/* Zone-tabs — mobiili-välilehtinavigaatio */
+#zone-tabs{
+  display:none; /* piilotettu desktop+tablet oletuksena */
+  position:fixed;
+  bottom:0;left:0;right:0;
+  z-index:80;
+  background:var(--paper);
+  border-top:1px solid var(--border);
+  padding:.3rem .5rem env(safe-area-inset-bottom,.3rem);
+  gap:.25rem;
+}
+.ztab{
+  flex:1;
+  font-family:'DM Sans',sans-serif;
+  font-size:.7rem;
+  font-weight:500;
+  padding:.5rem .25rem;
+  border:none;
+  border-radius:var(--r-sm);
+  background:transparent;
+  color:var(--muted);
+  cursor:pointer;
+  transition:background .15s,color .15s;
+  white-space:nowrap;
+}
+.ztab--active{
+  background:var(--surface-md);
+  color:var(--accent);
+}
+
+/* Desktop ja tablet — kaikki vyöhykkeet näkyvissä */
+@media(min-width:769px){
+  #zone-tabs{display:none !important;}
+  #arena,#hand,#deck{display:block !important;}
+}
+
+/* Mobiili (<= 768px) */
+@media(max-width:768px){
+  /* Näytetään tab-navigaatio */
+  #zone-tabs{display:flex;}
+
+  /* Pohjaväli jotta sisältö ei jää navin alle */
+  body > .wrap, .wrap{padding-bottom:calc(60px + env(safe-area-inset-bottom,0px));}
+
+  /* Vyöhykkeet piiloon oletuksena — JS näyttää aktiivisen */
+  #arena[data-zone-panel],
+  #hand[data-zone-panel],
+  #deck[data-zone-panel]{display:none;}
+
+  /* Aktiivinen vyöhyke näkyy */
+  #arena[data-zone-panel].zone-active,
+  #hand[data-zone-panel].zone-active,
+  #deck[data-zone-panel].zone-active{display:block;}
+
+  /* Pomo sticky mobiilissa */
+  #pb{
+    position:sticky;
+    top:0;
+    z-index:50;
+    margin-bottom:.75rem;
+  }
+
+  /* Areena-kortti täysleveys mobiilissa */
+  .card-new--arena{
+    width:100%;
+    box-sizing:border-box;
+  }
+
+  /* Käsikortti sopeutuu kapeuteen */
+  #hand-cards{
+    flex-wrap:wrap;
+    overflow-x:visible;
+    gap:.5rem;
+  }
+  .card-new--hand{
+    width:calc(50vw - 1.25rem);
+    min-width:140px;
+    max-width:220px;
+  }
+
+  /* Ei vaakasuoraa vieritystä — vain html-tasolla, EI bodylle (body overflow rikkoo stickyn) */
+  html{overflow-x:hidden;}
+
+  /* Pomo sticky mobiilissa — toimii kun overflow-x on html-tasolla eikä wrapissa */
+  #pb{
+    position:sticky;
+    top:0;
+    z-index:50;
+    border-radius:0 0 var(--r-lg) var(--r-lg);
+    border-top:none;
+    margin-bottom:.75rem;
+    box-shadow:0 4px 16px rgba(0,0,0,.18);
+  }
+  /* Placeholder ei tarvita sticky-tilassa */
+  #pb-ph{
+    display:none !important;
+  }
+
+  /* Areena-kortti täysleveys mobiilissa */
+  .card-new--arena{
+    width:100%;
+    box-sizing:border-box;
+  }
+
+  /* Käsikortti sopeutuu kapeuteen */
+  #hand-cards{
+    flex-wrap:wrap;
+    overflow-x:visible;
+    gap:.5rem;
+  }
+  .card-new--hand{
+    width:calc(50vw - 1.25rem);
+    min-width:140px;
+    max-width:220px;
+  }
+}
+
+/* ── Vaihe 12: Saavutettavuus — focus-tyylit ──────────────── */
+
+/* Poistetaan selaimen oletustulos ja korvataan yhtenäisellä tyylillä */
+:focus{outline:none;}
+:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+  border-radius:var(--r-sm);
+}
+
+/* Korteille hieman pyöreämpi kehys */
+.card-new:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:3px;
+  border-radius:var(--r-md);
+}
+
+/* Napeille tiiviimpi */
+.card-new__btn:focus-visible,
+.pbtn:focus-visible,
+.ztab:focus-visible,
+.infobtn:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+  border-radius:var(--r-sm);
+}
+
+/* Input- ja textarea-kentät — border-korostus fokuksessa */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible{
+  outline:none;
+  border-color:var(--accent) !important;
+  box-shadow:0 0 0 2px rgba(196,154,58,.25);
+}
+
+/* Eisenhower-kortit */
+.eise-card:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+}
+
+/* Pakkanäkymän kortit */
+.deck-card:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+}
+
+/* aria-hidden dekoratiivisille SVG-elementeille (JS lisää myös) */
+svg[aria-hidden="true"]{pointer-events:none;}
 </style>
-<div id="profile-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)"></div>
-<div id="profile-panel" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(480px,96vw);max-height:90vh;background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.15);z-index:201;flex-direction:column;overflow:hidden">
+<div id="profile-overlay" style="position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)"></div>
+<div id="profile-panel" style="position:fixed;top:50%;left:50%;width:min(480px,96vw);max-height:90vh;background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.15);z-index:201;flex-direction:column;overflow:hidden;display:flex">
   <div style="padding:1.5rem 1.75rem 1rem;border-bottom:1px solid var(--light);flex-shrink:0">
     <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;font-style:italic;color:var(--ink);margin-bottom:.2rem">Käyttäjäprofiili</div>
     <div style="font-size:var(--text-xs);color:var(--muted);font-weight:300">Tekoäly käyttää näitä tietoja räätälöidäkseen ehdotukset sinulle. Voit päivittää tiedot milloin tahansa.</div>
@@ -1195,9 +2354,12 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
     </div>
 
   </div>
-  <div style="padding:1rem 1.75rem;border-top:1px solid var(--light);display:flex;gap:.75rem;flex-shrink:0">
-    <button onclick="saveProfile()" style="font-family:'DM Sans',sans-serif;font-size:.875rem;font-weight:500;padding:.65rem 1.5rem;border-radius:var(--r-md);border:none;background:var(--accent);color:white;cursor:pointer;flex:1">Tallenna profiili</button>
-    <button onclick="closeProfile()" style="font-family:'DM Sans',sans-serif;font-size:.875rem;font-weight:400;padding:.65rem 1rem;border-radius:var(--r-md);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer">Peruuta</button>
+  <div style="padding:1rem 1.75rem;border-top:1px solid var(--light);display:flex;flex-direction:column;gap:.6rem;flex-shrink:0">
+    <div style="display:flex;gap:.75rem">
+      <button onclick="saveProfile()" style="font-family:'DM Sans',sans-serif;font-size:.875rem;font-weight:500;padding:.65rem 1.5rem;border-radius:var(--r-md);border:none;background:var(--accent);color:white;cursor:pointer;flex:1">Tallenna profiili</button>
+      <button onclick="closeProfile()" style="font-family:'DM Sans',sans-serif;font-size:.875rem;font-weight:400;padding:.65rem 1rem;border-radius:var(--r-md);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer">Peruuta</button>
+    </div>
+    <div style="font-size:.65rem;color:var(--light);font-weight:300;text-align:center;letter-spacing:.04em">Fokus A Priori · v1.0.0 · MIT-lisenssi</div>
   </div>
 </div>
 
@@ -1205,6 +2367,55 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
 .profile-chip{font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:400;padding:.3rem .75rem;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:all .15s}
 .profile-chip.on{border-color:var(--accent);color:var(--accent);background:rgba(196,154,58,.08)}
 </style>
+
+<!-- Vaihe 6c: Ajastinasetukset -->
+<div id="tset-overlay" style="position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)" onclick="if(event.target===this)closeTimerSettings()" aria-hidden="true"></div>
+<div id="tset-panel" role="dialog" aria-modal="true" aria-label="Ajastimen asetukset" style="position:fixed;top:50%;left:50%;width:min(440px,96vw);max-height:90vh;background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.15);z-index:201;flex-direction:column;overflow:hidden;display:flex">
+  <div style="padding:1.4rem 1.6rem 1rem;border-bottom:1px solid var(--light);flex-shrink:0">
+    <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;font-style:italic;color:var(--ink);margin-bottom:.2rem">Ajastimen asetukset</div>
+    <div style="font-size:var(--text-xs);color:var(--muted);font-weight:300;line-height:1.5">Säädä pomodoron vaiheiden pituudet itsellesi sopiviksi. Asetukset tallennetaan selaimeen ja otetaan käyttöön heti — jos ajastin on käynnissä, nykyinen vaihe jatkuu loppuun vanhoilla arvoilla.</div>
+  </div>
+
+  <div style="flex:1;overflow-y:auto;padding:1.25rem 1.6rem;display:flex;flex-direction:column;gap:1.4rem">
+
+    <div class="tset-field">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.55rem">
+        <label for="tset-work" style="font-size:var(--text-xs);font-weight:500;color:var(--muted);letter-spacing:.07em;text-transform:uppercase">Työaika</label>
+        <span style="font-family:'DM Serif Display',serif;font-size:1.05rem;color:var(--accent)"><span id="tset-work-val">25</span> min</span>
+      </div>
+      <input type="range" id="tset-work" min="5" max="90" step="5" value="25" oninput="tsetPreview('work',this.value)" style="width:100%;accent-color:var(--accent)">
+      <div style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--light);margin-top:.2rem"><span>5</span><span>90 min</span></div>
+    </div>
+
+    <div class="tset-field">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.55rem">
+        <label for="tset-sbrk" style="font-size:var(--text-xs);font-weight:500;color:var(--muted);letter-spacing:.07em;text-transform:uppercase">Lyhyt tauko</label>
+        <span style="font-family:'DM Serif Display',serif;font-size:1.05rem;color:var(--accent)"><span id="tset-sbrk-val">5</span> min</span>
+      </div>
+      <input type="range" id="tset-sbrk" min="1" max="30" step="1" value="5" oninput="tsetPreview('sbrk',this.value)" style="width:100%;accent-color:var(--accent)">
+      <div style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--light);margin-top:.2rem"><span>1</span><span>30 min</span></div>
+    </div>
+
+    <div class="tset-field">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.55rem">
+        <label for="tset-lbrk" style="font-size:var(--text-xs);font-weight:500;color:var(--muted);letter-spacing:.07em;text-transform:uppercase">Pitkä tauko <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--light)">(neljän pomodoran jälkeen)</span></label>
+        <span style="font-family:'DM Serif Display',serif;font-size:1.05rem;color:var(--accent)"><span id="tset-lbrk-val">20</span> min</span>
+      </div>
+      <input type="range" id="tset-lbrk" min="5" max="60" step="5" value="20" oninput="tsetPreview('lbrk',this.value)" style="width:100%;accent-color:var(--accent)">
+      <div style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--light);margin-top:.2rem"><span>5</span><span>60 min</span></div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;padding-top:.75rem;border-top:1px dashed var(--light)">
+      <div style="font-size:.72rem;color:var(--muted);font-weight:300">Klassinen pomodoro: 25 / 5 / 20 min</div>
+      <button onclick="tsetResetDefaults()" style="font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:400;padding:.3rem .7rem;border-radius:var(--r-sm);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer">↺ Palauta</button>
+    </div>
+  </div>
+
+  <div style="padding:1rem 1.6rem;border-top:1px solid var(--light);display:flex;gap:.75rem;flex-shrink:0">
+    <button onclick="saveTimerSettings()" style="font-family:'DM Sans',sans-serif;font-size:.875rem;font-weight:500;padding:.65rem 1.5rem;border-radius:var(--r-md);border:none;background:var(--accent);color:white;cursor:pointer;flex:1">Tallenna</button>
+    <button onclick="closeTimerSettings()" style="font-family:'DM Sans',sans-serif;font-size:.875rem;font-weight:400;padding:.65rem 1rem;border-radius:var(--r-md);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer">Peruuta</button>
+  </div>
+</div>
 <div id="ai-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)" onclick="if(event.target===this)closeAI()"></div>
 <div id="ai-panel" style="display:none;position:fixed;top:0;right:0;bottom:0;width:min(420px,100vw);background:var(--paper);border-left:1px solid var(--light);z-index:201;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid var(--light);flex-shrink:0">
@@ -1236,8 +2447,272 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
 // XSS-suojaus: sanitoi käyttäjädata ennen innerHTML-insertiä
 function esc(s){if(s==null)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
+// ── VAIHE 9: Eisenhower-modal ──
+var _eiseOpen=false;
+
+function openEisenhower(){
+  var ov=document.getElementById('eise-overlay'),md=document.getElementById('eise-modal');
+  if(!ov||!md)return;
+  renderEisenhower();
+  ov.classList.add('on');
+  md.classList.add('on');
+  _eiseOpen=true;
+  // Fokusointi saavutettavuutta varten
+  var closeBtn=md.querySelector('.eise-close');
+  if(closeBtn)setTimeout(function(){closeBtn.focus();},50);
+}
+
+function closeEisenhower(){
+  var ov=document.getElementById('eise-overlay'),md=document.getElementById('eise-modal');
+  if(!ov||!md)return;
+  ov.classList.remove('on');
+  md.classList.remove('on');
+  _eiseOpen=false;
+}
+
+// ESC sulkee modalin — lisätään document-tason kuuntelija
+// ── Vaihe 12D: aria-live apufunktio ──────────────────────────
+function a11yAnnounce(msg){
+  var el=document.getElementById('a11y-live');
+  if(!el)return;
+  // Tyhjennys ensin pakottaa ruudunlukijan lukemaan uudelleen
+  el.textContent='';
+  setTimeout(function(){el.textContent=msg;},50);
+}
+
+document.addEventListener('keydown',function(e){
+  // ESC: sulje modaalit
+  if(e.key==='Escape'&&_eiseOpen){
+    closeEisenhower();
+  }
+  if(e.key==='Escape'){
+    var panel=document.getElementById('tset-panel');
+    if(panel&&panel.classList.contains('fap-open')){
+      closeTimerSettings();
+    }
+  }
+
+  // ── Vaihe 12C: Globaalit näppäinkomennot ──
+  // Ei aktivoidu kun kirjoitetaan input/textarea/contenteditable -kentässä
+  var tag=(document.activeElement&&document.activeElement.tagName)||'';
+  var isEditing=tag==='INPUT'||tag==='TEXTAREA'||
+    (document.activeElement&&document.activeElement.isContentEditable);
+  if(isEditing) return;
+
+  // P = aloita/pysäytä pomodoro
+  if(e.key==='p'||e.key==='P'){
+    e.preventDefault();
+    toggleTimer();
+    return;
+  }
+
+  var act=getActive();
+
+  // E = merkitse aktiivinen tehtävä valmiiksi
+  if((e.key==='e'||e.key==='E')&&act){
+    e.preventDefault();
+    markDone(act.id);
+    notify('✓ Merkitty valmiiksi: '+act.text);
+    return;
+  }
+
+  // Delete = poista aktiivinen tehtävä (kumottavissa)
+  if(e.key==='Delete'&&act){
+    e.preventDefault();
+    delUndoable(act.id);
+    return;
+  }
+});
+
+// ── VAIHE 9 OSA 3: Eisenhower-modalin renderöinti ──
+function renderEisenhower(){
+  var inbox=tasks.filter(function(t){return !t.done&&!t.scheduled_hidden;});
+
+  ['q1','q2','q3','q4'].forEach(function(q){
+    var list=document.getElementById('e'+q);
+    if(!list)return;
+    list.innerHTML='';
+
+    var qt=inbox.filter(function(t){return t.quad===q;});
+    if(qt.length===0){
+      list.innerHTML='<div class="eise-qemp">Ei tehtäviä</div>';
+      return;
+    }
+
+    // Järjestys: frog ensin, sitten order
+    qt.sort(function(a,b){
+      if(a.frog&&!b.frog)return -1;
+      if(!a.frog&&b.frog)return 1;
+      return (a.order||0)-(b.order||0);
+    });
+
+    qt.forEach(function(t){
+      var card=document.createElement('div');
+      card.className='eise-card'+(t.frog?' eise-frog':'');
+      card.draggable=true;
+      card.dataset.id=t.id;
+      card.dataset.quad=q;
+
+      // Klikkaus avaa siirtovalikon (mobiiliystävällinen vaihtoehto raahaukselle)
+      card.onclick=function(e){
+        e.stopPropagation();
+        if(_eiseMoveMenu&&_eiseMoveMenu.parentNode===card){
+          eiseCloseMoveMenu();return;
+        }
+        eiseOpenMoveMenu(card,t.id,q);
+      };
+
+      // Drag-start: tallenna raahattavan kortin id
+      card.ondragstart=function(e){
+        e.dataTransfer.setData('text/plain',String(t.id));
+        e.dataTransfer.effectAllowed='move';
+        setTimeout(function(){card.classList.add('eise-dragging');},0);
+      };
+      card.ondragend=function(){
+        card.classList.remove('eise-dragging');
+      };
+
+      // Indikaattorit (frog, waiting, tomato)
+      var ind=document.createElement('span');
+      ind.className='eise-card-ind';
+
+      if(t.frog){
+        var fi=document.createElement('span');
+        fi.style.cssText='display:flex;align-items:center;flex-shrink:0';
+        fi.appendChild(svgFrogFilled(12));
+        ind.appendChild(fi);
+      }
+      if(t.waiting){
+        var wi=document.createElement('span');
+        wi.style.cssText='color:#3a6b8a;display:flex;align-items:center';
+        wi.appendChild(svgHourglass(10));
+        ind.appendChild(wi);
+      }
+      var isQ=t.id===active||turn.indexOf(t.id)>=0;
+      if(isQ){
+        var ti=document.createElement('span');
+        ti.style.cssText='display:flex;align-items:center;opacity:.7';
+        ti.appendChild(svgTomatoFilled(11));
+        ind.appendChild(ti);
+      }
+
+      // Tehtäväteksti
+      var txt=document.createElement('span');
+      txt.className='eise-card-txt';
+      txt.textContent=t.text;
+
+      card.appendChild(txt);
+      if(ind.childNodes.length)card.appendChild(ind);
+
+      list.appendChild(card);
+    });
+
+    // Kvadrantti on drop-zone: sallitaan dragover ja drop
+    eiseSetDropZone(list,q);
+  });
+}
+
+// Drop-zone: kvadranttiruudun lista vastaanottaa kortteja
+function eiseSetDropZone(list,targetQuad){
+  var quad=list.closest('.eise-quad');
+
+  function onDragover(e){
+    e.preventDefault();
+    e.dataTransfer.dropEffect='move';
+    if(quad)quad.classList.add('eise-drop-hover');
+  }
+  function onDragleave(e){
+    // Poistu vain jos hiiri todella poistui kvadrantista
+    if(quad&&!quad.contains(e.relatedTarget)){
+      quad.classList.remove('eise-drop-hover');
+    }
+  }
+  function onDrop(e){
+    e.preventDefault();
+    if(quad)quad.classList.remove('eise-drop-hover');
+    var dragId=parseInt(e.dataTransfer.getData('text/plain'));
+    if(!dragId)return;
+    var dragTask=tasks.find(function(t){return t.id===dragId;});
+    if(!dragTask)return;
+    if(dragTask.quad===targetQuad)return; // ei muutosta
+
+    // Vaihda kvadrantti ja päivitä important/urgent-kentät
+    dragTask.quad=targetQuad;
+    if(targetQuad==='q1'){dragTask.important=true;dragTask.urgent=true;}
+    else if(targetQuad==='q2'){dragTask.important=true;dragTask.urgent=false;}
+    else if(targetQuad==='q3'){dragTask.important=false;dragTask.urgent=true;}
+    else if(targetQuad==='q4'){dragTask.important=false;dragTask.urgent=false;}
+
+    save();
+    render();           // päivittää matriisi-välilehden
+    renderEisenhower(); // päivittää modalin
+    notify('Siirretty: '+QL[targetQuad]);
+  }
+
+  if(quad){
+    quad.ondragover=onDragover;
+    quad.ondragleave=onDragleave;
+    quad.ondrop=onDrop;
+  }
+}
+
+// ── Klikkauspohjainen siirtovalikko (mobiili + fallback) ──
+var _eiseMoveMenu=null;
+
+function eiseOpenMoveMenu(card,taskId,currentQuad){
+  eiseCloseMoveMenu();
+
+  var menu=document.createElement('div');
+  menu.className='eise-move-menu';
+  _eiseMoveMenu=menu;
+
+  var quadColors={q1:'var(--q1)',q2:'var(--q2)',q3:'var(--q3)',q4:'var(--q4)'};
+  var quadLabels={q1:'TEE HETI',q2:'AIKATAULUTA',q3:'DELEGOI',q4:'POISTA'};
+
+  Object.keys(quadLabels).forEach(function(q){
+    if(q===currentQuad)return; // ei tarjota nykyistä
+    var item=document.createElement('div');
+    item.className='eise-move-item';
+    var dot=document.createElement('span');
+    dot.className='eise-move-dot';
+    dot.style.background=quadColors[q];
+    var lbl=document.createElement('span');
+    lbl.textContent='→ '+quadLabels[q];
+    item.appendChild(dot);
+    item.appendChild(lbl);
+    item.onclick=function(e){
+      e.stopPropagation();
+      eiseCloseMoveMenu();
+      var dragTask=tasks.find(function(t){return t.id===taskId;});
+      if(!dragTask)return;
+      dragTask.quad=q;
+      if(q==='q1'){dragTask.important=true;dragTask.urgent=true;}
+      else if(q==='q2'){dragTask.important=true;dragTask.urgent=false;}
+      else if(q==='q3'){dragTask.important=false;dragTask.urgent=true;}
+      else if(q==='q4'){dragTask.important=false;dragTask.urgent=false;}
+      save();render();renderEisenhower();
+      notify('Siirretty: '+QL[q]);
+    };
+    menu.appendChild(item);
+  });
+
+  card.appendChild(menu);
+
+  // Sulje klikkaamalla muualle
+  setTimeout(function(){
+    document.addEventListener('click',eiseCloseMoveMenu,{once:true,capture:true});
+  },0);
+}
+
+function eiseCloseMoveMenu(){
+  if(_eiseMoveMenu){
+    _eiseMoveMenu.remove();
+    _eiseMoveMenu=null;
+  }
+}
+
 // ── STATE ──
-var tasks=[],nid=1,est=1,queue=[],newImportant=false,newUrgent=false;
+var tasks=[],nid=1,est=1,active=null,turn=[],newImportant=false,newUrgent=false;
 var newTags=[],newProjectId=null;
 var projects=[],pnid=1;
 var tmr=null,tleft=25*60,phase='idle',startAt=null,startTleft=25*60;
@@ -1266,6 +2741,7 @@ function svgTomatoFilled(size){
   var s=document.createElementNS('http://www.w3.org/2000/svg','svg');
   s.setAttribute('width',size);s.setAttribute('height',size);
   s.setAttribute('viewBox','0 0 28 32');
+  s.setAttribute('aria-hidden','true');
   s.style.display='block';
   s.innerHTML='<ellipse cx="14" cy="20" rx="12" ry="11" fill="#a84c28"/>'
     +'<ellipse cx="9" cy="15" rx="3" ry="2" fill="rgba(255,255,255,.15)" transform="rotate(-20 9 15)"/>'
@@ -1280,6 +2756,7 @@ function svgTomatoOutline(size){
   var s=document.createElementNS('http://www.w3.org/2000/svg','svg');
   s.setAttribute('width',size);s.setAttribute('height',Math.round(size*1.1));
   s.setAttribute('viewBox','0 0 28 30');
+  s.setAttribute('aria-hidden','true');
   s.style.display='inline-block';s.style.verticalAlign='middle';
   s.innerHTML='<ellipse cx="14" cy="18" rx="11" ry="10" fill="none" stroke="#a84c28" stroke-width="2.5"/>'
     +'<path d="M11,8 Q14,3 17,8" fill="none" stroke="#2d5a3d" stroke-width="2.2" stroke-linecap="round"/>'
@@ -1294,6 +2771,7 @@ function svgTomatoFilledHalf(size){
   s.setAttribute('width',Math.round(size/2));
   s.setAttribute('height',size);
   s.setAttribute('viewBox','0 0 14 32');
+  s.setAttribute('aria-hidden','true');
   s.style.display='inline-block';s.style.verticalAlign='middle';
   var id='fhclip'+Math.random().toString(36).slice(2,7);
   s.innerHTML='<defs><clipPath id="'+id+'"><rect x="0" y="0" width="14" height="32"/></clipPath></defs>'
@@ -1311,6 +2789,7 @@ function svgTomatoHalf(size, filled){
   s.setAttribute('width',Math.round(size/2));
   s.setAttribute('height',Math.round(size*1.1));
   s.setAttribute('viewBox','0 0 14 30');
+  s.setAttribute('aria-hidden','true');
   s.style.display='inline-block';s.style.verticalAlign='middle';
   // Draw full tomato but clip to left half only
   var id='hclip'+Math.random().toString(36).slice(2,7);
@@ -1333,6 +2812,7 @@ function svgTomatoDone(size){
   var s=document.createElementNS('http://www.w3.org/2000/svg','svg');
   s.setAttribute('width',size);s.setAttribute('height',Math.round(size*1.1));
   s.setAttribute('viewBox','0 0 28 30');
+  s.setAttribute('aria-hidden','true');
   s.style.display='inline-block';s.style.verticalAlign='middle';
   s.innerHTML='<ellipse cx="14" cy="18" rx="11" ry="10" fill="#a84c28" opacity=".85"/>'
     +'<ellipse cx="14" cy="18" rx="11" ry="10" fill="none" stroke="#8a3a1e" stroke-width="1.5"/>'
@@ -1347,6 +2827,7 @@ function svgHourglass(size){
   var s=document.createElementNS('http://www.w3.org/2000/svg','svg');
   s.setAttribute('width',size);s.setAttribute('height',size);
   s.setAttribute('viewBox','0 0 22 22');
+  s.setAttribute('aria-hidden','true');
   s.style.display='inline-block';s.style.verticalAlign='middle';
   s.innerHTML='<path d="M5,2 L17,2 L11,11 L17,20 L5,20 L11,11 Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>'
     +'<line x1="5" y1="2" x2="17" y2="2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
@@ -1361,6 +2842,7 @@ function svgImportant(size, active){
   var s=document.createElementNS('http://www.w3.org/2000/svg','svg');
   s.setAttribute('width',size);s.setAttribute('height',size);
   s.setAttribute('viewBox','0 0 22 22');
+  s.setAttribute('aria-hidden','true');
   s.style.display='block';
   if(active){
     s.innerHTML=
@@ -1383,6 +2865,7 @@ function svgUrgent(size, active){
   var s=document.createElementNS('http://www.w3.org/2000/svg','svg');
   s.setAttribute('width',size);s.setAttribute('height',size);
   s.setAttribute('viewBox','0 0 22 22');
+  s.setAttribute('aria-hidden','true');
   s.style.display='block';
   if(active){
     s.innerHTML=
@@ -1404,6 +2887,7 @@ function svgPencil(size){
   var s=document.createElementNS('http://www.w3.org/2000/svg','svg');
   s.setAttribute('width',size);s.setAttribute('height',size);
   s.setAttribute('viewBox','0 0 16 16');
+  s.setAttribute('aria-hidden','true');
   s.style.display='block';
   s.innerHTML='<path d="M11.5 2 L14 4.5 L5.5 13 L2.5 13.5 L3 10.5 Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>'
     +'<line x1="10" y1="3.5" x2="12.5" y2="6" stroke="currentColor" stroke-width="1.3"/>';
@@ -1416,6 +2900,7 @@ function svgCalendar(size){
   var s=document.createElementNS('http://www.w3.org/2000/svg','svg');
   s.setAttribute('width',size);s.setAttribute('height',size);
   s.setAttribute('viewBox','0 0 16 16');
+  s.setAttribute('aria-hidden','true');
   s.style.display='block';
   s.innerHTML='<rect x="1.5" y="3" width="13" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/>'
     +'<line x1="1.5" y1="6.5" x2="14.5" y2="6.5" stroke="currentColor" stroke-width="1.1"/>'
@@ -1428,7 +2913,8 @@ function setWaiting(id){
   var t=tasks.find(function(t){return t.id===id});
   if(!t)return;
   t.waiting=true;
-  queue=queue.filter(function(i){return i!==id});
+  if(active===id){active=turn.length>0?turn.shift():null;}
+  else{turn=turn.filter(function(i){return i!==id});}
   save();render();
   notify('Siirretty odottamaan');
 }
@@ -1437,13 +2923,20 @@ function clearWaiting(id){
   var t=tasks.find(function(t){return t.id===id});
   if(!t)return;
   t.waiting=false;
+  // Lisää vuoron loppuun jos ei jo siellä eikä aktiivinen
+  if(active!==id&&turn.indexOf(id)<0){
+    if(active===null){active=id;}
+    else{turn.push(id);}
+  }
   save();render();
+  notify('Palautettu vuoroon');
 }
 function svgFrogOutline(size){
   size=size||20;
   var s=document.createElementNS('http://www.w3.org/2000/svg','svg');
   s.setAttribute('width',size);s.setAttribute('height',Math.round(size*.93));
   s.setAttribute('viewBox','0 0 28 26');
+  s.setAttribute('aria-hidden','true');
   s.style.display='block';
   s.innerHTML='<ellipse cx="14" cy="17" rx="11" ry="8" fill="none" stroke="#4a6e22" stroke-width="2"/>'
     +'<circle cx="8" cy="9" r="4" fill="none" stroke="#4a6e22" stroke-width="2"/>'
@@ -1459,6 +2952,7 @@ function svgFrogFilled(size){
   var s=document.createElementNS('http://www.w3.org/2000/svg','svg');
   s.setAttribute('width',size);s.setAttribute('height',Math.round(size*.93));
   s.setAttribute('viewBox','0 0 28 26');
+  s.setAttribute('aria-hidden','true');
   s.style.display='block';
   s.innerHTML='<ellipse cx="14" cy="17" rx="11" ry="8" fill="#4a6e22"/>'
     +'<circle cx="8" cy="9" r="4.5" fill="#4a6e22"/>'
@@ -1504,13 +2998,14 @@ function mkPipsEstimate(e,sm){
 }
 
 function totalQueueEst(){
-  return queue.reduce(function(sum,id){
+  var ids=(active?[active]:[]).concat(turn);
+  return ids.reduce(function(sum,id){
     var t=tasks.find(function(t){return t.id===id});
     return sum+(t?t.est||1:0);
   },0);
 }
 
-function getActive(){return queue.length>0?tasks.find(function(t){return t.id===queue[0]}):null}
+function getActive(){return active?tasks.find(function(t){return t.id===active})||null:null}
 
 function exportData(){
   var data=JSON.parse(localStorage.getItem(wsStorageKey())||'{}');
@@ -1668,18 +3163,19 @@ function popoutTimer(){
     +'  for(var i=0;i<4;i++){var d=document.createElement("div");d.className="pd"+(i<pd?" done":(ph==="work"&&i===pd?" active":""));dots.appendChild(d);}'
     // buttons: Tehty + Odottaa + Seuraava
     +'  var btns=document.getElementById("pbtns");btns.innerHTML="";'
-    +'  var hasQ=o.queue&&o.queue.length>=1;'
+    +'  var hasQ=o.active!=null;'
     +'  if(hasQ&&ph!=="idle"){'
     +'    var bd=document.createElement("button");bd.className="btn nxt";bd.textContent="✓ Tehty";bd.onclick=function(){o.doneActive&&o.doneActive()};btns.appendChild(bd);'
     +'    var bw=document.createElement("button");bw.className="btn wt";bw.textContent="⏳ Odottaa";bw.onclick=function(){o.waitActive&&o.waitActive()};btns.appendChild(bw);'
     +'  }'
-    +'  if(o.queue&&o.queue.length>1&&ph!=="idle"){'
+    +'  if(o.active!=null&&o.turn&&o.turn.length>0&&ph!=="idle"){'
     +'    var bn=document.createElement("button");bn.className="btn nxt";bn.textContent="→ Seuraava";bn.onclick=function(){o.doNext&&o.doNext()};btns.appendChild(bn);'
     +'  }'
-    // queue list
+    // vuoro list
     +'  var ql=document.getElementById("pqueue");ql.innerHTML="";'
-    +'  if(o.queue&&o.tasks){'
-    +'    o.queue.slice(0,8).forEach(function(id,idx){'
+    +'  if(o.active!=null&&o.tasks){'
+    +'    var allIds=(o.active?[o.active]:[]).concat(o.turn||[]);'
+    +'    allIds.slice(0,8).forEach(function(id,idx){'
     +'      var t=o.tasks.find(function(t){return t.id===id});if(!t)return;'
     +'      var item=document.createElement("div");item.className="qi";'
     +'      var dot=document.createElement("div");dot.className="qi-dot";dot.style.background=QC[t.quad||"q4"];'
@@ -1689,7 +3185,7 @@ function popoutTimer(){
     +'      rm.onclick=(function(i){return function(){o.returnFromQueue&&o.returnFromQueue(i)}})(id);'
     +'      item.appendChild(dot);item.appendChild(nm);item.appendChild(rm);ql.appendChild(item);'
     +'    });'
-    +'    if(o.queue.length>8){var more=document.createElement("div");more.style.cssText="font-size:.65rem;color:var(--muted);padding:.25rem 0";more.textContent="+"+(o.queue.length-8)+" lisää";ql.appendChild(more);}'
+    +'    if(allIds.length>8){var more=document.createElement("div");more.style.cssText="font-size:.65rem;color:var(--muted);padding:.25rem 0";more.textContent="+"+(allIds.length-8)+" lisää";ql.appendChild(more);}'
     +'  }'
     +'  var rl=document.getElementById("prule2");'
     +'  if(ph==="work"){rl.textContent=(4-pd)+" pomodoroa pitkään taukoon.";}'
@@ -1756,16 +3252,292 @@ function openProfile(){
     document.getElementById('pApiStatus').textContent='✓ API-avain tallennettu';
     document.getElementById('pApiStatus').style.color='var(--accent)';
   }
-  document.getElementById('profile-overlay').style.display='block';
-  document.getElementById('profile-panel').style.display='flex';
+  document.getElementById('profile-overlay').classList.add('fap-open');
+  document.getElementById('profile-panel').classList.add('fap-open');
 }
 
 function closeProfile(){
-  document.getElementById('profile-overlay').style.display='none';
-  document.getElementById('profile-panel').style.display='none';
+  document.getElementById('profile-overlay').classList.remove('fap-open');
+  document.getElementById('profile-panel').classList.remove('fap-open');
+}
+
+// ── Vaihe 6c: Ajastinasetukset ──
+var TSET_DEFAULTS={work:25,sbrk:5,lbrk:20};
+var TSET_KEY='fap_timer_settings';
+
+function _applyTimerValues(s){
+  var w=parseInt(s.work,10),b=parseInt(s.sbrk,10),l=parseInt(s.lbrk,10);
+  if(w>=5&&w<=90) WORK=w*60;
+  if(b>=1&&b<=30) SBRK=b*60;
+  if(l>=5&&l<=60) LBRK=l*60;
+  if(phase==='idle'){tleft=WORK;startTleft=WORK;}
+  updClock();
+}
+
+function loadTimerSettings(){
+  // 1. localStorage — käytetään heti (nopea, synkroninen)
+  try{
+    var raw=localStorage.getItem(TSET_KEY);
+    if(raw){ _applyTimerValues(JSON.parse(raw)); }
+  }catch(e){console.warn('Timer settings localStorage load failed',e);}
+
+  // 2. Firestore — ylikirjoittaa jos saatavilla (asynkroninen)
+  if(window._loadTimerFromFs){
+    window._loadTimerFromFs().then(function(fsData){
+      if(!fsData)return;
+      try{
+        _applyTimerValues(fsData);
+        // Päivitä myös localStorage synkronissa
+        localStorage.setItem(TSET_KEY,JSON.stringify(fsData));
+        console.log('⏱️ Timer-asetukset ladattu Firestoresta');
+      }catch(e){console.warn('Timer settings Firestore apply failed',e);}
+    });
+  } else {
+    // Firebase ei vielä valmis — koukuta kun kirjautuminen valmistuu
+    window._pendingTimerFsLoad = true;
+  }
+}
+
+function openTimerSettings(){
+  document.getElementById('tset-work').value=Math.round(WORK/60);
+  document.getElementById('tset-work-val').textContent=Math.round(WORK/60);
+  document.getElementById('tset-sbrk').value=Math.round(SBRK/60);
+  document.getElementById('tset-sbrk-val').textContent=Math.round(SBRK/60);
+  document.getElementById('tset-lbrk').value=Math.round(LBRK/60);
+  document.getElementById('tset-lbrk-val').textContent=Math.round(LBRK/60);
+  document.getElementById('tset-overlay').classList.add('fap-open');
+  document.getElementById('tset-panel').classList.add('fap-open');
+  // Siirretään fokus modaaliin ruudunlukijaa varten
+  setTimeout(function(){
+    var first=document.getElementById('tset-work');
+    if(first) first.focus();
+  }, 50);
+}
+
+function closeTimerSettings(){
+  document.getElementById('tset-overlay').classList.remove('fap-open');
+  document.getElementById('tset-panel').classList.remove('fap-open');
+  // Palautetaan fokus asetusnapille
+  var btn=document.getElementById('pringBtn');
+  if(btn) btn.focus();
+}
+
+function tsetPreview(kind,val){
+  var el=document.getElementById('tset-'+kind+'-val');
+  if(el) el.textContent=val;
+}
+
+function tsetResetDefaults(){
+  document.getElementById('tset-work').value=TSET_DEFAULTS.work;
+  document.getElementById('tset-work-val').textContent=TSET_DEFAULTS.work;
+  document.getElementById('tset-sbrk').value=TSET_DEFAULTS.sbrk;
+  document.getElementById('tset-sbrk-val').textContent=TSET_DEFAULTS.sbrk;
+  document.getElementById('tset-lbrk').value=TSET_DEFAULTS.lbrk;
+  document.getElementById('tset-lbrk-val').textContent=TSET_DEFAULTS.lbrk;
+}
+
+function saveTimerSettings(){
+  var w=parseInt(document.getElementById('tset-work').value,10);
+  var b=parseInt(document.getElementById('tset-sbrk').value,10);
+  var l=parseInt(document.getElementById('tset-lbrk').value,10);
+  if(!(w>=5&&w<=90)||!(b>=1&&b<=30)||!(l>=5&&l<=60)){
+    notify('Tarkista arvot — jokin on epäkelpo');
+    return;
+  }
+  WORK=w*60; SBRK=b*60; LBRK=l*60;
+  // localStorage — varmuuskopio ja offline-kerros
+  try{
+    localStorage.setItem(TSET_KEY,JSON.stringify({work:w,sbrk:b,lbrk:l}));
+  }catch(e){console.warn('Timer settings save failed',e);}
+  // Firestore — synkronointi muille laitteille
+  if(window._saveTimerToFs) window._saveTimerToFs(w,b,l);
+  // Jos ajastin on lepotilassa, synkronoi jäljellä oleva aika uuteen työaikaan.
+  // Jos ajastin on käynnissä, annetaan nykyisen vaiheen jatkua loppuun — uudet arvot
+  // astuvat voimaan seuraavassa vaihesiirtymässä onPhaseEnd:ssa.
+  if(phase==='idle'){tleft=WORK;startTleft=WORK;}
+  updClock();
+  notify('Ajastimen asetukset tallennettu');
+  closeTimerSettings();
 }
 
 function toggleChip(btn){btn.classList.toggle('on');}
+
+// ── Vaihe 18: Yhteinen kortin muokkausmodaali ──
+function openEditModal(id){
+  var t=tasks.find(function(x){return x.id===id;});
+  if(!t)return;
+  document.getElementById('edit-modal-id').value=id;
+  document.getElementById('edit-text').value=t.text||'';
+  document.getElementById('edit-notes').value=t.lisatiedot||'';
+  document.getElementById('edit-link').value=t.linkki||'';
+
+  // Tärkeä / Kiireinen / Sammakko
+  document.getElementById('edit-important').classList.toggle('on',!!t.important);
+  document.getElementById('edit-urgent').classList.toggle('on',!!t.urgent);
+  var fb=document.getElementById('edit-frog');
+  fb.classList.toggle('on',!!t.frog);
+  fb.style.background=t.frog?'#3d7a52':'';
+  fb.style.color=t.frog?'white':'';
+  fb.style.borderColor=t.frog?'#3d7a52':'';
+
+  // Arvio-slider
+  var esl=document.getElementById('edit-esl');
+  var ev=document.getElementById('edit-ev');
+  var estVal=t.est||1;
+  esl.value=estVal;
+  ev.textContent=fe(estVal);
+
+  // Projektinapit
+  var pb=document.getElementById('edit-proj-btns');
+  pb.innerHTML='';
+  if(projects&&projects.length){
+    var noneB=document.createElement('button');
+    noneB.className='hud-chip'+(!t.projectId?' active':'');
+    noneB.textContent='— ei projektia —';
+    noneB.dataset.pid='';
+    pb.appendChild(noneB);
+    projects.forEach(function(p){
+      var b=document.createElement('button');
+      var act=t.projectId===p.id;
+      b.className='hud-chip'+(act?' active':'');
+      b.style.cssText='border-color:'+p.color+';color:'+(act?'white':p.color)+';background:'+(act?p.color:'transparent');
+      b.textContent=p.name;
+      b.dataset.pid=p.id;
+      pb.appendChild(b);
+    });
+    pb.querySelectorAll('button').forEach(function(btn){
+      btn.addEventListener('click',function(e){
+        e.stopPropagation();
+        pb.querySelectorAll('button').forEach(function(b2){
+          b2.classList.remove('active');
+          var pid2=b2.dataset.pid;
+          if(pid2){var p2=projects.find(function(p){return p.id==pid2;});if(p2){b2.style.color=p2.color;b2.style.background='transparent';}}
+        });
+        btn.classList.add('active');
+        var pid=btn.dataset.pid;
+        if(pid){var p3=projects.find(function(p){return p.id==pid;});if(p3){btn.style.color='white';btn.style.background=p3.color;}}
+      });
+    });
+  }
+
+  fb.onclick=function(){
+    var on=fb.classList.toggle('on');
+    fb.style.background=on?'#3d7a52':'';
+    fb.style.color=on?'white':'';
+    fb.style.borderColor=on?'#3d7a52':'';
+  };
+
+  var ov=document.getElementById('edit-overlay');
+  var md=document.getElementById('edit-modal');
+  ov.style.display='block';
+  md.style.display='flex';
+  setTimeout(function(){document.getElementById('edit-text').focus();},50);
+}
+
+function closeEditModal(){
+  document.getElementById('edit-overlay').style.display='none';
+  document.getElementById('edit-modal').style.display='none';
+}
+
+function saveEditModal(){
+  var id=parseInt(document.getElementById('edit-modal-id').value,10);
+  var t=tasks.find(function(x){return x.id===id;});
+  if(!t)return;
+  var txt=document.getElementById('edit-text').value.trim();
+  if(!txt)return;
+  t.text=txt;
+  t.lisatiedot=document.getElementById('edit-notes').value.trim()||null;
+  t.linkki=document.getElementById('edit-link').value.trim()||null;
+  t.important=document.getElementById('edit-important').classList.contains('on');
+  t.urgent=document.getElementById('edit-urgent').classList.contains('on');
+  // Quad päivitetään important/urgent-yhdistelmän perusteella
+  if(t.important&&t.urgent)t.quad='q1';
+  else if(t.important&&!t.urgent)t.quad='q2';
+  else if(!t.important&&t.urgent)t.quad='q3';
+  else t.quad='q4';
+  t.est=parseFloat(document.getElementById('edit-esl').value)||1;
+  // Sammakko
+  var wantFrog=document.getElementById('edit-frog').classList.contains('on');
+  if(wantFrog&&!t.frog){tasks.forEach(function(x){x.frog=false;});}
+  t.frog=wantFrog;
+  // Projekti
+  var pb=document.getElementById('edit-proj-btns');
+  var activeBtn=pb.querySelector('button.active');
+  if(activeBtn)t.projectId=activeBtn.dataset.pid||null;
+  save();render();
+  closeEditModal();
+}
+
+// ESC sulkee muokkausmodaalin
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'&&document.getElementById('edit-modal')&&document.getElementById('edit-modal').style.display==='flex'){
+    closeEditModal();
+  }
+});
+
+// ── Vaihe 6c / 11: Minimoitu pomo-kello — aktivoituu kun pb osuu yläreunaan ──
+var _pboxMiniOn=false;
+var _pboxNormalHeight=0;
+var _pboxObserver=null;
+var _pboxDebounce=null;
+var _pboxLocked=false; // lukko estää oskillaation tilamuutoksen jälkeen
+
+function _applyPboxMini(shouldMini){
+  var pbEl=document.getElementById('pb');
+  var phEl=document.getElementById('pb-ph');
+  if(!pbEl||shouldMini===_pboxMiniOn||_pboxLocked) return;
+
+  _pboxLocked=true;
+
+  if(shouldMini){
+    // 1. Mittaa ja lukitse placeholder ENNEN fixed-muutosta
+    _pboxNormalHeight=pbEl.offsetHeight;
+    if(phEl){
+      phEl.style.height=_pboxNormalHeight+'px';
+      phEl.classList.add('active');
+    }
+    // 2. Pieni viive: anna placeholder renderöityä ennen fixed-muutosta
+    //    estää layout-hypyn joka aiheuttaa oskillaation
+    requestAnimationFrame(function(){
+      pbEl.classList.add('pbox--mini');
+      _pboxMiniOn=true;
+      // Vapautetaan lukko vasta kun layout on vakiintunut
+      setTimeout(function(){ _pboxLocked=false; }, 350);
+    });
+  } else {
+    pbEl.classList.remove('pbox--mini');
+    // Poistetaan placeholder vasta transition-ajan jälkeen
+    setTimeout(function(){
+      if(phEl){phEl.classList.remove('active');phEl.style.height='';}
+      _pboxMiniOn=false;
+      setTimeout(function(){ _pboxLocked=false; }, 50);
+    }, 250);
+  }
+}
+
+function _initPboxObserver(){
+  if(_pboxObserver){_pboxObserver.disconnect();_pboxObserver=null;}
+  var pbEl=document.getElementById('pb');
+  if(!pbEl) return;
+  var sentinel=document.getElementById('_pb-sentinel');
+  if(!sentinel){
+    sentinel=document.createElement('div');
+    sentinel.id='_pb-sentinel';
+    sentinel.style.cssText='height:1px;width:100%;pointer-events:none;';
+    pbEl.parentNode.insertBefore(sentinel,pbEl);
+  }
+  _pboxObserver=new IntersectionObserver(function(entries){
+    var e=entries[0];
+    var want=(!e.isIntersecting && e.boundingClientRect.top < 1);
+    // Debounce 80ms — suodattaa nopeat edestakainen heilunta hitaassa scrollissa
+    clearTimeout(_pboxDebounce);
+    _pboxDebounce=setTimeout(function(){ _applyPboxMini(want); }, 80);
+  },{threshold:0});
+  _pboxObserver.observe(sentinel);
+}
+
+function updatePboxMini(){ _initPboxObserver(); }
+window.addEventListener('resize',_initPboxObserver);
 
 function buildProfileContext(){
   var p=loadProfile();
@@ -1958,7 +3730,21 @@ function renderAIResults(result,inbox){
 function acceptFrog(id){
   tasks.forEach(function(t){t.frog=false;});
   var t=tasks.find(function(t){return t.id===id});
-  if(t){t.frog=true;if(queue.indexOf(id)<0)queue.unshift(id);else{queue=queue.filter(function(i){return i!==id});queue.unshift(id);}}
+  if(t){
+    t.frog=true;
+    var inTurn=turn.indexOf(id)>=0;
+    var isActive=active===id;
+    if(!isActive&&!inTurn){
+      // Ei vielä vuorossa — laita areenalle tai vuoron ensimmäiseksi
+      if(active===null){active=id;}
+      else{turn.unshift(id);}
+    } else if(inTurn){
+      // Jo vuorossa — nosta ensimmäiseksi
+      turn=turn.filter(function(i){return i!==id});
+      turn.unshift(id);
+    }
+    // Jos jo aktiivinen, ei tarvitse tehdä mitään
+  }
   save();render();
   notify('🐸 Sammakko asetettu');
   document.getElementById('ai-card-frog')&&(document.getElementById('ai-card-frog').style.opacity='.5');
@@ -2332,6 +4118,7 @@ function addTask(){
   else if(newImportant&&!newUrgent)q='q2';
   else if(!newImportant&&newUrgent)q='q3';
   tasks.push({id:nid++,text:txt,verbi:newVerbi,kuvaus:kuvaus,lisatiedot:lisatiedot||null,linkki:linkki||null,quad:q,done:false,pomos:0,est:est,important:newImportant,urgent:newUrgent,tags:newTags.slice(),projectId:newProjectId||null,schedule:newSchedule||null,scheduled_hidden:!!newSchedule});
+  _newTaskId=nid-1; // Vaihe 10: merkitään juuri lisätty id animaatiota varten
   // Split remainder if set
   var remainder = window._splitRemainder;
   window._splitRemainder = null;
@@ -2363,10 +4150,20 @@ function markDone(id){
   if(t){
     t.done=true;
     t.doneAt=new Date().toISOString();
-    queue=queue.filter(function(i){return i!==id});
+    if(active===id){active=turn.length>0?turn.shift():null;}
+    else{turn=turn.filter(function(i){return i!==id});}
     soundBell();
+    // 12D: ilmoita ruudunlukijalle
+    a11yAnnounce('Valmis: '+(t.verbi?t.verbi+' ':'')+t.text);
   }
-  save();render();
+  // Vaihe 10: animoi kortti ulos ennen render()
+  var cardEl=document.querySelector('[data-task-id="'+id+'"]');
+  if(cardEl){
+    cardEl.classList.add('card-exiting');
+    cardEl.addEventListener('animationend',function(){save();render();},{once:true});
+  } else {
+    save();render();
+  }
 }
 
 function restore(id){
@@ -2375,17 +4172,17 @@ function restore(id){
   save();render();
 }
 function del(id){
-  queue=queue.filter(function(i){return i!==id});
+  if(active===id){active=turn.length>0?turn.shift():null;}
+  else{turn=turn.filter(function(i){return i!==id});}
   tasks=tasks.filter(function(t){return t.id!==id});
-  // Ajastin jatkaa vaikka jono tyhjenisi — pomodoro on ehjä yksikkö
-  // Pysäytetään vain jos ei ole käynnissä
-  if(queue.length===0&&tmr===null) stopAll();
+  if(!active&&turn.length===0&&tmr===null) stopAll();
   save();render();
 }
 
 // Kumottava poisto — tallentaa tehtävän 5 sekunniksi ja näyttää banneri
 var _pendingDelete=null;
 var _pendingDeleteTimer=null;
+var _newTaskId=null; // Vaihe 10: merkitsee juuri luodun tehtävän animaatiota varten
 function delUndoable(id){
   var t=tasks.find(function(x){return x.id===id});
   if(!t)return;
@@ -2394,8 +4191,9 @@ function delUndoable(id){
     clearTimeout(_pendingDeleteTimer);
     _finalizeDelete();
   }
-  _pendingDelete={task:JSON.parse(JSON.stringify(t)),inQueue:queue.indexOf(id)>=0,queueIdx:queue.indexOf(id)};
-  queue=queue.filter(function(i){return i!==id});
+  _pendingDelete={task:JSON.parse(JSON.stringify(t)),wasActive:active===id,turnIdx:turn.indexOf(id)};
+  if(active===id){active=turn.length>0?turn.shift():null;}
+  else{turn=turn.filter(function(i){return i!==id});}
   tasks=tasks.filter(function(x){return x.id!==id});
   save();render();
   _showUndoBanner();
@@ -2410,9 +4208,13 @@ function undoDelete(){
   if(!_pendingDelete)return;
   clearTimeout(_pendingDeleteTimer);
   tasks.push(_pendingDelete.task);
-  if(_pendingDelete.inQueue){
-    var idx=Math.min(_pendingDelete.queueIdx, queue.length);
-    queue.splice(idx,0,_pendingDelete.task.id);
+  if(_pendingDelete.wasActive){
+    // Palauta aktiiviseksi, siirrä nykyinen active vuoron eteen
+    if(active!==null) turn.unshift(active);
+    active=_pendingDelete.task.id;
+  } else if(_pendingDelete.turnIdx>=0){
+    var idx=Math.min(_pendingDelete.turnIdx, turn.length);
+    turn.splice(idx,0,_pendingDelete.task.id);
   }
   _pendingDelete=null;_pendingDeleteTimer=null;
   var b=document.getElementById('undo-banner');
@@ -2441,21 +4243,34 @@ function _showUndoBanner(){
 }
 
 function tqToggle(id){
-  if(queue.indexOf(id)>=0) queue=queue.filter(function(i){return i!==id});
-  else queue.push(id);
-  // Ei pysäytetä ajastinta kesken pomodoran — se on ehjä yksikkö
-  if(queue.length===0&&!tmr) stopAll();
+  var wasInQueue=id===active||turn.indexOf(id)>=0;
+  var wasArena=id===active;
+  if(wasInQueue){
+    if(active===id){active=turn.length>0?turn.shift():null;}
+    else{turn=turn.filter(function(i){return i!==id});}
+  } else {
+    if(active===null){active=id;}
+    else{turn.push(id);}
+  }
+  if(!active&&turn.length===0&&!tmr) stopAll();
+  // 12D: ilmoita ruudunlukijalle jos tehtävä nousee areenalle
+  if(!wasInQueue&&active===id){
+    var t=tasks.find(function(t){return t.id===id});
+    if(t) a11yAnnounce('Uusi aktiivinen tehtävä: '+(t.verbi?t.verbi+' ':'')+t.text);
+  }
   save();render();
 }
 function tqRemove(id){
-  queue=queue.filter(function(i){return i!==id});
-  if(queue.length===0&&!tmr) stopAll();
+  if(active===id){active=turn.length>0?turn.shift():null;}
+  else{turn=turn.filter(function(i){return i!==id});}
+  if(!active&&turn.length===0&&!tmr) stopAll();
   save();render();
 }
 
 function returnFromQueue(id){
-  queue=queue.filter(function(i){return i!==id});
-  if(queue.length===0&&!tmr) stopAll();
+  if(active===id){active=turn.length>0?turn.shift():null;}
+  else{turn=turn.filter(function(i){return i!==id});}
+  if(!active&&turn.length===0&&!tmr) stopAll();
   save();render();
   notify('Palautettu tehtävälistalle');
 }
@@ -2471,20 +4286,38 @@ function doneActive(){
   if(cur){
     cur.done=true;
     cur.doneAt=new Date().toISOString();
-    queue=queue.filter(function(i){return i!==cur.id});
+    active=turn.length>0?turn.shift():null;
     soundBell();
+    // Vaihe 10: animoi areenakortti ulos
+    var cardEl=document.querySelector('[data-task-id="'+cur.id+'"]');
+    if(cardEl){
+      cardEl.classList.add('card-exiting');
+      cardEl.addEventListener('animationend',function(){save();render();},{once:true});
+      return;
+    }
   }
   save();render();
 }
 
 function doNext(){
+  // Siirtää aktiivisen kortin vuoron LOPPUUN (ei merkitse tehdyksi)
+  // ja nostaa vuoron ensimmäisen aktiiviseksi.
   var cur=getActive();
-  if(cur){
-    cur.done=true;
-    cur.doneAt=new Date().toISOString();
-    soundBell();
+  if(!cur) return;
+  if(turn.length===0){
+    // Vuoro tyhjä — ei ole minne siirtää, ei tee mitään
+    notify('Vuorossa ei ole muita kortteja');
+    return;
   }
-  queue.shift();
+  // Siirrä aktiivinen vuoron loppuun
+  turn.push(cur.id);
+  // Nosta vuoron ensimmäinen aktiiviseksi
+  active=turn.shift();
+  // 12D: ilmoita seuraava tehtävä
+  var next=getActive();
+  if(next) setTimeout(function(){
+    a11yAnnounce('Uusi aktiivinen tehtävä: '+(next.verbi?next.verbi+' ':'')+next.text);
+  }, 500);
   save();render();
 }
 
@@ -2494,11 +4327,15 @@ function toggleTimer(){
   if(tmr){
     // Running → stop
     stopAll();
+    a11yAnnounce('Pomodoro pysäytetty.');
     return;
   }
-  if(queue.length===0){notify('Lisää tehtäviä jonoon ensin 🍅');return}
+  if(!active&&turn.length===0){notify('Lisää tehtäviä jonoon ensin 🍅');return}
   if(phase==='idle')phase='work';
   startTmr();
+  var act=getActive();
+  var wmin=Math.round(WORK/60);
+  a11yAnnounce('Pomodoro käynnistyi. '+(act?act.text+'. ':'')+wmin+' minuuttia.');
 }
 
 function startTmr(){
@@ -2661,13 +4498,17 @@ function onPhaseEnd(){
     if(pomoDone>=4){
       pomoDone=0;
       phase='lbrk';tleft=LBRK;
-      pushNotif('🎉 Neljä pomodoroa!','Ansaittu 20 min pitkä tauko. Poistu ruudulta.');
-      notify('🎉 Neljä pomodoroa! Ansaittu 20 min pitkä tauko.');
+      var lmin=Math.round(LBRK/60);
+      pushNotif('🎉 Neljä pomodoroa!','Ansaittu '+lmin+' min pitkä tauko. Poistu ruudulta.');
+      notify('🎉 Neljä pomodoroa! Ansaittu '+lmin+' min pitkä tauko.');
+      a11yAnnounce('Neljä pomodoroa valmis. Pitkä tauko '+lmin+' minuuttia alkaa.');
     } else {
       phase='sbrk';tleft=SBRK;
       var actName=act?act.text:'';
-      pushNotif('🍅 Pomodoro valmis!', (actName?'"'+actName+'" valmis. ':'')+' 5 min tauko.');
-      notify('🍅 Pomodoro valmis! ' + SBRK/60 + ' min tauko.');
+      var smin=Math.round(SBRK/60);
+      pushNotif('🍅 Pomodoro valmis!', (actName?'"'+actName+'" valmis. ':'')+' '+smin+' min tauko.');
+      notify('🍅 Pomodoro valmis! ' + smin + ' min tauko.');
+      a11yAnnounce('Pomodoro valmis. Tauko '+smin+' minuuttia alkaa.');
     }
     startTmr();
   } else if(phase==='sbrk'||phase==='lbrk'){
@@ -2675,6 +4516,7 @@ function onPhaseEnd(){
     soundWater();
     pushNotif('⏰ Tauko ohi','Paina ▶ aloittaaksesi seuraavan pomodoran.');
     notify('⏰ Tauko ohi — paina ▶ aloittaaksesi seuraavan pomodoran.');
+    a11yAnnounce('Tauko ohi. Voit aloittaa seuraavan pomodoran.');
     if(tmr){clearInterval(tmr);tmr=null;}
     setClockIcon(false);
     updClock();render();
@@ -2695,8 +4537,10 @@ function stopAll(){
 function setClockIcon(running){
   var play=document.getElementById('iconPlay');
   var stop=document.getElementById('iconStop');
+  var btn=document.getElementById('pringBtn');
   if(play) play.setAttribute('opacity', running?'0':'0.18');
   if(stop) stop.setAttribute('opacity', running?'0.22':'0');
+  if(btn) btn.setAttribute('aria-label', running?'Pysäytä pomodoro':'Aloita pomodoro');
 }
 
 // ── CLOCK UPDATE ──
@@ -2725,10 +4569,12 @@ function updClock(){
   var ringColor='#c0392b';
   var total=WORK;
 
-  if(phase==='work'){phaseLabel='TYÖ';phaseColor='#c0392b';ringColor='#c0392b';total=WORK;pbEl.className='pbox work';}
-  else if(phase==='sbrk'){phaseLabel='TAUKO 5 min';phaseColor='#2980b9';ringColor='#2980b9';total=SBRK;pbEl.className='pbox sbrk';}
-  else if(phase==='lbrk'){phaseLabel='PITKÄ TAUKO 20 min';phaseColor='#8e44ad';ringColor='#8e44ad';total=LBRK;pbEl.className='pbox lbrk';}
-  else{phaseLabel='';pbEl.className='pbox idle';}
+  // Vaiheluokka pbEl:ään ilman että muut luokat (pbox--arena, pbox--mini) katoavat
+  pbEl.classList.remove('work','sbrk','lbrk','idle');
+  if(phase==='work'){phaseLabel='TYÖ';phaseColor='#c0392b';ringColor='#c0392b';total=WORK;pbEl.classList.add('work');}
+  else if(phase==='sbrk'){phaseLabel='TAUKO '+Math.round(SBRK/60)+' min';phaseColor='#2980b9';ringColor='#2980b9';total=SBRK;pbEl.classList.add('sbrk');}
+  else if(phase==='lbrk'){phaseLabel='PITKÄ TAUKO '+Math.round(LBRK/60)+' min';phaseColor='#8e44ad';ringColor='#8e44ad';total=LBRK;pbEl.classList.add('lbrk');}
+  else{phaseLabel='';pbEl.classList.add('idle');}
 
   if(tphaseEl){tphaseEl.textContent=phaseLabel;tphaseEl.setAttribute('fill',phaseColor);}
 
@@ -2756,12 +4602,12 @@ function updClock(){
     }
   }
 
-  // Next button: work phase + 2+ in queue. Done button: work phase + exactly 1 in queue.
+  // Next button: work phase + vuorossa lisää kortteja. Done button: active olemassa + ei idle.
   var dnBtn=document.getElementById('btnDn');
   var wtBtn=document.getElementById('btnWt');
-  if(nxBtn) nxBtn.style.display=(phase==='work'&&queue.length>1)?'':'none';
-  if(dnBtn) dnBtn.style.display=(queue.length>=1&&phase!=='idle')?'':'none';
-  if(wtBtn) wtBtn.style.display=(queue.length>=1&&phase!=='idle')?'':'none';
+  if(nxBtn) nxBtn.style.display=(phase==='work'&&turn.length>0)?'':'none';
+  if(dnBtn) dnBtn.style.display=(active!==null&&phase!=='idle')?'':'none';
+  if(wtBtn) wtBtn.style.display=(active!==null&&phase!=='idle')?'':'none';
 
   // Rule strip: context-aware message
   if(ruleEl){
@@ -2773,7 +4619,7 @@ function updClock(){
     } else if(phase==='lbrk'){
       ruleEl.innerHTML='<strong>Pitkä tauko — ansaittu.</strong> Poistu ruudulta kokonaan. Palaa levänneenä.';
     } else {
-      ruleEl.innerHTML='<strong>Pomodoro:</strong> 25 min työ → 5 min tauko. Neljän pomodoran jälkeen 20 min pitkä tauko.';
+      ruleEl.innerHTML='<strong>Pomodoro:</strong> '+Math.round(WORK/60)+' min työ → '+Math.round(SBRK/60)+' min tauko. Neljän pomodoran jälkeen '+Math.round(LBRK/60)+' min pitkä tauko.';
     }
   }
 
@@ -2784,70 +4630,1042 @@ function updClock(){
 function updInfo(){
   var infoEl=document.getElementById('pinfo');
   if(!infoEl)return;
-  if(queue.length===0){
-    if(tmr){
-      // Timer running but queue empty — show reminder
-      infoEl.innerHTML='';
-      var rm=document.createElement('div');rm.className='pstatus';rm.textContent='Jono tyhjä';infoEl.appendChild(rm);
-      var msg=document.createElement('div');
-      msg.style.cssText='font-size:.78rem;color:rgba(255,255,255,.85);font-weight:300;line-height:1.5;margin-top:.25rem';
-      msg.innerHTML='Pomodoro on ehjä yksikkö — anna ajastimen loppua.<br><span style="color:var(--muted)">Käytä jäljellä oleva aika: kirjaa mitä opit, tai istu rauhassa.</span>';
-      infoEl.appendChild(msg);
-    } else {
-      infoEl.innerHTML='<div class="pinfo-empty">Lisää tehtäviä jonoon — napauta tehtävän tomaattia</div>';
-    }
-    return;
-  }
 
   infoEl.innerHTML='';
 
-  // Status line
+  // Näytetään vain ajastimen tila — tehtävä ja jono näkyvät areenassa
   var st=document.createElement('div');st.className='pstatus';
   if(phase==='work'&&tmr)st.textContent='Työ käynnissä';
-  else if(phase==='sbrk')st.textContent='Lyhyt tauko — 5 min';
-  else if(phase==='lbrk')st.textContent='Pitkä tauko — 20 min';
+  else if(phase==='sbrk')st.textContent='Lyhyt tauko';
+  else if(phase==='lbrk')st.textContent='Pitkä tauko';
   else if(phase==='work'&&!tmr)st.textContent='Pysäytetty';
-  else st.textContent='Tehtäviä jonossa';
-  infoEl.appendChild(st);
-
-  // Active task name only
-  var act=getActive();
-  if(act){
-    var an=document.createElement('div');an.className='pactive-name';an.textContent=act.text;infoEl.appendChild(an);
-  }
-
-  // Queue estimate row — SVG tomatoes
-  var totalEst=totalQueueEst();
-  if(totalEst>0){
-    var qe=document.createElement('div');
-    qe.style.cssText='display:flex;align-items:center;flex-wrap:wrap;gap:2px;margin:.3rem 0 .35rem;';
-    var lbl=document.createElement('span');
-    lbl.style.cssText='color:var(--muted);font-size:.68rem;font-weight:300;margin-right:.3rem;white-space:nowrap';
-    lbl.textContent='Jono yhteensä';
-    qe.appendChild(lbl);
-    var whole=Math.floor(totalEst),half=totalEst%1!==0;
-    for(var i=0;i<whole;i++) qe.appendChild(svgTomatoFilled(16));
-    if(half) qe.appendChild(svgTomatoFilledHalf(16));
-    infoEl.appendChild(qe);
-  }
-
-  // Next tasks chips
-  if(queue.length>1){
-    var nd=document.createElement('div');nd.className='pnext';
-    queue.slice(1,4).forEach(function(id){
-      var t=tasks.find(function(t){return t.id===id});if(!t)return;
-      var c=document.createElement('div');c.className='chip';
-      var s=document.createElement('span');s.textContent=t.text;
-      var x=document.createElement('span');x.className='chipx';x.title='Poista jonosta';x.textContent='×';
-      x.onclick=(function(i){return function(){returnFromQueue(i)}})(id);
-      c.appendChild(s);c.appendChild(x);nd.appendChild(c);
-    });
-    if(queue.length>4){var more=document.createElement('div');more.style.fontSize='.68rem';more.style.color='var(--muted)';more.textContent='+'+(queue.length-4)+' lisää';nd.appendChild(more);}
-    infoEl.appendChild(nd);
-  }
+  else if(tmr)st.textContent='Käynnissä';
+  else st.textContent='';
+  if(st.textContent) infoEl.appendChild(st);
 }
 
 // ── RENDER ──
+/* ── Vaihe 5: Feature flag + uusi korttikomponentti ─────────── */
+window._useCardUI = true; // vaihe 6a: uusi korttinäkymä oletuksena
+
+var VERB_ICONS = {
+  'Soita':'📞','Sovi':'🤝','Kirjaa':'📝','Tee':'🔨',
+  'Selvitä':'🔍','Vie':'➡️','Tarkista':'✓','Aikatauluta':'📅',
+  'Varaa':'📅','Lue':'📖','Lähetä':'📤','Muu':'✦'
+};
+
+/* Pienen tomaatti-rivin rakennus (ääriviivat) */
+function mkPipsNew(count){
+  var wrap=document.createElement('div');
+  wrap.className='card-new__pips';
+  // Ruudunlukija: kerrotaan arvio tekstinä
+  var half=count-Math.floor(count)>=0.5;
+  var txt=Math.floor(count)+(half?'½':'');
+  wrap.setAttribute('aria-label',txt+' pomodoro'+(count!==1?'a':''));
+  wrap.setAttribute('role','img');
+  var whole=Math.floor(count);
+  var half=count-whole>=0.5;
+  for(var i=0;i<Math.min(whole,4);i++){
+    var s=svgTomatoOutline(12);
+    s.style.opacity='.8';
+    wrap.appendChild(s);
+  }
+  if(half&&whole<4){
+    var h=svgTomatoOutline(12);h.style.opacity='.5';wrap.appendChild(h);
+  }
+  if(count>4){
+    var lbl=document.createElement('span');
+    lbl.style.cssText='font-size:.55rem;color:var(--muted);font-weight:500;margin-left:.1rem';
+    lbl.textContent='×'+count;
+    wrap.appendChild(lbl);
+  }
+  return wrap;
+}
+
+/* Tärkeä-symboli pienempänä (kultainen ! ympyrässä) */
+function mkImpBadge(active){
+  var btn=document.createElement('button');
+  btn.className='card-new__btn'+(active?' imp-on':'');
+  btn.title='Tärkeä';
+  btn.setAttribute('aria-label','Tärkeä'+(active?' (aktiivinen)':''));
+  // SVG: kultainen huutomerkki ympyrässä
+  var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('width','16');svg.setAttribute('height','16');
+  svg.setAttribute('viewBox','0 0 16 16');svg.setAttribute('fill','none');
+  var c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  c.setAttribute('cx','8');c.setAttribute('cy','8');c.setAttribute('r','7');
+  c.setAttribute('stroke',active?'#c49a3a':'currentColor');
+  c.setAttribute('stroke-width','1.5');
+  var line=document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1','8');line.setAttribute('y1','4.5');
+  line.setAttribute('x2','8');line.setAttribute('y2','9');
+  line.setAttribute('stroke',active?'#c49a3a':'currentColor');
+  line.setAttribute('stroke-width','1.8');line.setAttribute('stroke-linecap','round');
+  var dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  dot.setAttribute('cx','8');dot.setAttribute('cy','11.5');dot.setAttribute('r','1');
+  dot.setAttribute('fill',active?'#c49a3a':'currentColor');
+  svg.appendChild(c);svg.appendChild(line);svg.appendChild(dot);
+  btn.appendChild(svg);
+  return btn;
+}
+
+/* Kiireinen-symboli (terrakotta kolmio) */
+function mkUrgBadge(active){
+  var btn=document.createElement('button');
+  btn.className='card-new__btn'+(active?' urg-on':'');
+  btn.title='Kiireinen';
+  btn.setAttribute('aria-label','Kiireinen'+(active?' (aktiivinen)':''));
+  var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('width','15');svg.setAttribute('height','15');
+  svg.setAttribute('viewBox','0 0 15 15');svg.setAttribute('fill','none');
+  var poly=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+  poly.setAttribute('points','7.5,2 14,13 1,13');
+  poly.setAttribute('stroke',active?'#a84c28':'currentColor');
+  poly.setAttribute('stroke-width','1.5');
+  poly.setAttribute('stroke-linejoin','round');
+  if(active)poly.setAttribute('fill','rgba(168,76,40,.18)');
+  svg.appendChild(poly);
+  btn.appendChild(svg);
+  return btn;
+}
+
+function renderCardNew(t,container,anyFrog){
+  var isArena=t.id===active;
+  var isQ=t.id===active||turn.indexOf(t.id)>=0;
+
+  var card=document.createElement('div');
+  card.className='card-new '+(isArena?'card-new--arena':'card-new--deck');
+  card.setAttribute('tabindex','0');
+  var _qlbl=t.quad?{q1:'Tee heti',q2:'Aikatauluta',q3:'Delegoi',q4:'Poista'}[t.quad]:'';
+  var _albl=(t.frog?'Sammakko. ':'')+(t.verbi||'')+' '+t.text+(_qlbl?', '+_qlbl:'')+(t.est?' — '+fe(t.est)+' pomodoro':'');
+  card.setAttribute('aria-label',_albl);
+  card.dataset.taskId=t.id;
+
+  // Taustaikoni
+  var bgIco=document.createElement('span');
+  bgIco.className='card-new__bg-icon';
+  bgIco.setAttribute('aria-hidden','true');
+  bgIco.textContent=VERB_ICONS[t.verbi]||'✦';
+  card.appendChild(bgIco);
+
+  if(isArena){
+    /* ── AREENA-TILA: täysi näkymä ── */
+
+    // Verbi + nimi
+    var titleWrap=document.createElement('div');
+    if(t.verbi){
+      var vSpan=document.createElement('span');
+      vSpan.className='card-new__verb';
+      vSpan.textContent=t.verbi;
+      titleWrap.appendChild(vSpan);
+    }
+    var nameSpan=document.createElement('div');
+    nameSpan.className='card-new__title';
+    nameSpan.style.fontWeight='500';
+    nameSpan.textContent=t.text;
+    titleWrap.appendChild(nameSpan);
+    card.appendChild(titleWrap);
+
+    // Fakta-rivi: projekti + quad
+    var fact=document.createElement('div');
+    fact.className='card-new__fact';
+    if(t.projectId){
+      var proj=projects.find(function(p){return p.id===t.projectId});
+      if(proj){
+        var chip=document.createElement('span');
+        chip.className='card-new__proj-chip';
+        chip.style.color=proj.color;chip.style.borderColor=proj.color;
+        chip.textContent=proj.name;
+        fact.appendChild(chip);
+      }
+    }
+    if(t.quad){
+      var qbadge=document.createElement('span');
+      qbadge.className='card-new__quad-badge '+t.quad;
+      qbadge.textContent=t.quad.toUpperCase()+' · '+QL[t.quad];
+      fact.appendChild(qbadge);
+    }
+    if(fact.children.length)card.appendChild(fact);
+
+    // Ominaisuusrivi (tärkeä, kiireinen, tomaatit, sammakko)
+    var traits=document.createElement('div');
+    traits.className='card-new__actions';
+
+    var impBtn2=mkImpBadge(!!t.important);
+    impBtn2.onclick=(function(i){return function(e){e.stopPropagation();setFlag(i,'important')}})(t.id);
+    traits.appendChild(impBtn2);
+
+    var urgBtn2=mkUrgBadge(!!t.urgent);
+    urgBtn2.onclick=(function(i){return function(e){e.stopPropagation();setFlag(i,'urgent')}})(t.id);
+    traits.appendChild(urgBtn2);
+
+    if(t.est&&t.est>0){
+      var pipsWrap=mkPipsNew(t.est);
+      pipsWrap.title='Aika-arvio: '+fe(t.est)+' 🍅';
+      traits.appendChild(pipsWrap);
+    }
+
+    if(t.frog){
+      var frogPip=document.createElement('span');
+      frogPip.className='card-new__frog-pip';
+      frogPip.textContent='🐸';
+      frogPip.title='Sammakko — tee tämä ensin';
+      traits.appendChild(frogPip);
+    }
+
+    // Sammakko-toggle
+    var showFrog=!anyFrog||t.frog;
+    if(showFrog){
+      var fbNew=document.createElement('button');
+      fbNew.className='card-new__btn'+(t.frog?' frog-on':'');
+      fbNew.title='Sammakko';
+      fbNew.setAttribute('aria-label',t.frog?'Poista sammakko':'Aseta sammakoksi');
+      fbNew.appendChild(t.frog?svgFrogFilled(16):svgFrogOutline(16));
+      fbNew.onclick=(function(i){return function(e){e.stopPropagation();toggleFrog(i)}})(t.id);
+      traits.appendChild(fbNew);
+    }
+
+    // Jono-nappi (tomaatti)
+    var qbtn=document.createElement('button');
+    qbtn.className='card-new__btn'+(isQ?' imp-on':'');
+    qbtn.title=isQ?'Poista jonosta':'Lisää jonoon';
+    qbtn.appendChild(svgTomatoFilled(16));
+    qbtn.onclick=(function(i){return function(e){e.stopPropagation();tqToggle(i)}})(t.id);
+    traits.appendChild(qbtn);
+
+    card.appendChild(traits);
+
+    // ── Vaihe 6a+: Toimintorivi (areenalla) ──
+    var actionRow=document.createElement('div');
+    actionRow.className='card-new__action-row';
+
+    // Matriisi-siirto (näkyy vain jos t.quad asetettu)
+    if(t.quad){
+      var mxBtn=document.createElement('button');
+      mxBtn.className='card-new__action-btn arena-secondary';
+      mxBtn.title='Näytä matriisissa';
+      mxBtn.innerHTML='<span class="emoji">⧉</span>';
+      mxBtn.onclick=(function(q){return function(e){
+        e.stopPropagation();
+        var matTab=document.querySelector('[data-tab="matrix"]')||document.querySelector('.tab:nth-child(2)');
+        if(matTab)matTab.click();else sv('matrix');
+        setTimeout(function(){
+          var el=document.getElementById('m'+q);
+          if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+        },150);
+      }})(t.quad);
+      actionRow.appendChild(mxBtn);
+    }
+
+    // Odottaa
+    var wBtn=document.createElement('button');
+    wBtn.className='card-new__action-btn'+(t.waiting?' wait-on':'');
+    wBtn.title=t.waiting?'Odottaa — palauta aktiiviseksi':'Merkitse odottavaksi';
+    wBtn.innerHTML='<span class="emoji">⏳</span>';
+    wBtn.onclick=(function(i,task){return function(e){
+      e.stopPropagation();
+      if(task.waiting)clearWaiting(i);else setWaiting(i);
+    }})(t.id,t);
+    actionRow.appendChild(wBtn);
+
+    // Kalenteri
+    var calBtn=document.createElement('button');
+    calBtn.className='card-new__action-btn arena-secondary';
+    calBtn.innerHTML='<span class="emoji">📅</span>';
+    calBtn.onclick=(function(tid){return function(e){e.stopPropagation();if(typeof openIcsDialog==='function')openIcsDialog(tid);}})(t.id);
+    actionRow.appendChild(calBtn);
+
+    // Avaa linkki (vain jos t.linkki asetettu)
+    if(t.linkki){
+      var lnkBtn=document.createElement('button');
+      lnkBtn.className='card-new__action-btn active arena-secondary';
+      lnkBtn.title='Avaa linkki: '+t.linkki;
+      lnkBtn.innerHTML='<span class="emoji">🔗</span>';
+      lnkBtn.onclick=(function(url){return function(e){e.stopPropagation();window.open(url,'_blank','noopener');}})(t.linkki);
+      actionRow.appendChild(lnkBtn);
+    }
+
+    // Aamusuunnittelu
+    var amuBtn=document.createElement('button');
+    amuBtn.className='card-new__action-btn arena-secondary';
+    var isAmu=Array.isArray(t.tags)&&t.tags.indexOf('aamusuunnittelu')>=0;
+    if(isAmu)amuBtn.classList.add('active');
+    amuBtn.title='Avaa aamusuunnittelu';
+    amuBtn.innerHTML='<span class="emoji">🌅</span>';
+    amuBtn.onclick=function(e){e.stopPropagation();window.open('aamu.html','_blank','width=560,height=800');};
+    actionRow.appendChild(amuBtn);
+
+    // Muokkaa — avaa yhteinen muokkausmodaali (Vaihe 18)
+    var editBtn=document.createElement('button');
+    editBtn.className='card-new__action-btn';
+    editBtn.title='Muokkaa';
+    editBtn.innerHTML='<span class="emoji">✏</span>';
+    editBtn.onclick=(function(tid){return function(e){e.stopPropagation();openEditModal(tid);};})(t.id);
+    actionRow.appendChild(editBtn);
+
+    card.appendChild(actionRow);
+
+    // Tehty + poista
+    var footer2=document.createElement('div');
+    footer2.className='card-new__footer';
+    if(t.quad){
+      var doneBtn=document.createElement('button');
+      doneBtn.className='card-new__done-btn';
+      doneBtn.textContent='✓ Tehty';
+      doneBtn.setAttribute('aria-label','Merkitse tehdyksi');
+      doneBtn.onclick=(function(i){return function(e){e.stopPropagation();markDone(i)}})(t.id);
+      footer2.appendChild(doneBtn);
+    } else {
+      footer2.appendChild(document.createElement('span'));
+    }
+    var delBtn=document.createElement('button');
+    delBtn.className='card-new__del-btn';
+    delBtn.title='Poista (kumottavissa 5s)';
+    delBtn.setAttribute('aria-label','Poista tehtävä');
+    delBtn.innerHTML='<svg width="13" height="13" viewBox="0 0 12 12" fill="none"><line x1="1.5" y1="1.5" x2="10.5" y2="10.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="10.5" y1="1.5" x2="1.5" y2="10.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+    delBtn.onclick=(function(i){return function(e){e.stopPropagation();delUndoable(i)}})(t.id);
+    footer2.appendChild(delBtn);
+    card.appendChild(footer2);
+
+  } else {
+    /* ── PAKKA-TILA: kompakti ── */
+
+    // Vasen: verbi + nimi
+    var deckLeft=document.createElement('div');
+    deckLeft.style.minWidth='0';
+    if(t.verbi){
+      var vSpanD=document.createElement('span');
+      vSpanD.className='card-new__verb';
+      vSpanD.textContent=t.verbi;
+      deckLeft.appendChild(vSpanD);
+    }
+    var nameD=document.createElement('div');
+    nameD.className='card-new__title';
+    // Ellipsis for long names
+    nameD.style.cssText+='white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+    nameD.textContent=t.text;
+    deckLeft.appendChild(nameD);
+    card.appendChild(deckLeft);
+
+    // Oikea: symbolit
+    var syms=document.createElement('div');
+    syms.className='card-new__symbols';
+
+    if(t.frog){var fp=document.createElement('span');fp.textContent='🐸';fp.style.fontSize='.85rem';fp.title='Sammakko';syms.appendChild(fp);}
+    if(t.important){var iB=mkImpBadge(true);iB.style.pointerEvents='none';syms.appendChild(iB);}
+    if(t.urgent){var uB=mkUrgBadge(true);uB.style.pointerEvents='none';syms.appendChild(uB);}
+    if(t.est&&t.est>0){
+      var pip2=mkPipsNew(Math.min(t.est,3));
+      syms.appendChild(pip2);
+    }
+    card.appendChild(syms);
+
+    // Hover: näytä fakta-rivi (piilotettuna, CSS:llä avautuu) — 
+    // Nyt yksinkertainen click→arena visuaalisena togglena
+    // Hover-efekti JS:llä (vältetään CSS :hover jumiutumisongelma)
+    card.addEventListener('mouseenter',function(){
+      if(card.classList.contains('card-new--deck')){
+        card.style.transform='scale(1.025) translateY(-2px)';
+        card.style.boxShadow='0 6px 20px rgba(0,0,0,.22)';
+        card.style.background='var(--surface-strong)';
+        card.style.zIndex='2';
+      }
+    });
+    card.addEventListener('mouseleave',function(){
+      card.style.transform='';
+      card.style.boxShadow='';
+      card.style.background='';
+      card.style.zIndex='';
+    });
+
+    card.onclick=function(e){
+      if(e.target.closest('.card-new__btn,.card-new__done-btn,.card-new__del-btn'))return;
+      // Visuaalinen toggle: deck→arena (ei oikeaa logiikkaa vaiheessa 5)
+      if(card.classList.contains('card-new--deck')){
+        // Sulje KAIKKI muut arena-preview-kortit koko dokumentissa
+        document.querySelectorAll('.card-new--arena-preview').forEach(function(prev){
+          prev.classList.remove('card-new--arena','card-new--arena-preview');
+          prev.classList.add('card-new--deck');
+          // Palauta deck-symbolit näkyviin
+          var ps=prev.querySelector('.card-new__symbols');if(ps)ps.style.display='';
+          // Poista dynaamisesti lisätyt elementit
+          var pf=prev.querySelector('.card-new__footer');if(pf)pf.remove();
+          var pa=prev.querySelector('.card-new__actions');if(pa)pa.remove();
+          var pfc=prev.querySelector('.card-new__fact');if(pfc)pfc.remove();
+        });
+        card.classList.remove('card-new--deck');
+        card.classList.add('card-new--arena','card-new--arena-preview');
+        // Piilota deck-symbolit laajennetussa tilassa
+        var deckSyms=card.querySelector('.card-new__symbols');
+        if(deckSyms)deckSyms.style.display='none';
+        // Lisää toimintorivi ja footer dynaamisesti
+        if(!card.querySelector('.card-new__footer')){
+          var f3=document.createElement('div');f3.className='card-new__footer';
+          if(t.quad){
+            var db3=document.createElement('button');db3.className='card-new__done-btn';db3.textContent='✓ Tehty';
+            db3.onclick=(function(i){return function(e2){e2.stopPropagation();markDone(i)}})(t.id);
+            f3.appendChild(db3);
+          } else {f3.appendChild(document.createElement('span'));}
+          var d3=document.createElement('button');d3.className='card-new__del-btn';d3.title='Poista';
+          d3.innerHTML='<svg width="13" height="13" viewBox="0 0 12 12" fill="none"><line x1="1.5" y1="1.5" x2="10.5" y2="10.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="10.5" y1="1.5" x2="1.5" y2="10.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+          d3.onclick=(function(i){return function(e2){e2.stopPropagation();delUndoable(i)}})(t.id);
+          f3.appendChild(d3);card.appendChild(f3);
+        }
+        // Toimintorivin symbolit käytettäväksi
+        if(!card.querySelector('.card-new__actions')){
+          var tr2=document.createElement('div');tr2.className='card-new__actions';
+          var iB2=mkImpBadge(!!t.important);iB2.onclick=(function(i){return function(e2){e2.stopPropagation();setFlag(i,'important')}})(t.id);tr2.appendChild(iB2);
+          var uB2=mkUrgBadge(!!t.urgent);uB2.onclick=(function(i){return function(e2){e2.stopPropagation();setFlag(i,'urgent')}})(t.id);tr2.appendChild(uB2);
+          var sfN=!anyFrog||t.frog;
+          if(sfN){var fbn2=document.createElement('button');fbn2.className='card-new__btn'+(t.frog?' frog-on':'');fbn2.title='Sammakko';fbn2.appendChild(t.frog?svgFrogFilled(15):svgFrogOutline(15));fbn2.onclick=(function(i){return function(e2){e2.stopPropagation();toggleFrog(i)}})(t.id);tr2.appendChild(fbn2);}
+          var qb2=document.createElement('button');qb2.className='card-new__btn'+(isQ?' imp-on':'');qb2.title='Jono';qb2.appendChild(svgTomatoFilled(15));qb2.onclick=(function(i){return function(e2){e2.stopPropagation();tqToggle(i)}})(t.id);tr2.appendChild(qb2);
+          var edB2=document.createElement('button');edB2.className='card-new__btn';edB2.title='Muokkaa';edB2.textContent='✎';edB2.onclick=(function(i){return function(e2){e2.stopPropagation();openEditModal(i);};})(t.id);tr2.appendChild(edB2);
+          card.insertBefore(tr2,card.querySelector('.card-new__footer'));
+        }
+        // Projekti + quad faktarivi
+        if(!card.querySelector('.card-new__fact')){
+          var fc2=document.createElement('div');fc2.className='card-new__fact';
+          if(t.projectId){var pj=projects.find(function(p){return p.id===t.projectId});if(pj){var ch2=document.createElement('span');ch2.className='card-new__proj-chip';ch2.style.color=pj.color;ch2.style.borderColor=pj.color;ch2.textContent=pj.name;fc2.appendChild(ch2);}}
+          if(t.quad){var qb3=document.createElement('span');qb3.className='card-new__quad-badge '+t.quad;qb3.textContent=t.quad.toUpperCase()+' · '+QL[t.quad];fc2.appendChild(qb3);}
+          if(fc2.children.length){var titleEl=card.querySelector('.card-new__title');if(titleEl)titleEl.after(fc2);}
+        }
+      } else {
+        card.classList.remove('card-new--arena','card-new--arena-preview');
+        card.classList.add('card-new--deck');
+        // Palauta deck-symbolit
+        var ds2=card.querySelector('.card-new__symbols');if(ds2)ds2.style.display='';
+        var f4=card.querySelector('.card-new__footer');if(f4)f4.remove();
+        var tr3=card.querySelector('.card-new__actions');if(tr3)tr3.remove();
+        var fc3=card.querySelector('.card-new__fact');if(fc3)fc3.remove();
+      }
+    };
+    // Näppäintuki: Enter/Space aktivoi saman kuin click
+    card.onkeydown=function(e){
+      if(e.key==='Enter'||e.key===' '){
+        e.preventDefault();
+        card.click();
+      }
+    };
+  }
+
+  // Reunan väri projektin mukaan
+  if(t.projectId){
+    var pj2=projects.find(function(p){return p.id===t.projectId});
+    if(pj2)card.style.borderLeft='3px solid '+pj2.color;
+  }
+
+  // Vaihe 10: fade-in animaatio juuri luodulle kortille
+  if(_newTaskId!==null&&t.id===_newTaskId){
+    card.classList.add('card-entering');
+    _newTaskId=null;
+    card.addEventListener('animationend',function(){card.classList.remove('card-entering');},{once:true});
+  }
+
+  container.appendChild(card);
+}
+
+// ── Vaihe 7: Käsi-vyöhyke ────────────────────────────────────────
+function buildHandQueue(inbox){
+  // Kandidaatit: Q1 tai Q2, ei tehty, ei odottaa, ei active eikä vuorossa
+  var cands=inbox.filter(function(t){
+    return !t.done&&!t.waiting&&t.id!==active&&turn.indexOf(t.id)<0&&(t.quad==='q1'||t.quad==='q2');
+  });
+  // Järjestys: Q1+frog → Q1 → Q2+frog → Q2
+  var q1f=cands.filter(function(t){return t.quad==='q1'&&t.frog;});
+  var q1 =cands.filter(function(t){return t.quad==='q1'&&!t.frog;});
+  var q2f=cands.filter(function(t){return t.quad==='q2'&&t.frog;});
+  var q2 =cands.filter(function(t){return t.quad==='q2'&&!t.frog;});
+  return q1f.concat(q1).concat(q2f).concat(q2).slice(0,7);
+}
+
+function promoteToHand(id){
+  // Nosta tehtävä vuoron kärkeen (heti areenan jälkeen) tai areenalle jos tyhjä
+  var hadActive=active!==null;
+  // Poista mahdollinen olemassa oleva paikka
+  if(active===id){active=turn.length>0?turn.shift():null;hadActive=false;}
+  else{turn=turn.filter(function(i){return i!==id;});}
+  if(hadActive){
+    // Lisää vuoron ensimmäiseksi
+    turn.unshift(id);
+  } else {
+    // Ei areenaa — nosta suoraan areenalle
+    active=id;
+  }
+  notify(hadActive?'🎴 Kortti siirretty seuraavaksi':'🎴 Kortti nostettu areenalle');
+  // Vaihe 10: animoi lähdekortti ulos, kohde sisään
+  var srcEl=document.querySelector('[data-task-id="'+id+'"]');
+  if(srcEl){
+    srcEl.classList.add('card-exiting');
+    srcEl.addEventListener('animationend',function(){
+      _newTaskId=id; // merkitään: tämä kortti animoituu sisään uudessa paikassaan
+      save();render();
+    },{once:true});
+  } else {
+    _newTaskId=id;
+    save();render();
+  }
+}
+
+// ── Vaihe 8: Pakka-vyöhyke ──────────────────────────────────────
+
+var _deckGroupMode='project'; // 'project' | 'quad' | 'none'
+var _deckFilterQuad=null;     // null | 'q1'|'q2'|'q3'|'q4'
+var _deckOverlayKey=null;     // projekti-id (int) tai quad-string tai '__all__'
+
+function getDeckTasks(inbox){
+  var handIds=buildHandQueue(inbox).map(function(t){return t.id;});
+  return inbox.filter(function(t){
+    return t.id!==active && turn.indexOf(t.id)<0 && handIds.indexOf(t.id)<0;
+  });
+}
+
+function renderDeck(inbox){
+  var deckEl=document.getElementById('deck');
+  if(!deckEl)return;
+  deckEl.innerHTML='';
+
+  if(!window._useCardUI)return;
+
+  var deckTasks=getDeckTasks(inbox);
+
+  // Otsikko
+  var lbl=document.createElement('div');
+  lbl.id='deck-label';
+  lbl.textContent='Pakka';
+  deckEl.appendChild(lbl);
+
+  // Kontrollit: ryhmittely + suodatus + haku
+  var ctrl=document.createElement('div');
+  ctrl.id='deck-controls';
+
+  // Ryhmittely-napit
+  var groups=[['project','Projektit'],['quad','Matriisi'],['none','Kaikki']];
+  groups.forEach(function(g){
+    var b=document.createElement('button');
+    b.className='deck-group-btn'+(_deckGroupMode===g[0]?' active':'');
+    b.textContent=g[1];
+    b.onclick=(function(mode){return function(){_deckGroupMode=mode;renderDeck(tasks.filter(function(t){return !t.done&&!t.scheduled_hidden;}));};}) (g[0]);
+    ctrl.appendChild(b);
+  });
+
+  // Suodatus Q1-Q4
+  var sep=document.createElement('span');
+  sep.style.cssText='width:1px;height:14px;background:var(--border);flex-shrink:0;margin:0 .1rem;';
+  ctrl.appendChild(sep);
+  ['q1','q2','q3','q4'].forEach(function(q){
+    var b=document.createElement('button');
+    b.className='deck-filter-btn '+q+(_deckFilterQuad===q?' active':'');
+    b.textContent=q.toUpperCase();
+    b.onclick=(function(qv){return function(){_deckFilterQuad=(_deckFilterQuad===qv?null:qv);renderDeck(tasks.filter(function(t){return !t.done&&!t.scheduled_hidden;}));};})(q);
+    ctrl.appendChild(b);
+  });
+
+  // Haku
+  var sw=document.createElement('div');
+  sw.id='deck-search-wrap';
+  sw.innerHTML='🔍 ';
+  var si=document.createElement('input');
+  si.id='deck-search-inp';
+  si.type='text';
+  si.placeholder='Hae pakasta…';
+  si.value=window._deckSearch||'';
+  si.oninput=function(){window._deckSearch=si.value;renderDeck(tasks.filter(function(t){return !t.done&&!t.scheduled_hidden;}));};
+  sw.appendChild(si);
+  ctrl.appendChild(sw);
+  deckEl.appendChild(ctrl);
+
+  // Suodata deckTasks
+  var filtered=deckTasks;
+  if(_deckFilterQuad) filtered=filtered.filter(function(t){return t.quad===_deckFilterQuad;});
+  var sq=(window._deckSearch||'').trim().toLowerCase();
+  if(sq) filtered=filtered.filter(function(t){
+    return (t.text||'').toLowerCase().indexOf(sq)>=0||(t.verbi||'').toLowerCase().indexOf(sq)>=0||(getProjectName(t.projectId)||'').toLowerCase().indexOf(sq)>=0;
+  });
+
+  var pilesEl=document.createElement('div');
+  pilesEl.id='deck-piles';
+
+  if(filtered.length===0){
+    var emp=document.createElement('div');
+    emp.id='deck-empty';
+    emp.textContent=deckTasks.length===0?'Kaikki tehtävät ovat areenalla tai kädessä.':'Ei hakutuloksia.';
+    deckEl.appendChild(emp);
+    return;
+  }
+
+  function makePile(key,name,color,tasks){
+    if(tasks.length===0)return;
+    var pile=document.createElement('div');
+    pile.className='deck-pile';
+    var c=color||'var(--muted)';
+    pile.style.setProperty('--dp-color',c);
+    var stripe=document.createElement('div');
+    stripe.className='deck-pile__stripe';
+    var nm=document.createElement('span');
+    nm.className='deck-pile__name';
+    nm.textContent=name;
+    var cnt=document.createElement('span');
+    cnt.className='deck-pile__count';
+    cnt.textContent=tasks.length+' kortt'+(tasks.length===1?'i':'ia');
+    pile.appendChild(stripe);pile.appendChild(nm);pile.appendChild(cnt);
+    pile.setAttribute('role','button');
+    pile.setAttribute('aria-label',name+' — '+tasks.length+' korttia');
+    pile.onclick=function(){openDeckOverlay(key,name,color,tasks);};
+    pilesEl.appendChild(pile);
+  }
+
+  if(_deckGroupMode==='project'){
+    var byP={};var noP=[];
+    filtered.forEach(function(t){
+      if(t.projectId){if(!byP[t.projectId])byP[t.projectId]=[];byP[t.projectId].push(t);}
+      else noP.push(t);
+    });
+    Object.keys(byP).forEach(function(pid){
+      var p=projects.find(function(p){return p.id===parseInt(pid)});
+      makePile('p:'+pid,p?p.name:'Projekti',p?p.color:'var(--muted)',byP[pid]);
+    });
+    if(noP.length) makePile('__noproject__','Ei projektia','var(--muted)',noP);
+  } else if(_deckGroupMode==='quad'){
+    var QN={q1:'Q1 — TEE HETI',q2:'Q2 — AIKATAULUTA',q3:'Q3 — DELEGOI',q4:'Q4 — POISTA',null:'Ei luokkaa'};
+    var QC={q1:'#8b1d1d',q2:'#2D5A3D',q3:'#555',q4:'#222'};
+    var byQ={};var noQ=[];
+    filtered.forEach(function(t){
+      if(t.quad){if(!byQ[t.quad])byQ[t.quad]=[];byQ[t.quad].push(t);}
+      else noQ.push(t);
+    });
+    ['q1','q2','q3','q4'].forEach(function(q){if(byQ[q])makePile('q:'+q,QN[q],QC[q],byQ[q]);});
+    if(noQ.length) makePile('__noquad__','Ei luokkaa','var(--muted)',noQ);
+  } else {
+    makePile('__all__','Kaikki tehtävät','var(--accent)',filtered);
+  }
+
+  deckEl.appendChild(pilesEl);
+}
+
+function getProjectName(pid){
+  if(!pid)return '';
+  var p=projects.find(function(p){return p.id===parseInt(pid)});
+  return p?p.name:'';
+}
+
+function openDeckOverlay(key,name,color,deckTaskList){
+  _deckOverlayKey=key;
+  var existing=document.getElementById('deck-overlay');
+  if(existing)existing.remove();
+
+  var overlay=document.createElement('div');
+  overlay.id='deck-overlay';
+  overlay.onclick=function(e){if(e.target===overlay)overlay.remove();};
+
+  var box=document.createElement('div');
+  box.id='deck-overlay-box';
+
+  // Header
+  var hdr=document.createElement('div');
+  hdr.id='deck-overlay-header';
+  var dot=document.createElement('span');
+  dot.style.cssText='width:10px;height:10px;border-radius:50%;background:'+(color||'var(--muted)')+';flex-shrink:0;';
+  var title=document.createElement('span');
+  title.id='deck-overlay-title';
+  title.textContent=name;
+  var closeBtn=document.createElement('button');
+  closeBtn.id='deck-overlay-close';
+  closeBtn.textContent='×';
+  closeBtn.setAttribute('aria-label','Sulje pakkanäkymä');
+  closeBtn.onclick=function(){overlay.remove();};
+  hdr.appendChild(dot);hdr.appendChild(title);hdr.appendChild(closeBtn);
+  box.appendChild(hdr);
+
+  // Sisäinen haku
+  var sch=document.createElement('input');
+  sch.id='deck-overlay-search';
+  sch.type='text';
+  sch.placeholder='🔍 Hae tästä pakasta…';
+  box.appendChild(sch);
+
+  // Suodattimet Q1-Q4
+  var filts=document.createElement('div');
+  filts.id='deck-overlay-filters';
+  var activeF=null;
+  function renderGrid(filterQ,searchVal){
+    var g=document.getElementById('deck-overlay-grid');
+    if(g)g.remove();
+    var cnt=document.getElementById('deck-overlay-count');
+    if(cnt)cnt.remove();
+    var tasks2=deckTaskList;
+    if(filterQ) tasks2=tasks2.filter(function(t){return t.quad===filterQ;});
+    if(searchVal){var sv=searchVal.toLowerCase();tasks2=tasks2.filter(function(t){return (t.text||'').toLowerCase().indexOf(sv)>=0||(t.verbi||'').toLowerCase().indexOf(sv)>=0;});}
+    var grid=document.createElement('div');
+    grid.id='deck-overlay-grid';
+    tasks2.forEach(function(t){grid.appendChild(makeDeckMiniCard(t));});
+    box.appendChild(grid);
+    var cntEl=document.createElement('div');
+    cntEl.id='deck-overlay-count';
+    cntEl.textContent=tasks2.length+' tehtävää';
+    box.appendChild(cntEl);
+  }
+  ['q1','q2','q3','q4'].forEach(function(q){
+    var b=document.createElement('button');
+    b.className='deck-filter-btn '+q;
+    b.textContent=q.toUpperCase();
+    b.onclick=function(){
+      activeF=(activeF===q?null:q);
+      filts.querySelectorAll('.deck-filter-btn').forEach(function(x){x.classList.remove('active');});
+      if(activeF)b.classList.add('active');
+      renderGrid(activeF,sch.value);
+    };
+    filts.appendChild(b);
+  });
+  box.appendChild(filts);
+  sch.oninput=function(){renderGrid(activeF,sch.value);};
+
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  renderGrid(null,'');
+  sch.focus();
+}
+
+function makeDeckMiniCard(t){
+  var card=document.createElement('div');
+  card.className='deck-mini-card'+(t.frog?' is-frog':'');
+  card.setAttribute('tabindex','0');
+  var _qlbl2=t.quad?{q1:'Tee heti',q2:'Aikatauluta',q3:'Delegoi',q4:'Poista'}[t.quad]:'';
+  card.setAttribute('aria-label',(t.frog?'Sammakko. ':'')+(t.verbi||'')+' '+t.text+(_qlbl2?', '+_qlbl2:''));
+
+  var bg=document.createElement('span');
+  bg.className='deck-mini-card__bg';
+  bg.setAttribute('aria-hidden','true');
+  bg.textContent=VERB_ICONS[t.verbi]||'✦';
+  card.appendChild(bg);
+
+  if(t.verbi){var v=document.createElement('div');v.className='deck-mini-card__verb';v.textContent=t.verbi;card.appendChild(v);}
+  var nm=document.createElement('div');nm.className='deck-mini-card__title';nm.textContent=t.text;card.appendChild(nm);
+
+  var meta=document.createElement('div');meta.className='deck-mini-card__meta';
+  if(t.quad){var qb=document.createElement('span');qb.className='card-new__quad-badge '+t.quad;qb.textContent=t.quad.toUpperCase();meta.appendChild(qb);}
+  if(t.est&&t.est>0){var pips=mkPipsNew(t.est);pips.style.marginLeft='.1rem';meta.appendChild(pips);}
+  if(t.frog){var fp=document.createElement('span');fp.style.fontSize='.7rem';fp.textContent='🐸';meta.appendChild(fp);}
+  card.appendChild(meta);
+
+  // Toimintonapit alareunaan
+  var acts=document.createElement('div');
+  acts.className='deck-mini-card__actions';
+
+  var btnTurn=document.createElement('button');
+  btnTurn.className='deck-mini-card__action';
+  btnTurn.textContent='+ Vuoroon';
+  btnTurn.setAttribute('aria-label','Lisää vuoroon: '+t.text);
+  btnTurn.onclick=(function(tid){return function(e){
+    e.stopPropagation();
+    if(tid===active)return;
+    if(turn.indexOf(tid)<0)turn.push(tid);
+    save();render();
+    notify('Lisätty vuoroon');
+    var overlay=document.getElementById('deck-overlay');
+    if(overlay)overlay.remove();
+  };})(t.id);
+
+  var btnEdit=document.createElement('button');
+  btnEdit.className='deck-mini-card__action edit-btn';
+  btnEdit.textContent='✎';
+  btnEdit.setAttribute('aria-label','Muokkaa: '+t.text);
+  btnEdit.onclick=function(e){
+    e.stopPropagation();
+    if(typeof editCard==='function') editCard(t.id);
+  };
+
+  acts.appendChild(btnTurn);
+  acts.appendChild(btnEdit);
+  card.appendChild(acts);
+
+  card.onclick=function(){};
+  card.onkeydown=(function(tid){return function(e){
+    if(e.key==='Enter'||e.key===' '){
+      e.preventDefault();
+      if(tid===active)return;
+      if(turn.indexOf(tid)<0)turn.push(tid);
+      save();render();
+      notify('Lisätty vuoroon');
+      var o=document.getElementById('deck-overlay');if(o)o.remove();
+    }
+  };})(t.id);
+  return card;
+}
+
+// ── Vaihe 16c: Vuoro-panel renderöinti ──────────────────────────
+function renderTurnPanel(inbox){
+  var listEl=document.getElementById('turn-list');
+  var emptyEl=document.getElementById('turn-empty');
+  var countEl=document.getElementById('turn-count');
+  if(!listEl)return;
+  listEl.innerHTML='';
+
+  var turnIds=Array.isArray(turn)?turn:[];
+  var turnTasks=turnIds.map(function(id){return inbox.find(function(t){return t.id===id&&!t.done});}).filter(Boolean);
+
+  if(countEl)countEl.textContent=turnTasks.length>0?turnTasks.length:'';
+  if(emptyEl)emptyEl.style.display=turnTasks.length?'none':'block';
+
+  var QUAD_COLORS={q1:'#c49a3a',q2:'#2d8a52',q3:'var(--muted)',q4:'var(--muted)'};
+
+  turnTasks.forEach(function(t,idx){
+    var row=document.createElement('div');
+    row.className='turn-card';
+    row.draggable=true;
+    row.dataset.id=t.id;
+    row.dataset.idx=idx;
+
+    var qdot=document.createElement('span');
+    qdot.className='turn-card__quad';
+    qdot.style.background=t.quad?QUAD_COLORS[t.quad]||'var(--muted)':'var(--muted)';
+    row.appendChild(qdot);
+
+    if(t.frog){
+      var fg=document.createElement('span');fg.textContent='🐸';fg.style.fontSize='.8rem';fg.style.lineHeight='1';
+      row.appendChild(fg);
+    }
+
+    var nm=document.createElement('span');
+    nm.className='turn-card__name';
+    nm.textContent=(t.verbi?t.verbi+' ':'')+t.text;
+    row.appendChild(nm);
+
+    if(t.est&&t.est>0){
+      var pips=document.createElement('span');
+      pips.className='turn-card__pips';
+      for(var p=0;p<Math.min(t.est,6);p++){
+        var pip=document.createElement('span');
+        pip.style.cssText='display:inline-block;width:5px;height:5px;border-radius:50%;background:'+(p<(t.pomos||0)?'var(--accent)':'var(--light)')+';flex-shrink:0';
+        pips.appendChild(pip);
+      }
+      if(t.est>6){var more=document.createElement('span');more.style.cssText='font-size:.55rem;color:var(--muted)';more.textContent='+';pips.appendChild(more);}
+      row.appendChild(pips);
+    }
+
+    var edBtn=document.createElement('button');
+    edBtn.className='turn-card__edit';
+    edBtn.title='Muokkaa';
+    edBtn.setAttribute('aria-label','Muokkaa tehtävää');
+    edBtn.textContent='✎';
+    edBtn.onclick=(function(tid){return function(e){
+      e.stopPropagation();
+      openEditModal(tid);
+    };})(t.id);
+    row.appendChild(edBtn);
+
+    var rmBtn=document.createElement('button');
+    rmBtn.className='turn-card__remove';
+    rmBtn.title='Poista vuorosta';
+    rmBtn.setAttribute('aria-label','Poista vuorosta');
+    rmBtn.innerHTML='&times;';
+    rmBtn.onclick=(function(tid){return function(e){
+      e.stopPropagation();
+      turn=turn.filter(function(i){return i!==tid;});
+      save();render();
+    };})(t.id);
+    row.appendChild(rmBtn);
+
+    row.addEventListener('dragstart',function(e){
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('text/plain',String(t.id));
+      setTimeout(function(){row.classList.add('dragging');},0);
+    });
+    row.addEventListener('dragend',function(){
+      row.classList.remove('dragging');
+      document.querySelectorAll('.turn-card').forEach(function(c){c.classList.remove('drag-over');});
+    });
+    row.addEventListener('dragover',function(e){e.preventDefault();e.dataTransfer.dropEffect='move';row.classList.add('drag-over');});
+    row.addEventListener('dragleave',function(){row.classList.remove('drag-over');});
+    row.addEventListener('drop',function(e){
+      e.preventDefault();row.classList.remove('drag-over');
+      var fromId=parseInt(e.dataTransfer.getData('text/plain'),10);
+      var toId=t.id;
+      if(fromId===toId)return;
+      var fi=turn.indexOf(fromId);var ti=turn.indexOf(toId);
+      if(fi<0||ti<0)return;
+      turn.splice(fi,1);turn.splice(ti,0,fromId);
+      save();render();
+    });
+
+    listEl.appendChild(row);
+  });
+}
+
+function renderWaitingPanel(inbox){
+  var el=document.getElementById('waiting-panel');
+  if(!el)return;
+  el.innerHTML='';
+  var waiting=inbox.filter(function(t){return t.waiting&&!t.done;});
+  if(waiting.length===0){el.style.display='none';return;}
+  el.style.display='';
+  var quadColors={q1:'#c0392b',q2:'#2980b9',q3:'#8e44ad',q4:'var(--muted)'};
+  var hdr=document.createElement('div');
+  hdr.className='waiting-panel__header';
+  hdr.innerHTML='⏳ Odottaa <span class="waiting-panel__count">'+waiting.length+'</span>';
+  el.appendChild(hdr);
+  waiting.forEach(function(t){
+    var row=document.createElement('div');
+    row.className='waiting-item';
+    var dot=document.createElement('span');
+    dot.className='waiting-item__quad';
+    dot.style.background=quadColors[t.quad]||'var(--muted)';
+    var txt=document.createElement('span');
+    txt.className='waiting-item__text';
+    txt.textContent=t.text;
+    var btn=document.createElement('button');
+    btn.className='waiting-item__restore';
+    btn.title='Palauta käteen';
+    btn.setAttribute('aria-label','Palauta tehtävä käteen');
+    btn.textContent='↩';
+    btn.addEventListener('click',(function(id){return function(){clearWaiting(id);};})(t.id));
+    row.appendChild(dot);
+    row.appendChild(txt);
+    row.appendChild(btn);
+    el.appendChild(row);
+  });
+}
+
+
+function renderHand(inbox){
+  var handEl=document.getElementById('hand');
+  if(!handEl)return;
+  handEl.innerHTML='';
+
+  if(!window._useCardUI)return; // Ei käsi-näkymää jos vanha UI
+
+  var handTasks=buildHandQueue(inbox);
+
+  var lbl=document.createElement('div');
+  lbl.id='hand-label';
+  lbl.textContent='Käsi';
+  handEl.appendChild(lbl);
+
+  if(handTasks.length===0){
+    var emp=document.createElement('div');
+    emp.id='hand-empty';
+    emp.textContent='Lisää Q1- tai Q2-tehtäviä — ne nousevat käteen.';
+    handEl.appendChild(emp);
+    return;
+  }
+
+  var row=document.createElement('div');
+  row.id='hand-cards';
+
+  handTasks.forEach(function(t){
+    var card=document.createElement('div');
+    card.className='card-new card-new--hand'+(t.frog?' is-frog':'');
+    card.setAttribute('tabindex','0');
+    var _qlbl3=t.quad?{q1:'Tee heti',q2:'Aikatauluta',q3:'Delegoi',q4:'Poista'}[t.quad]:'';
+    card.setAttribute('aria-label',(t.frog?'Sammakko. ':'')+(t.verbi||'')+' '+t.text+(_qlbl3?', '+_qlbl3:'')+' — kädessä. Klikkaa nostaaksesi areenalle.');
+    card.title='Klikkaa nostaaksesi areenalle';
+
+    // Taustaikoni
+    var bgIco=document.createElement('span');
+    bgIco.className='card-new__bg-icon';
+    bgIco.setAttribute('aria-hidden','true');
+    bgIco.textContent=VERB_ICONS[t.verbi]||'✦';
+    card.appendChild(bgIco);
+
+    // Verbi + nimi
+    if(t.verbi){
+      var vsp=document.createElement('span');
+      vsp.className='card-new__verb';
+      vsp.textContent=t.verbi;
+      card.appendChild(vsp);
+    }
+    var nameEl=document.createElement('div');
+    nameEl.className='card-new__title';
+    nameEl.textContent=t.text;
+    card.appendChild(nameEl);
+
+    // Meta: badge + tomaatit + sammakko
+    var meta=document.createElement('div');
+    meta.className='card-new--hand__meta';
+    if(t.quad){
+      var badge=document.createElement('span');
+      badge.className='card-new__quad-badge '+t.quad;
+      badge.textContent=t.quad.toUpperCase();
+      meta.appendChild(badge);
+    }
+    if(t.est&&t.est>0){
+      var pips=mkPipsNew(t.est);
+      pips.style.marginLeft='.15rem';
+      meta.appendChild(pips);
+    }
+    if(t.frog){
+      var fp=document.createElement('span');
+      fp.className='card-new__frog-pip';
+      fp.textContent='🐸';
+      fp.title='Sammakko';
+      meta.appendChild(fp);
+    }
+    card.appendChild(meta);
+
+    // Klikkaus → nosta
+    card.onclick=(function(tid){return function(){promoteToHand(tid);};})(t.id);
+    card.onkeydown=(function(tid){return function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();promoteToHand(tid);}};})(t.id);
+
+    row.appendChild(card);
+  });
+
+  handEl.appendChild(row);
+}
+
+// ── Vaihe 11: Vyöhykkeen vaihto mobiilissa ──
+var _activeZone = 'arena';
+function switchZone(zone){
+  _activeZone = zone;
+  ['arena','hand','deck'].forEach(function(z){
+    var el = document.getElementById(z);
+    if(!el) return;
+    if(z === zone){ el.classList.add('zone-active'); }
+    else { el.classList.remove('zone-active'); }
+  });
+  document.querySelectorAll('.ztab').forEach(function(btn){
+    if(btn.dataset.zone === zone){
+      btn.classList.add('ztab--active');
+      btn.setAttribute('aria-current','page');
+    } else {
+      btn.classList.remove('ztab--active');
+      btn.removeAttribute('aria-current');
+    }
+  });
+}
+
+// Pomo fixed mobiilissa — päivitetään placeholder-korkeus
+function _updatePbPlaceholder(){
+  if(window.innerWidth > 768) return;
+  var pb = document.getElementById('pb');
+  var ph = document.getElementById('pb-ph');
+  if(!pb || !ph) return;
+  var h = pb.getBoundingClientRect().height;
+  document.documentElement.style.setProperty('--pb-fixed-h', h+'px');
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  if(window.innerWidth <= 768){
+    switchZone('arena');
+    setTimeout(_updatePbPlaceholder, 100);
+  }
+  // Alusta pomo-observer kaikilla leveyksillä
+  setTimeout(_initPboxObserver, 150);
+});
+
+window.addEventListener('resize', function(){
+  if(window.innerWidth > 768){
+    ['arena','hand','deck'].forEach(function(z){
+      var el = document.getElementById(z);
+      if(el) el.classList.remove('zone-active');
+    });
+    // Poistetaan pb fixed mobiilista
+    var ph = document.getElementById('pb-ph');
+    if(ph) ph.style.display = '';
+  } else {
+    switchZone(_activeZone);
+    setTimeout(_updatePbPlaceholder, 100);
+  }
+});
+
 function render(){
   var inbox=tasks.filter(function(t){return !t.done&&!t.scheduled_hidden});
   var done=tasks.filter(function(t){return t.done});
@@ -2874,6 +5692,39 @@ function render(){
       return inName||inVerbi;
     });
   }
+
+  // ── Vaihe 6a: Areena — renderöi queue[0] isona kortina ──
+  var arenaEl=document.getElementById('arena');
+  if(arenaEl){
+    arenaEl.innerHTML='';
+    if(window._useCardUI){
+      var label=document.createElement('div');
+      label.id='arena-label';
+      label.textContent='Areena';
+      arenaEl.appendChild(label);
+      var activeTask=active!==null?inbox.find(function(t){return t.id===active}):null;
+      if(activeTask){
+        renderCardNew(activeTask,arenaEl,anyFrog);
+        // Suodatetaan pois varsinaisesta listasta duplikaatin välttämiseksi
+        filteredInbox=filteredInbox.filter(function(t){return t.id!==activeTask.id});
+      } else {
+        var emptyEl=document.createElement('div');
+        emptyEl.id='arena-empty';
+        emptyEl.innerHTML='Ei kortteja vuorossa.<br><span style="font-size:var(--text-xs);opacity:.7">Lisää kortti kädestä, pakasta tai aamusuunnittelusta.</span>';
+        arenaEl.appendChild(emptyEl);
+      }
+    }
+  }
+
+  // ── Vaihe 16c: Vuoro-panel ──
+  renderTurnPanel(inbox);
+  renderWaitingPanel(inbox);
+  renderHand(inbox);
+  // Vaihe 8: Pakka
+  renderDeck(inbox);
+  // Suodata käden tehtävät pois pakka-listasta
+  var handTaskIds=buildHandQueue(inbox).map(function(t){return t.id;});
+  filteredInbox=filteredInbox.filter(function(t){return handTaskIds.indexOf(t.id)<0;});
 
   // Group by project
   var grouped={};
@@ -2916,10 +5767,11 @@ function render(){
     var active=taskList.filter(function(t){return !t.frog&&!t.waiting});
     var waiting=taskList.filter(function(t){return !t.frog&&t.waiting});
     var sorted=frogs.concat(active);
-    sorted.forEach(function(t){renderCard(t,container,anyFrog);});
+    var renderFn=window._useCardUI?renderCardNew:renderCard;
+    sorted.forEach(function(t){renderFn(t,container,anyFrog);});
     if(waiting.length){
       container.appendChild(mkWaitDivider());
-      waiting.forEach(function(t){renderCard(t,container,anyFrog);});
+      waiting.forEach(function(t){renderFn(t,container,anyFrog);});
     }
   }
 
@@ -2968,7 +5820,7 @@ function render(){
   }
 
   function renderCard(t,container,anyFrog){
-    var isA=queue[0]===t.id,isQ=queue.indexOf(t.id)>=0;
+    var isA=t.id===active,isQ=t.id===active||turn.indexOf(t.id)>=0;
     var card=document.createElement('div');
     card.className='card hud-card'+(isA?' qa':isQ?' qd':'')+(t.frog?' frog':'')+(t.needsReview?' needs-review':'')+(t.waiting?' waiting':'');
 
@@ -3155,116 +6007,11 @@ function render(){
     xb.onclick=(function(i){return function(e){e.stopPropagation();delUndoable(i)}})(t.id);
     footer.appendChild(xb);
 
-    // ─── MUOKKAUSPANEELI (piilotettu, avautuu kynällä) ───
-    var editor=document.createElement('div');
-    editor.className='hud-editor';
-    editor.style.display='none';
-
-    // Muokattava tekstikenttä
-    var edTxt=document.createElement('input');
-    edTxt.type='text';edTxt.value=t.text;
-    edTxt.className='hud-editor-input';
-    edTxt.placeholder='Tehtävän teksti';
-    edTxt.onkeydown=(function(task){return function(e){
-      if(e.key==='Enter'){
-        var val=edTxt.value.trim();
-        if(val)task.text=val;
-        save();render();
-      }
-      if(e.key==='Escape'){editor.style.display='none';}
-    };})(t);
-    edTxt.onblur=(function(task){return function(){
-      var val=edTxt.value.trim();
-      if(val && val!==task.text){task.text=val;save();render();}
-    };})(t);
-    editor.appendChild(edTxt);
-
-    // Projekti-valikko
-    if(projects.length){
-      var projRow=document.createElement('div');
-      projRow.className='hud-editor-row';
-      var projLbl=document.createElement('span');
-      projLbl.className='hud-editor-lbl';
-      projLbl.textContent='Projekti';
-      projRow.appendChild(projLbl);
-      var projBtns=document.createElement('div');
-      projBtns.style.cssText='display:flex;gap:.25rem;flex-wrap:wrap;flex:1';
-      // Ei projektia
-      var noneBtn=document.createElement('button');
-      var noneActive=!t.projectId;
-      noneBtn.className='hud-chip'+(noneActive?' active':'');
-      noneBtn.textContent='— ei —';
-      noneBtn.onclick=(function(task){return function(e){
-        e.stopPropagation();task.projectId=null;save();render();
-      };})(t);
-      projBtns.appendChild(noneBtn);
-      projects.forEach(function(p){
-        var btn=document.createElement('button');
-        var active=t.projectId===p.id;
-        btn.className='hud-chip'+(active?' active':'');
-        btn.style.cssText='border-color:'+p.color+';color:'+(active?'white':p.color)+';background:'+(active?p.color:'transparent');
-        btn.textContent=p.name;
-        btn.onclick=(function(pid,task){return function(e){
-          e.stopPropagation();task.projectId=(task.projectId===pid?null:pid);save();render();
-        };})(p.id,t);
-        projBtns.appendChild(btn);
-      });
-      projRow.appendChild(projBtns);
-      editor.appendChild(projRow);
-    }
-
-    // Ajastus + lisätiedot + linkki rivit
-    var actions=document.createElement('div');
-    actions.className='hud-editor-actions';
-    // Ajasta
-    var schBtn=document.createElement('button');
-    schBtn.className='hud-action-btn';
-    schBtn.innerHTML='🕐 '+(t.schedule ? (t.schedule.type==='once'?t.schedule.date:'Toistuva klo '+t.schedule.time) : 'Ajasta');
-    schBtn.onclick=(function(tid){return function(e){e.stopPropagation();openSchedulePicker&&openSchedulePicker(tid);}})(t.id);
-    actions.appendChild(schBtn);
-    editor.appendChild(actions);
-
-    // Lisätiedot-kenttä
-    var notesRow=document.createElement('div');
-    notesRow.className='hud-editor-row';
-    var notesLbl=document.createElement('span');
-    notesLbl.className='hud-editor-lbl';
-    notesLbl.textContent='📝';
-    notesLbl.title='Lisätiedot';
-    notesRow.appendChild(notesLbl);
-    var notesInp=document.createElement('input');
-    notesInp.type='text';notesInp.value=t.lisatiedot||'';
-    notesInp.className='hud-editor-input sub';
-    notesInp.placeholder='Muistiinpanoja...';
-    notesInp.onblur=(function(task){return function(){task.lisatiedot=notesInp.value.trim()||null;save();render();};})(t);
-    notesInp.onkeydown=function(e){if(e.key==='Enter')notesInp.blur();};
-    notesRow.appendChild(notesInp);
-    editor.appendChild(notesRow);
-
-    // Linkki
-    var linkRow=document.createElement('div');
-    linkRow.className='hud-editor-row';
-    var linkLbl=document.createElement('span');
-    linkLbl.className='hud-editor-lbl';
-    linkLbl.textContent='🔗';
-    linkLbl.title='Linkki';
-    linkRow.appendChild(linkLbl);
-    var linkInp=document.createElement('input');
-    linkInp.type='url';linkInp.value=t.linkki||'';
-    linkInp.className='hud-editor-input sub';
-    linkInp.placeholder='https://...';
-    linkInp.onblur=(function(task){return function(){task.linkki=linkInp.value.trim()||null;save();render();};})(t);
-    linkInp.onkeydown=function(e){if(e.key==='Enter')linkInp.blur();};
-    linkRow.appendChild(linkInp);
-    editor.appendChild(linkRow);
-
-    // Kynä aktivoi editorin
-    editBtn.onclick=(function(ed,btn){return function(e){
+    // Kynä — avaa yhteinen muokkausmodaali (Vaihe 18)
+    editBtn.onclick=(function(tid){return function(e){
       e.stopPropagation();
-      var open=ed.style.display!=='none';
-      ed.style.display=open?'none':'flex';
-      btn.classList.toggle('active',!open);
-    };})(editor,editBtn);
+      openEditModal(tid);
+    };})(t.id);
 
     // ─── KOKOA ───
     var row=document.createElement('div');
@@ -3273,7 +6020,6 @@ function render(){
     row.appendChild(mid);
     row.appendChild(right);
     card.appendChild(row);
-    card.appendChild(editor);
     card.appendChild(footer);
 
     container.appendChild(card);
@@ -3291,7 +6037,7 @@ function render(){
       return (a.order||0)-(b.order||0);
     });
     qt.forEach(function(t,idx){
-      var isQ=queue.indexOf(t.id)>=0;
+      var isQ=t.id===active||turn.indexOf(t.id)>=0;
       var item=document.createElement('div');
       item.className='qti'+(t.frog?' frog':'');
       item.draggable=true;
@@ -3591,7 +6337,7 @@ function getActiveWsId(){return localStorage.getItem(WS_ACTIVE)||'work';}
 function switchWorkspace(id){
   save(); // save current before switching
   localStorage.setItem(WS_ACTIVE,id);
-  tasks=[];queue=[];projects=[];nid=1;pnid=1;pomoDone=0;totalPomos=0;
+  tasks=[];active=null;turn=[];projects=[];nid=1;pnid=1;pomoDone=0;totalPomos=0;
   // Reset morning check so it can recheck for new workspace
   load();
   renderWsSwitcher();
@@ -3642,7 +6388,7 @@ function renderWsSwitcher(){
 }
 
 function save(){
-  localStorage.setItem(wsStorageKey(),JSON.stringify({tasks:tasks,nid:nid,queue:queue,pomoDone:pomoDone,totalPomos:totalPomos,date:dtEl.value,projects:projects,pnid:pnid}));
+  localStorage.setItem(wsStorageKey(),JSON.stringify({tasks:tasks,nid:nid,active:active,turn:turn,pomoDone:pomoDone,totalPomos:totalPomos,date:dtEl.value,projects:projects,pnid:pnid}));
   if(window._scheduleFsSave) window._scheduleFsSave();
 }
 function load(){
@@ -3659,7 +6405,15 @@ function load(){
   if(r){
     var d=JSON.parse(r);
     tasks=d.tasks||[];nid=d.nid||1;
-    queue=(d.queue||[]).filter(function(id){return tasks.find(function(t){return t.id===id&&!t.done})});
+    // Migraatio: vanha queue[] → active + turn
+    if(d.active!==undefined){
+      active=tasks.find(function(t){return t.id===d.active&&!t.done})?d.active:null;
+      turn=(d.turn||[]).filter(function(id){return tasks.find(function(t){return t.id===id&&!t.done})});
+    } else {
+      var oldQ=(d.queue||[]).filter(function(id){return tasks.find(function(t){return t.id===id&&!t.done})});
+      active=oldQ.length>0?oldQ[0]:null;
+      turn=oldQ.slice(1);
+    }
     pomoDone=d.pomoDone||0;totalPomos=d.totalPomos||0;
     projects=d.projects||[];pnid=d.pnid||1;
   }
@@ -3667,7 +6421,22 @@ function load(){
 }
 var ICS_VERBS_HIGHLIGHT = ['Sovi','Aikatauluta','Varaa'];
 // Firestore-moduuli kutsuu tätä kun pilvidata on haettu — lataa ja renderöi uudelleen
-window._fsLoadComplete = function(){ load(); };
+window._fsLoadComplete = function(){
+  load();
+  // Jos loadTimerSettings kutsuttiin ennen Firebase-kirjautumista, ladataan nyt
+  if(window._pendingTimerFsLoad && window._loadTimerFromFs){
+    window._pendingTimerFsLoad=false;
+    window._loadTimerFromFs().then(function(fsData){
+      if(!fsData)return;
+      try{
+        _applyTimerValues(fsData);
+        localStorage.setItem(TSET_KEY,JSON.stringify(fsData));
+        console.log('⏱️ Timer-asetukset ladattu Firestoresta (myöhästynyt)');
+      }catch(e){console.warn('Timer settings delayed apply failed',e);}
+    });
+  }
+};
+loadTimerSettings();
 load();
 renderWsSwitcher();
 
@@ -3680,14 +6449,35 @@ function checkMorningTask(){
   var existing=tasks.find(function(t){return t.tags&&t.tags.indexOf('aamusuunnittelu')>=0&&!t.done});
   if(existing)return;
   var mt={id:nid++,text:'\u2600 P\u00e4iv\u00e4n suunnittelu \u2014 k\u00e4y teht\u00e4v\u00e4t l\u00e4pi, arvioi ja aseta t\u00e4m\u00e4n p\u00e4iv\u00e4n fokus',quad:'q1',done:false,pomos:1,est:1,important:true,urgent:true,tags:['aamusuunnittelu'],projectId:null,frog:false,needsReview:false};
-  tasks.unshift(mt);queue.unshift(mt.id);
+  tasks.unshift(mt);
+  if(active===null){active=mt.id;}else{turn.unshift(mt.id);}
   save();render();
   notify('\u2600 Uusi p\u00e4iv\u00e4 \u2014 aloita suunnittelulla!');
 }
 
 checkMorningTask();
 
-/* ── TEEMA-JÄRJESTELMÄ ─────────────────────────────────── */
+// ── STORAGE SYNC: päivitä kun aamu.html tai toinen välilehti kirjoittaa ──
+window.addEventListener('storage', function(e){
+  // Reagoi vain pääavaimen muutoksiin
+  var wsId = localStorage.getItem('fap_active_ws') || 'work';
+  var mainKey = 'eis_v5_' + wsId;
+  if(e.key === mainKey || e.key === 'fap_active_ws'){
+    load(); render();
+  }
+});
+// Päivitä myös kun käyttäjä palaa ikkunaan (aamu.html popup suljettu)
+window.addEventListener('focus', function(){
+  var wsId = localStorage.getItem('fap_active_ws') || 'work';
+  var mainKey = 'eis_v5_' + wsId;
+  var raw = localStorage.getItem(mainKey);
+  if(!raw) return;
+  var d = JSON.parse(raw);
+  // Tarkista onko data muuttunut sitten viime renderin
+  var newSig = (d.tasks||[]).length + '_' + (d.active||'') + '_' + (d.turn||d.queue||[]).join(',');
+  var oldSig = tasks.length + '_' + (active||'') + '_' + turn.join(',');
+  if(newSig !== oldSig){ load(); render(); }
+});
 function setTheme(t){
   document.documentElement.setAttribute('data-theme',t);
   localStorage.setItem('fap_theme',t);
@@ -3886,6 +6676,54 @@ function generoiICS(tehtava, tyyppi, pvm, alkuaika, kestoMin) {
       <button onclick="lataаIcs()" style="font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;padding:.6rem 1.3rem;border-radius:8px;border:none;background:var(--accent);color:white;cursor:pointer;flex:1">📥 Lataa .ics</button>
       <button onclick="closeIcsDialog()" style="font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:400;padding:.6rem .9rem;border-radius:8px;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);background:none;cursor:pointer">Peruuta</button>
     </div>
+  </div>
+</div>
+
+<!-- EDIT CARD MODAL (Vaihe 18) -->
+<div id="edit-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)" onclick="if(event.target===this)closeEditModal()"></div>
+<div id="edit-modal" role="dialog" aria-modal="true" aria-label="Muokkaa korttia" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(440px,96vw);max-height:90vh;background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.18);z-index:201;flex-direction:column;overflow:hidden">
+  <input type="hidden" id="edit-modal-id">
+  <div style="padding:1.25rem 1.5rem 1rem;border-bottom:1px solid var(--border)">
+    <div style="font-family:'DM Serif Display',serif;font-size:1.05rem;font-style:italic;color:var(--ink)">Muokkaa korttia</div>
+  </div>
+  <div style="padding:1.25rem 1.5rem;display:flex;flex-direction:column;gap:.9rem;overflow-y:auto">
+    <!-- Nimi -->
+    <div>
+      <label for="edit-text" style="font-size:var(--text-xs);font-weight:500;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:.35rem">📝 Tehtävän teksti</label>
+      <input id="edit-text" type="text" placeholder="Tehtävän teksti" style="width:100%;box-sizing:border-box;font-family:'DM Sans',sans-serif;font-size:var(--text-base);font-weight:300;padding:.6rem .85rem;border-radius:var(--r-md);border:1.5px solid var(--border);outline:none;color:var(--ink);background:var(--surface)">
+    </div>
+    <!-- Tärkeä / Kiireinen / Sammakko -->
+    <div style="display:flex;gap:.4rem">
+      <button id="edit-important" onclick="this.classList.toggle('on')" class="qb q2" style="flex:1;justify-content:center;padding:.6rem">Tärkeä</button>
+      <button id="edit-urgent" onclick="this.classList.toggle('on')" class="qb q1" style="flex:1;justify-content:center;padding:.6rem">Kiireinen</button>
+      <button id="edit-frog" style="font-family:'DM Sans',sans-serif;font-size:var(--text-sm);font-weight:500;padding:.6rem .9rem;border-radius:var(--r-md);border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap" title="Aseta sammakoksi (tärkein tehtävä)">🐸 Sammakko</button>
+    </div>
+    <!-- Arvio -->
+    <div style="display:flex;align-items:center;gap:.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:.45rem .85rem">
+      <span style="font-size:var(--text-xs);color:var(--muted);font-weight:300">🍅 Arvio</span>
+      <button onclick="var s=document.getElementById('edit-esl');s.value=Math.max(.5,parseFloat(s.value)-.5);document.getElementById('edit-ev').textContent=fe(parseFloat(s.value))" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:.85rem;padding:0 .1rem;line-height:1;font-family:'DM Sans',sans-serif">‹</button>
+      <input type="range" class="eslider" id="edit-esl" min="0.5" max="8" step="0.5" value="1" oninput="document.getElementById('edit-ev').textContent=fe(parseFloat(this.value))" style="flex:1">
+      <button onclick="var s=document.getElementById('edit-esl');s.value=Math.min(8,parseFloat(s.value)+.5);document.getElementById('edit-ev').textContent=fe(parseFloat(s.value))" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:.85rem;padding:0 .1rem;line-height:1;font-family:'DM Sans',sans-serif">›</button>
+      <span id="edit-ev" style="font-size:var(--text-sm);font-weight:500;color:var(--pomo);min-width:1.8rem">1</span>
+      <span style="font-size:var(--text-xs);color:var(--muted);font-weight:300;white-space:nowrap">× 25 min</span>
+    </div>
+    <!-- Projektit -->
+    <div id="edit-proj-btns" style="display:flex;gap:.3rem;flex-wrap:wrap"></div>
+    <!-- Lisätiedot -->
+    <div>
+      <label for="edit-notes" style="font-size:var(--text-xs);font-weight:500;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:.35rem">💬 Lisätiedot</label>
+      <textarea id="edit-notes" rows="2" placeholder="Taustaa, muistiinpanoja..." style="width:100%;box-sizing:border-box;font-family:'DM Sans',sans-serif;font-size:var(--text-sm);font-weight:300;padding:.6rem .85rem;border-radius:var(--r-md);border:1.5px solid var(--border);outline:none;color:var(--ink);background:var(--surface);resize:vertical;min-height:52px"></textarea>
+    </div>
+    <!-- Linkki -->
+    <div>
+      <label for="edit-link" style="font-size:var(--text-xs);font-weight:500;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:.35rem">🔗 Linkki</label>
+      <input id="edit-link" type="url" placeholder="https://..." style="width:100%;box-sizing:border-box;font-family:'DM Sans',sans-serif;font-size:var(--text-base);font-weight:300;padding:.6rem .85rem;border-radius:var(--r-md);border:1.5px solid var(--border);outline:none;color:var(--ink);background:var(--surface)">
+    </div>
+  </div>
+  <div class="edit-modal-footer" style="padding:1rem 1.5rem 1.25rem;border-top:1px solid var(--border);display:flex;gap:.65rem">
+    <button onclick="saveEditModal()" style="font-family:'DM Sans',sans-serif;font-size:var(--text-base);font-weight:500;padding:.65rem 1.4rem;border-radius:var(--r-md);border:none;background:var(--accent);color:white;cursor:pointer;flex:1">Tallenna</button>
+    <button onclick="(function(){var id=parseInt(document.getElementById('edit-modal-id').value,10);closeEditModal();if(typeof openIcsDialog==='function')openIcsDialog(id);})()" title="Lisää kalenteriin" style="font-family:'DM Sans',sans-serif;font-size:var(--text-base);padding:.65rem .9rem;border-radius:var(--r-md);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer">📅</button>
+    <button onclick="closeEditModal()" style="font-family:'DM Sans',sans-serif;font-size:var(--text-base);font-weight:400;padding:.65rem 1rem;border-radius:var(--r-md);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer">Peruuta</button>
   </div>
 </div>
 </body>
