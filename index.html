@@ -86,11 +86,11 @@ body::before{
 input[type=date]{font-family:'DM Sans',sans-serif;font-size:var(--text-sm);color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:.4rem .7rem;outline:none}
 
 /* POMODORO PANEL */
-.pbox{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem;margin-bottom:1.5rem;transition:border-color .3s,box-shadow .3s,opacity .3s}
+.pbox{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem;margin-bottom:1.5rem;transition:border-color .2s,box-shadow .2s,opacity .2s}
 .pbox.idle{opacity:.7}
-.pbox.work{border-color:var(--pomo);box-shadow:0 0 0 2px rgba(192,57,43,.08);opacity:1}
-.pbox.sbrk{border-color:var(--brk);box-shadow:0 0 0 2px rgba(41,128,185,.08);opacity:1}
-.pbox.lbrk{border-color:var(--lbrk);box-shadow:0 0 0 2px rgba(142,68,173,.08);opacity:1}
+.pbox.work{border-color:var(--pomo);box-shadow:0 0 0 2px rgba(192,57,43;opacity:1}
+.pbox.sbrk{border-color:var(--brk);box-shadow:0 0 0 2px rgba(41,128,185;opacity:1}
+.pbox.lbrk{border-color:var(--lbrk);box-shadow:0 0 0 2px rgba(142,68,173;opacity:1}
 .pbox:hover{opacity:1}
 
 /* top row: clock | info | controls */
@@ -109,7 +109,7 @@ input[type=date]{font-family:'DM Sans',sans-serif;font-size:var(--text-sm);color
 .pomo-dots{display:flex;gap:.25rem;align-items:center}
 .pd{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);flex-shrink:0}
 .pd.done{background:var(--pomo);border-color:var(--pomo)}
-.pd.active{background:var(--surface);border-color:var(--pomo);box-shadow:0 0 0 2px rgba(192,57,43,.2)}
+.pd.active{background:var(--surface);border-color:var(--pomo);box-shadow:0 0 0 2px rgba(192,57,43}
 
 /* info section */
 .pinfo{min-width:0}
@@ -127,13 +127,13 @@ input[type=date]{font-family:'DM Sans',sans-serif;font-size:var(--text-sm);color
 .pbtn.dnx{border-color:var(--accent);color:var(--accent);font-size:.7rem} .pbtn.dnx:hover{background:var(--accent);color:white}
 
 /* VERB BUTTONS */
-.vbtn{font-family:'DM Sans',sans-serif;font-size:var(--text-xs);font-weight:500;padding:.38rem .5rem;border-radius:var(--r-sm);border:1.5px solid var(--border);background:var(--surface);color:rgba(255,255,255,.65);cursor:pointer;transition:all .15s;white-space:nowrap;text-align:center;width:100%}
+.vbtn{font-family:'DM Sans',sans-serif;font-size:var(--text-xs);font-weight:500;padding:.38rem .5rem;border-radius:var(--r-sm);border:1.5px solid var(--border);background:var(--surface);color:rgba(255,255,255,.65);cursor:pointer;transition:background .12s,color .12s,border-color .12s,opacity .12s;white-space:nowrap;text-align:center;width:100%}
 .vbtn:hover{border-color:var(--accent);color:var(--accent)}
 .vbtn.on{border-color:var(--accent);background:var(--accent-dim);color:white;font-weight:500}
 .vbtn-muu{border-style:dashed;color:rgba(255,255,255,.4)}
 
 /* ICS CALENDAR BUTTONS */
-.ics-type-btn{font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:500;padding:.4rem .85rem;border-radius:7px;border:1.5px solid rgba(255,255,255,.2);background:var(--surface);color:var(--muted);cursor:pointer;transition:all .15s}
+.ics-type-btn{font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:500;padding:.4rem .85rem;border-radius:7px;border:1.5px solid rgba(255,255,255,.2);background:var(--surface);color:var(--muted);cursor:pointer;transition:background .12s,color .12s,border-color .12s,opacity .12s}
 .ics-type-btn.on{border-color:var(--accent);color:white;background:var(--accent-dim)}
 .ics-cal-btn{background:none;border:none;cursor:pointer;padding:0 .1rem;line-height:1;transition:opacity .15s,color .15s;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
 .ics-cal-btn.highlight{opacity:1;color:var(--wait)}
@@ -166,17 +166,17 @@ input[type=date]{font-family:'DM Sans',sans-serif;font-size:var(--text-sm);color
 .elbl{font-size:var(--text-sm);color:var(--muted);white-space:nowrap}
 .eval{font-size:var(--text-sm);font-weight:500;color:var(--pomo);min-width:2.2rem;text-align:right;white-space:nowrap}
 .eslider{-webkit-appearance:none;appearance:none;width:80px;height:4px;border-radius:2px;background:var(--light);outline:none;cursor:pointer}
-.eslider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:var(--r-full);background:var(--pomo);cursor:pointer;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.eslider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:var(--r-full);background:var(--pomo);cursor:pointer;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0}
 .eslider::-moz-range-thumb{width:16px;height:16px;border-radius:var(--r-full);background:var(--pomo);cursor:pointer;border:2px solid white}
 .badd{font-family:'DM Sans',sans-serif;font-size:var(--text-base);font-weight:500;background:var(--accent);color:white;border:none;border-radius:var(--r-md);padding:.65rem 1.2rem;cursor:pointer;white-space:nowrap}
 
 /* TASK CARD */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:.7rem 1rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;transition:box-shadow .15s,transform .15s;will-change:transform}
-.card:hover{box-shadow:0 6px 20px rgba(0,0,0,.18);transform:scale(1.02) translateY(-2px)}
+.card:hover{box-shadow:0 6px 20px rgba(0,0,0;transform:scale(1.02) translateY(-2px)}
 .card:active{transform:scale(1.00) translateY(0)}
 .card.qd{border-color:rgba(192,57,43,.4)}
-.card.qa{border-color:var(--pomo);box-shadow:0 0 0 2px rgba(192,57,43,.08)}
-.card.frog{border-color:#6b8a30;box-shadow:0 0 0 2px rgba(107,138,48,.1)}
+.card.qa{border-color:var(--pomo);box-shadow:0 0 0 2px rgba(192,57,43}
+.card.frog{border-color:#6b8a30;box-shadow:0 0 0 2px rgba(107,138,48}
 .qbtn{font-size:var(--text-sm);width:22px;height:22px;border-radius:var(--r-full);border:1.5px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:border-color .15s}
 .qbtn:hover{border-color:var(--pomo)} .qbtn.on{background:var(--pomo);border-color:var(--pomo);color:white}
 .ttxt{flex:1;font-size:var(--text-base);font-weight:300;min-width:80px}
@@ -219,7 +219,7 @@ input[type=date]{font-family:'DM Sans',sans-serif;font-size:var(--text-sm);color
 /* Footer — tehty + poista */
 .hud-footer{display:flex;align-items:stretch;gap:.35rem;padding:.35rem .55rem .55rem;border-top:1px solid var(--light)}
 .hud-done{flex:1;text-align:center;padding:.42rem;font-size:var(--text-xs);font-weight:500}
-.hud-del-box{width:42px;background:transparent;border:1.5px solid var(--light);border-radius:var(--r-sm);color:var(--muted);opacity:.55;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+.hud-del-box{width:42px;background:transparent;border:1.5px solid var(--light);border-radius:var(--r-sm);color:var(--muted);opacity:.55;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s,color .12s,border-color .12s,opacity .12s;flex-shrink:0}
 .hud-del-box:hover{border-color:var(--pomo);color:var(--pomo);opacity:1;transform:scale(1.05)}
 /* Editor (kynän takana) */
 .hud-editor{flex-direction:column;gap:.4rem;padding:.55rem .7rem .6rem;border-top:1px solid var(--light);background:rgba(0,0,0,.08);animation:hud-slide-down .18s ease-out}
@@ -230,9 +230,9 @@ input[type=date]{font-family:'DM Sans',sans-serif;font-size:var(--text-sm);color
 .hud-editor-row{display:flex;align-items:center;gap:.45rem}
 .hud-editor-lbl{font-size:.65rem;font-weight:500;color:var(--muted);min-width:50px;letter-spacing:.03em}
 .hud-editor-actions{display:flex;gap:.3rem;flex-wrap:wrap}
-.hud-action-btn{font-family:'DM Sans',sans-serif;font-size:.7rem;font-weight:400;padding:.25rem .55rem;border-radius:var(--r-sm);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer;transition:all .15s}
+.hud-action-btn{font-family:'DM Sans',sans-serif;font-size:.7rem;font-weight:400;padding:.25rem .55rem;border-radius:var(--r-sm);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer;transition:background .12s,color .12s,border-color .12s,opacity .12s}
 .hud-action-btn:hover{border-color:var(--accent);color:var(--accent)}
-.hud-chip{font-family:'DM Sans',sans-serif;font-size:.65rem;font-weight:500;padding:.18rem .55rem;border-radius:20px;border:1.5px solid var(--border);color:var(--muted);background:transparent;cursor:pointer;transition:all .15s;white-space:nowrap}
+.hud-chip{font-family:'DM Sans',sans-serif;font-size:.65rem;font-weight:500;padding:.18rem .55rem;border-radius:20px;border:1.5px solid var(--border);color:var(--muted);background:transparent;cursor:pointer;transition:background .12s,color .12s,border-color .12s,opacity .12s;white-space:nowrap}
 .hud-chip:hover{border-color:var(--accent);color:var(--accent)}
 .hud-chip.active{background:var(--accent);color:white;border-color:var(--accent)}
 
@@ -272,9 +272,9 @@ input[type=date]{font-family:'DM Sans',sans-serif;font-size:var(--text-sm);color
 .qemp{font-size:var(--text-sm);color:var(--light);font-style:italic}
 
 /* EISENHOWER MODAL (Vaihe 9) */
-.eise-overlay{position:fixed;inset:0;background:rgba(15,25,20,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);z-index:200;opacity:0;pointer-events:none;transition:opacity .2s ease}
+.eise-overlay{position:fixed;inset:0;background:rgba(15,25,20,.55);-webkit-z-index:200;opacity:0;pointer-events:none;transition:opacity .2s ease}
 .eise-overlay.on{opacity:1;pointer-events:auto}
-.eise-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.95);width:min(880px,94vw);max-height:88vh;background:var(--paper);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:0 20px 60px rgba(0,0,0,.3);z-index:201;padding:1.5rem 1.5rem 1.75rem;opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;overflow-y:auto;display:flex;flex-direction:column;gap:1rem}
+.eise-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.95);width:min(880px,94vw);max-height:88vh;background:var(--paper);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:0 20px 60px rgba(0,0,0;z-index:201;padding:1.5rem 1.5rem 1.75rem;opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;overflow-y:auto;display:flex;flex-direction:column;gap:1rem}
 .eise-modal.on{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:auto}
 .eise-hdr{position:relative;padding-right:2rem}
 .eise-ttl{font-family:'DM Serif Display',serif;font-size:1.2rem;font-style:italic;color:var(--ink);line-height:1.2}
@@ -303,7 +303,7 @@ input[type=date]{font-family:'DM Sans',sans-serif;font-size:var(--text-sm);color
 .eise-q4q h4{color:var(--q4)}
 .eise-qlist{display:flex;flex-direction:column;gap:.3rem}
 .eise-card{display:flex;align-items:center;gap:.4rem;padding:.35rem .55rem;background:var(--paper);border:1px solid var(--border);border-radius:var(--r-sm);font-size:var(--text-sm);font-weight:300;cursor:grab;user-select:none;transition:opacity .15s,box-shadow .15s;position:relative}
-.eise-card:hover{box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.eise-card:hover{box-shadow:0 2px 6px rgba(0,0,0}
 .eise-card:active{cursor:grabbing}
 .eise-card.eise-dragging{opacity:.3}
 .eise-card-txt{flex:1;word-break:break-word;min-width:0}
@@ -318,7 +318,7 @@ input[type=date]{font-family:'DM Sans',sans-serif;font-size:var(--text-sm);color
 .pe-cards-wrap{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.15) transparent}
 
 /* Move-valikko (klikkauspohjainen, erityisesti mobiili) */
-.eise-move-menu{position:absolute;z-index:210;background:var(--paper);border:1px solid var(--border);border-radius:var(--r-md);box-shadow:0 6px 20px rgba(0,0,0,.18);min-width:160px;padding:.3rem 0;pointer-events:auto}
+.eise-move-menu{position:absolute;z-index:210;background:var(--paper);border:1px solid var(--border);border-radius:var(--r-md);box-shadow:0 6px 20px rgba(0,0,0;min-width:160px;padding:.3rem 0;pointer-events:auto}
 .eise-move-item{display:flex;align-items:center;gap:.5rem;padding:.45rem .85rem;font-size:var(--text-sm);font-weight:400;cursor:pointer;transition:background .1s;white-space:nowrap;color:var(--ink)}
 .eise-move-item:hover{background:var(--surface)}
 .eise-move-item .eise-move-dot{width:7px;height:7px;border-radius:var(--r-full);flex-shrink:0}
@@ -342,7 +342,7 @@ html[data-theme="aurinko"] .eise-move-item:hover{background:rgba(180,130,70,.1)!
 .pstat{font-size:var(--text-sm);color:var(--muted)}
 
 /* WAITING */
-.card.waiting{border-color:var(--wait);box-shadow:0 0 0 2px rgba(58,107,138,.07);opacity:.85}
+.card.waiting{border-color:var(--wait);box-shadow:0 0 0 2px rgba(58,107,138;opacity:.85}
 .wait-badge{font-size:var(--text-xs);font-weight:500;color:var(--wait);background:rgba(58,107,138,.09);border-radius:var(--r-sm);padding:.15rem .4rem;white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:.25rem}
 .frogbtn{background:none;border:none;cursor:pointer;font-size:.85rem;line-height:1;padding:.1rem;opacity:.25;transition:opacity .15s;flex-shrink:0}
 .frogbtn:hover{opacity:.6}
@@ -356,15 +356,15 @@ html[data-theme="aurinko"] .eise-move-item:hover{background:rgba(180,130,70,.1)!
 .qti.drag-over{border-top:2px solid var(--accent)!important}
 
 /* NOTIF */
-.notif{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:var(--ink);color:white;border-radius:10px;padding:.75rem 1.5rem;font-size:.85rem;box-shadow:0 4px 20px rgba(0,0,0,.2);opacity:0;pointer-events:none;transition:opacity .3s;z-index:100;white-space:nowrap}
+.notif{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:var(--ink);color:white;border-radius:10px;padding:.75rem 1.5rem;font-size:.85rem;box-shadow:0 4px 20px rgba(0,0,0;opacity:0;pointer-events:none;transition:opacity .3s;z-index:100;white-space:nowrap}
 .notif.on{opacity:1}
 
 /* GLASS MIXIN */
 /* Override specific components */
-.pbox{background:var(--surface);backdrop-filter:blur(18px) saturate(1.3);-webkit-backdrop-filter:blur(18px);border-color:rgba(255,255,255,.28) !important}
-.card{background:var(--surface) !important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-color:rgba(255,255,255,.22) !important;box-shadow:none}
-.card:hover{box-shadow:0 6px 20px rgba(0,0,0,.22) !important;transform:scale(1.02) translateY(-2px)}
-.quad{background:var(--surface) !important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-color:rgba(255,255,255,.2) !important}
+.pbox{background:var(--surface);-webkit-border-color:rgba(255,255,255,.28) !important}
+.card{background:var(--surface) !important;-webkit-border-color:rgba(255,255,255,.22) !important;box-shadow:none}
+.card:hover{box-shadow:0 6px 20px rgba(0,0,0;transform:scale(1.02) translateY(-2px)}
+.quad{background:var(--surface) !important;-webkit-border-color:rgba(255,255,255,.2) !important}
 .hdr{border-color:rgba(255,255,255,.2) !important}
 .tabs{border-color:rgba(255,255,255,.2) !important}
 .tab{color:rgba(255,255,255,.5) !important}
@@ -386,7 +386,6 @@ select option{background:#1e3a28;color:white}
 .iadd,div[style*="background:white"],div[style*="background: white"],
 div[style*="background:#f"],div[style*="background: #f"]{
   background:var(--surface) !important;
-  backdrop-filter:blur(12px);
   border-color:rgba(255,255,255,.22) !important;
 }
 
@@ -407,7 +406,7 @@ button{color:rgba(255,255,255,.85)}
 .qb.on:not(.q1):not(.q2):not(.q3):not(.q4){background:var(--accent-dim) !important;border-color:var(--accent) !important;color:var(--accent) !important}
 .infobtn{border-color:var(--border) !important;color:rgba(255,255,255,.5) !important;background:rgba(255,255,255,.08) !important}
 .infobtn:hover{border-color:rgba(255,255,255,.6) !important;color:white !important}
-.infobox{background:rgba(15,40,25,.75) !important;color:rgba(255,255,255,.85) !important;backdrop-filter:blur(8px);border-color:rgba(255,255,255,.15) !important}
+.infobox{background:rgba(15,40,25,.75) !important;color:rgba(255,255,255,.85) !important;border-color:rgba(255,255,255,.15) !important}
 .infobox strong{color:white !important}
 .dnbtn{background:rgba(196,154,58,.35) !important;border-color:rgba(220,190,100,.45) !important;color:rgba(230,200,120,.9) !important}
 .dnbtn:hover{background:rgba(196,154,58,.7) !important;color:white !important}
@@ -430,13 +429,13 @@ button[onclick*="exportData"],label[title*="kopio"],button[onclick*="openAI"],bu
 }
 
 /* Pomo ring */
-.pbox.work{border-color:rgba(255,150,100,.5) !important;box-shadow:0 0 0 2px rgba(255,150,100,.08) !important}
-.pbox.sbrk{border-color:rgba(100,160,200,.5) !important;box-shadow:0 0 0 2px rgba(100,160,200,.08) !important}
+.pbox.work{border-color:rgba(255,150,100,.5) !important;box-shadow:0 0 0 2px rgba(255,150,100}
+.pbox.sbrk{border-color:rgba(100,160,200,.5) !important;box-shadow:0 0 0 2px rgba(100,160,200}
 .pbox.idle{opacity:.88}
 .pstatus{color:rgba(255,255,255,.6) !important}
 
 /* Modals */
-#proj-modal,#profile-panel,#schedule-modal,#eise-modal{background:rgba(15,40,25,.9) !important;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-color:rgba(255,255,255,.2) !important}
+#proj-modal,#profile-panel,#schedule-modal,#eise-modal{background:rgba(15,40,25,.9) !important;-webkit-border-color:rgba(255,255,255,.2) !important}
 #schedule-modal .sched-day-btn{background:rgba(255,255,255,.12) !important;border-color:rgba(255,255,255,.22) !important;color:rgba(255,255,255,.7) !important}
 #schedule-modal .sched-day-btn.on{background:rgba(196,154,58,.65) !important;border-color:rgba(220,190,100,.5) !important;color:white !important}
 
@@ -457,20 +456,20 @@ button[onclick*="exportData"],label[title*="kopio"],button[onclick*="openAI"],bu
 .wait-badge{background:rgba(58,107,138,.35) !important;border-color:rgba(58,107,138,.5) !important;color:rgba(150,200,230,.9) !important}
 
 /* Notif */
-.notif{background:rgba(15,40,25,.92) !important;backdrop-filter:blur(12px)}
+.notif{background:rgba(15,40,25,.92) !important;}
 
 /* AI panel */
-#ai-panel{background:rgba(12,35,22,.92) !important;backdrop-filter:blur(20px);border-color:rgba(255,255,255,.18) !important}
+#ai-panel{will-change:transform;background:rgba(12,35,22,.92) !important;border-color:rgba(255,255,255,.18) !important}
 
 /* Onboarding */
-#onboarding{background:var(--surface-strong) !important;border-color:var(--border) !important;backdrop-filter:blur(16px)}
+#onboarding{background:var(--surface-strong) !important;border-color:var(--border) !important;}
 
 /* Tag chips */
 .tag{background:rgba(255,255,255,.15) !important;border-color:rgba(255,255,255,.22) !important;color:rgba(255,255,255,.8) !important}
 .tag-rm{color:rgba(255,255,255,.3) !important}
 
 /* Tag input wrap */
-.tag-input-wrap,.tag-suggestions{background:rgba(20,50,30,.85) !important;border-color:rgba(255,255,255,.2) !important;backdrop-filter:blur(8px)}
+.tag-input-wrap,.tag-suggestions{background:rgba(20,50,30,.85) !important;border-color:rgba(255,255,255,.2) !important;}
 .tag-sug-item{color:rgba(255,255,255,.85) !important}
 .tag-sug-item:hover{background:rgba(255,255,255,.1) !important}
 
@@ -478,7 +477,7 @@ button[onclick*="exportData"],label[title*="kopio"],button[onclick*="openAI"],bu
 .ws-btn,.ws-btn button{border-color:rgba(255,255,255,.28) !important;background:rgba(255,255,255,.12) !important;color:rgba(255,255,255,.75) !important}
 
 /* Project cards */
-.proj-card{background:var(--surface-md) !important;backdrop-filter:blur(14px);border-color:rgba(255,255,255,.2) !important}
+.proj-card{background:var(--surface-md) !important;border-color:rgba(255,255,255,.2) !important}
 .proj-card-name{color:white !important}
 .proj-card-meta,.proj-task-item{color:rgba(255,255,255,.6) !important}
 .proj-btn{background:rgba(255,255,255,.1) !important;border-color:rgba(255,255,255,.2) !important;color:rgba(255,255,255,.65) !important}
@@ -501,8 +500,8 @@ button[onclick*="exportData"],label[title*="kopio"],button[onclick*="openAI"],bu
 .qti:hover .drag-handle{color:rgba(255,255,255,.5) !important}
 
 /* Frog/waiting CSS */
-.card.frog{border-color:rgba(100,180,100,.4) !important;box-shadow:0 0 0 2px rgba(100,180,100,.1) !important}
-.card.waiting{border-color:rgba(58,107,138,.5) !important;box-shadow:0 0 0 2px rgba(58,107,138,.08) !important;opacity:.9}
+.card.frog{border-color:rgba(100,180,100,.4) !important;box-shadow:0 0 0 2px rgba(100,180,100}
+.card.waiting{border-color:rgba(58,107,138,.5) !important;box-shadow:0 0 0 2px rgba(58,107,138;opacity:.9}
 .card.needs-review{border-color:rgba(220,180,80,.4) !important}
 
 /* ═══════════════════════════════════════════════════════
@@ -531,7 +530,7 @@ html[data-theme="havu"] body::before {
 }
 html[data-theme="havu"] .pbox{background:rgba(12,35,22,.90)!important;border-color:rgba(255,255,255,.15)!important}
 html[data-theme="havu"] #proj-modal,html[data-theme="havu"] #profile-panel,html[data-theme="havu"] #schedule-modal,html[data-theme="havu"] #eise-modal,html[data-theme="havu"] #edit-modal{background:rgba(6,22,13,.97)!important;border-color:rgba(255,255,255,.15)!important}
-html[data-theme="havu"] #ai-panel{background:rgba(4,18,10,.97)!important;border-color:rgba(255,255,255,.13)!important}
+html[data-theme="havu"] #ai-panel{will-change:transform;background:rgba(4,18,10,.97)!important;border-color:rgba(255,255,255,.13)!important}
 html[data-theme="havu"] .pbtn{background:rgba(12,35,22,.80)!important;border-color:rgba(255,255,255,.28)!important;color:rgba(255,255,255,.88)!important}
 html[data-theme="havu"] .notif{background:rgba(6,22,13,.97)!important}
 html[data-theme="havu"] #search-inp{background:rgba(12,35,22,.88)!important;border-color:rgba(255,255,255,.18)!important}
@@ -573,16 +572,16 @@ html[data-theme="aurinko"] body::before {
 }
 /* Panels */
 html[data-theme="aurinko"] .pbox{background:rgba(255,248,230,.90)!important;border-color:rgba(180,130,70,.30)!important;color:#2d2417!important}
-html[data-theme="aurinko"] #proj-modal,html[data-theme="aurinko"] #profile-panel,html[data-theme="aurinko"] #schedule-modal,html[data-theme="aurinko"] #eise-modal,html[data-theme="aurinko"] #edit-modal,html[data-theme="aurinko"] #wiz-modal{background:rgba(255,245,220,.98)!important;border-color:rgba(180,130,70,.30)!important;color:#2d2417!important;backdrop-filter:blur(20px)}
+html[data-theme="aurinko"] #proj-modal,html[data-theme="aurinko"] #profile-panel,html[data-theme="aurinko"] #schedule-modal,html[data-theme="aurinko"] #eise-modal,html[data-theme="aurinko"] #edit-modal,html[data-theme="aurinko"] #wiz-modal{background:rgba(255,245,220,.98)!important;border-color:rgba(180,130,70,.30)!important;color:#2d2417!important;}
 html[data-theme="aurinko"] #eise-overlay{background:rgba(80,50,10,.35)!important}
 html[data-theme="aurinko"] .eise-quad{background:rgba(255,248,230,.75)!important;border-color:rgba(180,130,70,.25)!important}
 html[data-theme="aurinko"] .eise-card{background:rgba(255,250,235,.95)!important;border-color:rgba(180,130,70,.28)!important;color:#2d2417!important}
-html[data-theme="aurinko"] .eise-card:hover{box-shadow:0 2px 8px rgba(120,80,30,.12)}
+html[data-theme="aurinko"] .eise-card:hover{box-shadow:0 2px 8px rgba(120,80,30}
 html[data-theme="aurinko"] .eise-ttl{color:#3d2d15!important}
 html[data-theme="aurinko"] .eise-sub{color:rgba(61,45,21,.65)!important}
 html[data-theme="aurinko"] .eise-close{color:rgba(61,45,21,.55)!important}
 html[data-theme="aurinko"] .eise-close:hover{color:#3d2d15!important;background:rgba(180,130,70,.15)!important}
-html[data-theme="aurinko"] #ai-panel{background:rgba(255,242,215,.98)!important;border-color:rgba(180,130,70,.30)!important;color:#2d2417!important}
+html[data-theme="aurinko"] #ai-panel{will-change:transform;background:rgba(255,242,215,.98)!important;border-color:rgba(180,130,70,.30)!important;color:#2d2417!important}
 html[data-theme="aurinko"] #onboarding{background:rgba(255,245,220,.92)!important;border-color:rgba(180,130,70,.30)!important;color:#2d2417!important}
 /* Buttons */
 html[data-theme="aurinko"] .pbtn{background:rgba(255,248,230,.92)!important;border-color:rgba(180,130,70,.40)!important;color:#4a3a20!important}
@@ -625,8 +624,8 @@ html[data-theme="aurinko"] #search-inp{background:rgba(255,248,230,.88)!importan
 html[data-theme="aurinko"] .drag-handle{color:rgba(45,36,23,.20)!important}
 html[data-theme="aurinko"] .qti:hover .drag-handle{color:rgba(45,36,23,.48)!important}
 /* Card states */
-html[data-theme="aurinko"] .card.frog{border-color:rgba(61,107,48,.40)!important;box-shadow:0 0 0 2px rgba(61,107,48,.10)!important}
-html[data-theme="aurinko"] .card.waiting{border-color:rgba(74,122,154,.48)!important;box-shadow:0 0 0 2px rgba(74,122,154,.08)!important}
+html[data-theme="aurinko"] .card.frog{border-color:rgba(61,107,48,.40)!important;box-shadow:0 0 0 2px rgba(61,107,48}
+html[data-theme="aurinko"] .card.waiting{border-color:rgba(74,122,154,.48)!important;box-shadow:0 0 0 2px rgba(74,122,154}
 html[data-theme="aurinko"] .card.needs-review{border-color:rgba(196,160,50,.40)!important}
 /* Header divider */
 html[data-theme="aurinko"] .hdr{border-bottom-color:rgba(180,130,70,.30)!important}
@@ -859,6 +858,15 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
   // Käynnistetään kuuntelu
   initAuth();
 </script>
+
+<style id="perf-optimizations">
+/* Suorituskykyoptimoinit vanhoille laitteille */
+.card { contain: layout style; }
+.quad { contain: layout style; }
+.pbox { contain: layout style; }
+.proj-card { contain: layout style; }
+* { -webkit-font-smoothing: subpixel-antialiased; }
+</style>
 </head>
 <body>
 <!-- Vaihe 9.6: Custom verbi-ikonien SVG sprite -->
@@ -1182,7 +1190,7 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
 .tag-input-wrap{position:relative;display:flex;flex-wrap:wrap;gap:.3rem;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:.35rem .6rem;cursor:text;transition:border-color .15s;min-height:32px}
 .tag-input-wrap:focus-within{border-color:var(--warm)}
 .tag-input-wrap input{border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:var(--text-xs);color:rgba(255,255,255,.85);background:transparent;min-width:80px;flex:1}
-.tag-suggestions{position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);margin-top:2px;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,.08);overflow:hidden}
+.tag-suggestions{position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);margin-top:2px;z-index:50;box-shadow:0 4px 12px rgba(0,0,0;overflow:hidden}
 .tag-sug-item{font-size:var(--text-xs);padding:.4rem .75rem;cursor:pointer;color:rgba(255,255,255,.85);font-weight:300}
 .tag-sug-item:hover{background:var(--paper)}
 
@@ -1208,10 +1216,8 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
   justify-content:center;
   cursor:pointer;
   z-index:150;
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
-  transition:border-color .2s,background .2s;
-  box-shadow:0 2px 10px rgba(0,0,0,.18);
+  -webkit-transition:border-color .2s,background .2s;
+  box-shadow:0 2px 10px rgba(0,0,0;
 }
 #ham-btn:hover{border-color:var(--accent-dim,var(--accent));background:var(--surface-strong,var(--surface))}
 
@@ -1223,12 +1229,10 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
   opacity:0;
   pointer-events:none;
   transition:opacity .25s;
-  backdrop-filter:blur(2px);
-  -webkit-backdrop-filter:blur(2px);
-}
+  -webkit-}
 #ham-overlay.ham-open{opacity:1;pointer-events:auto}
 
-#ham-sheet{
+#ham-sheet{will-change:transform;
   position:fixed;
   bottom:0;
   left:0;
@@ -1334,9 +1338,7 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
   z-index:400;
   opacity:0;pointer-events:none;
   transition:opacity .2s;
-  backdrop-filter:blur(3px);
-  -webkit-backdrop-filter:blur(3px);
-}
+  -webkit-}
 #done-modal-overlay.ham-open{opacity:1;pointer-events:auto}
 #done-modal{
   position:fixed;
@@ -1347,7 +1349,7 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
   background:var(--paper);
   border:1px solid var(--border);
   border-radius:var(--r-lg);
-  box-shadow:0 12px 40px rgba(0,0,0,.2);
+  box-shadow:0 12px 40px rgba(0,0,0;
   z-index:401;
   display:flex;flex-direction:column;
   overflow:hidden;
@@ -1379,9 +1381,8 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
   color:var(--ink);font-size:1.1rem;
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;z-index:150;
-  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  transition:border-color .2s,background .2s;
-  box-shadow:0 2px 10px rgba(0,0,0,.18);
+  -webkit-transition:border-color .2s,background .2s;
+  box-shadow:0 2px 10px rgba(0,0,0;
 }
 #inv-btn:hover{border-color:var(--accent-dim,var(--accent));background:var(--surface-strong,var(--surface))}
 
@@ -1556,7 +1557,7 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 }
 .inv-card--star{
   border-color:#c49a3a !important;
-  box-shadow:0 0 0 1px rgba(196,154,58,.35), 0 0 12px rgba(196,154,58,.2) !important;
+  box-shadow:0 0 0 1px rgba(196,154,58,.35), 0 0 12px rgba(196,154,58;
 }
 .inv-card__star-btn{
   position:absolute;bottom:.3rem;right:.35rem;
@@ -1641,8 +1642,8 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 </div>
 
 <!-- PROJECT MODAL -->
-<div id="proj-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)" onclick="if(event.target===this)closeProjectModal()"></div>
-<div id="proj-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(400px,96vw);background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.15);z-index:201;padding:1.5rem">
+<div id="proj-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;" onclick="if(event.target===this)closeProjectModal()"></div>
+<div id="proj-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(400px,96vw);background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0;z-index:201;padding:1.5rem">
   <div style="font-family:'DM Serif Display',serif;font-size:1.1rem;font-style:italic;color:var(--ink);margin-bottom:1.1rem" id="proj-modal-title">Uusi projekti</div>
   <input type="hidden" id="proj-edit-id">
   <div style="display:flex;flex-direction:column;gap:.85rem">
@@ -1666,8 +1667,8 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 </div>
 
 <!-- SCHEDULE PICKER MODAL -->
-<div id="schedule-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)" onclick="if(event.target===this)closeSchedulePicker()"></div>
-<div id="schedule-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(380px,96vw);background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.15);z-index:201;padding:1.5rem">
+<div id="schedule-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;" onclick="if(event.target===this)closeSchedulePicker()"></div>
+<div id="schedule-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(380px,96vw);background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0;z-index:201;padding:1.5rem">
   <div style="font-family:'DM Serif Display',serif;font-size:1.1rem;font-style:italic;color:var(--ink);margin-bottom:1.1rem">🕐 Ajasta tehtävä</div>
   <!-- Type -->
   <div style="display:flex;gap:.5rem;margin-bottom:1rem">
@@ -1710,7 +1711,7 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   </div>
 </div>
 <style>
-.sched-day-btn{font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;width:36px;height:36px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:all .15s}
+.sched-day-btn{font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;width:36px;height:36px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:background .12s,color .12s,border-color .12s,opacity .12s}
 .sched-day-btn.on{border-color:var(--accent);background:var(--accent);color:white}
 
 /* ── Vaihe 4 TCG: Areena-rivi kolmisarakkeena ─────────────────── */
@@ -1977,10 +1978,8 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   height:var(--hand-bar-h, 160px);
   background:var(--surface-strong);
   border-top:1px solid var(--border);
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
-  transform:translateY(0);
-  transition:transform 300ms ease;
+  -webkit-transform:translateY(0);
+  transition:transform 200ms ease;
   padding:0 .75rem;
 }
 #hand-bar.hand-bar--hidden{
@@ -2008,13 +2007,12 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   display:flex;
   align-items:center;
   gap:.35rem;
-  backdrop-filter:blur(12px);
   transition:color .15s;
 }
 #hand-toggle:hover{color:var(--ink);}
 #hand-toggle .hand-toggle__arrow{
   display:inline-block;
-  transition:transform 300ms ease;
+  transition:transform 200ms ease;
   font-size:.8rem;
 }
 #hand-bar.hand-bar--hidden + #hand-toggle,
@@ -2052,17 +2050,17 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 .card-new--hand-bar:hover{
   transform:translateY(-3px);
   border-color:var(--accent);
-  box-shadow:0 6px 18px rgba(0,0,0,.22);
+  box-shadow:0 6px 18px rgba(0,0,0;
   z-index:2;
 }
 /* Tähtikortti — käteen Q-logiikan ohi pakotettu */
 .card-new--hand-bar.card-new--star{
   border-color:#c49a3a;
-  box-shadow:0 0 0 1px rgba(196,154,58,.4), 0 0 14px rgba(196,154,58,.22);
+  box-shadow:0 0 0 1px rgba(196,154,58,.4), 0 0 14px rgba(196,154,58;
 }
 .card-new--hand-bar.card-new--star:hover{
   border-color:#d4a943;
-  box-shadow:0 6px 18px rgba(0,0,0,.22), 0 0 0 1px rgba(196,154,58,.55), 0 0 18px rgba(196,154,58,.32);
+  box-shadow:0 6px 18px rgba(0,0,0,.22), 0 0 0 1px rgba(196,154,58,.55), 0 0 18px rgba(196,154,58;
 }
 .card-new__star-mark{
   position:absolute;
@@ -2152,13 +2150,11 @@ body.hand-hidden{padding-bottom:1rem;}
   display:flex;
   flex-direction:column;
   gap:.35rem;
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
-  background:rgba(30,30,30,.55);
+  -webkit-background:rgba(30,30,30,.55);
   border:1px solid rgba(255,255,255,.14);
   border-radius:14px;
   padding:.4rem .55rem;
-  box-shadow:0 6px 22px rgba(0,0,0,.28);
+  box-shadow:0 6px 22px rgba(0,0,0;
   font-family:'DM Sans',sans-serif;
   user-select:none;
   max-width:calc(100vw - 1.2rem);
@@ -2255,7 +2251,7 @@ body.hand-hidden{padding-bottom:1rem;}
   flex-shrink:0;
 }
 .hdr-timer__dots .pomo-dot.done{background:#c0392b}
-.hdr-timer__dots .pomo-dot.active{background:#e8c873;box-shadow:0 0 6px rgba(232,200,115,.6)}
+.hdr-timer__dots .pomo-dot.active{background:#e8c873;box-shadow:0 0 6px rgba(232,200,115}
 
 /* Mobiili: pieni säätö */
 @media(max-width:768px){
@@ -2313,7 +2309,7 @@ body.hand-hidden{padding-bottom:1rem;}
 }
 .card-new--hand:hover{
   transform:translateY(-4px) scale(1.04);
-  box-shadow:0 8px 22px rgba(0,0,0,.22);
+  box-shadow:0 8px 22px rgba(0,0,0;
   border-color:var(--accent);
   z-index:2;
 }
@@ -2334,7 +2330,7 @@ body.hand-hidden{padding-bottom:1rem;}
 /* Frog-korostus kädessä */
 .card-new--hand.is-frog{
   border-color:#3d7a52;
-  box-shadow:0 0 0 1px rgba(61,122,82,.25);
+  box-shadow:0 0 0 1px rgba(61,122,82;
 }
 /* Tooltip-vihje klikkaamista varten */
 .card-new--hand::after{
@@ -2355,9 +2351,7 @@ body.hand-hidden{padding-bottom:1rem;}
   padding:1.25rem 1.5rem;
   margin-bottom:1.25rem;
   border-radius:var(--r-lg);
-  backdrop-filter:blur(18px) saturate(1.3);
-  -webkit-backdrop-filter:blur(18px);
-  will-change:transform;
+  -webkit-will-change:transform;
   transition:
     padding .25s ease,
     margin-bottom .25s ease,
@@ -2392,7 +2386,7 @@ body.hand-hidden{padding-bottom:1rem;}
   border-radius:0 0 var(--r-lg) var(--r-lg);
   padding:.5rem .85rem;
   margin-bottom:0;
-  box-shadow:0 4px 16px rgba(0,0,0,.18);
+  box-shadow:0 4px 16px rgba(0,0,0;
   border-top:none;
 }
 /* Sisäelementtien vaiheistettu transitio */
@@ -2481,12 +2475,11 @@ body.hand-hidden{padding-bottom:1rem;}
   display:flex;
   flex-direction:column;
   margin-bottom:0;
-  box-shadow:
-    0 0 0 1px rgba(196,154,58,.35),
+  box-shadow:0 0 0 1px rgba(196,154,58,.35),
     0 0 40px 8px rgba(196,154,58,.30),
     0 0 80px 16px rgba(196,154,58,.15),
     0 12px 36px rgba(196,154,58,.20),
-    0 4px 16px rgba(0,0,0,.25);
+    0 4px 16px rgba(0,0,0;
   border-color:transparent;
   border-width:0;
   flex:none;
@@ -2669,7 +2662,7 @@ body.hand-hidden{padding-bottom:1rem;}
   width:100%;
   max-height:80vh;
   overflow-y:auto;
-  box-shadow:0 20px 60px rgba(0,0,0,.5);
+  box-shadow:0 20px 60px rgba(0,0,0;
   color:var(--ink);
 }
 .notes-modal h3{
@@ -2718,12 +2711,11 @@ body.hand-hidden{padding-bottom:1rem;}
 .card-new--arena .arena-secondary{display:none;}
 .card-new--arena:hover{
   transform:translateY(-6px);
-  box-shadow:
-    0 0 0 1px rgba(196,154,58,.5),
+  box-shadow:0 0 0 1px rgba(196,154,58,.5),
     0 0 56px 12px rgba(196,154,58,.40),
     0 0 100px 20px rgba(196,154,58,.20),
     0 18px 48px rgba(196,154,58,.25),
-    0 6px 20px rgba(0,0,0,.3);
+    0 6px 20px rgba(0,0,0;
 }
 
 /* ── 3a: SVG-kulmaornamentit (TCG-tyyli) ──────────────────── */
@@ -2990,7 +2982,7 @@ body.hand-hidden{padding-bottom:1rem;}
     border-radius:0 0 var(--r-lg) var(--r-lg);
     border-top:none;
     margin-bottom:.75rem;
-    box-shadow:0 4px 16px rgba(0,0,0,.18);
+    box-shadow:0 4px 16px rgba(0,0,0;
   }
 
   /* Areena-kortti täysleveys mobiilissa */
@@ -3064,7 +3056,7 @@ textarea:focus-visible,
 select:focus-visible{
   outline:none;
   border-color:var(--accent) !important;
-  box-shadow:0 0 0 2px rgba(196,154,58,.25);
+  box-shadow:0 0 0 2px rgba(196,154,58;
 }
 
 /* Eisenhower-kortit */
@@ -3099,10 +3091,8 @@ svg[aria-hidden="true"]{pointer-events:none;}
     background:
       radial-gradient(ellipse 70% 60% at 50% 50%, rgba(196,154,58,.10) 0%, rgba(196,154,58,.04) 40%, transparent 75%),
       radial-gradient(ellipse 100% 100% at 50% 50%, rgba(0,0,0,.20) 0%, rgba(0,0,0,.05) 60%, transparent 100%);
-    backdrop-filter: blur(1px);
-    -webkit-backdrop-filter: blur(1px);
-    overflow: hidden;
-    box-shadow: 0 4px 32px rgba(0,0,0,.18);
+    -webkit-overflow: hidden;
+    box-shadow:0 4px 32px rgba(0,0,0;
   }
   /* Yläpalkki */
   .hdr {
@@ -3241,8 +3231,8 @@ svg[aria-hidden="true"]{pointer-events:none;}
   }
 }
 </style>
-<div id="profile-overlay" style="position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)"></div>
-<div id="profile-panel" style="position:fixed;top:50%;left:50%;width:min(480px,96vw);max-height:90vh;background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.15);z-index:201;flex-direction:column;overflow:hidden;display:flex">
+<div id="profile-overlay" style="position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;"></div>
+<div id="profile-panel" style="position:fixed;top:50%;left:50%;width:min(480px,96vw);max-height:90vh;background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0;z-index:201;flex-direction:column;overflow:hidden;display:flex">
   <div style="padding:1.5rem 1.75rem 1rem;border-bottom:1px solid var(--light);flex-shrink:0">
     <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;font-style:italic;color:var(--ink);margin-bottom:.2rem">Käyttäjäprofiili</div>
     <div style="font-size:var(--text-xs);color:var(--muted);font-weight:300">Tekoäly käyttää näitä tietoja räätälöidäkseen ehdotukset sinulle. Voit päivittää tiedot milloin tahansa.</div>
@@ -3303,7 +3293,7 @@ svg[aria-hidden="true"]{pointer-events:none;}
 </div>
 
 <style>
-.profile-chip{font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:400;padding:.3rem .75rem;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:all .15s}
+.profile-chip{font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:400;padding:.3rem .75rem;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:background .12s,color .12s,border-color .12s,opacity .12s}
 .profile-chip.on{border-color:var(--accent);color:var(--accent);background:rgba(196,154,58,.08)}
 
 /* Vaihe 9.5 B: Live-jako (kahden sarakkeen UI) */
@@ -3321,7 +3311,7 @@ svg[aria-hidden="true"]{pointer-events:none;}
 .split-col .verb-pf-btn{cursor:pointer;border:none;background:none;padding:.1rem .25rem;margin:0 0 .3rem -.25rem;border-radius:var(--r-sm);color:var(--accent);font-size:var(--text-sm);font-weight:500;display:inline-flex;align-items:center;gap:.2rem}
 .split-col .verb-pf-btn:hover{background:var(--accent-dim)}
 .split-col .verb-pf-btn .vchev{font-size:.6rem;opacity:.6}
-.verb-pop{position:absolute;background:rgba(15,30,22,.95);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:var(--r-md);padding:.4rem;display:none;grid-template-columns:repeat(4,1fr);gap:.25rem;z-index:300;min-width:240px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.verb-pop{position:absolute;background:rgba(15,30,22,.95);border:1px solid var(--border);border-radius:var(--r-md);padding:.4rem;display:none;grid-template-columns:repeat(4,1fr);gap:.25rem;z-index:300;min-width:240px;box-shadow:0 8px 24px rgba(0,0,0}
 .verb-pop.on{display:grid}
 .verb-pop button{font-size:var(--text-xs);font-weight:500;padding:.4rem .5rem;border-radius:var(--r-sm);border:1.5px solid var(--border);background:var(--surface);color:rgba(255,255,255,.7);cursor:pointer}
 .verb-pop button:hover{border-color:var(--accent);color:var(--ink)}
@@ -3330,8 +3320,8 @@ svg[aria-hidden="true"]{pointer-events:none;}
 </style>
 
 <!-- Vaihe 6c: Ajastinasetukset -->
-<div id="tset-overlay" style="position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)" onclick="if(event.target===this)closeTimerSettings()" aria-hidden="true"></div>
-<div id="tset-panel" role="dialog" aria-modal="true" aria-label="Ajastimen asetukset" style="position:fixed;top:50%;left:50%;width:min(440px,96vw);max-height:90vh;background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.15);z-index:201;flex-direction:column;overflow:hidden;display:flex">
+<div id="tset-overlay" style="position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;" onclick="if(event.target===this)closeTimerSettings()" aria-hidden="true"></div>
+<div id="tset-panel" role="dialog" aria-modal="true" aria-label="Ajastimen asetukset" style="position:fixed;top:50%;left:50%;width:min(440px,96vw);max-height:90vh;background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0;z-index:201;flex-direction:column;overflow:hidden;display:flex">
   <div style="padding:1.4rem 1.6rem 1rem;border-bottom:1px solid var(--light);flex-shrink:0">
     <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;font-style:italic;color:var(--ink);margin-bottom:.2rem">Ajastimen asetukset</div>
     <div style="font-size:var(--text-xs);color:var(--muted);font-weight:300;line-height:1.5">Säädä pomodoron vaiheiden pituudet itsellesi sopiviksi. Asetukset tallennetaan selaimeen ja otetaan käyttöön heti — jos ajastin on käynnissä, nykyinen vaihe jatkuu loppuun vanhoilla arvoilla.</div>
@@ -3377,7 +3367,7 @@ svg[aria-hidden="true"]{pointer-events:none;}
     <button onclick="closeTimerSettings()" style="font-family:'DM Sans',sans-serif;font-size:.875rem;font-weight:400;padding:.65rem 1rem;border-radius:var(--r-md);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer">Peruuta</button>
   </div>
 </div>
-<div id="ai-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)" onclick="if(event.target===this)closeAI()"></div>
+<div id="ai-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;" onclick="if(event.target===this)closeAI()"></div>
 <div id="ai-panel" style="display:none;position:fixed;top:0;right:0;bottom:0;width:min(420px,100vw);background:var(--paper);border-left:1px solid var(--light);z-index:201;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid var(--light);flex-shrink:0">
     <div>
@@ -4076,7 +4066,7 @@ function popoutTimer(){
     +'.task{font-size:.82rem;font-weight:500;color:var(--ink);text-align:center;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:1.1rem}'
     +'.dots{display:flex;gap:4px;justify-content:center;align-items:center}'
     +'.pd{width:8px;height:8px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);flex-shrink:0}'
-    +'.pd.done{background:var(--pomo);border-color:var(--pomo)} .pd.active{border-color:var(--pomo);box-shadow:0 0 0 2px rgba(160,74,40,.2)}'
+    +'.pd.done{background:var(--pomo);border-color:var(--pomo)} .pd.active{border-color:var(--pomo);box-shadow:0 0 0 2px rgba(160,74,40}'
     +'.reset-btn{background:none;border:none;cursor:pointer;font-size:.7rem;color:var(--light);font-family:\'DM Sans\',sans-serif;padding:.1rem .3rem}'
     +'.reset-btn:hover{color:var(--muted)}'
     +'.btns{display:flex;gap:.4rem;flex-wrap:wrap;justify-content:center}'
@@ -5117,7 +5107,7 @@ function wizRenderProjBtns(){
   projects.forEach(function(p){
     var btn=document.createElement('button');
     var active=newProjectId===p.id;
-    btn.style.cssText='font-family:\'DM Sans\',sans-serif;font-size:var(--text-xs);font-weight:500;padding:.2rem .6rem;border-radius:20px;border:1.5px solid '+p.color+';color:'+(active?'white':p.color)+';background:'+(active?p.color:'transparent')+';cursor:pointer;transition:all .15s;white-space:nowrap';
+    btn.style.cssText='font-family:\'DM Sans\',sans-serif;font-size:var(--text-xs);font-weight:500;padding:.2rem .6rem;border-radius:20px;border:1.5px solid '+p.color+';color:'+(active?'white':p.color)+';background:'+(active?p.color:'transparent')+';cursor:pointer;transition:background .12s,color .12s,border-color .12s,opacity .12s;white-space:nowrap';
     btn.textContent=p.name;
     btn.onclick=(function(proj){return function(){
       newProjectId=(newProjectId===proj.id)?null:proj.id;
@@ -5530,8 +5520,7 @@ function _showUndoBanner(){
   if(!b){
     b=document.createElement('div');
     b.id='undo-banner';
-    b.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--surface-md,var(--surface));border:1.5px solid var(--accent);border-radius:10px;padding:.65rem 1rem;display:flex;align-items:center;gap:.75rem;z-index:9999;box-shadow:0 6px 20px rgba(0,0,0,.25);font-family:\'DM Sans\',sans-serif;font-size:.8rem;color:var(--ink);backdrop-filter:blur(10px)';
-    document.body.appendChild(b);
+    b.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--surface-md,var(--surface));border:1.5px solid var(--accent);border-radius:10px;padding:.65rem 1rem;display:flex;align-items:center;gap:.75rem;z-index:9999;box-shadow:0 6px 20px rgba(0,0,0;font-family:\'DM Sans\',sans-serif;font-size:.8rem;color:var(--ink);document.body.appendChild(b);
   }
   b.innerHTML='<span>Tehtävä poistettu</span><button onclick="undoDelete()" style="font-family:inherit;font-size:.78rem;font-weight:500;padding:.3rem .7rem;border-radius:6px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);cursor:pointer">↶ Kumoa</button><span id="undo-count" style="font-size:.7rem;color:var(--muted);min-width:1.5rem;text-align:right">5s</span>';
   b.style.display='flex';
@@ -5679,7 +5668,7 @@ function startTmr(){
   keepAwake();
   requestNotifPermission();
   soundClick();
-  tmr=setInterval(tick,250);
+  tmr=setInterval(tick,500);
   updClock();render();
 }
 
@@ -6500,7 +6489,7 @@ function renderCardNew(t,container,anyFrog){
     jatkRow.style.cssText='padding:.35rem .85rem .6rem;';
     var jatkBtn=document.createElement('button');
     jatkBtn.textContent='↳ + Jatkokortti';
-    jatkBtn.style.cssText='width:100%;font-family:\'DM Sans\',sans-serif;font-size:var(--text-xs);font-weight:500;padding:.38rem .7rem;border-radius:var(--r-sm);border:1.5px dashed var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;';
+    jatkBtn.style.cssText='width:100%;font-family:\'DM Sans\',sans-serif;font-size:var(--text-xs);font-weight:500;padding:.38rem .7rem;border-radius:var(--r-sm);border:1.5px dashed var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:background .12s,color .12s,border-color .12s,opacity .12s;';
     jatkBtn.onmouseenter=function(){this.style.borderColor='var(--accent)';this.style.color='var(--accent)';};
     jatkBtn.onmouseleave=function(){this.style.borderColor='var(--border)';this.style.color='var(--muted)';};
     jatkBtn.onclick=(function(i){return function(e){e.stopPropagation();openJatkokortti(i);};})(t.id);
@@ -7294,8 +7283,7 @@ function renderWsSwitcher(){
   if(el) el.innerHTML='';
   if(elHam) elHam.innerHTML='';
   var cssBtn=function(isActive){
-    return 'font-family:\'DM Sans\',sans-serif;font-size:.7rem;font-weight:'+(isActive?'500':'300')+';padding:.3rem .7rem;border-radius:20px;border:1.5px solid '+(isActive?'var(--accent)':'rgba(255,255,255,.3)')+';background:'+(isActive?'var(--accent)':'var(--surface)')+';color:'+(isActive?'white':'rgba(255,255,255,.7)')+';cursor:pointer;white-space:nowrap;transition:all .15s;backdrop-filter:blur(8px)';
-  };
+    return 'font-family:\'DM Sans\',sans-serif;font-size:.7rem;font-weight:'+(isActive?'500':'300')+';padding:.3rem .7rem;border-radius:20px;border:1.5px solid '+(isActive?'var(--accent)':'rgba(255,255,255,.3)')+';background:'+(isActive?'var(--accent)':'var(--surface)')+';color:'+(isActive?'white':'rgba(255,255,255,.7)')+';cursor:pointer;white-space:nowrap;transition:background .12s,color .12s,border-color .12s,opacity .12s;};
   wss.forEach(function(ws){
     var isActive=ws.id===activeId;
     function makeWsBtn(container){
@@ -7824,7 +7812,7 @@ function renderPresetList(){
   presets.forEach(function(p){
     var row=document.createElement('div');
     var isActive=p.id===_selectedPresetId;
-    row.style.cssText='display:flex;align-items:center;gap:.65rem;padding:.5rem .7rem;background:'+(isActive?'var(--accent-dim)':'var(--surface)')+';border:1px solid '+(isActive?'var(--accent)':'var(--border)')+';border-radius:var(--r-md);cursor:pointer;transition:all .12s;';
+    row.style.cssText='display:flex;align-items:center;gap:.65rem;padding:.5rem .7rem;background:'+(isActive?'var(--accent-dim)':'var(--surface)')+';border:1px solid '+(isActive?'var(--accent)':'var(--border)')+';border-radius:var(--r-md);cursor:pointer;transition:background .12s,color .12s,border-color .12s;';
     row.innerHTML='<span style="font-size:1rem;flex-shrink:0">📋</span>'
       +'<div style="flex:1;min-width:0">'
       +'<div style="font-size:var(--text-sm);font-weight:500;color:var(--ink)">'+esc(p.title||'Nimetön pohja')+'</div>'
@@ -8384,8 +8372,8 @@ function closeChainView(){
 </script>
 
 <!-- ── KETJUNÄKYMÄ-PANEELI ── -->
-<div id="chain-view-overlay" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(10,14,10,.72);backdrop-filter:blur(3px);" onclick="closeChainView()"></div>
-<div id="chain-view-panel" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(360px,92vw);max-height:80vh;background:#1c2820;border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 16px 48px rgba(0,0,0,.6);z-index:301;flex-direction:column;overflow:hidden;">
+<div id="chain-view-overlay" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(10,14,10,.72);" onclick="closeChainView()"></div>
+<div id="chain-view-panel" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(360px,92vw);max-height:80vh;background:#1c2820;border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 16px 48px rgba(0,0,0;z-index:301;flex-direction:column;overflow:hidden;">
   <div style="padding:.9rem 1.2rem .7rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
     <div style="font-family:'DM Serif Display',serif;font-size:.95rem;font-style:italic;color:var(--ink);">🔗 Ketju</div>
     <button onclick="closeChainView()" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--muted);padding:.1rem .3rem;line-height:1;">×</button>
@@ -8394,8 +8382,8 @@ function closeChainView(){
 </div>
 
 <!-- ── TEHTÄVÄPOHJAT-PANEELI (Vaihe 11) ── -->
-<div id="presets-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)" onclick="if(event.target===this)closePresets()"></div>
-<div id="presets-panel" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(480px,96vw);height:90vh;max-height:90vh;background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.18);z-index:201;flex-direction:column;overflow:hidden;">
+<div id="presets-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;" onclick="if(event.target===this)closePresets()"></div>
+<div id="presets-panel" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(480px,96vw);height:90vh;max-height:90vh;background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0;z-index:201;flex-direction:column;overflow:hidden;">
   <div style="padding:.9rem 1.2rem .75rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
     <div style="font-family:'DM Serif Display',serif;font-style:italic;font-size:1rem;color:var(--ink)">📋 Tehtäväpohjat</div>
     <div style="display:flex;gap:.4rem;align-items:center">
@@ -8443,8 +8431,8 @@ function closeChainView(){
 </div>
 
 <!-- ── JATKOKORTTI-MODAALI ── -->
-<div id="jatko-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)" onclick="if(event.target===this)closeJatkoModal()"></div>
-<div id="jatko-modal" role="dialog" aria-modal="true" aria-label="Jatkokortti" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(440px,96vw);max-height:90vh;background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.18);z-index:401;flex-direction:column;overflow:visible">
+<div id="jatko-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;" onclick="if(event.target===this)closeJatkoModal()"></div>
+<div id="jatko-modal" role="dialog" aria-modal="true" aria-label="Jatkokortti" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(440px,96vw);max-height:90vh;background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0;z-index:401;flex-direction:column;overflow:visible">
   <div style="padding:1.25rem 1.5rem 1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
     <div style="font-family:'DM Serif Display',serif;font-size:1.05rem;font-style:italic;color:var(--ink)">↳ Jatkokortti</div>
     <button onclick="closeJatkoModal()" aria-label="Sulje" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--muted);padding:.2rem .4rem;line-height:1">×</button>
@@ -8565,8 +8553,8 @@ function closeChainView(){
 
 <!-- EDIT CARD MODAL (Vaihe 18) -->
 <!-- ── WIZARD-MODAALI ── -->
-<div id="wiz-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)" onclick="if(event.target===this)wizReset()"></div>
-<div id="wiz-modal" role="dialog" aria-modal="true" aria-label="Lisää tehtävä" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(440px,96vw);max-height:90vh;background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.18);z-index:401;flex-direction:column;overflow:visible">
+<div id="wiz-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;" onclick="if(event.target===this)wizReset()"></div>
+<div id="wiz-modal" role="dialog" aria-modal="true" aria-label="Lisää tehtävä" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(440px,96vw);max-height:90vh;background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0;z-index:401;flex-direction:column;overflow:visible">
   <!-- Vaihe 9.5 B+: Verbinvaihto-popover -->
   <div id="verb-pop" class="verb-pop" data-target="2">
     <button type="button" data-verb="Soita" onclick="pickVerbForSplit('Soita')">Soita</button>
@@ -8779,8 +8767,8 @@ function closeChainView(){
 
   </div>
 </div>
-<div id="edit-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,25,18,.55);z-index:400;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)" onclick="if(event.target===this)closeEditModal()"></div>
-<div id="edit-modal" role="dialog" aria-modal="true" aria-label="Muokkaa korttia" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(440px,96vw);max-height:90vh;background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.18);z-index:500;flex-direction:column;overflow:hidden">
+<div id="edit-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,25,18,.55);z-index:400;-webkit-" onclick="if(event.target===this)closeEditModal()"></div>
+<div id="edit-modal" role="dialog" aria-modal="true" aria-label="Muokkaa korttia" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(440px,96vw);max-height:90vh;background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0;z-index:500;flex-direction:column;overflow:hidden">
   <input type="hidden" id="edit-modal-id">
   <div style="padding:1.25rem 1.5rem 1rem;border-bottom:1px solid var(--border)">
     <div style="font-family:'DM Serif Display',serif;font-size:1.05rem;font-style:italic;color:var(--ink)">Muokkaa korttia</div>
@@ -8795,7 +8783,7 @@ function closeChainView(){
     <div style="display:flex;gap:.4rem">
       <button id="edit-important" onclick="this.classList.toggle('on')" class="qb q2" style="flex:1;justify-content:center;padding:.6rem">Tärkeä</button>
       <button id="edit-urgent" onclick="this.classList.toggle('on')" class="qb q1" style="flex:1;justify-content:center;padding:.6rem">Kiireinen</button>
-      <button id="edit-frog" style="font-family:'DM Sans',sans-serif;font-size:var(--text-sm);font-weight:500;padding:.6rem .9rem;border-radius:var(--r-md);border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap" title="Aseta sammakoksi (tärkein tehtävä)">🐸 Sammakko</button>
+      <button id="edit-frog" style="font-family:'DM Sans',sans-serif;font-size:var(--text-sm);font-weight:500;padding:.6rem .9rem;border-radius:var(--r-md);border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:background .12s,color .12s,border-color .12s,opacity .12s;white-space:nowrap" title="Aseta sammakoksi (tärkein tehtävä)">🐸 Sammakko</button>
     </div>
     <!-- Arvio -->
     <div style="display:flex;align-items:center;gap:.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:.45rem .85rem">
@@ -9012,7 +9000,14 @@ document.addEventListener('DOMContentLoaded', function() {
     var hDots = document.getElementById('hdr-pdots');
     if(mDots && hDots && hDots.innerHTML !== mDots.innerHTML) hDots.innerHTML = mDots.innerHTML;
   }
-  setInterval(syncHdr, 500);
+  // MutationObserver: päivitä hdr vain kun #ttime tai #tphase muuttuu
+  var _syncTarget = document.getElementById('pb');
+  if (_syncTarget && window.MutationObserver) {
+    var _mo = new MutationObserver(syncHdr);
+    _mo.observe(_syncTarget, {childList:true, subtree:true, characterData:true, attributes:true});
+  } else {
+    setInterval(syncHdr, 1000);
+  }
   setTimeout(syncHdr, 300);
 });
 </script>
@@ -9561,8 +9556,8 @@ function invEscHandler(e){
 </script>
 
 <!-- Share-preset-modaali (Vaihe 12A) -->
-<div id="share-preset-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.5);z-index:300;backdrop-filter:blur(3px)" onclick="closeSharePreset()"></div>
-<div id="share-preset-box" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(380px,92vw);background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.22);z-index:301;flex-direction:column;overflow:hidden;font-family:'DM Sans',sans-serif;">
+<div id="share-preset-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.5);z-index:300;" onclick="closeSharePreset()"></div>
+<div id="share-preset-box" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(380px,92vw);background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0;z-index:301;flex-direction:column;overflow:hidden;font-family:'DM Sans',sans-serif;">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.1rem;border-bottom:1px solid var(--border)">
     <div style="font-family:'DM Serif Display',serif;font-style:italic;font-size:.95rem;color:var(--ink)">🔗 Jaa pohja</div>
     <button onclick="closeSharePreset()" style="background:none;border:none;font-size:1.1rem;color:var(--muted);cursor:pointer;padding:.2rem .4rem">×</button>
@@ -9590,8 +9585,8 @@ function invEscHandler(e){
 </div>
 
 <!-- Esikatselu-modaali (Vaihe 12B) -->
-<div id="ppreview-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.55);z-index:300;backdrop-filter:blur(3px)" onclick="closePresetPreview()"></div>
-<div id="ppreview-box" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(440px,94vw);max-height:88vh;background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.22);z-index:301;flex-direction:column;overflow:hidden;font-family:'DM Sans',sans-serif;">
+<div id="ppreview-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.55);z-index:300;" onclick="closePresetPreview()"></div>
+<div id="ppreview-box" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(440px,94vw);max-height:88vh;background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0;z-index:301;flex-direction:column;overflow:hidden;font-family:'DM Sans',sans-serif;">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.1rem;border-bottom:1px solid var(--border);flex-shrink:0">
     <div style="font-family:'DM Serif Display',serif;font-style:italic;font-size:.95rem;color:var(--ink)">📋 Tehtäväpohja</div>
     <button onclick="closePresetPreview()" style="background:none;border:none;font-size:1.1rem;color:var(--muted);cursor:pointer;padding:.2rem .4rem">×</button>
@@ -9613,8 +9608,8 @@ function invEscHandler(e){
 </div>
 
 <!-- Koodinsyöttömodaali (Vaihe 12C) -->
-<div id="pcode-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.5);z-index:300;backdrop-filter:blur(3px)" onclick="closePresetCodeEntry()"></div>
-<div id="pcode-box" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(340px,90vw);background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.22);z-index:301;flex-direction:column;overflow:hidden;font-family:'DM Sans',sans-serif;">
+<div id="pcode-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.5);z-index:300;" onclick="closePresetCodeEntry()"></div>
+<div id="pcode-box" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(340px,90vw);background:var(--paper);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0;z-index:301;flex-direction:column;overflow:hidden;font-family:'DM Sans',sans-serif;">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.1rem;border-bottom:1px solid var(--border)">
     <div style="font-family:'DM Serif Display',serif;font-style:italic;font-size:.95rem;color:var(--ink)">🔑 Syötä pohjakoodi</div>
     <button onclick="closePresetCodeEntry()" style="background:none;border:none;font-size:1.1rem;color:var(--muted);cursor:pointer;padding:.2rem .4rem">×</button>
