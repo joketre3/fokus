@@ -12,9 +12,9 @@
   /* 60% PINTA  — tumma metsänvihreä lasi             */
   --ink:rgba(255,255,255,.95);
   --paper:rgba(30,50,40,.35);
-  --surface:rgba(30,55,40,.42);
-  --surface-md:rgba(30,55,40,.5);
-  --surface-strong:rgba(30,55,40,.65);
+  --surface:rgba(30,55,40,.88);
+  --surface-md:rgba(30,55,40,.92);
+  --surface-strong:rgba(30,55,40,.96);
   --border:rgba(255,255,255,.25);
   --muted:rgba(255,255,255,.55);
   --light:rgba(255,255,255,.2);
@@ -86,7 +86,7 @@ body::before{
 input[type=date]{font-family:'DM Sans',sans-serif;font-size:var(--text-sm);color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:.4rem .7rem;outline:none}
 
 /* POMODORO PANEL */
-.pbox{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem;margin-bottom:1.5rem;transition:border-color .2s,box-shadow .2s,opacity .2s}
+.pbox{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem;margin-bottom:1.5rem;transition:border-color .3s,box-shadow .3s,opacity .3s}
 .pbox.idle{opacity:.7}
 .pbox.work{border-color:var(--pomo);box-shadow:0 0 0 2px rgba(192,57,43;opacity:1}
 .pbox.sbrk{border-color:var(--brk);box-shadow:0 0 0 2px rgba(41,128,185;opacity:1}
@@ -272,7 +272,7 @@ input[type=date]{font-family:'DM Sans',sans-serif;font-size:var(--text-sm);color
 .qemp{font-size:var(--text-sm);color:var(--light);font-style:italic}
 
 /* EISENHOWER MODAL (Vaihe 9) */
-.eise-overlay{position:fixed;inset:0;background:rgba(15,25,20,.55);-webkit-z-index:200;opacity:0;pointer-events:none;transition:opacity .2s ease}
+.eise-overlay{position:fixed;inset:0;background:rgba(15,25,20,.85);-webkit-z-index:200;opacity:0;pointer-events:none;transition:opacity .2s ease}
 .eise-overlay.on{opacity:1;pointer-events:auto}
 .eise-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.95);width:min(880px,94vw);max-height:88vh;background:var(--paper);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:0 20px 60px rgba(0,0,0;z-index:201;padding:1.5rem 1.5rem 1.75rem;opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;overflow-y:auto;display:flex;flex-direction:column;gap:1rem}
 .eise-modal.on{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:auto}
@@ -322,7 +322,7 @@ input[type=date]{font-family:'DM Sans',sans-serif;font-size:var(--text-sm);color
 .eise-move-item{display:flex;align-items:center;gap:.5rem;padding:.45rem .85rem;font-size:var(--text-sm);font-weight:400;cursor:pointer;transition:background .1s;white-space:nowrap;color:var(--ink)}
 .eise-move-item:hover{background:var(--surface)}
 .eise-move-item .eise-move-dot{width:7px;height:7px;border-radius:var(--r-full);flex-shrink:0}
-html[data-theme="aurinko"] .eise-move-menu{background:rgba(255,245,220,.98)!important;border-color:rgba(180,130,70,.3)!important}
+html[data-theme="aurinko"] .eise-move-menu{background:rgba(255,245,220,.99)!important;border-color:rgba(180,130,70,.3)!important}
 html[data-theme="aurinko"] .eise-move-item:hover{background:rgba(180,130,70,.1)!important}
 
 @media(max-width:640px){
@@ -406,7 +406,7 @@ button{color:rgba(255,255,255,.85)}
 .qb.on:not(.q1):not(.q2):not(.q3):not(.q4){background:var(--accent-dim) !important;border-color:var(--accent) !important;color:var(--accent) !important}
 .infobtn{border-color:var(--border) !important;color:rgba(255,255,255,.5) !important;background:rgba(255,255,255,.08) !important}
 .infobtn:hover{border-color:rgba(255,255,255,.6) !important;color:white !important}
-.infobox{background:rgba(15,40,25,.75) !important;color:rgba(255,255,255,.85) !important;border-color:rgba(255,255,255,.15) !important}
+.infobox{background:rgba(15,40,25,.97) !important;color:rgba(255,255,255,.85) !important;border-color:rgba(255,255,255,.15) !important}
 .infobox strong{color:white !important}
 .dnbtn{background:rgba(196,154,58,.35) !important;border-color:rgba(220,190,100,.45) !important;color:rgba(230,200,120,.9) !important}
 .dnbtn:hover{background:rgba(196,154,58,.7) !important;color:white !important}
@@ -456,10 +456,10 @@ button[onclick*="exportData"],label[title*="kopio"],button[onclick*="openAI"],bu
 .wait-badge{background:rgba(58,107,138,.35) !important;border-color:rgba(58,107,138,.5) !important;color:rgba(150,200,230,.9) !important}
 
 /* Notif */
-.notif{background:rgba(15,40,25,.92) !important;}
+.notif{background:rgba(15,40,25,.97) !important;}
 
 /* AI panel */
-#ai-panel{will-change:transform;background:rgba(12,35,22,.92) !important;border-color:rgba(255,255,255,.18) !important}
+#ai-panel{background:rgba(12,35,22,.97) !important;border-color:rgba(255,255,255,.18) !important}
 
 /* Onboarding */
 #onboarding{background:var(--surface-strong) !important;border-color:var(--border) !important;}
@@ -469,7 +469,7 @@ button[onclick*="exportData"],label[title*="kopio"],button[onclick*="openAI"],bu
 .tag-rm{color:rgba(255,255,255,.3) !important}
 
 /* Tag input wrap */
-.tag-input-wrap,.tag-suggestions{background:rgba(20,50,30,.85) !important;border-color:rgba(255,255,255,.2) !important;}
+.tag-input-wrap,.tag-suggestions{background:rgba(20,50,30,.97) !important;border-color:rgba(255,255,255,.2) !important;}
 .tag-sug-item{color:rgba(255,255,255,.85) !important}
 .tag-sug-item:hover{background:rgba(255,255,255,.1) !important}
 
@@ -530,7 +530,7 @@ html[data-theme="havu"] body::before {
 }
 html[data-theme="havu"] .pbox{background:rgba(12,35,22,.90)!important;border-color:rgba(255,255,255,.15)!important}
 html[data-theme="havu"] #proj-modal,html[data-theme="havu"] #profile-panel,html[data-theme="havu"] #schedule-modal,html[data-theme="havu"] #eise-modal,html[data-theme="havu"] #edit-modal{background:rgba(6,22,13,.97)!important;border-color:rgba(255,255,255,.15)!important}
-html[data-theme="havu"] #ai-panel{will-change:transform;background:rgba(4,18,10,.97)!important;border-color:rgba(255,255,255,.13)!important}
+html[data-theme="havu"] #ai-panel{background:rgba(4,18,10,.97)!important;border-color:rgba(255,255,255,.13)!important}
 html[data-theme="havu"] .pbtn{background:rgba(12,35,22,.80)!important;border-color:rgba(255,255,255,.28)!important;color:rgba(255,255,255,.88)!important}
 html[data-theme="havu"] .notif{background:rgba(6,22,13,.97)!important}
 html[data-theme="havu"] #search-inp{background:rgba(12,35,22,.88)!important;border-color:rgba(255,255,255,.18)!important}
@@ -572,7 +572,7 @@ html[data-theme="aurinko"] body::before {
 }
 /* Panels */
 html[data-theme="aurinko"] .pbox{background:rgba(255,248,230,.90)!important;border-color:rgba(180,130,70,.30)!important;color:#2d2417!important}
-html[data-theme="aurinko"] #proj-modal,html[data-theme="aurinko"] #profile-panel,html[data-theme="aurinko"] #schedule-modal,html[data-theme="aurinko"] #eise-modal,html[data-theme="aurinko"] #edit-modal,html[data-theme="aurinko"] #wiz-modal{background:rgba(255,245,220,.98)!important;border-color:rgba(180,130,70,.30)!important;color:#2d2417!important;}
+html[data-theme="aurinko"] #proj-modal,html[data-theme="aurinko"] #profile-panel,html[data-theme="aurinko"] #schedule-modal,html[data-theme="aurinko"] #eise-modal,html[data-theme="aurinko"] #edit-modal,html[data-theme="aurinko"] #wiz-modal{background:rgba(255,245,220,.99)!important;border-color:rgba(180,130,70,.30)!important;color:#2d2417!important;}
 html[data-theme="aurinko"] #eise-overlay{background:rgba(80,50,10,.35)!important}
 html[data-theme="aurinko"] .eise-quad{background:rgba(255,248,230,.75)!important;border-color:rgba(180,130,70,.25)!important}
 html[data-theme="aurinko"] .eise-card{background:rgba(255,250,235,.95)!important;border-color:rgba(180,130,70,.28)!important;color:#2d2417!important}
@@ -581,7 +581,7 @@ html[data-theme="aurinko"] .eise-ttl{color:#3d2d15!important}
 html[data-theme="aurinko"] .eise-sub{color:rgba(61,45,21,.65)!important}
 html[data-theme="aurinko"] .eise-close{color:rgba(61,45,21,.55)!important}
 html[data-theme="aurinko"] .eise-close:hover{color:#3d2d15!important;background:rgba(180,130,70,.15)!important}
-html[data-theme="aurinko"] #ai-panel{will-change:transform;background:rgba(255,242,215,.98)!important;border-color:rgba(180,130,70,.30)!important;color:#2d2417!important}
+html[data-theme="aurinko"] #ai-panel{background:rgba(255,242,215,.98)!important;border-color:rgba(180,130,70,.30)!important;color:#2d2417!important}
 html[data-theme="aurinko"] #onboarding{background:rgba(255,245,220,.92)!important;border-color:rgba(180,130,70,.30)!important;color:#2d2417!important}
 /* Buttons */
 html[data-theme="aurinko"] .pbtn{background:rgba(255,248,230,.92)!important;border-color:rgba(180,130,70,.40)!important;color:#4a3a20!important}
@@ -601,7 +601,7 @@ html[data-theme="aurinko"] .notif{background:rgba(255,245,220,.97)!important;col
 /* Tags */
 html[data-theme="aurinko"] .tag{background:rgba(196,104,30,.12)!important;border-color:rgba(196,104,30,.30)!important;color:#4a3a20!important}
 html[data-theme="aurinko"] .tag-rm{color:rgba(100,80,50,.40)!important}
-html[data-theme="aurinko"] .tag-input-wrap,html[data-theme="aurinko"] .tag-suggestions{background:rgba(255,245,220,.98)!important;border-color:rgba(180,130,70,.30)!important}
+html[data-theme="aurinko"] .tag-input-wrap,html[data-theme="aurinko"] .tag-suggestions{background:rgba(255,245,220,.99)!important;border-color:rgba(180,130,70,.30)!important}
 html[data-theme="aurinko"] .tag-sug-item{color:#4a3a20!important}
 html[data-theme="aurinko"] .tag-sug-item:hover{background:rgba(196,104,30,.10)!important}
 /* Workspace switcher */
@@ -858,14 +858,13 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
   // Käynnistetään kuuntelu
   initAuth();
 </script>
-
-<style id="perf-optimizations">
-/* Suorituskykyoptimoinit vanhoille laitteille */
-.card { contain: layout style; }
-.quad { contain: layout style; }
-.pbox { contain: layout style; }
-.proj-card { contain: layout style; }
-* { -webkit-font-smoothing: subpixel-antialiased; }
+<style id="perf">
+.card{contain:layout style}
+.quad{contain:layout style}
+.pbox{contain:layout style}
+.proj-card{contain:layout style}
+#ham-sheet{will-change:transform}
+#ai-panel{will-change:transform}
 </style>
 </head>
 <body>
@@ -1232,7 +1231,7 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
   -webkit-}
 #ham-overlay.ham-open{opacity:1;pointer-events:auto}
 
-#ham-sheet{will-change:transform;
+#ham-sheet{
   position:fixed;
   bottom:0;
   left:0;
@@ -1979,7 +1978,7 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   background:var(--surface-strong);
   border-top:1px solid var(--border);
   -webkit-transform:translateY(0);
-  transition:transform 200ms ease;
+  transition:transform 300ms ease;
   padding:0 .75rem;
 }
 #hand-bar.hand-bar--hidden{
@@ -2012,7 +2011,7 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 #hand-toggle:hover{color:var(--ink);}
 #hand-toggle .hand-toggle__arrow{
   display:inline-block;
-  transition:transform 200ms ease;
+  transition:transform 300ms ease;
   font-size:.8rem;
 }
 #hand-bar.hand-bar--hidden + #hand-toggle,
@@ -9000,7 +8999,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var hDots = document.getElementById('hdr-pdots');
     if(mDots && hDots && hDots.innerHTML !== mDots.innerHTML) hDots.innerHTML = mDots.innerHTML;
   }
-  // MutationObserver: päivitä hdr vain kun #ttime tai #tphase muuttuu
+  // MutationObserver korvaa pollauksen — päivittyy vain kun data muuttuu
   var _syncTarget = document.getElementById('pb');
   if (_syncTarget && window.MutationObserver) {
     var _mo = new MutationObserver(syncHdr);
