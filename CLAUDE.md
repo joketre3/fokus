@@ -173,3 +173,41 @@ Kutsuu Anthropic API:a suoraan selaimesta (`https://api.anthropic.com/v1/message
 - Fontit: DM Sans, DM Serif Display
 - Deployment: GitHub Pages https://joketre3.github.io/fokus/ (repo: "fokus")
 - Bash-työkalut: `grep -n` pipe-erotetuilla kuvioilla; `sed -n 'start,endp'` alueiden lukemiseen; `wc -l` tiedostokoon tarkistukseen ensin
+
+## Kaupallistaminen (lisätty 2026-05-28)
+
+Täysi analyysi: `docs/strategia-kooste-2026-05.md`
+Firebase-integraatiosuunnitelma: `docs/firebase-integraatio-suunnitelma.md`
+
+### Nykytila vs. tavoite
+
+| | Nyt | Tavoite |
+|---|---|---|
+| `index.html` | Firebase Auth + Firestore ✅ | — |
+| `aamu.html` | localStorage only ❌ | Firebase sync |
+| `swipe.html` | localStorage only ❌ | Firebase sync |
+| Maksut | Ei mitään ❌ | Stripe + Vercel functions |
+| Freemium-rajat | Ei enforcea ❌ | 30 tehtävää / 1 työtila ilmaisella |
+
+### Arkkitehtuuripäätökset
+
+- **Pysytään Firebasessa** — ei migraatiota Supabaseen
+- **Stripe + Vercel/Netlify serverless** webhookeille (ilmainen tier)
+- **Subscription-status Firestoreen:** `users/{uid}/subscription: { tier, status, expires_at }`
+- **Kotipalvelin ei tuotantoon** — Firebase hoitaa, kotipalvelin vain dev-työkaluille
+
+### Differointistrategia
+
+Lähimmät kilpailijat: Sunsama ($20/kk), TickTick ($3/kk), Akiflow ($15/kk).
+Fokuksen etu: ohjattu aamurutiini metodologiana (ei vain näkymänä), selkeämpi ja halvempi.
+
+**Tie 1 (aloita):** Niche suomi — "Pohjoismainen tuottavuusrituaali", ~€2–5k MRR realistinen katto.
+**Tie 2 (myöhemmin):** Globaali englanninkielinen versio kun pohja on kunnossa.
+
+### Seuraavat askeleet prioriteettijärjestyksessä
+
+- [ ] Firebase-integraatio `aamu.html` ja `swipe.html`:ään (ks. `docs/firebase-integraatio-suunnitelma.md`)
+- [ ] Stripe + Vercel-funktiot (checkout, webhook, portal)
+- [ ] Freemium-rajojen enforkointi Firestoresta
+- [ ] Email-kirjautuminen Google-kirjautumisen rinnalle
+- [ ] Englanninkielinen versio
