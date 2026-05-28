@@ -7538,6 +7538,8 @@ function _updatePerfBtn(){
   var on=document.documentElement.getAttribute('data-perf')==='lite';
   var btn=document.getElementById('perf-toggle-btn');
   if(btn){btn.textContent=on?'⚡ Nopea tila: päällä':'⚡ Nopea tila: pois';btn.setAttribute('aria-pressed',on?'true':'false');}
+  var hbtn=document.getElementById('ham-perf-btn');
+  if(hbtn){var lbl=hbtn.querySelector('.ham-row__label');if(lbl)lbl.textContent=on?'Nopea tila: päällä':'Nopea tila: pois';}
 }
 function togglePerfMode(){
   var on=document.documentElement.getAttribute('data-perf')==='lite';
@@ -9132,6 +9134,11 @@ document.addEventListener('DOMContentLoaded', function() {
     <span class="ham-row__label">Ajastimen asetukset</span>
   </button>
 
+  <button id="ham-perf-btn" class="ham-row" onclick="togglePerfMode()">
+    <span class="ham-row__icon">⚡</span>
+    <span class="ham-row__label">Nopea tila: pois</span>
+  </button>
+
   <div class="ham-divider"></div>
 
   <div class="ham-sheet__title">Teema</div>
@@ -9162,6 +9169,7 @@ function openHamMenu(){
   document.getElementById('ham-sheet').classList.add('ham-open');
   renderWsSwitcher();
   updateHamThemeBtns();
+  _updatePerfBtn();
   var doneCount = (typeof tasks !== 'undefined') ? tasks.filter(function(t){return t.done}).length : 0;
   var countEl = document.getElementById('ham-done-count');
   if(countEl) countEl.textContent = doneCount > 0 ? doneCount + ' kpl' : '';
