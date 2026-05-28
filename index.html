@@ -4626,7 +4626,7 @@ function renderAIResults(result,inbox){
       fc.style.cssText='background:var(--surface);border:1px solid #4a6e22;border-radius:var(--r-md);padding:1rem 1.1rem;border-left:3px solid #4a6e22';
       fc.innerHTML='<div style="font-size:.65rem;font-weight:500;color:#4a6e22;letter-spacing:.07em;text-transform:uppercase;margin-bottom:.35rem">🐸 Sammakkoehdotus</div>'
         +'<div style="font-size:.85rem;font-weight:400;color:var(--ink);margin-bottom:.3rem">'+esc(ft.text)+'</div>'
-        +'<div style="font-size:.72rem;color:var(--muted);font-weight:300;margin-bottom:.75rem;line-height:1.5">'+result.sammakko.perustelu+'</div>'
+        +'<div style="font-size:.72rem;color:var(--muted);font-weight:300;margin-bottom:.75rem;line-height:1.5">'+esc(result.sammakko.perustelu)+'</div>'
         +'<button onclick="acceptFrog('+ft.id+')" style="font-family:\'DM Sans\',sans-serif;font-size:.75rem;font-weight:500;padding:.35rem .85rem;border-radius:var(--r-sm);border:1.5px solid #4a6e22;color:#4a6e22;background:var(--surface);cursor:pointer;margin-right:.4rem">Hyväksy sammakko</button>'
         +'<button onclick="this.closest(\'div[style]\').style.opacity=\'.4\'" style="font-family:\'DM Sans\',sans-serif;font-size:.75rem;font-weight:300;padding:.35rem .6rem;border-radius:var(--r-sm);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer">Ohita</button>';
       el.appendChild(fc);
@@ -4660,7 +4660,7 @@ function renderAIResults(result,inbox){
           +' → <span style="color:var(--pomo);font-weight:500">'+e.ehdotettu_est+' pomodoroa</span></div>';
       }
       if(e.kommentti){
-        inner+='<div style="font-size:.7rem;color:var(--muted);font-weight:300;font-style:italic;margin-bottom:.6rem;line-height:1.5">'+e.kommentti+'</div>';
+        inner+='<div style="font-size:.7rem;color:var(--muted);font-weight:300;font-style:italic;margin-bottom:.6rem;line-height:1.5">'+esc(e.kommentti)+'</div>';
       }
       inner+='<button onclick="acceptSuggestion('+e.id+',\''+( e.ehdotettu_quad||'')+'\','+( e.ehdotettu_est||'null')+')" '
         +'style="font-family:\'DM Sans\',sans-serif;font-size:.72rem;font-weight:500;padding:.3rem .75rem;border-radius:var(--r-sm);border:1.5px solid var(--accent);color:var(--accent);background:var(--surface);cursor:pointer;margin-right:.35rem">Hyväksy</button>'
