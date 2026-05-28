@@ -46,6 +46,9 @@ Jokainen tiedosto on itsenäinen: kaikki CSS ja JS sisäänrakennettu HTML-tiedo
 - `position: sticky` rikkoutuu kun vanhemmalla on `overflow-x: hidden` mobiilissa — käytä `position: fixed` + placeholder-elementti (`#pb-ph`)
 - Firebase API-avain client-side koodissa on tarkoituksella julkinen, ei tietoturvariski
 - Python `content.replace(old, new, 1)` on luotettava fallback kun `str_replace` epäonnistuu isoissa JS-funktioissa
+- `backdrop-filter` on pääsyyllinen hitaaseen suorituskykyyn MacBook Pro 2010:llä (Intel HD Graphics, ei NVIDIA) — `html[data-perf="lite"]`-attribuutti poistaa sen kaikista elementeistä
+- Usvametsä-teeman `--paper` (rgba .35) ja `--surface` (rgba .42) ovat läpinäkyviä ja luottavat backdrop-filteriin — nopean tilan CSS ylikirjoittaa ne opaakeiksi (.97)
+- Asetusnapit kuuluvat hampuriaisvalikkoon (Asetukset-osio), ei profiilipaneeliin — käyttäjä ei löydä piilotettujakin modaaleja
 
 ## Core data model
 
@@ -81,6 +84,7 @@ Kaikki tehtävädata `localStorage`-avaimessa `eis_v5_<wsId>` (oletus: `eis_v5_w
 - `fap_timer_settings` — `{work, sbrk, lbrk}` (minuutit)
 - `fap_apikey` — Anthropic API-avain
 - `fap_profile` — käyttäjäprofiili AI-analyysiä varten
+- `fap_perf` — `'1'` kun Nopea tila päällä (asettaa `html[data-perf="lite"]`)
 
 ## Tehtävien verbi-formaatti
 
@@ -156,6 +160,17 @@ Kolmivaiheinen tietoturva- ja koodinlaatuprojekti tehty, kaikki commitoitu ja pu
 | 3 — Konsolidointi | `WS_ACTIVE` vakio event-handlereissa, `fe()` duplikaatti poistettu, `POMO_MIN` lukee `fap_timer_settings` | ✅ |
 
 Analyysi- ja suunnitteludokumentit: `analysis/ASSESSMENT.md`, `analysis/report.html`, `docs/superpowers/plans/`.
+
+### Nopea tila -ominaisuus (2026-05-28) — valmis
+
+MacBook Pro 2010 (Intel HD, ei GPU) suorituskykyoptionointi Chromessa.
+
+| Muutos | Tiedosto | Mitä |
+|--------|----------|------|
+| `html[data-perf="lite"]` CSS-lohko | index.html:~682 | `backdrop-filter:none`, transitiot pois kaikista elementeistä |
+| Opaakki `--paper`/`--surface` | index.html:~696 | Usva .35→.97, havu/aurinko omat arvot |
+| `togglePerfMode()`, `initPerfMode()` | index.html:~7537 | localStorage `fap_perf`, `data-perf` attribute |
+| Hampurilaisvalikko → Asetukset | index.html:~9137 | `#ham-perf-btn` nappi |
 
 ### Jäljellä (manuaalinen)
 
