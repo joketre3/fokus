@@ -284,8 +284,6 @@ function saveQueue(){
   localStorage.setItem(key,JSON.stringify(d));
 }
 
-function fe(v){if(v===0.5)return'½';if(v%1!==0)return Math.floor(v)+'½';return String(v);}
-
 function queueTotalMin(){
   var wsId=localStorage.getItem('fap_active_ws')||'work';
   var raw=localStorage.getItem('eis_v5_'+wsId);
