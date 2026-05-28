@@ -7532,6 +7532,20 @@ function setTheme(t){
   setTheme(saved);
 })();
 
+function _updatePerfBtn(){
+  var on=document.documentElement.getAttribute('data-perf')==='lite';
+  var btn=document.getElementById('perf-toggle-btn');
+  if(btn) btn.textContent=on?'⚡ Nopea tila: päällä':'⚡ Nopea tila: pois';
+}
+function togglePerfMode(){
+  var on=document.documentElement.getAttribute('data-perf')==='lite';
+  if(on){document.documentElement.removeAttribute('data-perf');localStorage.removeItem('fap_perf');}
+  else{document.documentElement.setAttribute('data-perf','lite');localStorage.setItem('fap_perf','1');}
+  _updatePerfBtn();
+}
+(function initPerfMode(){
+  if(localStorage.getItem('fap_perf')==='1') document.documentElement.setAttribute('data-perf','lite');
+})();
 
 // ── ICS KALENTERI ──────────────────────────────────────
 var _icsTask = null;
