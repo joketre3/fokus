@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="fi" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fokus A Priori — Modernization Assessment</title>
+<style>
+  :root {
+    --bg: #111;
+    --surface: #1a1a1a;
+    --border: #2e2e2e;
+    --ink: #d4d4d4;
+    --muted: #888;
+    --accent: #c49a3a;
+    --red: #c0392b;
+    --orange: #e67e22;
+    --green: #27ae60;
+    --blue: #2980b9;
+    font-size: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: system-ui, sans-serif; line-height: 1.6; padding: 1rem; max-width: 900px; margin: auto; }
+  h1 { color: var(--accent); font-size: 1.4rem; margin: 1.5rem 0 0.25rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+  h2 { color: var(--accent); font-size: 1.1rem; margin: 1.2rem 0 0.5rem; }
+  h3 { color: var(--ink); font-size: 0.95rem; margin: 1rem 0 0.3rem; }
+  p { margin: 0.5rem 0; font-size: 0.9rem; }
+  .summary { background: var(--surface); border-left: 3px solid var(--accent); padding: 0.75rem 1rem; border-radius: 4px; margin: 0.75rem 0; font-size: 0.9rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin: 0.5rem 0 1rem; }
+  th { background: var(--surface); color: var(--muted); text-align: left; padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--border); font-weight: 600; }
+  td { padding: 0.35rem 0.5rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:hover td { background: var(--surface); }
+  .high { color: var(--red); font-weight: 700; }
+  .medium { color: var(--orange); }
+  .low { color: var(--muted); }
+  .tag { display: inline-block; padding: 0.1rem 0.4rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600; margin-right: 0.2rem; }
+  .tag-high { background: #3a1010; color: #e57373; }
+  .tag-medium { background: #2d1f0a; color: #ffb74d; }
+  .tag-low { background: #1a1a1a; color: #888; }
+  .stat-row { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 0.5rem 0 1rem; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.6rem 1rem; flex: 1; min-width: 120px; }
+  .stat-val { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+  .stat-lbl { font-size: 0.75rem; color: var(--muted); }
+  code { background: var(--surface); border: 1px solid var(--border); padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.8rem; font-family: monospace; }
+  .section { margin-bottom: 2rem; }
+  .rec { background: #1a2a1a; border: 1px solid #2d5a3d; border-radius: 6px; padding: 0.75rem 1rem; margin-top: 0.5rem; }
+  .rec-title { color: #6aaa88; font-weight: 700; margin-bottom: 0.25rem; }
+  .steps { counter-reset: step; list-style: none; padding: 0; }
+  .steps li { counter-increment: step; padding: 0.4rem 0.4rem 0.4rem 2.2rem; position: relative; border-left: 2px solid var(--border); margin: 0.25rem 0; font-size: 0.88rem; }
+  .steps li::before { content: counter(step); position: absolute; left: -0.9rem; background: var(--accent); color: #111; font-weight: 700; font-size: 0.7rem; width: 1.4rem; height: 1.4rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  @media (max-width: 600px) {
+    table { font-size: 0.75rem; }
+    td, th { padding: 0.3rem 0.35rem; }
+    .stat-val { font-size: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Fokus A Priori — Modernization Assessment</h1>
+<p style="color:var(--muted);font-size:0.8rem">Generoitu 2026-05-28 · Claude Code multi-agent analyysi</p>
+
+<div class="section">
+  <div class="summary">
+    Single-file HTML -tuottavuussovellus (11 060 SLOC), jossa Eisenhower-matriisi + Pomodoro + TCG-metafora. Single-file-arkkitehtuuri on tietoinen rajoite — <strong>ei arkkitehtuurimuutosta</strong>. 2 korkean tason XSS-haavoittuvuutta preset-jakamisessa, 3 kriittistä bugia/puuttuvaa virheenkäsittelyä. Suositus: <strong>kohdennettu Refactor</strong> ~5–6 työpäivässä.
+  </div>
+
+  <div class="stat-row">
+    <div class="stat"><div class="stat-val">11 060</div><div class="stat-lbl">Rivejä (uniikki)</div></div>
+    <div class="stat"><div class="stat-val">12</div><div class="stat-lbl">Toiminnallista domeenia</div></div>
+    <div class="stat"><div class="stat-val">9</div><div class="stat-lbl">Tietoturvahavaintoa</div></div>
+    <div class="stat"><div class="stat-val">10</div><div class="stat-lbl">Teknisen velan kohtaa</div></div>
+    <div class="stat"><div class="stat-val">~41 kk</div><div class="stat-lbl">COCOMO-II arvio</div></div>
+  </div>
+</div>
+
+<div class="section">
+  <h1>Tekninen velka</h1>
+  <table>
+    <tr><th>#</th><th>Prioriteetti</th><th>Löydös</th><th>Sijainti</th></tr>
+    <tr>
+      <td>1</td><td><span class="tag tag-high">KORKEA</span></td>
+      <td><code>save()</code> — ei try/catch. QuotaExceededError hylätään hiljaa mobiilissa.</td>
+      <td><code>index.html:7388</code></td>
+    </tr>
+    <tr>
+      <td>2</td><td><span class="tag tag-high">KORKEA</span></td>
+      <td><code>load()</code> — JSON.parse ilman try/catch. Korruptoitunut localStorage kaataa sovelluksen.</td>
+      <td><code>index.html:7403, :7479</code></td>
+    </tr>
+    <tr>
+      <td>3</td><td><span class="tag tag-high">KORKEA</span></td>
+      <td><code>queueTotalMin()</code> lukee <code>'eis_v5'</code> (legacy key). Väärä data ei-oletus-työtilassa.</td>
+      <td><code>swipe.html:289</code></td>
+    </tr>
+    <tr>
+      <td>4</td><td><span class="tag tag-high">KORKEA</span></td>
+      <td>Popup-timer kovakoodaa <code>WORK=1500</code> — käyttäjän omat asetukset ei vaikuta timer-popupin kaareen.</td>
+      <td><code>index.html:4131</code></td>
+    </tr>
+    <tr>
+      <td>5</td><td><span class="tag tag-high">KORKEA</span></td>
+      <td><code>runAnalysis()</code> ei tarkista <code>response.ok</code>. HTTP 401/429/529 → sama virheviesti.</td>
+      <td><code>index.html:4592</code></td>
+    </tr>
+    <tr>
+      <td>6</td><td><span class="tag tag-medium">KESKI</span></td>
+      <td><code>fe()</code> määritelty kahdesti swipe.html:ssä. Toinen hiljaa varjostaa ensimmäistä.</td>
+      <td><code>swipe.html:221, :286</code></td>
+    </tr>
+    <tr>
+      <td>7</td><td><span class="tag tag-medium">KESKI</span></td>
+      <td><code>POMO_MIN=25</code> kovakoodattu swipe + aamu. Pitäisi lukea <code>fap_timer_settings.work</code>.</td>
+      <td><code>swipe.html:220, aamu.html:465</code></td>
+    </tr>
+    <tr>
+      <td>8</td><td><span class="tag tag-medium">KESKI</span></td>
+      <td><code>renderCardNew()</code> on 386 riviä — kaksi täysin eri renderöintihaaraa samassa funktiossa.</td>
+      <td><code>index.html:6155–6541</code></td>
+    </tr>
+    <tr>
+      <td>9</td><td><span class="tag tag-low">MATALA</span></td>
+      <td><code>WS_ACTIVE</code>-vakio ohitetaan 4 paikassa raw-stringillä. Lisäksi aamu+swipe käyttävät raw-stringiä.</td>
+      <td><code>index.html:743,:799,:7467,:7475</code></td>
+    </tr>
+    <tr>
+      <td>10</td><td><span class="tag tag-low">MATALA</span></td>
+      <td>7 localStorage-avainta ilman nimettyä vakiota (<code>fap_theme</code>, <code>fap_apikey</code>, jne.).</td>
+      <td><code>index.html:4247</code> (malli)</td>
+    </tr>
+  </table>
+</div>
+
+<div class="section">
+  <h1>Tietoturvahavainnot</h1>
+  <table>
+    <tr><th>ID</th><th>CWE</th><th>Vakavuus</th><th>Kuvaus</th><th>Sijainti</th></tr>
+    <tr>
+      <td>SEC-003</td><td>CWE-79</td><td><span class="high">KORKEA</span></td>
+      <td>Jaettujen presettien <code>titleTemplate</code>/<code>verb</code> renderöidään <code>innerHTML</code>:ään — cross-user stored XSS, API-avaimen eksfiltrointi mahdollinen.</td>
+      <td><code>:7979–7981, :8260</code></td>
+    </tr>
+    <tr>
+      <td>SEC-007</td><td>CWE-284</td><td><span class="high">KORKEA</span></td>
+      <td>Firestore Security Rules — puuttuvat <code>uid</code>-tarkistukset mahdollistavat cross-user-kirjoitukset. Tarkistettava Firestore-konsolista.</td>
+      <td>Firestore rules</td>
+    </tr>
+    <tr>
+      <td>SEC-001</td><td>CWE-79</td><td><span class="medium">KESKI</span></td>
+      <td>AI-vastauksen <code>perustelu</code>/<code>kommentti</code> → <code>innerHTML</code> ilman <code>esc()</code>. Prompt-injection voi eksfiltroida API-avaimen.</td>
+      <td><code>:4629, :4663</code></td>
+    </tr>
+    <tr>
+      <td>SEC-002</td><td>CWE-79</td><td><span class="medium">KESKI</span></td>
+      <td>Inventory-kortit rakentavat HTML:n <code>t.text</code>/<code>t.verbi</code>:llä ilman <code>esc()</code>.</td>
+      <td><code>:9464–9465</code></td>
+    </tr>
+    <tr>
+      <td>SEC-004</td><td>CWE-601</td><td><span class="medium">KESKI</span></td>
+      <td><code>window.open(t.linkki)</code> ilman URL-skeeman validointia — <code>data:</code> ja <code>blob:</code> URI:t sallittu.</td>
+      <td><code>:6289</code></td>
+    </tr>
+    <tr>
+      <td>SEC-008</td><td>CWE-693</td><td><span class="medium">KESKI</span></td>
+      <td>Ei Content Security Policy:a — XSS:n räjähdyssäde rajoittamaton. Meta CSP estäisi API-avaimen eksfiltroinnin.</td>
+      <td>Kaikki tiedostot</td>
+    </tr>
+    <tr>
+      <td>SEC-005</td><td>CWE-312</td><td><span class="low">MATALA</span></td>
+      <td>API-avain cleartext localStorage:ssa. Tietoinen päätös — mitigointi: poista XSS-vektorit.</td>
+      <td><code>:4210, :4579</code></td>
+    </tr>
+    <tr>
+      <td>SEC-006</td><td>CWE-116</td><td><span class="low">MATALA</span></td>
+      <td><code>t.quad</code> konkatenoidaan class-attribuuttiin ilman whitelist-validointia.</td>
+      <td><code>:9451, :9461</code></td>
+    </tr>
+    <tr>
+      <td>SEC-009</td><td>CWE-79</td><td><span class="low">MATALA</span></td>
+      <td><code>p.deadline</code> → <code>meta.innerHTML</code> ilman <code>esc()</code>.</td>
+      <td><code>:4872</code></td>
+    </tr>
+  </table>
+</div>
+
+<div class="section">
+  <h1>Suositeltu toimenpidesuunnitelma</h1>
+  <div class="rec">
+    <div class="rec-title">Refactor — single-file-rajoitteen sisällä</div>
+    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem">Ei arkkitehtuurimuutosta. Ei frameworkeja. Ei tiedostojen jakoa.</p>
+    <ol class="steps">
+      <li><strong>Tietoturva (1–2 pv):</strong> SEC-003 → SEC-007 Firestore-auditointi → SEC-001 → SEC-008 meta CSP. Kaikki 1–3 rivin muutoksia olemassa olevan <code>esc()</code>:n avulla.</li>
+      <li><strong>Kriittiset bugit (1 pv):</strong> <code>swipe.html:289</code> workspace-avain · <code>index.html:4131</code> popup-timer kovakoodaus · <code>save()</code>/<code>load()</code> try/catch · <code>runAnalysis()</code> response.ok-tarkistus.</li>
+      <li><strong>Koodin konsolidointi (2–3 pv):</strong> localStorage-vakioiden yhtenäistäminen · <code>renderCardNew()</code> jakaminen · <code>POMO_MIN</code> lukeminen <code>fap_timer_settings</code>:istä · duplikaatti <code>fe()</code> poistaminen.</li>
+    </ol>
+  </div>
+</div>
+
+<div class="section">
+  <h1>Dokumentaatioaukot</h1>
+  <table>
+    <tr><th>#</th><th>Aukko</th></tr>
+    <tr><td>1</td><td><code>aamu.html</code> ei ole linkitetty mistään navigaatiosta — polku puuttuu käyttäjältä</td></tr>
+    <tr><td>2</td><td><code>_useCardUI</code> dokumentoitu CLAUDE.md:ssä mutta ei koodissa — <code>_handBarVisible</code> on oikea muuttuja</td></tr>
+    <tr><td>3</td><td><code>lataаIcs</code>:ssa kyrillinen homoglyfi — ei hajonnut, mutta dokumentoimaton ja hauras</td></tr>
+    <tr><td>4</td><td><code>eis_v5_default</code> fallback (index.html:7396) — legacy-migraatio vai kuollut koodi?</td></tr>
+    <tr><td>5</td><td>Firestore timer-settings synkronoinnissa ei konfliktinratkaisustrategiaa offline-tilanteille</td></tr>
+  </table>
+</div>
+
+<p style="color:var(--muted);font-size:0.75rem;margin-top:2rem;text-align:center">
+  Fokus A Priori · Analyysi: Claude Code (legacy-analyst × 2, security-auditor) · 2026-05-28
+</p>
+
+</body>
+</html>

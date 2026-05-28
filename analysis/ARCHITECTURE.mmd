@@ -1,0 +1,93 @@
+graph TD
+  subgraph D1["D1 Firebase/Auth (684–861)"]
+    FB[Firebase SDK\nauth + Firestore]
+  end
+
+  subgraph D4["D4 State + Eisenhower (3408–3699)"]
+    STATE[Global State\ntasks/active/turn]
+    EISE[Eisenhower Modal]
+  end
+
+  subgraph D5["D5 Settings + AI + Projects (3700–4920)"]
+    PROF[Profile/Timer Settings]
+    AI[AI Analysis\nAnthropic API]
+    PROJ[Projects/Tags]
+  end
+
+  subgraph D6["D6 Task CRUD + Wizard (4921–5646)"]
+    WIZ[Wizard + Verb Picker]
+    SPLIT[Live Split ja-detection]
+    CRUD[addTask/done/next]
+  end
+
+  subgraph D7["D7 Timer + Sounds (5647–5988)"]
+    TMR[Pomodoro Timer]
+    SND[Web Audio API]
+    NOTIF[Notifications + Clock]
+  end
+
+  subgraph D8["D8 Render Engine (5989–7044)"]
+    RND[render dispatcher]
+    ARN[renderArena]
+    QUE[renderQueue]
+    MTX[renderMatrix]
+    HND[renderHandBar]
+  end
+
+  subgraph D9["D9 Schedule (7045–7242)"]
+    SCHCK[checkScheduledTasks\nsetInterval 60s]
+  end
+
+  subgraph D10["D10 Save/Load + Workspaces (7243–7508)"]
+    SAVE[save/load\neis_v5_wsId]
+    WS[Workspace CRUD]
+    THEME[setTheme]
+  end
+
+  subgraph D11["D11 ICS + Jatkokortti + Presets (7509–8384)"]
+    ICS[ICS Calendar export]
+    JATKO[Jatkokortti chain]
+    PST[Preset share\nFirestore short codes]
+  end
+
+  subgraph D12["D12 Satellite Scripts (8829–9561)"]
+    HDR[Header Timer Widget]
+    HAM[Hamburger Menu]
+    INV[Inventory/Tehtäväpakka]
+  end
+
+  FB -->|auth state| SAVE
+  SAVE -->|dual write| FB
+  SAVE -->|tasks/active/turn| STATE
+  STATE -->|tasks| RND
+  STATE -->|tasks| EISE
+  CRUD -->|calls| SAVE
+  CRUD -->|calls| RND
+  WIZ -->|calls| CRUD
+  SPLIT -->|calls| CRUD
+  AI -->|reads| STATE
+  AI -->|acceptSuggestion| SAVE
+  AI -->|calls| RND
+  PROJ -->|reads| STATE
+  PROJ -->|calls| SAVE
+  EISE -->|calls| SAVE
+  EISE -->|calls| RND
+  TMR -->|phase change| RND
+  TMR -->|hide/show| HND
+  SCHCK -->|mutates tasks| SAVE
+  SCHCK -->|calls| RND
+  JATKO -->|calls| SAVE
+  JATKO -->|calls| RND
+  PST -->|createFromPreset| SAVE
+  PST -->|calls| RND
+  ICS -->|reads| STATE
+  HAM -->|calls| WS
+  HAM -->|calls| PROF
+  HAM -->|calls| THEME
+  INV -->|reads| STATE
+  INV -->|starToHand| SAVE
+  RND --- ARN
+  RND --- QUE
+  RND --- MTX
+  RND --- HND
+  HDR -->|reads window.tleft| TMR
