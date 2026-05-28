@@ -7411,7 +7411,7 @@ function load(){
     }
   }
   if(r){
-    var d=JSON.parse(r);
+    var d;try{d=JSON.parse(r);}catch(e){d={};}
     tasks=d.tasks||[];nid=d.nid||1;
     // Migraatio: lisää chain-kentät vanhoille tehtäville
     tasks.forEach(function(t){
@@ -7487,7 +7487,7 @@ window.addEventListener('focus', function(){
   var mainKey = 'eis_v5_' + wsId;
   var raw = localStorage.getItem(mainKey);
   if(!raw) return;
-  var d = JSON.parse(raw);
+  var d;try{d=JSON.parse(raw);}catch(e){return;}
   // Tarkista onko data muuttunut sitten viime renderin
   var newSig = (d.tasks||[]).length + '_' + (d.active||'') + '_' + (d.turn||d.queue||[]).join(',');
   var oldSig = tasks.length + '_' + (active||'') + '_' + turn.join(',');
