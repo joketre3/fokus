@@ -4590,6 +4590,7 @@ async function runAnalysis(){
         messages:[{role:'user',content:userPrompt}]
       })
     });
+    if(!response.ok) throw new Error('HTTP '+response.status);
     var data=await response.json();
     var raw=data.content[0].text;
     var clean=raw.replace(/```json|```/g,'').trim();
@@ -4599,9 +4600,13 @@ async function runAnalysis(){
     document.getElementById('ai-loading').style.display='none';
     document.getElementById('ai-results').style.display='block';
     var hasKey=!!localStorage.getItem('fap_apikey');
-    document.getElementById('ai-results').innerHTML='<div style="font-size:.8rem;color:var(--pomo);padding:1rem;background:rgba(168,76,40,.07);border-radius:8px;line-height:1.6">'
-      +(hasKey?'Analyysi epäonnistui. Tarkista API-avain profiilista tai verkkoyhteytesi.':'API-avain puuttuu. Avaa <strong>⚙ Profiili</strong> ja lisää Anthropic API-avain.')
-      +'</div>';
+    var status=err&&err.message?parseInt(err.message.replace('HTTP ',''),10):0;
+    var msg=!hasKey?'API-avain puuttuu. Avaa <strong>⚙ Profiili</strong> ja lisää Anthropic API-avain.'
+      :status===401?'Virheellinen API-avain. Tarkista avain profiilista.'
+      :status===429?'API-kutsuraja ylitetty. Odota hetki ja yritä uudelleen.'
+      :status===529?'Anthropicin palvelin ylikuormittunut. Yritä myöhemmin uudelleen.'
+      :'Analyysi epäonnistui. Tarkista verkkoyhteytesi.';
+    document.getElementById('ai-results').innerHTML='<div style="font-size:.8rem;color:var(--pomo);padding:1rem;background:rgba(168,76,40,.07);border-radius:8px;line-height:1.6">'+msg+'</div>';
   }
 }
 
