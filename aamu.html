@@ -463,7 +463,7 @@ html[data-theme="aurinko"] .done-summary{background:#fffbf2;border-color:#e8d8b8
 </div>
 
 <script>
-var POMO_MIN = 25;
+var POMO_MIN=(function(){try{var s=JSON.parse(localStorage.getItem('fap_timer_settings')||'{}');return(s.work>=5&&s.work<=90)?s.work:25;}catch(e){return 25;}}());
 var MAX_Q2 = 3;
 
 // Slots: max pomodoros per slot (rough workday estimate)

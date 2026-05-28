@@ -218,7 +218,7 @@ html[data-theme="aurinko"] .tint.yes{background:rgba(196,104,30,.08)}
 var QL={q1:'TEE HETI',q2:'AIKATAULUTA',q3:'DELEGOI',q4:'POISTA'};
 var QC={q1:'Tärkeä + kiireinen',q2:'Tärkeä, ei kiireinen',q3:'Kiireinen, ei tärkeä',q4:'Ei tärkeä, ei kiireinen'};
 var tasks=[],queue=[],active=null,turn=[],idx=0,total=0,budgetMin=0;
-var POMO_MIN=25;
+var POMO_MIN=(function(){try{var s=JSON.parse(localStorage.getItem('fap_timer_settings')||'{}');return(s.work>=5&&s.work<=90)?s.work:25;}catch(e){return 25;}}());
 function fe(v){if(v===0.5)return'½';if(v%1!==0)return Math.floor(v)+'½';return String(v);}
 
 document.querySelectorAll('.time-opt').forEach(function(b){
