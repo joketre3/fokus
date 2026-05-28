@@ -4129,7 +4129,7 @@ function popoutTimer(){
     +'  document.title=ph!=="idle"?(m+":"+s+" — "+phaseShort):"Fokus A Priori";'
     +'  document.getElementById("ptask").textContent=act?act.text:"Ei aktiivista tehtävää";'
     +'  var phEl=document.getElementById("pphase");'
-    +'  var WORK=1500,SBRK=300,LBRK=1200,total=WORK;'
+    +'  var WORK=(window.opener&&window.opener.WORK)||1500,SBRK=(window.opener&&window.opener.SBRK)||300,LBRK=(window.opener&&window.opener.LBRK)||1200,total=WORK;'
     +'  if(ph==="work"){phEl.className="phase work";phEl.textContent="TYÖ";total=WORK;}'
     +'  else if(ph==="sbrk"){phEl.className="phase sbrk";phEl.textContent="TAUKO 5 min";total=SBRK;}'
     +'  else if(ph==="lbrk"){phEl.className="phase lbrk";phEl.textContent="PITKÄ TAUKO 20 min";total=LBRK;}'
