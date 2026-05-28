@@ -689,6 +689,20 @@ html[data-perf="lite"] *::after{
   animation-iteration-count:1!important;
   transition-duration:.01ms!important;
 }
+/* Nopea tila: opaakki pinnat (usva/havu — --paper ja --surface ovat oletuksena läpinäkyviä) */
+html[data-perf="lite"]{
+  --paper:rgba(18,40,28,.97);
+  --surface:rgba(22,46,32,.97);
+  --surface-md:rgba(25,50,36,.97);
+  --surface-strong:rgba(28,54,40,.97);
+}
+/* Aurinko-teema nopea tila: säilytetään lämmin sävy */
+html[data-theme="aurinko"][data-perf="lite"]{
+  --paper:rgba(255,248,230,.98);
+  --surface:rgba(250,242,220,.98);
+  --surface-md:rgba(248,240,216,.98);
+  --surface-strong:rgba(245,235,210,.98);
+}
 
 </style>
 
