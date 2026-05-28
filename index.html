@@ -4869,7 +4869,7 @@ function renderProjects(){
       var dl=new Date(p.deadline);var now=new Date();
       var diff=Math.ceil((dl-now)/(1000*60*60*24));
       var dlStr=diff<0?'Deadline ylitetty '+Math.abs(diff)+'pv sitten':diff===0?'Deadline tänään':diff+' päivää jäljellä';
-      meta.innerHTML+='<span>📅 '+p.deadline+'</span><span style="color:'+(diff<=3?'var(--pomo)':'var(--muted)')+'">'+dlStr+'</span>';
+      meta.innerHTML+='<span>📅 '+esc(p.deadline)+'</span><span style="color:'+(diff<=3?'var(--pomo)':'var(--muted)')+'">'+esc(dlStr)+'</span>';
     }
     meta.innerHTML+='<span>'+done.length+'/'+ptasks.length+' tehtävää tehty</span>';
     card.appendChild(meta);
@@ -9447,8 +9447,9 @@ function renderInventory(){
     var verb = getVerbFromTask(t);
     var icon = getVerbIconFromText(verb);
     var isActive = isTaskActive(t);
-    var qLabel = (t.quad||'').toUpperCase();
-    var qClass = 'inv-card__q--'+(t.quad||'q4');
+    var safeQuad = ['q1','q2','q3','q4'].indexOf(t.quad) !== -1 ? t.quad : 'q4';
+    var qLabel = safeQuad.toUpperCase();
+    var qClass = 'inv-card__q--'+safeQuad;
 
     var card = document.createElement('div');
     card.className = 'inv-card'+(isActive?' inv-card--active':'')+(t.done?' inv-card--done':'')+(t.handForced?' inv-card--star':'');
@@ -9461,8 +9462,8 @@ function renderInventory(){
     html += '<div class="inv-card__q '+qClass+'">'+qLabel+'</div>';
     if(isActive) html += '<div class="inv-card__active-badge">★</div>';
     if(t.handForced && !isActive) html += '<div class="inv-card__star-badge" title="Tähtikortti — pakotettu käteen">⭐</div>';
-    html += '<div class="inv-card__name">'+(t.text||'')+'</div>';
-    if(verb) html += '<div class="inv-card__verb">'+verb+'</div>';
+    html += '<div class="inv-card__name">'+esc(t.text||'')+'</div>';
+    if(verb) html += '<div class="inv-card__verb">'+esc(verb)+'</div>';
     html += '<div class="inv-card__meta">';
     if(t.est) html += '\u23f3'+t.est;
     if(t.pomos) html += ' \u00b7 \ud83c\udf45'+t.pomos;
