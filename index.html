@@ -6286,7 +6286,11 @@ function renderCardNew(t,container,anyFrog){
       lnkBtn.className='card-new__action-btn active';
       lnkBtn.title='Avaa linkki: '+t.linkki;
       lnkBtn.innerHTML='<span class="emoji">🔗</span>';
-      lnkBtn.onclick=(function(url){return function(e){e.stopPropagation();window.open(url,'_blank','noopener');}})(t.linkki);
+      lnkBtn.onclick=(function(url){return function(e){
+        e.stopPropagation();
+        if(!/^https?:\/\//i.test(url)){notify('Vain http(s)-linkit sallittu');return;}
+        window.open(url,'_blank','noopener');
+      };})(t.linkki);
       statsRight.appendChild(lnkBtn);
     }
 
