@@ -7390,7 +7390,13 @@ function generatePresetId(title){
 }
 // ── /TEHTÄVÄPOHJAT ────────────────────────────────────────────────
 function save(){
-  localStorage.setItem(wsStorageKey(),JSON.stringify({tasks:tasks,nid:nid,active:active,turn:turn,pomoDone:pomoDone,totalPomos:totalPomos,date:dtEl.value,projects:projects,pnid:pnid}));
+  try{
+    localStorage.setItem(wsStorageKey(),JSON.stringify({tasks:tasks,nid:nid,active:active,turn:turn,pomoDone:pomoDone,totalPomos:totalPomos,date:dtEl.value,projects:projects,pnid:pnid}));
+  }catch(e){
+    if(e.name==='QuotaExceededError'||e.name==='NS_ERROR_DOM_QUOTA_REACHED'){
+      notify('Tallennus epäonnistui: selain muisti täynnä');
+    }
+  }
   if(window._scheduleFsSave) window._scheduleFsSave();
 }
 function load(){
