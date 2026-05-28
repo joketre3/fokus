@@ -3310,6 +3310,7 @@ svg[aria-hidden="true"]{pointer-events:none;}
       <button onclick="saveProfile()" style="font-family:'DM Sans',sans-serif;font-size:.875rem;font-weight:500;padding:.65rem 1.5rem;border-radius:var(--r-md);border:none;background:var(--accent);color:white;cursor:pointer;flex:1">Tallenna profiili</button>
       <button onclick="closeProfile()" style="font-family:'DM Sans',sans-serif;font-size:.875rem;font-weight:400;padding:.65rem 1rem;border-radius:var(--r-md);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer">Peruuta</button>
     </div>
+    <button id="perf-toggle-btn" onclick="togglePerfMode()" style="font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:400;padding:.4rem .85rem;border-radius:var(--r-md);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer;width:100%">⚡ Nopea tila: pois</button>
     <div style="font-size:.65rem;color:var(--light);font-weight:300;text-align:center;letter-spacing:.04em">Fokus A Priori · v1.0.0 · MIT-lisenssi</div>
   </div>
 </div>
@@ -4247,6 +4248,7 @@ function openProfile(){
   }
   document.getElementById('profile-overlay').classList.add('fap-open');
   document.getElementById('profile-panel').classList.add('fap-open');
+  _updatePerfBtn();
 }
 
 function closeProfile(){
