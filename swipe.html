@@ -287,7 +287,8 @@ function saveQueue(){
 function fe(v){if(v===0.5)return'½';if(v%1!==0)return Math.floor(v)+'½';return String(v);}
 
 function queueTotalMin(){
-  var raw=localStorage.getItem('eis_v5');
+  var wsId=localStorage.getItem('fap_active_ws')||'work';
+  var raw=localStorage.getItem('eis_v5_'+wsId);
   var dtasks=(raw?JSON.parse(raw).tasks:[])||[];
   return queue.reduce(function(s,id){
     var t=tasks.find(function(u){return u.id===id})||dtasks.find(function(u){return u.id===id});
