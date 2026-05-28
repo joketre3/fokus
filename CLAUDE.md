@@ -145,9 +145,26 @@ CSS custom properties: `--ink`, `--paper`, `--accent`, `--surface`, `--surface-m
 
 ## Nykyinen kehitystila
 
-Aktiivinen kehitys jatkosuunnitelman mukaan (`jatkosuunnitelma-regressiotestien-jalkeen.md`). Viimeksi valmis: **vaihe 9.5 B** — Live-jako-ominaisuus (tehtävän jakaminen "ja"-sanan perusteella).
+### Modernization-prosessi (2026-05-28) — valmis
 
-Seuraavana: **vaihe 9.5 C**
+Kolmivaiheinen tietoturva- ja koodinlaatuprojekti tehty, kaikki commitoitu ja pushattu GitHubiin.
+
+| Vaihe | Mitä | Status |
+|-------|------|--------|
+| 1 — Tietoturva | 8 XSS-korjausta (`esc()`), URL-validointi, CSP meta kaikille tiedostoille | ✅ |
+| 2 — Kriittiset bugit | `save()`/`load()` try/catch, swipe.html workspace-avain, popup-timer `window.opener`, AI-analyysi `response.ok` + HTTP 401/429/529 | ✅ |
+| 3 — Konsolidointi | `WS_ACTIVE` vakio event-handlereissa, `fe()` duplikaatti poistettu, `POMO_MIN` lukee `fap_timer_settings` | ✅ |
+
+Analyysi- ja suunnitteludokumentit: `analysis/ASSESSMENT.md`, `analysis/report.html`, `docs/superpowers/plans/`.
+
+### Jäljellä (manuaalinen)
+
+- **SEC-007** — Firestore Security Rules -auditointi Firebase-konsolissa (ei koodimuutosta)
+- **`renderCardNew()`-jako** — `renderArenaCard()` + `renderDeckCard()` (index.html:6161–6530, ~370 riviä) — vaatii manuaalista testausta
+
+### Alkuperäinen TCG-kehityssuunnitelma
+
+Viimeksi valmis: **vaihe 9.5 B** — Live-jako-ominaisuus. Seuraavana: **vaihe 9.5 C**
 
 Areenakortin TCG/MtG-design (osittain määritelty, toteutus kesken):
 - Mitat: MtG-suhde 63:88, ~240×335px
