@@ -7480,15 +7480,15 @@ checkMorningTask();
 // ── STORAGE SYNC: päivitä kun aamu.html tai toinen välilehti kirjoittaa ──
 window.addEventListener('storage', function(e){
   // Reagoi vain pääavaimen muutoksiin
-  var wsId = localStorage.getItem('fap_active_ws') || 'work';
+  var wsId = localStorage.getItem(WS_ACTIVE) || 'work';
   var mainKey = 'eis_v5_' + wsId;
-  if(e.key === mainKey || e.key === 'fap_active_ws'){
+  if(e.key === mainKey || e.key === WS_ACTIVE){
     load(); render();
   }
 });
 // Päivitä myös kun käyttäjä palaa ikkunaan (aamu.html popup suljettu)
 window.addEventListener('focus', function(){
-  var wsId = localStorage.getItem('fap_active_ws') || 'work';
+  var wsId = localStorage.getItem(WS_ACTIVE) || 'work';
   var mainKey = 'eis_v5_' + wsId;
   var raw = localStorage.getItem(mainKey);
   if(!raw) return;
