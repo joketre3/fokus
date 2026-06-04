@@ -2054,11 +2054,12 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 
 /* Korttirivi */
 #hand-bar-cards{
-  display:grid;
-  grid-template-columns:repeat(5, 1fr);
-  gap:.5rem;
+  display:flex;
+  justify-content:center;
+  align-items:flex-end;
+  gap:0;
   height:100%;
-  padding:.5rem 0;
+  padding:.3rem 0 0;
   overflow:visible;
 }
 
@@ -2067,8 +2068,11 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   position:relative;
   overflow:hidden;
   aspect-ratio:3/4;
-  height:100%;
-  width:100%;
+  height:calc(100% - .5rem);
+  width:auto;
+  flex:none;
+  margin:0 -10px;
+  transform-origin:bottom center;
   display:flex;
   flex-direction:column;
   gap:.2rem;
@@ -2077,13 +2081,19 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   border:1px solid var(--border);
   border-radius:var(--r-md);
   cursor:pointer;
-  transition:transform .15s, border-color .15s, box-shadow .15s;
+  transition:transform .2s ease, border-color .15s, box-shadow .2s ease;
 }
+/* Viuhka-rotaatiot */
+.card-new--hand-bar:nth-child(1){transform:rotate(-8deg) translateY(8px);}
+.card-new--hand-bar:nth-child(2){transform:rotate(-3deg) translateY(2px);}
+.card-new--hand-bar:nth-child(3){transform:rotate(1deg) translateY(0px);}
+.card-new--hand-bar:nth-child(4){transform:rotate(6deg) translateY(5px);}
+.card-new--hand-bar:nth-child(5){transform:rotate(11deg) translateY(11px);}
 .card-new--hand-bar:hover{
-  transform:translateY(-3px);
+  transform:translateY(-48px) scale(1.1) rotate(0deg) !important;
   border-color:var(--accent);
-  box-shadow:0 6px 18px rgba(0,0,0,.22);
-  z-index:2;
+  box-shadow:0 14px 32px rgba(0,0,0,.38), 0 0 22px color-mix(in srgb,var(--accent) 28%,transparent);
+  z-index:20;
 }
 /* Tähtikortti — käteen Q-logiikan ohi pakotettu */
 .card-new--hand-bar.card-new--star{
@@ -3357,11 +3367,11 @@ svg[aria-hidden="true"]{pointer-events:none;}
     overflow: visible;
     box-sizing: border-box;
   }
-  /* Korttirivi täyttää käytettävissä olevan tilan, kortit eivät paisu */
+  /* Korttirivi täyttää käytettävissä olevan tilan */
   #hand-bar #hand-bar-cards {
     height: 100%;
     max-height: calc(160px - .5rem);
-    align-items: stretch;
+    align-items: flex-end;
   }
   /* Piilotettu tila desktopilla: piilotetaan korttirivi, hand-bar kutistuu toggle-napin verran */
   #hand-bar.hand-bar--hidden {
