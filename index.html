@@ -6,7 +6,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline'; connect-src https://api.anthropic.com https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://www.gstatic.com https://identitytoolkit.googleapis.com; font-src https://fonts.gstatic.com; style-src 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:">
 <title>Fokus A Priori</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&family=Cinzel:wght@600;700&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   /* ── Usvametsä — 3 core colors ─────────────────── */
@@ -49,6 +49,9 @@
   --r-md:8px;
   --r-lg:12px;
   --r-full:50%;
+  /* TCG kortin sisälevy (usva-oletus) */
+  --plate-top:#1a2e26;
+  --plate-bot:#13211b;
 }
 body{
   color:var(--ink);
@@ -519,6 +522,8 @@ button[onclick*="exportData"],label[title*="kopio"],button[onclick*="openAI"],bu
 html[data-theme="havu"] {
   --ink:rgba(255,255,255,.97);
   --paper:rgba(12,30,20,.88);
+  --plate-top:#13241b;
+  --plate-bot:#0c1812;
   --warm:rgba(255,255,255,.13);
   --muted:rgba(255,255,255,.50);
   --light:rgba(255,255,255,.08);
@@ -544,6 +549,8 @@ html[data-theme="havu"] #onboarding{background:rgba(12,35,22,.80)!important;bord
 /* ── AURINKO (vaalea, lämmin) ──────────────────────────── */
 html[data-theme="aurinko"] {
   --ink:#2d2417;
+  --plate-top:#1c2e26;
+  --plate-bot:#14241c;
   --paper:rgba(255,248,235,.90);
   --warm:rgba(180,130,70,.28);
   --muted:#7a6a4a;
@@ -2003,8 +2010,6 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   height:var(--hand-bar-h, 160px);
   background:var(--surface-strong);
   border-top:1px solid var(--border);
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
   transform:translateY(0);
   transition:transform 300ms ease;
   padding:0 .75rem;
@@ -2034,7 +2039,6 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   display:flex;
   align-items:center;
   gap:.35rem;
-  backdrop-filter:blur(12px);
   transition:color .15s;
 }
 #hand-toggle:hover{color:var(--ink);}
@@ -2055,7 +2059,7 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   gap:.5rem;
   height:100%;
   padding:.5rem 0;
-  overflow:hidden;
+  overflow:visible;
 }
 
 /* Minikortti baariversion tyyli (aspect-ratio 3/4) */
@@ -2974,6 +2978,177 @@ body.hand-hidden{padding-bottom:1rem;}
   background:var(--surface-md);color:var(--ink);outline:none;
 }
 .card-new__editor-input:focus{border-color:var(--accent)}
+
+/* ── TCG-kortti (mockup-kortti.html ilme) ──────────────────── */
+.tcg-card{
+  --qc:#a84c28;
+  position:relative;
+  width:280px;aspect-ratio:5/7;
+  border-radius:14px;padding:7px;
+  background:var(--qc);
+  background:linear-gradient(160deg,
+    color-mix(in srgb,var(--qc) 55%,#14241c) 0%,
+    #0e1a14 60%,
+    color-mix(in srgb,var(--qc) 35%,#0e1a14) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.10),
+    inset 0 0 0 3px rgba(0,0,0,.35),
+    0 2px 0 rgba(0,0,0,.4),
+    0 10px 24px rgba(0,0,0,.45);
+  isolation:isolate;
+}
+.tcg-card--frog{
+  background:#c49a3a;
+  background:linear-gradient(160deg,#e8c66a 0%,#6b4f1c 42%,#c49a3a 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.25),
+    inset 0 0 0 3px rgba(70,50,12,.6),
+    0 2px 0 rgba(0,0,0,.4),
+    0 12px 28px rgba(0,0,0,.5);
+}
+.tcg-card__plate{
+  position:relative;height:100%;
+  border-radius:8px;overflow:hidden;
+  background:linear-gradient(180deg,var(--plate-top) 0%,var(--plate-bot) 100%);
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.06),inset 0 -2px 6px rgba(0,0,0,.4);
+  display:flex;flex-direction:column;
+}
+.tcg-card__cost{
+  position:absolute;top:9px;right:9px;z-index:4;
+  display:flex;gap:3px;align-items:center;
+}
+.tcg-card__pip{
+  width:17px;height:17px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#e8623a,#a84c28 72%);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.5),0 1px 2px rgba(0,0,0,.55);
+}
+.tcg-card__pip--half{
+  background:linear-gradient(90deg,#e8623a 50%,rgba(168,76,40,.25) 50%);
+}
+.tcg-card__pip-x{
+  font-family:'Cinzel',serif;font-weight:700;font-size:.7rem;
+  color:#f0d9a8;text-shadow:0 1px 2px rgba(0,0,0,.7);
+}
+.tcg-card__frog-seal{
+  position:absolute;top:9px;left:9px;z-index:4;
+  width:25px;height:25px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#2d5a3d,#14241c);
+  box-shadow:0 0 0 2px #c49a3a,inset 0 1px 2px rgba(255,255,255,.3);
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+}
+.tcg-card__art{
+  position:relative;flex:0 0 40%;
+  display:flex;align-items:center;justify-content:center;
+  margin:6px 6px 0;border-radius:6px;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 30%,
+    color-mix(in srgb,var(--qc) 42%,transparent) 0%,#0c1611 82%);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.5),inset 0 0 18px rgba(0,0,0,.55);
+}
+.tcg-card__art svg{
+  width:52%;height:52%;opacity:.95;position:relative;z-index:1;
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.6));
+}
+.tcg-card__art::after{
+  content:"";position:absolute;inset:0;
+  background-image:radial-gradient(circle,rgba(255,255,255,.05) 1px,transparent 1px);
+  background-size:6px 6px;
+}
+.tcg-card__typeline{
+  display:flex;align-items:center;gap:.4rem;
+  margin:6px 6px 0;padding:.28rem .55rem;
+  font-family:'Cinzel',serif;font-weight:600;
+  font-size:.6rem;letter-spacing:.13em;text-transform:uppercase;
+  color:#e8dcc0;border-radius:4px;
+  background:linear-gradient(180deg,rgba(196,154,58,.30),rgba(196,154,58,.08));
+  border-top:1px solid rgba(196,154,58,.5);
+  border-bottom:1px solid rgba(0,0,0,.45);
+  text-shadow:0 1px 1px rgba(0,0,0,.6);
+}
+.tcg-card__typeline svg{width:1.15em;height:1.15em;opacity:.9;flex:none;}
+.tcg-card__typeline .tl-quad{margin-left:auto;opacity:.85;letter-spacing:.1em;}
+.tcg-card__body{
+  flex:1;display:flex;flex-direction:column;
+  padding:.55rem .7rem;gap:.4rem;min-height:0;
+}
+.tcg-card__title{
+  font-family:'DM Sans',sans-serif;font-weight:600;font-size:.92rem;
+  line-height:1.25;color:#f4f0e4;
+}
+.tcg-card__notes-tcg{
+  font-size:.7rem;color:rgba(255,255,255,.5);line-height:1.4;
+  font-style:italic;border-left:2px solid rgba(196,154,58,.4);padding-left:.5rem;
+}
+.tcg-card__meta-tcg{
+  margin-top:auto;display:flex;align-items:center;gap:.5rem;
+  font-size:.68rem;color:rgba(255,255,255,.6);letter-spacing:.02em;
+}
+.tcg-card__meta-tcg .dot{opacity:.4;}
+.tcg-card__actions-tcg{display:flex;gap:.3rem;padding:.4rem .55rem .55rem;}
+.tcg-card__actions-tcg button{
+  font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:600;
+  border:1px solid rgba(196,154,58,.4);border-radius:6px;cursor:pointer;
+  padding:.4rem .5rem;background:rgba(0,0,0,.25);color:#f0e6cc;
+  transition:background .15s,transform .1s;
+}
+.tcg-card__actions-tcg button:hover{background:rgba(196,154,58,.25);}
+.tcg-card__actions-tcg button:active{transform:translateY(1px);}
+.tcg-card__actions-tcg .act-start{
+  flex:1;background:var(--accent);color:#fff;border-color:var(--accent);
+}
+.tcg-card__actions-tcg .act-start:hover{filter:brightness(1.1);}
+/* Stats-rivi (tärkeä/kiireinen/muokkaa-napit) */
+.tcg-card__stats{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.35rem .55rem;gap:.3rem;flex-shrink:0;
+  border-bottom:1px solid rgba(196,154,58,.1);
+}
+.tcg-card__stats-left,.tcg-card__stats-right{
+  display:flex;align-items:center;gap:.3rem;
+}
+/* Holo-efekti: vain frog + important */
+.tcg-card--holo .tcg-card__plate::before{
+  content:"";position:absolute;inset:0;z-index:3;pointer-events:none;
+  border-radius:8px;
+  background:conic-gradient(from 0deg at 50% 50%,
+    rgba(255,80,80,.22),rgba(255,220,80,.20),rgba(80,255,160,.22),
+    rgba(80,180,255,.20),rgba(200,80,255,.22),rgba(255,80,80,.22));
+  mix-blend-mode:color-dodge;opacity:0;transition:opacity .35s;
+  -webkit-mask-image:linear-gradient(115deg,transparent 30%,#000 50%,transparent 70%);
+  mask-image:linear-gradient(115deg,transparent 30%,#000 50%,transparent 70%);
+  -webkit-mask-size:250% 250%;mask-size:250% 250%;
+  animation:holoSweep 5s linear infinite;
+}
+.tcg-card--holo:hover .tcg-card__plate::before{opacity:.5;}
+.tcg-card--arena.tcg-card--holo .tcg-card__plate::before{opacity:.45;}
+@keyframes holoSweep{
+  0%{-webkit-mask-position:0% 0%;mask-position:0% 0%;}
+  100%{-webkit-mask-position:100% 100%;mask-position:100% 100%;}
+}
+/* Areena-kortti isompi + kultainen hehku */
+.tcg-card.tcg-card--arena-size{
+  width:100%;max-width:300px;
+  transform:translateY(-4px);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.10),
+    inset 0 0 0 3px rgba(0,0,0,.35),
+    0 2px 0 rgba(0,0,0,.4),
+    0 14px 32px rgba(0,0,0,.5),
+    0 0 36px color-mix(in srgb,var(--accent) 40%,transparent);
+}
+.tcg-card.tcg-card--arena-size.tcg-card--frog{
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.25),
+    inset 0 0 0 3px rgba(70,50,12,.6),
+    0 14px 32px rgba(0,0,0,.55),
+    0 0 44px rgba(196,154,58,.45);
+}
+@keyframes arenaLand{
+  0%{box-shadow:0 0 0 0 rgba(196,154,58,.6),0 14px 32px rgba(0,0,0,.5);}
+  100%{box-shadow:0 0 0 16px rgba(196,154,58,0),0 14px 32px rgba(0,0,0,.5);}
+}
+.tcg-card.just-landed{animation:arenaLand .6s ease-out;}
+/* Perf-lite: holo pois */
+html[data-perf="lite"] .tcg-card__plate::before{display:none!important;}
 
 /* ── Vaihe 11: Responsiivisuus ──────────────────────────────── */
 
@@ -6110,6 +6285,23 @@ function getVerbIconFromVerbi(verbi){
   return '✦';
 }
 
+/* TCG mana-helmet (pyöreät) — käytetään tcg-card__cost:ssa */
+function mkCostPips(est){
+  var wrap=document.createElement('div');
+  wrap.className='tcg-card__cost';
+  wrap.setAttribute('aria-label',(est||0)+' pomodoro');
+  wrap.setAttribute('role','img');
+  if(est>4){
+    var p=document.createElement('div');p.className='tcg-card__pip';wrap.appendChild(p);
+    var x=document.createElement('span');x.className='tcg-card__pip-x';x.textContent='×'+est;wrap.appendChild(x);
+    return wrap;
+  }
+  var full=Math.floor(est),half=(est%1)>=0.5;
+  for(var i=0;i<full;i++){var p2=document.createElement('div');p2.className='tcg-card__pip';wrap.appendChild(p2);}
+  if(half){var h=document.createElement('div');h.className='tcg-card__pip tcg-card__pip--half';wrap.appendChild(h);}
+  return wrap;
+}
+
 /* Pienen tomaatti-rivin rakennus (ääriviivat) */
 function mkPipsNew(count){
   var wrap=document.createElement('div');
@@ -6185,7 +6377,233 @@ function mkUrgBadge(active){
   return btn;
 }
 
+/* ── TCG-kortin verb→sprite-id -kartta ─────────────────────── */
+var _TCG_VERB_ID = {
+  'Soita':'verb-i-soita','Sovi':'verb-i-sovi','Kirjaa':'verb-i-kirjaa',
+  'Tee':'verb-i-tee','Selvitä':'verb-i-selvita','Vie':'verb-i-vie',
+  'Tarkista':'verb-i-tarkista','Varaa':'verb-i-varaa'
+};
+function _tcgIconId(verbi){
+  if(!verbi) return 'verb-i-tee';
+  if(_TCG_VERB_ID[verbi]) return _TCG_VERB_ID[verbi];
+  var low=verbi.toLowerCase();
+  for(var k in _TCG_VERB_ID){if(k.toLowerCase()===low||low.indexOf(k.toLowerCase())===0)return _TCG_VERB_ID[k];}
+  return 'verb-i-tee';
+}
+function _tcgSvgIcon(id, size){
+  var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox','0 0 24 24');
+  svg.setAttribute('aria-hidden','true');
+  if(size){svg.setAttribute('width',size);svg.setAttribute('height',size);}
+  var u=document.createElementNS('http://www.w3.org/2000/svg','use');
+  u.setAttribute('href','#'+id);
+  svg.appendChild(u);
+  return svg;
+}
+
+/* ── renderArenaCard — rakentaa .tcg-card -rakenteen areenalle ─ */
+function renderArenaCard(t, container, anyFrog){
+  var q = t.quad && {q1:'Tee heti',q2:'Aikatauluta',q3:'Delegoi',q4:'Poista'}[t.quad];
+  var qc = t.quad && {'q1':'#a84c28','q2':'#2d5a3d','q3':'#7a6a50','q4':'#9a9a8e'}[t.quad] || '#9a9a8e';
+  var iconId = _tcgIconId(t.verbi);
+
+  var card=document.createElement('div');
+  card.className='tcg-card tcg-card--arena-size'+(t.frog?' tcg-card--frog':'')+(t.frog||t.important?' tcg-card--holo':'');
+  card.setAttribute('tabindex','0');
+  card.style.setProperty('--qc',qc);
+  var _albl=(t.frog?'Sammakko. ':'')+(t.verbi||'')+' '+t.text+(q?', '+q:'')+(t.est?' — '+fe(t.est)+' pomodoro':'');
+  card.setAttribute('aria-label',_albl);
+  card.dataset.taskId=t.id;
+
+  // Mana-kustannus (abs. oikea yläkulma)
+  if(t.est&&t.est>0) card.appendChild(mkCostPips(t.est));
+
+  // Sammakko-sinetti (abs. vasen yläkulma)
+  if(t.frog){
+    var seal=document.createElement('div');
+    seal.className='tcg-card__frog-seal';
+    seal.textContent='🐸';
+    card.appendChild(seal);
+  }
+
+  var plate=document.createElement('div');
+  plate.className='tcg-card__plate';
+
+  // Kuva-alue
+  var art=document.createElement('div');
+  art.className='tcg-card__art';
+  art.appendChild(_tcgSvgIcon(iconId,'52%'));
+  plate.appendChild(art);
+
+  // Tyyppipalkki
+  var tl=document.createElement('div');
+  tl.className='tcg-card__typeline';
+  tl.appendChild(_tcgSvgIcon(iconId));
+  if(t.verbi){var vs=document.createElement('span');vs.textContent=t.verbi;tl.appendChild(vs);}
+  if(q){var qs=document.createElement('span');qs.className='tl-quad';qs.textContent=q;tl.appendChild(qs);}
+  plate.appendChild(tl);
+
+  // Runko
+  var body=document.createElement('div');
+  body.className='tcg-card__body';
+
+  var title=document.createElement('div');
+  title.className='tcg-card__title';
+  title.textContent=t.text;
+  body.appendChild(title);
+
+  if(t.lisatiedot&&t.lisatiedot.trim()){
+    var notes=document.createElement('div');
+    notes.className='tcg-card__notes-tcg';
+    notes.textContent=t.lisatiedot;
+    body.appendChild(notes);
+  }
+
+  var meta=document.createElement('div');
+  meta.className='tcg-card__meta-tcg';
+  var tom=document.createElement('span');
+  tom.textContent='🍅 ×'+(t.est||1);
+  meta.appendChild(tom);
+  if(t.projectId){
+    var pj=projects.find(function(p){return p.id===t.projectId;});
+    if(pj){
+      var dot1=document.createElement('span');dot1.className='dot';dot1.textContent='·';meta.appendChild(dot1);
+      var pr=document.createElement('span');pr.textContent=pj.name;if(pj.color)pr.style.color=pj.color;meta.appendChild(pr);
+    }
+  }
+  if(t.waiting){
+    var dot2=document.createElement('span');dot2.className='dot';dot2.textContent='·';meta.appendChild(dot2);
+    var wt=document.createElement('span');wt.textContent='odottaa';meta.appendChild(wt);
+  }
+  body.appendChild(meta);
+  plate.appendChild(body);
+
+  // Stats-rivi: tärkeä/kiireinen/sammakko vasen | odottaa/linkki/muokkaa oikea
+  var stats=document.createElement('div');
+  stats.className='tcg-card__stats';
+  var sLeft=document.createElement('div');sLeft.className='tcg-card__stats-left';
+  var sRight=document.createElement('div');sRight.className='tcg-card__stats-right';
+
+  var impBtn=mkImpBadge(!!t.important);
+  impBtn.onclick=(function(i){return function(e){e.stopPropagation();setFlag(i,'important');};})(t.id);
+  sLeft.appendChild(impBtn);
+
+  var urgBtn=mkUrgBadge(!!t.urgent);
+  urgBtn.onclick=(function(i){return function(e){e.stopPropagation();setFlag(i,'urgent');};})(t.id);
+  sLeft.appendChild(urgBtn);
+
+  if(!anyFrog||t.frog){
+    var fb=document.createElement('button');
+    fb.className='card-new__btn'+(t.frog?' frog-on':'');
+    fb.title='Sammakko';
+    fb.setAttribute('aria-label',t.frog?'Poista sammakko':'Aseta sammakoksi');
+    fb.appendChild(t.frog?svgFrogFilled(16):svgFrogOutline(16));
+    fb.onclick=(function(i){return function(e){e.stopPropagation();toggleFrog(i);};})(t.id);
+    sLeft.appendChild(fb);
+  }
+
+  var wBtn=document.createElement('button');
+  wBtn.className='card-new__action-btn'+(t.waiting?' wait-on':'');
+  wBtn.title=t.waiting?'Odottaa — palauta aktiiviseksi':'Merkitse odottavaksi';
+  var wSpan=document.createElement('span');wSpan.className='emoji';wSpan.textContent='⏳';wBtn.appendChild(wSpan);
+  wBtn.onclick=(function(i,task){return function(e){e.stopPropagation();if(task.waiting)clearWaiting(i);else setWaiting(i);};})(t.id,t);
+  sRight.appendChild(wBtn);
+
+  if(t.linkki){
+    var lnkBtn=document.createElement('button');
+    lnkBtn.className='card-new__action-btn active';
+    lnkBtn.title='Avaa linkki: '+t.linkki;
+    var lSpan=document.createElement('span');lSpan.className='emoji';lSpan.textContent='🔗';lnkBtn.appendChild(lSpan);
+    lnkBtn.onclick=(function(url){return function(e){
+      e.stopPropagation();
+      if(!/^https?:\/\//i.test(url)){notify('Vain http(s)-linkit sallittu');return;}
+      window.open(url,'_blank','noopener');
+    };})(t.linkki);
+    sRight.appendChild(lnkBtn);
+  }
+
+  var editBtn=document.createElement('button');
+  editBtn.className='card-new__action-btn';
+  editBtn.title='Muokkaa';
+  var eSpan=document.createElement('span');eSpan.className='emoji';eSpan.textContent='✏';editBtn.appendChild(eSpan);
+  editBtn.onclick=(function(tid){return function(e){e.stopPropagation();openEditModal(tid);};})(t.id);
+  sRight.appendChild(editBtn);
+
+  stats.appendChild(sLeft);stats.appendChild(sRight);
+  plate.appendChild(stats);
+
+  // Toimintonapit: ▶ Aloita | ✓ Tehty | del
+  var acts=document.createElement('div');
+  acts.className='tcg-card__actions-tcg';
+
+  var startBtn=document.createElement('button');
+  startBtn.className='act-start';
+  startBtn.textContent='▶ Aloita';
+  startBtn.onclick=function(e){e.stopPropagation();toggleTimer();};
+  acts.appendChild(startBtn);
+
+  if(t.quad){
+    var doneBtn=document.createElement('button');
+    doneBtn.textContent='✓ Tehty';
+    doneBtn.setAttribute('aria-label','Merkitse tehdyksi');
+    doneBtn.onclick=(function(i){return function(e){e.stopPropagation();markDone(i);};})(t.id);
+    acts.appendChild(doneBtn);
+  }
+
+  var delBtn=document.createElement('button');
+  delBtn.title='Poista (kumottavissa 5s)';
+  delBtn.setAttribute('aria-label','Poista tehtävä');
+  var delSvg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  delSvg.setAttribute('width','13');delSvg.setAttribute('height','13');
+  delSvg.setAttribute('viewBox','0 0 12 12');delSvg.setAttribute('fill','none');
+  var l1=document.createElementNS('http://www.w3.org/2000/svg','line');
+  l1.setAttribute('x1','1.5');l1.setAttribute('y1','1.5');l1.setAttribute('x2','10.5');l1.setAttribute('y2','10.5');
+  l1.setAttribute('stroke','currentColor');l1.setAttribute('stroke-width','1.6');l1.setAttribute('stroke-linecap','round');
+  var l2=document.createElementNS('http://www.w3.org/2000/svg','line');
+  l2.setAttribute('x1','10.5');l2.setAttribute('y1','1.5');l2.setAttribute('x2','1.5');l2.setAttribute('y2','10.5');
+  l2.setAttribute('stroke','currentColor');l2.setAttribute('stroke-width','1.6');l2.setAttribute('stroke-linecap','round');
+  delSvg.appendChild(l1);delSvg.appendChild(l2);
+  delBtn.appendChild(delSvg);
+  delBtn.onclick=(function(i){return function(e){e.stopPropagation();delUndoable(i);};})(t.id);
+  acts.appendChild(delBtn);
+
+  plate.appendChild(acts);
+  card.appendChild(plate);
+
+  // Jatkokortti-nappi
+  var jatkRow=document.createElement('div');
+  jatkRow.style.cssText='padding:.35rem .85rem .6rem;';
+  var jatkBtn=document.createElement('button');
+  jatkBtn.textContent='↳ + Jatkokortti';
+  jatkBtn.style.cssText='width:100%;font-family:\'DM Sans\',sans-serif;font-size:var(--text-xs);font-weight:500;padding:.38rem .7rem;border-radius:var(--r-sm);border:1.5px dashed var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;';
+  jatkBtn.onmouseenter=function(){this.style.borderColor='var(--accent)';this.style.color='var(--accent)';};
+  jatkBtn.onmouseleave=function(){this.style.borderColor='var(--border)';this.style.color='var(--muted)';};
+  jatkBtn.onclick=(function(i){return function(e){e.stopPropagation();openJatkokortti(i);};})(t.id);
+  jatkRow.appendChild(jatkBtn);
+  card.appendChild(jatkRow);
+
+  // Projektin reunaväri
+  if(t.projectId){
+    var pj2=projects.find(function(p){return p.id===t.projectId;});
+    if(pj2) card.style.borderLeft='3px solid '+pj2.color;
+  }
+
+  // Land-pulssi
+  card.classList.add('just-landed');
+  setTimeout(function(){card.classList.remove('just-landed');},650);
+
+  // Fade-in uudelle kortille
+  if(_newTaskId!==null&&t.id===_newTaskId){
+    card.classList.add('card-entering');
+    _newTaskId=null;
+    card.addEventListener('animationend',function(){card.classList.remove('card-entering');},{once:true});
+  }
+
+  container.appendChild(card);
+}
+
 function renderCardNew(t,container,anyFrog){
+  if(t.id===active){ renderArenaCard(t,container,anyFrog); return; }
   var isArena=t.id===active;
   var isQ=t.id===active||turn.indexOf(t.id)>=0;
 
