@@ -52,6 +52,10 @@
   /* TCG kortin sisälevy (usva-oletus) */
   --plate-top:#1a2e26;
   --plate-bot:#13211b;
+  /* Viuhka-käsi */
+  --hand-card-w:130px;
+  --hand-card-h:182px;
+  --hand-peek-h:30px;
 }
 body{
   color:var(--ink);
@@ -1138,7 +1142,7 @@ html[data-theme="aurinko"][data-perf="lite"]{
     <!-- ── Vaihe 5A TCG: Tehtäväkäsi-baari (desktop) ── -->
     <div id="hand-bar" aria-label="Tehtäväkäsi">
       <button id="hand-toggle" onclick="toggleHandBar()" aria-label="Näytä/piilota tehtäväkäsi">
-        <span class="hand-toggle__arrow">▼</span>
+        <span class="htog-fan"><b></b><b></b><b></b></span>
         <span id="hand-toggle-label">Käsi</span>
       </button>
       <div id="hand-bar-cards"></div>
@@ -2000,57 +2004,74 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 }
 
 /* ── Vaihe 5A TCG: Tehtäväkäsi-baari (kaikki leveydet) ───────── */
+/* ── Viuhka-käsi (mobiili: floating peek) ─────────────────── */
 #hand-bar{
-  display:block;
   position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
+  bottom:0;left:0;right:0;
   z-index:60;
-  height:var(--hand-bar-h, 160px);
-  background:var(--surface-strong);
-  border-top:1px solid var(--border);
+  height:var(--hand-card-h,182px);
+  background:transparent;
+  border:none;
+  padding:0;
+  /* Oletus: kortit piilossa 82%, vain --hand-peek-h näkyy */
+  transform:translateY(calc(var(--hand-card-h,182px) - var(--hand-peek-h,30px)));
+  transition:transform 320ms cubic-bezier(.34,1.2,.64,1);
+  overflow:visible;
+}
+#hand-bar.hand-bar--open{
   transform:translateY(0);
-  transition:transform 300ms ease;
-  padding:0 .75rem;
 }
 #hand-bar.hand-bar--hidden{
   transform:translateY(100%);
+  pointer-events:none;
 }
 
-/* Toggle-nappi */
+/* Korttiviuhka-toggle-nappi */
 #hand-toggle{
   position:absolute;
-  top:-28px;
-  right:1.25rem;
+  top:-32px;
+  left:50%;
+  transform:translateX(-50%);
   height:28px;
-  padding:0 .75rem;
+  padding:0 .85rem 0 .55rem;
   font-family:'DM Sans',sans-serif;
   font-size:.65rem;
   font-weight:500;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-  color:var(--muted);
+  letter-spacing:.06em;
+  color:var(--accent);
   background:var(--surface-strong);
-  border:1px solid var(--border);
-  border-bottom:none;
-  border-radius:var(--r-sm) var(--r-sm) 0 0;
+  border:1px solid rgba(196,154,58,.5);
+  border-radius:20px;
   cursor:pointer;
   display:flex;
   align-items:center;
-  gap:.35rem;
-  transition:color .15s;
+  gap:.45rem;
+  white-space:nowrap;
+  box-shadow:0 2px 8px rgba(0,0,0,.25);
+  transition:background .15s,border-color .15s;
 }
-#hand-toggle:hover{color:var(--ink);}
-#hand-toggle .hand-toggle__arrow{
-  display:inline-block;
-  transition:transform 300ms ease;
-  font-size:.8rem;
+#hand-toggle:hover{
+  background:rgba(196,154,58,.12);
+  border-color:var(--accent);
 }
-#hand-bar.hand-bar--hidden + #hand-toggle,
-#hand-toggle.is-hidden .hand-toggle__arrow{
-  transform:rotate(180deg);
+/* Korttiviuhka-ikoni togglessa */
+.htog-fan{
+  position:relative;
+  width:18px;height:14px;
+  flex:none;
 }
+.htog-fan b{
+  position:absolute;
+  width:7px;height:11px;
+  background:rgba(196,154,58,.18);
+  border:1px solid rgba(196,154,58,.7);
+  border-radius:1px;
+  bottom:0;left:50%;margin-left:-3.5px;
+  transform-origin:bottom center;
+  display:block;
+}
+.htog-fan b:nth-child(1){transform:rotate(-15deg) translateX(-5px);}
+.htog-fan b:nth-child(3){transform:rotate(15deg) translateX(5px);}
 
 /* Korttirivi */
 #hand-bar-cards{
@@ -2059,51 +2080,47 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   align-items:flex-end;
   gap:0;
   height:100%;
-  padding:.3rem 0 0;
+  padding:0;
   overflow:visible;
 }
 
 /* Minikortti baariversion tyyli (aspect-ratio 3/4) */
-.card-new--hand-bar{
-  position:relative;
-  overflow:hidden;
-  aspect-ratio:3/4;
-  height:calc(100% - .5rem);
-  width:auto;
+/* TCG käsikortti — sama ilme kuin areena, ilman korostuksia */
+.tcg-card--hand{
+  width:var(--hand-card-w,130px);
+  /* aspect-ratio 5/7 periytyy .tcg-card:lta → korkeus ~182px */
   flex:none;
-  margin:0 -10px;
+  margin:0 -12px;
   transform-origin:bottom center;
-  display:flex;
-  flex-direction:column;
-  gap:.2rem;
-  padding:.5rem .6rem;
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:var(--r-md);
+  transition:transform .2s ease, box-shadow .2s ease;
   cursor:pointer;
-  transition:transform .2s ease, border-color .15s, box-shadow .2s ease;
+  /* Ei arena-glowia */
+  box-shadow:0 6px 18px rgba(0,0,0,.35);
 }
 /* Viuhka-rotaatiot */
-.card-new--hand-bar:nth-child(1){transform:rotate(-8deg) translateY(8px);}
-.card-new--hand-bar:nth-child(2){transform:rotate(-3deg) translateY(2px);}
-.card-new--hand-bar:nth-child(3){transform:rotate(1deg) translateY(0px);}
-.card-new--hand-bar:nth-child(4){transform:rotate(6deg) translateY(5px);}
-.card-new--hand-bar:nth-child(5){transform:rotate(11deg) translateY(11px);}
-.card-new--hand-bar:hover{
-  transform:translateY(-48px) scale(1.1) rotate(0deg) !important;
-  border-color:var(--accent);
-  box-shadow:0 14px 32px rgba(0,0,0,.38), 0 0 22px color-mix(in srgb,var(--accent) 28%,transparent);
+.tcg-card--hand:nth-child(1){transform:rotate(-8deg) translateY(8px);}
+.tcg-card--hand:nth-child(2){transform:rotate(-3deg) translateY(2px);}
+.tcg-card--hand:nth-child(3){transform:rotate(1deg) translateY(0);}
+.tcg-card--hand:nth-child(4){transform:rotate(6deg) translateY(5px);}
+.tcg-card--hand:nth-child(5){transform:rotate(11deg) translateY(11px);}
+.tcg-card--hand:hover{
+  transform:translateY(-52px) scale(1.1) rotate(0deg) !important;
+  box-shadow:0 16px 36px rgba(0,0,0,.45),
+             0 0 24px color-mix(in srgb,var(--accent) 30%,transparent);
   z-index:20;
 }
-/* Tähtikortti — käteen Q-logiikan ohi pakotettu */
-.card-new--hand-bar.card-new--star{
-  border-color:#c49a3a;
-  box-shadow:0 0 0 1px rgba(196,154,58,.4), 0 0 14px rgba(196,154,58,.22);
+/* Tähtikortti (handForced) kultakehys */
+.tcg-card--hand.tcg-card--star{
+  box-shadow:0 0 0 2px rgba(196,154,58,.7),0 6px 18px rgba(0,0,0,.35),0 0 16px rgba(196,154,58,.25);
 }
-.card-new--hand-bar.card-new--star:hover{
-  border-color:#d4a943;
-  box-shadow:0 6px 18px rgba(0,0,0,.22), 0 0 0 1px rgba(196,154,58,.55), 0 0 18px rgba(196,154,58,.32);
+.tcg-card--hand.tcg-card--star:hover{
+  box-shadow:0 16px 36px rgba(0,0,0,.45),0 0 0 2px var(--accent),0 0 28px rgba(196,154,58,.4);
 }
+/* Käsikortin sisältö: pienempi fontti */
+.tcg-card--hand .tcg-card__title{font-size:.72rem;}
+.tcg-card--hand .tcg-card__typeline{font-size:.52rem;}
+.tcg-card--hand .tcg-card__art{flex-basis:36%;}
+.tcg-card--hand .tcg-card__meta-tcg{font-size:.58rem;}
 .card-new__star-mark{
   position:absolute;
   top:.3rem;
@@ -2114,56 +2131,6 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   pointer-events:none;
 }
 /* Verbi-ikoni taustalla */
-.card-new--hand-bar__bg-icon{
-  position:absolute;
-  right:-6px;
-  bottom:-6px;
-  font-size:100px;
-  opacity:.10;
-  pointer-events:none;
-  filter:grayscale(.3);
-  z-index:0;
-}
-.card-new--hand-bar__verb{
-  font-size:.5rem;
-  font-weight:500;
-  color:var(--accent);
-  letter-spacing:.06em;
-  text-transform:uppercase;
-  z-index:1;
-}
-.card-new--hand-bar__title{
-  font-size:.72rem;
-  font-weight:300;
-  line-height:1.3;
-  color:var(--ink);
-  display:-webkit-box;
-  -webkit-line-clamp:3;
-  -webkit-box-orient:vertical;
-  overflow:hidden;
-  z-index:1;
-  flex:1;
-}
-.card-new--hand-bar__meta{
-  display:flex;
-  align-items:center;
-  gap:.2rem;
-  flex-wrap:wrap;
-  z-index:1;
-}
-/* Q-badge minikorttiin */
-.card-new--hand-bar__quad-badge{
-  font-size:.5rem;
-  font-weight:600;
-  letter-spacing:.05em;
-  padding:.1rem .3rem;
-  border-radius:3px;
-  color:white;
-}
-.card-new--hand-bar__quad-badge.q1{background:var(--q1);}
-.card-new--hand-bar__quad-badge.q2{background:var(--q2);}
-.card-new--hand-bar__quad-badge.q3{background:var(--q3);}
-.card-new--hand-bar__quad-badge.q4{background:var(--q4);}
 
 /* Tyhjä tila */
 #hand-bar-empty{
@@ -2178,9 +2145,11 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 }
 
 /* Body-padding: tilaa hand-barin korkeudelle */
-body{padding-bottom:calc(var(--hand-bar-h, 160px) + 1rem);}
+body{padding-bottom:calc(var(--hand-peek-h, 30px) + 48px);}
 /* Kun baari on piilossa, ei tarvita lisätilaa */
 body.hand-hidden{padding-bottom:1rem;}
+/* Käsi auki: sivulle enemmän tilaa alhaalta */
+body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
 /* ── /Vaihe 5A TCG ──────────────────────────────────────────── */
 
 /* ── Lohko F: hdr-timer — pääajastin oikeassa yläkulmassa ──── */
@@ -3359,26 +3328,30 @@ svg[aria-hidden="true"]{pointer-events:none;}
     left: auto;
     right: auto;
     z-index: 1;
-    height: 160px;
-    min-height: 28px;
-    max-height: 160px;
+    height: var(--hand-card-h, 182px);
     transform: none !important;
     transition: none;
     overflow: visible;
+    background: transparent;
+    border: none;
     box-sizing: border-box;
+  }
+  /* Desktopilla: toggle absoluuttinen ylhäällä, ei floating */
+  #hand-bar #hand-toggle {
+    position: absolute;
+    top: -32px;
+    left: 50%;
+    transform: translateX(-50%);
   }
   /* Korttirivi täyttää käytettävissä olevan tilan */
   #hand-bar #hand-bar-cards {
     height: 100%;
-    max-height: calc(160px - .5rem);
     align-items: flex-end;
   }
-  /* Piilotettu tila desktopilla: piilotetaan korttirivi, hand-bar kutistuu toggle-napin verran */
+  /* Piilotettu tila desktopilla: korttirivi piiloon */
   #hand-bar.hand-bar--hidden {
     height: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    border-top: none;
+    pointer-events: none;
   }
   #hand-bar.hand-bar--hidden #hand-bar-cards {
     display: none;
@@ -6411,14 +6384,17 @@ function _tcgSvgIcon(id, size){
   return svg;
 }
 
-/* ── renderArenaCard — rakentaa .tcg-card -rakenteen areenalle ─ */
-function renderArenaCard(t, container, anyFrog){
+/* ── renderArenaCard — rakentaa .tcg-card -rakenteen areenalle tai käteen ─ */
+/* mode: 'arena' (oletus) | 'hand' */
+function renderArenaCard(t, container, anyFrog, mode){
+  mode = mode || 'arena';
   var q = t.quad && {q1:'Tee heti',q2:'Aikatauluta',q3:'Delegoi',q4:'Poista'}[t.quad];
   var qc = t.quad && {'q1':'#a84c28','q2':'#2d5a3d','q3':'#7a6a50','q4':'#9a9a8e'}[t.quad] || '#9a9a8e';
   var iconId = _tcgIconId(t.verbi);
 
   var card=document.createElement('div');
-  card.className='tcg-card tcg-card--arena-size'+(t.frog?' tcg-card--frog':'')+(t.frog||t.important?' tcg-card--holo':'');
+  var modeClass = mode==='hand' ? 'tcg-card--hand' : 'tcg-card--arena-size';
+  card.className='tcg-card '+modeClass+(t.frog?' tcg-card--frog':'')+(t.frog||t.important?' tcg-card--holo':'')+(t.handForced?' tcg-card--star':'');
   card.setAttribute('tabindex','0');
   card.style.setProperty('--qc',qc);
   var _albl=(t.frog?'Sammakko. ':'')+(t.verbi||'')+' '+t.text+(q?', '+q:'')+(t.est?' — '+fe(t.est)+' pomodoro':'');
@@ -6487,6 +6463,8 @@ function renderArenaCard(t, container, anyFrog){
   }
   body.appendChild(meta);
   plate.appendChild(body);
+
+  if(mode==='hand'){ card.appendChild(plate); if(container) container.appendChild(card); return card; }
 
   // Stats-rivi: tärkeä/kiireinen/sammakko vasen | odottaa/linkki/muokkaa oikea
   var stats=document.createElement('div');
@@ -6598,7 +6576,7 @@ function renderArenaCard(t, container, anyFrog){
     if(pj2) card.style.borderLeft='3px solid '+pj2.color;
   }
 
-  // Land-pulssi
+  // Land-pulssi (vain areena)
   card.classList.add('just-landed');
   setTimeout(function(){card.classList.remove('just-landed');},650);
 
@@ -6609,7 +6587,8 @@ function renderArenaCard(t, container, anyFrog){
     card.addEventListener('animationend',function(){card.classList.remove('card-entering');},{once:true});
   }
 
-  container.appendChild(card);
+  if(container) container.appendChild(card);
+  return card;
 }
 
 function renderCardNew(t,container,anyFrog){
@@ -6978,26 +6957,30 @@ function renderCardNew(t,container,anyFrog){
 
 // ── Vaihe 5A TCG: Tehtäväkäsi-baari toggle ─────────────────────────
 var _handBarVisible = true;
+var _handBarOpen = false;
 function toggleHandBar(){
   var bar = document.getElementById('hand-bar');
-  var lbl = document.getElementById('hand-toggle-label');
   if(!bar) return;
-  _handBarVisible = !_handBarVisible;
-  if(_handBarVisible){
+  _handBarOpen = !_handBarOpen;
+  if(_handBarOpen){
+    bar.classList.add('hand-bar--open');
     bar.classList.remove('hand-bar--hidden');
+    document.body.classList.add('hand-open');
     document.body.classList.remove('hand-hidden');
-    if(lbl) lbl.textContent = 'Käsi';
   } else {
-    bar.classList.add('hand-bar--hidden');
-    document.body.classList.add('hand-hidden');
-    if(lbl) lbl.textContent = 'Käsi ▶';
+    bar.classList.remove('hand-bar--open');
+    document.body.classList.remove('hand-open');
   }
-  try{ localStorage.setItem('fap_hand_visible', _handBarVisible ? '1' : '0'); }catch(e){}
+  try{ localStorage.setItem('fap_hand_open', _handBarOpen ? '1' : '0'); }catch(e){}
 }
 function initHandBarState(){
   try{
-    var v = localStorage.getItem('fap_hand_visible');
-    if(v === '0'){ _handBarVisible = true; toggleHandBar(); }
+    var v = localStorage.getItem('fap_hand_open');
+    if(v === '1'){
+      var bar = document.getElementById('hand-bar');
+      if(bar){ bar.classList.add('hand-bar--open'); document.body.classList.add('hand-open'); }
+      _handBarOpen = true;
+    }
   }catch(e){}
 }
 // ── /Vaihe 5A TCG ──────────────────────────────────────────────────
@@ -7269,93 +7252,26 @@ function renderHandBar(inbox){
 
   if(!window._useCardUI) return;
 
+  var anyFrog = inbox.some(function(t){return t.frog;});
   var handTasks = buildHandQueue(inbox).slice(0, 5);
 
+  var lbl = document.getElementById('hand-toggle-label');
   if(handTasks.length === 0){
-    var emp = document.createElement('div');
-    emp.id = 'hand-bar-empty';
-    emp.textContent = 'Ei käteen sopivia tehtäviä (Q1/Q2).';
-    barCards.appendChild(emp);
-    // Päivitä toggle-label
-    var lbl = document.getElementById('hand-toggle-label');
-    if(lbl) lbl.textContent = 'Käsi (0)';
+    if(lbl) lbl.textContent = 'Käsi';
     return;
   }
-
-  // Päivitä toggle-label
-  var lbl = document.getElementById('hand-toggle-label');
-  if(lbl) lbl.textContent = 'Käsi (' + handTasks.length + ')';
+  if(lbl) lbl.textContent = handTasks.length+'';
 
   handTasks.forEach(function(t){
-    var card = document.createElement('div');
-    card.className = 'card-new card-new--hand-bar' + (t.frog ? ' is-frog' : '') + (t.handForced ? ' card-new--star' : '');
-    card.setAttribute('tabindex', '0');
-    var _qlbl = t.quad ? {q1:'Tee heti',q2:'Aikatauluta',q3:'Delegoi',q4:'Poista'}[t.quad] : '';
-    card.setAttribute('aria-label',
-      (t.frog ? 'Sammakko. ' : '') + (t.handForced ? 'Tähtikortti. ' : '') + (t.verbi||'') + ' ' + t.text +
-      (_qlbl ? ', ' + _qlbl : '') + ' — kädessä. Klikkaa nostaaksesi areenalle.'
-    );
+    var card = renderArenaCard(t, null, anyFrog, 'hand');
     card.title = 'Nosta areenalle';
-
-    // Tähti-merkki pakotettuihin kortteihin
-    if(t.handForced){
-      var starMark = document.createElement('span');
-      starMark.className = 'card-new__star-mark';
-      starMark.textContent = '⭐';
-      starMark.setAttribute('aria-hidden', 'true');
-      card.appendChild(starMark);
-    }
-
-    // Verbi-ikoni taustalla
-    var bgIco = document.createElement('span');
-    bgIco.className = 'card-new--hand-bar__bg-icon';
-    bgIco.setAttribute('aria-hidden', 'true');
-    bgIco.innerHTML = getVerbIconFromVerbi(t.verbi);
-    card.appendChild(bgIco);
-
-    // Verbi-pilli
-    if(t.verbi){
-      var vsp = document.createElement('span');
-      vsp.className = 'card-new--hand-bar__verb';
-      vsp.textContent = t.verbi;
-      card.appendChild(vsp);
-    }
-
-    // Otsikko
-    var nameEl = document.createElement('div');
-    nameEl.className = 'card-new--hand-bar__title';
-    nameEl.textContent = t.text;
-    card.appendChild(nameEl);
-
-    // Meta: Q-badge + tomaatit + sammakko
-    var meta = document.createElement('div');
-    meta.className = 'card-new--hand-bar__meta';
-    if(t.quad){
-      var badge = document.createElement('span');
-      badge.className = 'card-new--hand-bar__quad-badge ' + t.quad;
-      badge.textContent = t.quad.toUpperCase();
-      meta.appendChild(badge);
-    }
-    if(t.est && t.est > 0){
-      var pips = mkPipsNew(t.est);
-      pips.style.marginLeft = '.1rem';
-      meta.appendChild(pips);
-    }
-    if(t.frog){
-      var fp = document.createElement('span');
-      fp.style.fontSize = '.65rem';
-      fp.title = 'Sammakko';
-      fp.textContent = '🐸';
-      meta.appendChild(fp);
-    }
-    card.appendChild(meta);
-
-    // Klikkaus → nosta areenalle
-    card.onclick = (function(tid){ return function(){ promoteToHand(tid); }; })(t.id);
+    card.onclick = (function(tid){ return function(e){
+      if(e.target.closest('button')) return;
+      promoteToHand(tid);
+    }; })(t.id);
     card.onkeydown = (function(tid){ return function(e){
       if(e.key==='Enter'||e.key===' '){ e.preventDefault(); promoteToHand(tid); }
     }; })(t.id);
-
     barCards.appendChild(card);
   });
 }
