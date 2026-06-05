@@ -49,6 +49,9 @@ Jokainen tiedosto on itsenäinen: kaikki CSS ja JS sisäänrakennettu HTML-tiedo
 - `backdrop-filter` on pääsyyllinen hitaaseen suorituskykyyn MacBook Pro 2010:llä (Intel HD Graphics, ei NVIDIA) — `html[data-perf="lite"]`-attribuutti poistaa sen kaikista elementeistä
 - Usvametsä-teeman `--paper` (rgba .35) ja `--surface` (rgba .42) ovat läpinäkyviä ja luottavat backdrop-filteriin — nopean tilan CSS ylikirjoittaa ne opaakeiksi (.97)
 - Asetusnapit kuuluvat hampuriaisvalikkoon (Asetukset-osio), ei profiilipaneeliin — käyttäjä ei löydä piilotettujakin modaaleja
+- `position:fixed` lapsi-elementti transformatun vanhemman sisällä positionoituu vanhempaan eikä viewporttiin — toggle-napit yms. sijoitetaan transformatun elementin ULKOPUOLELLE DOM:issa
+- `node --check` ei toimi `.html`-tiedostoille — extractaa ensin: `python3 -c "import re; open('/tmp/chk.js','w').write('\n'.join(s[1] for s in re.findall(r'<script(?! type=[\"\'](module)[\"\']*[^>]*>)(?:[^>]*)>(.*?)</script>', open('index.html').read(), re.DOTALL)))"` → `node --check /tmp/chk.js`
+- Headless Chrome `--screenshot` ei renderöi CSS transformeja luotettavasti — testaa aina oikeassa selaimessa, älä luota headless-kuvakaappauksiin CSS-animaatioiden todentamiseen
 
 ## Core data model
 
@@ -175,18 +178,22 @@ MacBook Pro 2010 (Intel HD, ei GPU) suorituskykyoptionointi Chromessa.
 ### Jäljellä (manuaalinen)
 
 - **SEC-007** — Firestore Security Rules -auditointi Firebase-konsolissa (ei koodimuutosta)
-- **`renderCardNew()`-jako** — `renderArenaCard()` + `renderDeckCard()` (index.html:6161–6530, ~370 riviä) — vaatii manuaalista testausta
+- **`renderCardNew()`-jako** — `renderArenaCard()` tehty ✅; `renderDeckCard()` tekemättä
 
-### Alkuperäinen TCG-kehityssuunnitelma
+### TCG-korttipeli-ilme (2026-06-04/05) — haara `claude/graphic-design-skills-t3mNx`, PR auki
 
-Viimeksi valmis: **vaihe 9.5 B** — Live-jako-ominaisuus. Seuraavana: **vaihe 9.5 C**
+| Komponentti | Status | Sijainti |
+|---|---|---|
+| `.tcg-card*` CSS-lohko | ✅ | index.html:~3000 |
+| `renderArenaCard(t, container, anyFrog, mode)` | ✅ | index.html:~6440 |
+| `mkCostPips()` — pyöreät mana-helmet | ✅ | index.html:~6290 |
+| `_tcgIconId()`, `_tcgSvgIcon()` | ✅ | index.html:~6383 |
+| Viuhka-käsi (`#hand-bar`) peek-tila | ⚠️ vaatii selain-validoinnin | index.html:~2008 |
+| Cinzel `@import` | ✅ | index.html:9 |
+| `--plate-top/bot`, `--hand-card-w/h`, `--hand-peek-h` | ✅ | index.html:51 |
 
-Areenakortin TCG/MtG-design (osittain määritelty, toteutus kesken):
-- Mitat: MtG-suhde 63:88, ~240×335px
-- Tausta: `#1e3a3a→#162e2e`, 1.5px `#3d7a60` reunus, border-radius: 12px
-- Verbi-ikoni: oikeassa alakulmassa taustalla, 80px, opacity .08
-- Yläalue: verbiteksti (9px, `#6aaa88`, versaali), otsikko, Q-badge, meta (🍅×N · Projekti)
-- Toimintonapit: ▶ Aloita, ✓, →, ⏳
+**`renderArenaCard` mode:** `'arena'` = täysi kortti; `'hand'` = kompakti `.tcg-card--hand` ilman stats/footer/jatkokortti
+**`#hand-toggle` on `#hand-bar`:n ULKOPUOLELLA DOM:issa** — position:fixed toimii oikein vain näin
 
 ## Firebase
 
@@ -202,7 +209,7 @@ Kutsuu Anthropic API:a suoraan selaimesta (`https://api.anthropic.com/v1/message
 ## Tools & resources
 
 - Stack: Single-file HTML, Firebase SDK v10+ (modulaarinen, CDN), Firestore, anonyymi auth, valinnainen Google Sign-In
-- Fontit: DM Sans, DM Serif Display
+- Fontit: DM Sans, DM Serif Display, Cinzel (TCG-kortit)
 - Deployment: GitHub Pages https://joketre3.github.io/fokus/ (repo: "fokus")
 - Bash-työkalut: `grep -n` pipe-erotetuilla kuvioilla; `sed -n 'start,endp'` alueiden lukemiseen; `wc -l` tiedostokoon tarkistukseen ensin
 
