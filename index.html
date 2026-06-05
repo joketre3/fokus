@@ -53,9 +53,9 @@
   --plate-top:#1a2e26;
   --plate-bot:#13211b;
   /* Viuhka-käsi */
-  --hand-card-w:130px;
-  --hand-card-h:182px;
-  --hand-peek-h:30px;
+  --hand-card-w:90px;
+  --hand-card-h:126px;
+  --hand-peek-h:28px;
 }
 body{
   color:var(--ink);
@@ -1141,12 +1141,12 @@ html[data-theme="aurinko"][data-perf="lite"]{
 
     <!-- ── Vaihe 5A TCG: Tehtäväkäsi-baari (desktop) ── -->
     <div id="hand-bar" aria-label="Tehtäväkäsi">
-      <button id="hand-toggle" onclick="toggleHandBar()" aria-label="Näytä/piilota tehtäväkäsi">
-        <span class="htog-fan"><b></b><b></b><b></b></span>
-        <span id="hand-toggle-label">Käsi</span>
-      </button>
       <div id="hand-bar-cards"></div>
     </div>
+    <button id="hand-toggle" onclick="toggleHandBar()" aria-label="Näytä/piilota tehtäväkäsi">
+      <span class="htog-fan"><b></b><b></b><b></b></span>
+      <span id="hand-toggle-label">Käsi</span>
+    </button>
     <!-- ── /Vaihe 5A TCG ── -->
   </div>
 
@@ -2004,38 +2004,33 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 }
 
 /* ── Vaihe 5A TCG: Tehtäväkäsi-baari (kaikki leveydet) ───────── */
-/* ── Viuhka-käsi (mobiili: floating peek) ─────────────────── */
+/* ── Viuhka-käsi ───────────────────────────────────────────── */
 #hand-bar{
   position:fixed;
   bottom:0;left:0;right:0;
   z-index:60;
-  height:var(--hand-card-h,182px);
+  height:var(--hand-card-h,126px);
   background:transparent;
   border:none;
   padding:0;
-  /* Oletus: kortit piilossa 82%, vain --hand-peek-h näkyy */
-  transform:translateY(calc(var(--hand-card-h,182px) - var(--hand-peek-h,30px)));
-  transition:transform 320ms cubic-bezier(.34,1.2,.64,1);
   overflow:visible;
-}
-#hand-bar.hand-bar--open{
-  transform:translateY(0);
+  pointer-events:none; /* läpi klikkaukset */
 }
 #hand-bar.hand-bar--hidden{
-  transform:translateY(100%);
-  pointer-events:none;
+  display:none;
 }
 
-/* Korttiviuhka-toggle-nappi */
+/* Korttiviuhka-toggle — position:fixed viewporttiin, barin ulkopuolella */
 #hand-toggle{
-  position:absolute;
-  top:-32px;
+  position:fixed;
+  bottom:calc(var(--hand-peek-h,28px) + 6px);
   left:50%;
   transform:translateX(-50%);
-  height:28px;
-  padding:0 .85rem 0 .55rem;
+  z-index:62;
+  height:26px;
+  padding:0 .8rem 0 .5rem;
   font-family:'DM Sans',sans-serif;
-  font-size:.65rem;
+  font-size:.62rem;
   font-weight:500;
   letter-spacing:.06em;
   color:var(--accent);
@@ -2045,35 +2040,26 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   cursor:pointer;
   display:flex;
   align-items:center;
-  gap:.45rem;
+  gap:.4rem;
   white-space:nowrap;
-  box-shadow:0 2px 8px rgba(0,0,0,.25);
+  box-shadow:0 2px 8px rgba(0,0,0,.3);
   transition:background .15s,border-color .15s;
+  pointer-events:auto;
 }
-#hand-toggle:hover{
-  background:rgba(196,154,58,.12);
-  border-color:var(--accent);
-}
-/* Korttiviuhka-ikoni togglessa */
-.htog-fan{
-  position:relative;
-  width:18px;height:14px;
-  flex:none;
-}
+#hand-toggle:hover{background:rgba(196,154,58,.12);border-color:var(--accent);}
+.body-hand-hidden #hand-toggle{display:none;}
+/* Korttiviuhka-ikoni */
+.htog-fan{position:relative;width:18px;height:13px;flex:none;}
 .htog-fan b{
-  position:absolute;
-  width:7px;height:11px;
-  background:rgba(196,154,58,.18);
-  border:1px solid rgba(196,154,58,.7);
-  border-radius:1px;
-  bottom:0;left:50%;margin-left:-3.5px;
-  transform-origin:bottom center;
-  display:block;
+  position:absolute;width:7px;height:11px;
+  background:rgba(196,154,58,.18);border:1px solid rgba(196,154,58,.7);
+  border-radius:1px;bottom:0;left:50%;margin-left:-3.5px;
+  transform-origin:bottom center;display:block;
 }
 .htog-fan b:nth-child(1){transform:rotate(-15deg) translateX(-5px);}
 .htog-fan b:nth-child(3){transform:rotate(15deg) translateX(5px);}
 
-/* Korttirivi */
+/* Korttirivi — peek-tila transform tässä, ei barin tasolla */
 #hand-bar-cards{
   display:flex;
   justify-content:center;
@@ -2082,6 +2068,12 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   height:100%;
   padding:0;
   overflow:visible;
+  pointer-events:auto;
+  transform:translateY(calc(100% - var(--hand-peek-h,28px)));
+  transition:transform 300ms cubic-bezier(.34,1.2,.64,1);
+}
+#hand-bar.hand-bar--open #hand-bar-cards{
+  transform:translateY(0);
 }
 
 /* Minikortti baariversion tyyli (aspect-ratio 3/4) */
@@ -2145,7 +2137,7 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 }
 
 /* Body-padding: tilaa hand-barin korkeudelle */
-body{padding-bottom:calc(var(--hand-peek-h, 30px) + 48px);}
+body{padding-bottom:calc(var(--hand-peek-h, 28px) + 40px);}
 /* Kun baari on piilossa, ei tarvita lisätilaa */
 body.hand-hidden{padding-bottom:1rem;}
 /* Käsi auki: sivulle enemmän tilaa alhaalta */
@@ -3324,36 +3316,28 @@ svg[aria-hidden="true"]{pointer-events:none;}
   #hand-bar {
     grid-area: bottom;
     position: relative;
-    bottom: auto;
-    left: auto;
-    right: auto;
+    bottom: auto; left: auto; right: auto;
     z-index: 1;
-    height: var(--hand-card-h, 182px);
-    transform: none !important;
-    transition: none;
+    height: var(--hand-card-h, 126px);
     overflow: visible;
     background: transparent;
     border: none;
-    box-sizing: border-box;
+    pointer-events: none;
   }
-  /* Desktopilla: toggle absoluuttinen ylhäällä, ei floating */
-  #hand-bar #hand-toggle {
+  /* Desktopilla toggle ei floating vaan gridin sisällä */
+  #hand-toggle {
     position: absolute;
-    top: -32px;
+    bottom: 100%;
     left: 50%;
     transform: translateX(-50%);
+    z-index: 2;
   }
-  /* Korttirivi täyttää käytettävissä olevan tilan */
-  #hand-bar #hand-bar-cards {
+  #hand-bar-cards {
+    transform: none !important;
     height: 100%;
     align-items: flex-end;
   }
-  /* Piilotettu tila desktopilla: korttirivi piiloon */
   #hand-bar.hand-bar--hidden {
-    height: 0;
-    pointer-events: none;
-  }
-  #hand-bar.hand-bar--hidden #hand-bar-cards {
     display: none;
   }
   /* Kolmisarake: left / arena / right */
@@ -6965,11 +6949,9 @@ function toggleHandBar(){
   if(_handBarOpen){
     bar.classList.add('hand-bar--open');
     bar.classList.remove('hand-bar--hidden');
-    document.body.classList.add('hand-open');
-    document.body.classList.remove('hand-hidden');
+    document.body.classList.remove('hand-hidden','body-hand-hidden');
   } else {
     bar.classList.remove('hand-bar--open');
-    document.body.classList.remove('hand-open');
   }
   try{ localStorage.setItem('fap_hand_open', _handBarOpen ? '1' : '0'); }catch(e){}
 }
