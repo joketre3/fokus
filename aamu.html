@@ -70,7 +70,7 @@ body{
   display:flex;align-items:center;justify-content:center;
   font-size:.72rem;font-weight:500;
   background:var(--light);color:var(--muted);
-  flex-shrink:0;transition:all .25s;
+  flex-shrink:0;transition:background .25s,color .25s;
 }
 .step-num.active{background:var(--accent);color:white;}
 .step-num.done{background:rgba(196,154,58,.15);color:var(--accent);}
@@ -123,13 +123,14 @@ html[data-theme="aurinko"] .step-num.done{background:rgba(196,104,30,.12);color:
 .ca-btn{
   font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:500;
   padding:.45rem .9rem;border-radius:7px;border:none;cursor:pointer;
-  transition:all .15s;
+  transition:filter .15s,transform .15s;
 }
 .ca-keep{background:var(--q1);color:white;}
 .ca-move{background:rgba(196,154,58,.12);color:var(--q2);border:1.5px solid var(--q2);}
 html[data-theme="aurinko"] .ca-move{background:rgba(61,107,48,.1);color:#3d6b30;border-color:#3d6b30;}
 .ca-delegate{background:var(--light);color:var(--muted);}
 .ca-btn:hover{filter:brightness(.92);}
+.ca-btn:active{transform:scale(.96);}
 
 .q1-counter{
   font-size:.72rem;color:var(--muted);font-weight:300;
@@ -145,7 +146,7 @@ html[data-theme="aurinko"] .ca-move{background:rgba(61,107,48,.1);color:#3d6b30;
   background:white;border-radius:10px;
   border:1.5px solid var(--light);
   padding:.85rem 1rem;margin-bottom:.5rem;
-  cursor:pointer;transition:all .15s;
+  cursor:pointer;transition:border-color .15s,background .15s;
   display:flex;align-items:flex-start;gap:.75rem;
 }
 .q2-task.selected{
@@ -157,7 +158,7 @@ html[data-theme="aurinko"] .ca-move{background:rgba(61,107,48,.1);color:#3d6b30;
   border:1.5px solid var(--light);
   flex-shrink:0;margin-top:.1rem;
   display:flex;align-items:center;justify-content:center;
-  transition:all .15s;font-size:.65rem;color:white;
+  transition:background .15s,border-color .15s;font-size:.65rem;color:white;
 }
 .q2-task.selected .q2-check{background:var(--q2);border-color:var(--q2);}
 html[data-theme="aurinko"] .q2-task.selected .q2-check{background:var(--accent);border-color:var(--accent);}
@@ -180,11 +181,12 @@ html[data-theme="aurinko"] .q2-task.selected{border-color:var(--accent);backgrou
   background:white;border-radius:12px;
   border:2px solid var(--light);
   padding:1rem 1.25rem;margin-bottom:.6rem;
-  cursor:pointer;transition:all .18s;
+  cursor:pointer;transition:border-color .18s,transform .18s,box-shadow .18s;
   display:flex;align-items:center;gap:.85rem;
   position:relative;
 }
 .frog-card:hover{border-color:var(--accent);transform:translateY(-1px);}
+.frog-card:active{transform:translateY(0);border-color:var(--accent);}
 .frog-card.selected{
   border-color:#6b8a30;
   background:rgba(107,138,48,.07);
@@ -271,7 +273,7 @@ html[data-theme="aurinko"] .frog-card.selected{border-color:#3d6b30;background:r
   font-family:'DM Sans',sans-serif;font-size:.7rem;font-weight:400;
   padding:.3rem .7rem;border-radius:5px;
   border:1.5px solid var(--light);background:none;
-  color:var(--muted);cursor:pointer;transition:all .12s;
+  color:var(--muted);cursor:pointer;transition:border-color .12s,color .12s;
   display:flex;align-items:center;gap:.3rem;
 }
 .sp-btn:hover{border-color:var(--accent);color:var(--accent);}
@@ -322,17 +324,19 @@ html[data-theme="aurinko"] .done-summary{background:#fffbf2;border-color:#e8d8b8
 .btn-main{
   font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;
   padding:.65rem 1.5rem;border-radius:9px;border:none;
-  background:var(--accent);color:white;cursor:pointer;transition:all .15s;
+  background:var(--accent);color:white;cursor:pointer;transition:filter .15s,transform .15s;
 }
 .btn-main:hover{filter:brightness(.9);}
+.btn-main:active{transform:scale(.97);}
 .btn-main:disabled{opacity:.4;cursor:not-allowed;}
 .btn-ghost{
   font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:400;
   padding:.55rem .9rem;border-radius:8px;
   border:1.5px solid var(--light);background:white;
-  color:var(--muted);cursor:pointer;transition:all .15s;
+  color:var(--muted);cursor:pointer;transition:border-color .15s,color .15s,transform .15s;
 }
 .btn-ghost:hover{border-color:var(--muted);}
+.btn-ghost:active{transform:scale(.97);}
 
 .logo-bar{
   width:100%;max-width:520px;

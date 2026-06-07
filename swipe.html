@@ -14,8 +14,9 @@ body{background:var(--paper);font-family:'DM Sans',sans-serif;color:var(--ink);m
 #setup h2{font-family:'DM Serif Display',serif;font-size:1.5rem;font-style:italic}
 #setup p{font-size:.82rem;color:var(--muted);font-weight:300;line-height:1.6;max-width:280px}
 .time-opts{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center}
-.time-opt{font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;padding:.55rem 1.1rem;border-radius:8px;border:1.5px solid var(--light);background:white;color:var(--muted);cursor:pointer;transition:all .15s}
+.time-opt{font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;padding:.55rem 1.1rem;border-radius:8px;border:1.5px solid var(--light);background:white;color:var(--muted);cursor:pointer;transition:border-color .15s,color .15s,background .15s,transform .15s}
 .time-opt.on,.time-opt:hover{border-color:var(--accent);color:var(--accent);background:rgba(196,154,58,.06)}
+.time-opt:active{transform:scale(.96)}
 .custom-time{display:flex;align-items:center;gap:.5rem}
 .custom-time input{width:64px;font-family:'DM Sans',sans-serif;font-size:.85rem;padding:.45rem .6rem;border-radius:6px;border:1.5px solid var(--light);outline:none;text-align:center}
 .custom-time input:focus{border-color:var(--accent)}
@@ -78,10 +79,11 @@ body{background:var(--paper);font-family:'DM Sans',sans-serif;color:var(--ink);m
 #done-screen{display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;padding:2rem;gap:1rem;text-align:center}
 #done-screen h2{font-family:'DM Serif Display',serif;font-size:1.3rem;font-style:italic}
 #done-screen p{font-size:.8rem;color:var(--muted);font-weight:300;line-height:1.6;max-width:260px}
-.done-btn{font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;padding:.6rem 1.4rem;border-radius:8px;border:1.5px solid var(--accent);color:var(--accent);background:white;cursor:pointer}
+.done-btn{font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;padding:.6rem 1.4rem;border-radius:8px;border:1.5px solid var(--accent);color:var(--accent);background:white;cursor:pointer;transition:background .15s,color .15s,transform .15s}
 .done-btn:hover{background:var(--accent);color:white}
-.nt{position:fixed;bottom:1.25rem;left:50%;transform:translateX(-50%);background:var(--ink);color:white;border-radius:8px;padding:.55rem 1.1rem;font-size:.78rem;box-shadow:0 4px 14px rgba(0,0,0,.2);opacity:0;pointer-events:none;transition:opacity .25s;white-space:nowrap;z-index:200}
-.nt.on{opacity:1}
+.done-btn:active{transform:scale(.97)}
+.nt{position:fixed;bottom:1.25rem;left:50%;transform:translateX(-50%) translateY(8px);background:var(--ink);color:white;border-radius:8px;padding:.55rem 1.1rem;font-size:.78rem;box-shadow:0 4px 14px rgba(0,0,0,.2);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s ease-out;white-space:nowrap;z-index:200}
+.nt.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* ── TEEMA — swipe.html ──────────────────────────────── */
 /* Usvametsä = oletus (nykyinen vaalea tyyli) */
