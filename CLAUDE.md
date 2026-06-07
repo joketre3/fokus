@@ -52,6 +52,11 @@ Jokainen tiedosto on itsenäinen: kaikki CSS ja JS sisäänrakennettu HTML-tiedo
 - `position:fixed` lapsi-elementti transformatun vanhemman sisällä positionoituu vanhempaan eikä viewporttiin — toggle-napit yms. sijoitetaan transformatun elementin ULKOPUOLELLE DOM:issa
 - `node --check` ei toimi `.html`-tiedostoille — extractaa ensin: `python3 -c "import re; open('/tmp/chk.js','w').write('\n'.join(s[1] for s in re.findall(r'<script(?! type=[\"\'](module)[\"\']*[^>]*>)(?:[^>]*)>(.*?)</script>', open('index.html').read(), re.DOTALL)))"` → `node --check /tmp/chk.js`
 - Headless Chrome `--screenshot` ei renderöi CSS transformeja luotettavasti — testaa aina oikeassa selaimessa, älä luota headless-kuvakaappauksiin CSS-animaatioiden todentamiseen
+- CSS hover-bounce: kun elementti liikkuu `:hover`-tilassa ylös, lisää `::after { position:absolute; bottom:-64px; left:-8px; right:-8px; height:64px; }` laajentamaan hit-aluetta — muuten elementti pomputtaa itseään
+- `position:fixed` lapsielementti grid-rivin sisällä positionoituu viewporttiin kun vanhemmalla ei ole `transform`ia — käytä tätä viuhkan kaltaisiin fixed-overlayhin gridin sisällä
+- `.wrap { overflow:hidden }` katkaisee gridin ulkopuolelle menevän sisällön — piilota elementit `translateY(100%)`:llä, älä siirrä fyysisesti gridin ulkopuolelle
+- Grid-rivi säilyttää korkeutensa vaikka sen sisältö on `position:fixed` — käytä tätä pitämään muut elementit (esim. arena-kortti) paikallaan viuhkan avautuessa
+- `startTmr()` ei kutsu `render()` — kutsu manuaalisesti heti perään jos UI pitää päivittää (esim. nappi-teksti)
 
 ## Core data model
 
@@ -188,12 +193,14 @@ MacBook Pro 2010 (Intel HD, ei GPU) suorituskykyoptionointi Chromessa.
 | `renderArenaCard(t, container, anyFrog, mode)` | ✅ | index.html:~6440 |
 | `mkCostPips()` — pyöreät mana-helmet | ✅ | index.html:~6290 |
 | `_tcgIconId()`, `_tcgSvgIcon()` | ✅ | index.html:~6383 |
-| Viuhka-käsi (`#hand-bar`) peek-tila | ⚠️ vaatii selain-validoinnin | index.html:~2008 |
+| Viuhka-käsi (`#hand-bar`) peek-tila | ✅ | index.html:~2008 |
 | Cinzel `@import` | ✅ | index.html:9 |
 | `--plate-top/bot`, `--hand-card-w/h`, `--hand-peek-h` | ✅ | index.html:51 |
 
 **`renderArenaCard` mode:** `'arena'` = täysi kortti; `'hand'` = kompakti `.tcg-card--hand` ilman stats/footer/jatkokortti
 **`#hand-toggle` on `#hand-bar`:n ULKOPUOLELLA DOM:issa** — position:fixed toimii oikein vain näin
+**`#hand-bar-cards` on desktopilla `position:fixed`** — overlay viewportin alareunassa, hover avaa, 5s mouseleave sulkee. `#hand-bar` pysyy gridin pohjarivissä (182px) pitäen areenan paikallaan.
+**Viuhkan tilat desktopilla:** peek (oletus, ~36px näkyvissä) → `hand-bar--open` (täysin auki) → `hand-bar--hidden` (ajastin käynnissä, `translateY(100%)`)
 
 ## Firebase
 
