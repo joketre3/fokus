@@ -53,9 +53,9 @@
   --plate-top:#1a2e26;
   --plate-bot:#13211b;
   /* Viuhka-käsi */
-  --hand-card-w:90px;
-  --hand-card-h:126px;
-  --hand-peek-h:28px;
+  --hand-card-w:130px;
+  --hand-card-h:182px;
+  --hand-peek-h:36px;
 }
 body{
   color:var(--ink);
@@ -2009,7 +2009,7 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   position:fixed;
   bottom:0;left:0;right:0;
   z-index:60;
-  height:var(--hand-card-h,126px);
+  height:var(--hand-card-h,182px);
   background:transparent;
   border:none;
   padding:0;
@@ -2023,16 +2023,17 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 /* Korttiviuhka-toggle — position:fixed viewporttiin, barin ulkopuolella */
 #hand-toggle{
   position:fixed;
-  bottom:calc(var(--hand-peek-h,28px) + 6px);
-  left:50%;
-  transform:translateX(-50%);
+  bottom:calc(var(--hand-peek-h,36px) + 8px);
+  right:1.5rem;
+  left:auto;
+  transform:none;
   z-index:62;
-  height:26px;
-  padding:0 .8rem 0 .5rem;
+  height:30px;
+  padding:0 .85rem 0 .55rem;
   font-family:'DM Sans',sans-serif;
-  font-size:.62rem;
-  font-weight:500;
-  letter-spacing:.06em;
+  font-size:.65rem;
+  font-weight:600;
+  letter-spacing:.05em;
   color:var(--accent);
   background:var(--surface-strong);
   border:1px solid rgba(196,154,58,.5);
@@ -2042,12 +2043,12 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   align-items:center;
   gap:.4rem;
   white-space:nowrap;
-  box-shadow:0 2px 8px rgba(0,0,0,.3);
-  transition:background .15s,border-color .15s;
+  box-shadow:0 2px 10px rgba(0,0,0,.35);
+  transition:background .15s,border-color .15s,bottom 300ms cubic-bezier(.34,1.2,.64,1);
   pointer-events:auto;
 }
-#hand-toggle:hover{background:rgba(196,154,58,.12);border-color:var(--accent);}
-.body-hand-hidden #hand-toggle{display:none;}
+#hand-toggle:hover{background:rgba(196,154,58,.14);border-color:var(--accent);}
+body.hand-open #hand-toggle{bottom:calc(var(--hand-card-h,182px) + 12px);}
 /* Korttiviuhka-ikoni */
 .htog-fan{position:relative;width:18px;height:13px;flex:none;}
 .htog-fan b{
@@ -2069,7 +2070,7 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   padding:0;
   overflow:visible;
   pointer-events:auto;
-  transform:translateY(calc(100% - var(--hand-peek-h,28px)));
+  transform:translateY(calc(100% - var(--hand-peek-h,36px)));
   transition:transform 300ms cubic-bezier(.34,1.2,.64,1);
 }
 #hand-bar.hand-bar--open #hand-bar-cards{
@@ -2078,7 +2079,8 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 
 /* Minikortti baariversion tyyli (aspect-ratio 3/4) */
 /* TCG käsikortti — sama ilme kuin areena, ilman korostuksia */
-.tcg-card--hand{
+/* Kaksoisluokka (ylempi spesifisyys kuin .tcg-card) */
+.tcg-card.tcg-card--hand{
   width:var(--hand-card-w,130px);
   /* aspect-ratio 5/7 periytyy .tcg-card:lta → korkeus ~182px */
   flex:none;
@@ -2095,6 +2097,13 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 .tcg-card--hand:nth-child(3){transform:rotate(1deg) translateY(0);}
 .tcg-card--hand:nth-child(4){transform:rotate(6deg) translateY(5px);}
 .tcg-card--hand:nth-child(5){transform:rotate(11deg) translateY(11px);}
+.tcg-card--hand::after{
+  content:'';
+  position:absolute;
+  bottom:-64px;
+  left:-8px;right:-8px;
+  height:64px;
+}
 .tcg-card--hand:hover{
   transform:translateY(-52px) scale(1.1) rotate(0deg) !important;
   box-shadow:0 16px 36px rgba(0,0,0,.45),
@@ -2137,7 +2146,7 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 }
 
 /* Body-padding: tilaa hand-barin korkeudelle */
-body{padding-bottom:calc(var(--hand-peek-h, 28px) + 40px);}
+body{padding-bottom:calc(var(--hand-peek-h, 32px) + 40px);}
 /* Kun baari on piilossa, ei tarvita lisätilaa */
 body.hand-hidden{padding-bottom:1rem;}
 /* Käsi auki: sivulle enemmän tilaa alhaalta */
@@ -3066,6 +3075,9 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
 .tcg-card__actions-tcg .act-start{
   flex:1;background:var(--accent);color:#fff;border-color:var(--accent);
 }
+.tcg-card__actions-tcg .act-start--running{
+  background:#7a2020;border-color:#7a2020;
+}
 .tcg-card__actions-tcg .act-start:hover{filter:brightness(1.1);}
 /* Stats-rivi (tärkeä/kiireinen/muokkaa-napit) */
 .tcg-card__stats{
@@ -3312,33 +3324,46 @@ svg[aria-hidden="true"]{pointer-events:none;}
     flex-wrap: nowrap;
     flex-shrink: 0;
   }
-  /* hand-bar: irti fixed-positioinnista, gridin pohjalle */
+  /* hand-bar: gridin pohjarivi pysyy aina 182px → arena ei liiku */
   #hand-bar {
     grid-area: bottom;
     position: relative;
     bottom: auto; left: auto; right: auto;
     z-index: 1;
-    height: var(--hand-card-h, 126px);
+    height: var(--hand-card-h, 182px);
     overflow: visible;
     background: transparent;
     border: none;
     pointer-events: none;
+    display: block !important; /* ei piilotu display:none:lla, vain kortit piiloutuvat */
   }
-  /* Desktopilla toggle ei floating vaan gridin sisällä */
+  /* Toggle piilotettu desktopilla — hover hoitaa */
   #hand-toggle {
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 2;
-  }
-  #hand-bar-cards {
-    transform: none !important;
-    height: 100%;
-    align-items: flex-end;
-  }
-  #hand-bar.hand-bar--hidden {
     display: none;
+  }
+  /* Kortit: position:fixed overlay, peek oletuksena */
+  #hand-bar-cards {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--hand-card-h, 182px);
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    overflow: visible;
+    transform: translateY(calc(100% - var(--hand-peek-h, 36px)));
+    transition: transform 300ms cubic-bezier(.34,1.2,.64,1);
+    pointer-events: auto;
+  }
+  /* Hover tai auki: kortit täysin näkyvissä */
+  #hand-bar.hand-bar--open #hand-bar-cards {
+    transform: translateY(0);
+  }
+  /* Ajastin käynnissä: kortit täysin piilossa */
+  #hand-bar.hand-bar--hidden #hand-bar-cards {
+    transform: translateY(100%);
+    pointer-events: none;
   }
   /* Kolmisarake: left / arena / right */
   .tcg-left {
@@ -5829,17 +5854,14 @@ function toggleTimer(){
   }
   if(!active&&turn.length===0){notify('Lisää tehtäviä jonoon ensin 🍅');return}
   if(phase==='idle')phase='work';
-  // Vaihe 5C TCG: IDLE/pause→WORK → piilota käsi-baari
-  if(window.innerWidth>768&&_handBarVisible){
+  // Vaihe 5C TCG: IDLE/pause→WORK → viuhka peek-tilaan (ei kokonaan piiloon)
+  if(window.innerWidth>768){
     var bar=document.getElementById('hand-bar');
-    if(bar&&!bar.classList.contains('hand-bar--hidden')){
-      bar.classList.add('hand-bar--hidden');
-      document.body.classList.add('hand-hidden');
-      _handBarVisible=false;
-      try{localStorage.setItem('fap_hand_visible','0');}catch(e){}
-    }
+    if(bar){ bar.classList.remove('hand-bar--open'); }
+    if(_handHideTimer){ clearTimeout(_handHideTimer); _handHideTimer=null; }
   }
   startTmr();
+  render();
   var act=getActive();
   var wmin=Math.round(WORK/60);
   a11yAnnounce('Pomodoro käynnistyi. '+(act?act.text+'. ':'')+wmin+' minuuttia.');
@@ -6035,14 +6057,18 @@ function stopAll(){
   phase='idle';tleft=WORK;startAt=null;
   stopKeepAwake();
   setClockIcon(false);
-  // Vaihe 5C TCG: IDLE → palauta käsi-baari näkyviin
-  if(window.innerWidth>768&&!_handBarVisible){
+  // Vaihe 5C TCG: IDLE → viuhka esiin 5 sekunniksi, sitten peek
+  if(window.innerWidth>768){
     var bar=document.getElementById('hand-bar');
     if(bar){
       bar.classList.remove('hand-bar--hidden');
-      document.body.classList.remove('hand-hidden');
-      _handBarVisible=true;
-      try{localStorage.setItem('fap_hand_visible','1');}catch(e){}
+      bar.classList.add('hand-bar--open');
+      if(_handHideTimer){ clearTimeout(_handHideTimer); }
+      _handHideTimer=setTimeout(function(){
+        var b=document.getElementById('hand-bar');
+        if(b) b.classList.remove('hand-bar--open');
+        _handHideTimer=null;
+      },5000);
     }
   }
   document.getElementById('btnNx').style.display='none';
@@ -6510,7 +6536,9 @@ function renderArenaCard(t, container, anyFrog, mode){
 
   var startBtn=document.createElement('button');
   startBtn.className='act-start';
-  startBtn.textContent='▶ Aloita';
+  var timerRunning=(tmr!==null&&phase==='work');
+  startBtn.textContent=timerRunning?'■ Lopeta':'▶ Aloita';
+  if(timerRunning) startBtn.classList.add('act-start--running');
   startBtn.onclick=function(e){e.stopPropagation();toggleTimer();};
   acts.appendChild(startBtn);
 
@@ -6942,7 +6970,11 @@ function renderCardNew(t,container,anyFrog){
 // ── Vaihe 5A TCG: Tehtäväkäsi-baari toggle ─────────────────────────
 var _handBarVisible = true;
 var _handBarOpen = false;
+var _handHideTimer = null;
+
 function toggleHandBar(){
+  // Vain mobiililla (desktopilla hover hoitaa)
+  if(window.innerWidth >= 900) return;
   var bar = document.getElementById('hand-bar');
   if(!bar) return;
   _handBarOpen = !_handBarOpen;
@@ -6950,20 +6982,52 @@ function toggleHandBar(){
     bar.classList.add('hand-bar--open');
     bar.classList.remove('hand-bar--hidden');
     document.body.classList.remove('hand-hidden','body-hand-hidden');
+    document.body.classList.add('hand-open');
   } else {
     bar.classList.remove('hand-bar--open');
+    document.body.classList.remove('hand-open');
   }
   try{ localStorage.setItem('fap_hand_open', _handBarOpen ? '1' : '0'); }catch(e){}
 }
+
 function initHandBarState(){
   try{
-    var v = localStorage.getItem('fap_hand_open');
-    if(v === '1'){
-      var bar = document.getElementById('hand-bar');
-      if(bar){ bar.classList.add('hand-bar--open'); document.body.classList.add('hand-open'); }
-      _handBarOpen = true;
+    var bar = document.getElementById('hand-bar');
+    var isDesktop = window.innerWidth >= 900;
+    if(isDesktop){
+      // Desktop: peek oletuksena, hover hoitaa avaamisen
+      if(bar){ bar.classList.remove('hand-bar--hidden','hand-bar--open'); }
+      document.body.classList.remove('hand-open','hand-hidden','body-hand-hidden');
+    } else {
+      var v = localStorage.getItem('fap_hand_open');
+      _handBarOpen = (v === '1');
+      if(_handBarOpen){
+        if(bar){ bar.classList.add('hand-bar--open'); bar.classList.remove('hand-bar--hidden'); }
+        document.body.classList.add('hand-open');
+      }
     }
   }catch(e){}
+}
+
+function _attachHandHoverDesktop(){
+  var cards = document.getElementById('hand-bar-cards');
+  if(!cards) return;
+  cards.addEventListener('mouseenter', function(){
+    if(window.innerWidth < 900) return;
+    if(_handHideTimer){ clearTimeout(_handHideTimer); _handHideTimer = null; }
+    var bar = document.getElementById('hand-bar');
+    if(bar && !bar.classList.contains('hand-bar--hidden')){
+      bar.classList.add('hand-bar--open');
+    }
+  });
+  cards.addEventListener('mouseleave', function(){
+    if(window.innerWidth < 900) return;
+    _handHideTimer = setTimeout(function(){
+      var bar = document.getElementById('hand-bar');
+      if(bar){ bar.classList.remove('hand-bar--open'); }
+      _handHideTimer = null;
+    }, 5000);
+  });
 }
 // ── /Vaihe 5A TCG ──────────────────────────────────────────────────
 
@@ -7271,8 +7335,8 @@ function _updatePbPlaceholder(){
 
 document.addEventListener('DOMContentLoaded', function(){
   setTimeout(_updatePbPlaceholder, 100);
-  // Vaihe 5A: käsi-baarin tila
   initHandBarState();
+  _attachHandHoverDesktop();
 });
 
 window.addEventListener('resize', function(){
