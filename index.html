@@ -38,7 +38,7 @@
   --q4:#9a9a8e;        /* neither           → stone grey   */
 
   /* Type scale */
-  --text-xs:.65rem;
+  --text-xs:.72rem;
   --text-sm:.75rem;
   --text-base:.875rem;
   --text-md:1rem;
@@ -703,6 +703,11 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
   }
 }
 
+/* Ajastimen SVG-elementit — teemaväri var(--pomo) */
+#ring,#hdr-ring{stroke:var(--pomo)}
+#iconPlay,#hdr-play{fill:var(--pomo)}
+#iconStop,#hdr-stop{fill:var(--pomo)}
+
 /* NOPEA TILA — poistaa backdrop-filter ja transitiot heikolla laitteistolla */
 html[data-perf="lite"] *,
 html[data-perf="lite"] *::before,
@@ -1138,7 +1143,7 @@ html[data-theme="aurinko"][data-perf="lite"]{
           <span class="side-panel__count" id="waiting-count">0</span>
         </div>
         <div id="waiting-list" class="waiting-list"></div>
-        <div id="waiting-empty" class="side-panel__empty">Ei odottavia</div>
+        <div id="waiting-empty" class="side-panel__empty">Ei odottavia — hyvin menee!</div>
       </div>
       <!-- Keskellä: Areena -->
       <div id="arena" class="tcg-arena" role="region" aria-label="Areena — aktiivinen tehtävä"></div>
@@ -1149,7 +1154,7 @@ html[data-theme="aurinko"][data-perf="lite"]{
           <span class="side-panel__count" id="turn-count">0</span>
         </div>
         <div id="turn-list" class="turn-list"></div>
-        <div id="turn-empty" class="side-panel__empty" style="display:none">Ei tehtäviä jonossa</div>
+        <div id="turn-empty" class="side-panel__empty" style="display:none">Ei jonossa — lisää ↑-napilla</div>
       </div>
 
     <!-- ── Vaihe 5A TCG: Tehtäväkäsi-baari (desktop) ── -->
@@ -2278,7 +2283,7 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
   background:rgba(255,255,255,.2);
   flex-shrink:0;
 }
-.hdr-timer__dots .pomo-dot.done{background:#c0392b}
+.hdr-timer__dots .pomo-dot.done{background:var(--pomo)}
 .hdr-timer__dots .pomo-dot.active{background:#e8c873;box-shadow:0 0 6px rgba(232,200,115,.6)}
 
 /* Mobiili: pieni säätö */
@@ -6122,14 +6127,15 @@ function updClock(){
   else document.title='Fokus A Priori';
 
   // Phase label and color
+  var _pomoClr=getComputedStyle(document.documentElement).getPropertyValue('--pomo').trim()||'#a84c28';
   var phaseLabel='valmiina';
   var phaseColor='#8a8278';
-  var ringColor='#c0392b';
+  var ringColor=_pomoClr;
   var total=WORK;
 
   // Vaiheluokka pbEl:ään ilman että muut luokat (pbox--arena, pbox--mini) katoavat
   pbEl.classList.remove('work','sbrk','lbrk','idle');
-  if(phase==='work'){phaseLabel='TYÖ';phaseColor='#c0392b';ringColor='#c0392b';total=WORK;pbEl.classList.add('work');}
+  if(phase==='work'){phaseLabel='TYÖ';phaseColor=_pomoClr;ringColor=_pomoClr;total=WORK;pbEl.classList.add('work');}
   else if(phase==='sbrk'){phaseLabel='TAUKO '+Math.round(SBRK/60)+' min';phaseColor='#2980b9';ringColor='#2980b9';total=SBRK;pbEl.classList.add('sbrk');}
   else if(phase==='lbrk'){phaseLabel='PITKÄ TAUKO '+Math.round(LBRK/60)+' min';phaseColor='#8e44ad';ringColor='#8e44ad';total=LBRK;pbEl.classList.add('lbrk');}
   else{phaseLabel='';pbEl.classList.add('idle');}
