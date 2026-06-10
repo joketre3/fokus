@@ -4,6 +4,19 @@
 
 Vastaukset minimiin. Luolamieskieli. Säästä tokeneita.
 
+## Design-backlog
+
+Impeccable-analyysi tehty 2026-06-07. Raportti: `docs/impeccable-kritiikki.md`.
+PRODUCT.md luotu 2026-06-10. P0 valmis.
+
+**P0 ✅ valmis (2026-06-10):** Aurinko-teema kerma → puhdas valkoinen; aamu.html usva-synkronointi; --muted .55 → .72
+
+**P1 seuraavaksi:**
+- text-xs .65rem → .72rem
+- SVG-ajastinvärit hardkoodattu #c0392b → var(--pomo)
+- reduced-motion media query puuttuu
+- Empty states: waiting/turn-paneelit
+
 ## Project overview
 
 Fokus A Priori — suomenkielinen tuottavuussovellus. Jaakko on sosiaaliohjaaja Länsi-Uudenmaan hyvinvointialueella (LUVN). Zero-dependency, single-file HTML. Ei build systemiä, ei npm. Julkaistu: https://joketre3.github.io/fokus/
