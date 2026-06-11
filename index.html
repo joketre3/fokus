@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline'; connect-src https://api.anthropic.com https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://www.gstatic.com https://identitytoolkit.googleapis.com; font-src https://fonts.gstatic.com; style-src 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline' https://www.gstatic.com https://apis.google.com; connect-src https://api.anthropic.com https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://www.gstatic.com https://identitytoolkit.googleapis.com https://accounts.google.com; font-src https://fonts.gstatic.com; style-src 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; frame-src https://accounts.google.com https://fokus-a-priori.firebaseapp.com">
 <title>Fokus A Priori</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&family=Cinzel:wght@600;700&display=swap');
@@ -760,8 +760,8 @@ html[data-theme="aurinko"][data-perf="lite"] body{
 <script type="module">
   // 1. TÄRKEÄT IMPORTIT (Tässä on mukana Google-työkalut)
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-  import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc, query, where, collectionGroup } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { initializeFirestore, persistentLocalCache, onSnapshot, doc, getDoc, setDoc, collection, getDocs, deleteDoc, query, where, collectionGroup } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyBHYckayJPQq7rsa609Si07RAz8BGvWT8U",
@@ -778,7 +778,7 @@ html[data-theme="aurinko"][data-perf="lite"] body{
 
   window._firebaseApp = app;
   window._firebaseAuth = getAuth(app);
-  window._firebaseDb = getFirestore(app);
+  window._firebaseDb = initializeFirestore(app, {localCache: persistentLocalCache()});
   const db = window._firebaseDb;
   // Vaihe 11: Firestore-apufunktiot window-kontekstiin
   window.db = db;
@@ -786,15 +786,70 @@ html[data-theme="aurinko"][data-perf="lite"] body{
   window.collection = collection; window.getDocs = getDocs; window.deleteDoc = deleteDoc;
   window.query = query; window.where = where; window.collectionGroup = collectionGroup;
 
+  let _lastFsWriteTs = 0;
+  let _fsSnapshotUnsub = null;
+  let _syncOkTimer = null;
+
+  window._setSyncStatus = function(state) {
+    var el = document.getElementById('fs-sync-status');
+    if (!el) return;
+    clearTimeout(_syncOkTimer);
+    var cfg = {
+      syncing: {text: '☁ ...', color: 'var(--accent)'},
+      ok:      {text: '☁ ✓',  color: '#34A853'},
+      offline: {text: '○ offline', color: 'var(--muted)'},
+      error:   {text: '☁ !',  color: '#e05c3a'}
+    }[state];
+    if (!cfg) return;
+    el.textContent = cfg.text;
+    el.style.color = cfg.color;
+    el.style.display = 'inline';
+    if (state === 'ok') {
+      _syncOkTimer = setTimeout(function() { el.style.display = 'none'; }, 2000);
+    }
+  };
+
+  window.addEventListener('online',  function() { if (window.currentUser) window._setSyncStatus('ok'); });
+  window.addEventListener('offline', function() { window._setSyncStatus('offline'); });
+
   // ── Firestore: tallenna workspace-data ─────────────────────────
   async function saveToFirestore(uid, wsId, data) {
+    window._setSyncStatus('syncing');
     try {
       const ref = doc(db, 'users', uid, 'workspaces', wsId);
-      await setDoc(ref, data);
+      await setDoc(ref, data, {merge: true});
+      _lastFsWriteTs = data.updatedAt || 0;
+      window._setSyncStatus('ok');
       console.log('☁️ Firestore tallennettu:', wsId);
     } catch(e) {
+      window._setSyncStatus('error');
       console.warn('⚠️ Firestore-tallennus epäonnistui:', e.message);
     }
+  }
+
+  // ── onSnapshot-kuuntelu aktiiviselle workspacelle ──────────────
+  function startFsListener(uid, wsId) {
+    if (_fsSnapshotUnsub) { _fsSnapshotUnsub(); _fsSnapshotUnsub = null; }
+    const ref = doc(db, 'users', uid, 'workspaces', wsId);
+    _fsSnapshotUnsub = onSnapshot(ref, function(snap) {
+      if (!snap.exists()) return;
+      const data = snap.data();
+      const ts = data.updatedAt || 0;
+      if (ts !== 0 && ts === _lastFsWriteTs) return; // oma echo, sivuutetaan
+      const lsKey = 'eis_v5_' + wsId;
+      let localData = null;
+      try { const lr = localStorage.getItem(lsKey); if (lr) localData = JSON.parse(lr); } catch(e) {}
+      const localTs = (localData && localData.updatedAt) || 0;
+      if (ts > localTs) {
+        console.log('☁️ onSnapshot: uudempi data pilvestä (' + (data.tasks ? data.tasks.length : 0) + ' tehtävää)');
+        localStorage.setItem(lsKey, JSON.stringify(data));
+        window._setSyncStatus('ok');
+        if (typeof window.load === 'function') window.load();
+      }
+    }, function(err) {
+      window._setSyncStatus('error');
+      console.warn('⚠️ onSnapshot-virhe:', err.message);
+    });
   }
 
   // ── Firestore: lataa workspace-data ───────────────────────────
@@ -831,7 +886,7 @@ html[data-theme="aurinko"][data-perf="lite"] body{
     if (!window.currentUser) return;
     try {
       const ref = doc(db, 'users', window.currentUser.uid, 'settings', 'timer');
-      await setDoc(ref, {work: work, sbrk: sbrk, lbrk: lbrk});
+      await setDoc(ref, {work: work, sbrk: sbrk, lbrk: lbrk}, {merge: true});
       console.log('⏱️ Timer-asetukset tallennettu Firestoreen');
     } catch(e) {
       console.warn('⚠️ Timer-asetusten tallennus epäonnistui:', e.message);
@@ -867,69 +922,103 @@ html[data-theme="aurinko"][data-perf="lite"] body{
         if (signinBtn) signinBtn.style.display = 'inline-flex';
         if (signedInEl) signedInEl.style.display = 'none';
       }
+      if (typeof window._updateHamAuthBtn === 'function') window._updateHamAuthBtn();
 
       if (user) {
         window.currentUser = user;
         console.log('✅ Kirjautuminen onnistui:', user.uid);
 
         const wsId = localStorage.getItem('fap_active_ws') || 'work';
-        var statusEl = document.getElementById('fs-sync-status');
-        if (statusEl) { statusEl.style.display = 'inline'; }
+        const lsKey = 'eis_v5_' + wsId;
+        window._setSyncStatus('syncing');
+
+        // Estä race: peru vireillä oleva pilvitallennus ennen latausta
+        clearTimeout(_fsSaveTimer);
 
         const fsData = await loadFromFirestore(user.uid, wsId);
 
-        if (fsData && Array.isArray(fsData.tasks) && fsData.tasks.length > 0) {
-          console.log('☁️ Data ladattu Firestoresta (' + fsData.tasks.length + ' tehtävää)');
-          localStorage.setItem('eis_v5_' + wsId, JSON.stringify(fsData));
-        } else if (fsData) {
-          console.log('☁️ Firestore-data tyhjä, säilytetään localStorage-data');
-          const localRaw2 = localStorage.getItem('eis_v5_' + wsId);
-          if (localRaw2) {
-            try {
-              const localParsed = JSON.parse(localRaw2);
-              if (localParsed.tasks && localParsed.tasks.length > 0) {
-                console.log('📦 Palautetaan localStorage-data Firestoreen');
-                await saveToFirestore(user.uid, wsId, localParsed);
-              }
-            } catch(e) { console.warn('⚠️ Palautus epäonnistui:', e); }
-          }
-        } else {
-          const localRaw = localStorage.getItem('eis_v5_' + wsId);
-          if (localRaw) {
-            console.log('📦 Migraatio: localStorage → Firestore');
-            try {
-              await saveToFirestore(user.uid, wsId, JSON.parse(localRaw));
-              console.log('✅ Migraatio valmis');
-            } catch(e) { console.warn('⚠️ Migraatio epäonnistui:', e); }
-          }
-        }
+        // Parsitaan paikallinen data aikaleimavertailua varten
+        let localData = null;
+        try { const lr = localStorage.getItem(lsKey); if (lr) localData = JSON.parse(lr); } catch(e) { localData = null; }
 
-        if (statusEl) { statusEl.style.display = 'none'; }
+        const fsHas = fsData && Array.isArray(fsData.tasks) && fsData.tasks.length > 0;
+        const localHas = localData && Array.isArray(localData.tasks) && localData.tasks.length > 0;
+        const fsTs = (fsData && fsData.updatedAt) || 0;
+        const localTs = (localData && localData.updatedAt) || 0;
+
+        if (fsHas && localHas) {
+          // Molemmilla dataa → uudempi voittaa. Tasapelissä Firestore (deterministinen).
+          if (localTs > fsTs) {
+            console.log('📦 localStorage uudempi (' + localTs + ' > ' + fsTs + ') → pilveen');
+            await saveToFirestore(user.uid, wsId, localData);
+          } else {
+            console.log('☁️ Firestore uudempi/tasapeli → localStorageen (' + fsData.tasks.length + ' tehtävää)');
+            localStorage.setItem(lsKey, JSON.stringify(fsData));
+          }
+        } else if (fsHas) {
+          console.log('☁️ Data ladattu Firestoresta (' + fsData.tasks.length + ' tehtävää)');
+          localStorage.setItem(lsKey, JSON.stringify(fsData));
+        } else if (localHas) {
+          console.log('📦 Migraatio/palautus: localStorage → Firestore');
+          await saveToFirestore(user.uid, wsId, localData);
+        }
+        // else: ei dataa kummallakaan → ei tehdä mitään
+
+        window._setSyncStatus('ok');
 
         if (typeof window._fsLoadComplete === 'function') {
           window._fsLoadComplete();
         }
 
+        startFsListener(user.uid, wsId);
+
       } else {
-        // Jos käyttäjä ei ole kirjautunut, ei tehdä mitään. Odotetaan että painetaan nappia.
+        window.currentUser = null;
+        if (_fsSnapshotUnsub) { _fsSnapshotUnsub(); _fsSnapshotUnsub = null; }
         console.log('Odotetaan kirjautumista...');
       }
     });
   }
 
   // ── Google-kirjautumisen funktio ───────────────────────────────
-  // Liitetään 'window'-olioon, jotta HTML-nappi löytää sen module-skriptin sisältä!
   window.kirjauduGooglella = function() {
     const auth = window._firebaseAuth;
     const provider = new GoogleAuthProvider();
-    
+    provider.setCustomParameters({prompt: 'select_account'});
     signInWithPopup(auth, provider)
       .then((result) => {
         console.log("✅ Google-popup onnistui!", result.user.uid);
-        // Huom: onAuthStateChanged() yläpuolella laukeaa nyt automaattisesti!
       }).catch((error) => {
         console.error("❌ Virhe Google-kirjautumisessa:", error.message);
       });
+  };
+
+  window.kirjauduUlos = function() {
+    signOut(window._firebaseAuth).then(function() {
+      console.log('👋 Kirjauduttu ulos');
+    }).catch(function(e) {
+      console.warn('⚠️ Uloskirjautuminen epäonnistui:', e.message);
+    });
+  };
+
+  window.toggleAuth = function() {
+    if (window.currentUser) {
+      window.kirjauduUlos();
+    } else {
+      window.kirjauduGooglella();
+    }
+  };
+
+  // Päivitä hampurilaisvalikon auth-nappi
+  window._updateHamAuthBtn = function() {
+    var lbl = document.getElementById('ham-auth-label');
+    if (!lbl) return;
+    if (window.currentUser) {
+      var name = window.currentUser.displayName ? window.currentUser.displayName.split(' ')[0] : window.currentUser.email ? window.currentUser.email.split('@')[0] : 'Kirjautunut';
+      lbl.textContent = 'Kirjaudu ulos (' + name + ')';
+    } else {
+      lbl.textContent = 'Kirjaudu Googlella';
+    }
   };
 
   // Käynnistetään kuuntelu
@@ -1057,17 +1146,17 @@ html[data-theme="aurinko"][data-perf="lite"] body{
     </div>
     <div id="hdr-right" style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
       <input type="date" id="dt">
-      <span id="fs-sync-status" style="display:none;font-size:.68rem;color:var(--accent);opacity:.8;font-family:'DM Sans',sans-serif">☁️ Synkronoidaan...</span>
+      <span id="fs-sync-status" style="display:none;font-size:.68rem;opacity:.8;font-family:'DM Sans',sans-serif"></span>
       <!-- 9.5C: Auth-indikaattori -->
       <div id="auth-status-wrap" style="display:flex;align-items:center;gap:.4rem">
         <button id="auth-signin-btn" onclick="window.kirjauduGooglella()" style="display:inline-flex;align-items:center;gap:.35rem;font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;padding:.35rem .75rem;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer" title="Kirjaudu Googlella">
           <svg width="13" height="13" viewBox="0 0 18 18" style="flex-shrink:0"><path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 002.38-5.88c0-.57-.05-.66-.15-1.18z"/><path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2.04a4.8 4.8 0 01-7.18-2.54H1.83v2.07A8 8 0 008.98 17z"/><path fill="#FBBC05" d="M4.5 10.48A4.8 4.8 0 014.5 7.5V5.43H1.83a8 8 0 000 7.14z"/><path fill="#EA4335" d="M8.98 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A8 8 0 001.83 5.43L4.5 7.5a4.8 4.8 0 014.48-3.92z"/></svg>
           Kirjaudu
         </button>
-        <span id="auth-signed-in" style="display:none;align-items:center;gap:.35rem;font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--muted)">
-          <span style="width:8px;height:8px;border-radius:50%;background:#34A853;display:inline-block;flex-shrink:0" title="Firebase yhdistetty"></span>
+        <button id="auth-signed-in" onclick="window.kirjauduUlos()" style="display:none;align-items:center;gap:.35rem;font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--muted);background:none;border:none;cursor:pointer;padding:0" title="Kirjaudu ulos">
+          <span style="width:8px;height:8px;border-radius:50%;background:#34A853;display:inline-block;flex-shrink:0"></span>
           <span id="auth-user-label"></span>
-        </span>
+        </button>
       </div>
     </div>
   </div>
@@ -7917,7 +8006,7 @@ function generatePresetId(title){
 // ── /TEHTÄVÄPOHJAT ────────────────────────────────────────────────
 function save(){
   try{
-    localStorage.setItem(wsStorageKey(),JSON.stringify({tasks:tasks,nid:nid,active:active,turn:turn,pomoDone:pomoDone,totalPomos:totalPomos,date:dtEl.value,projects:projects,pnid:pnid}));
+    localStorage.setItem(wsStorageKey(),JSON.stringify({tasks:tasks,nid:nid,active:active,turn:turn,pomoDone:pomoDone,totalPomos:totalPomos,date:dtEl.value,projects:projects,pnid:pnid,updatedAt:Date.now()}));
   }catch(e){
     if(e.name==='QuotaExceededError'||e.name==='NS_ERROR_DOM_QUOTA_REACHED'){
       notify('Tallennus epäonnistui: selain muisti täynnä');
@@ -8005,6 +8094,8 @@ window.addEventListener('storage', function(e){
   var mainKey = 'eis_v5_' + wsId;
   if(e.key === mainKey || e.key === WS_ACTIVE){
     load(); render();
+    // Popup (aamu/swipe) kirjoitti localStorageen → flushaa pilveen
+    if(window._scheduleFsSave) window._scheduleFsSave();
   }
 });
 // Päivitä myös kun käyttäjä palaa ikkunaan (aamu.html popup suljettu)
@@ -9642,6 +9733,11 @@ document.addEventListener('DOMContentLoaded', function() {
     <span class="ham-row__label">Ajastimen asetukset</span>
   </button>
 
+  <button id="ham-auth-btn" class="ham-row" onclick="closeHamMenu();window.toggleAuth()">
+    <span class="ham-row__icon">☁</span>
+    <span id="ham-auth-label" class="ham-row__label">Kirjaudu Googlella</span>
+  </button>
+
   <button id="ham-perf-btn" class="ham-row" onclick="togglePerfMode()">
     <span class="ham-row__icon">⚡</span>
     <span class="ham-row__label">Nopea tila: pois</span>
@@ -9678,6 +9774,7 @@ function openHamMenu(){
   renderWsSwitcher();
   updateHamThemeBtns();
   _updatePerfBtn();
+  if (typeof window._updateHamAuthBtn === 'function') window._updateHamAuthBtn();
   var doneCount = (typeof tasks !== 'undefined') ? tasks.filter(function(t){return t.done}).length : 0;
   var countEl = document.getElementById('ham-done-count');
   if(countEl) countEl.textContent = doneCount > 0 ? doneCount + ' kpl' : '';

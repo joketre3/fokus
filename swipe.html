@@ -283,7 +283,10 @@ function saveQueue(){
   d.turn=turn;
   delete d.queue; // poistetaan vanha kenttä
   tasks.forEach(function(t){var o=d.tasks.find(function(u){return u.id===t.id});if(o)o.frog=t.frog;});
+  d.updatedAt=Date.now(); // last-write-wins -leima pilvisynkkaan
   localStorage.setItem(key,JSON.stringify(d));
+  // Delegoi pilvitallennus pääikkunalle (Firebase-SDK vain siellä)
+  try{ if(window.opener&&window.opener._scheduleFsSave) window.opener._scheduleFsSave(); }catch(e){}
 }
 
 function queueTotalMin(){
@@ -414,7 +417,8 @@ function renderQueuePanel(){
     bEl.textContent=m>0?m+' min':'';wEl.classList.remove('on');
   }
   if(!queue.length){list.innerHTML='<div class="qp-empty">Ei tehtäviä</div>';document.getElementById('qpTotal').textContent='';return;}
-  var raw=localStorage.getItem('eis_v5');
+  var wsId=localStorage.getItem('fap_active_ws')||'work';
+  var raw=localStorage.getItem('eis_v5_'+wsId);
   var dtasks=raw?JSON.parse(raw).tasks:[];
   queue.forEach(function(id){
     var t=tasks.find(function(u){return u.id===id})||dtasks.find(function(u){return u.id===id});
