@@ -740,7 +740,7 @@ html[data-theme="aurinko"][data-perf="lite"]{
   async function saveToFirestore(uid, wsId, data) {
     try {
       const ref = doc(db, 'users', uid, 'workspaces', wsId);
-      await setDoc(ref, data);
+      await setDoc(ref, data, {merge: true});
       console.log('☁️ Firestore tallennettu:', wsId);
     } catch(e) {
       console.warn('⚠️ Firestore-tallennus epäonnistui:', e.message);
@@ -781,7 +781,7 @@ html[data-theme="aurinko"][data-perf="lite"]{
     if (!window.currentUser) return;
     try {
       const ref = doc(db, 'users', window.currentUser.uid, 'settings', 'timer');
-      await setDoc(ref, {work: work, sbrk: sbrk, lbrk: lbrk});
+      await setDoc(ref, {work: work, sbrk: sbrk, lbrk: lbrk}, {merge: true});
       console.log('⏱️ Timer-asetukset tallennettu Firestoreen');
     } catch(e) {
       console.warn('⚠️ Timer-asetusten tallennus epäonnistui:', e.message);
@@ -823,36 +823,41 @@ html[data-theme="aurinko"][data-perf="lite"]{
         console.log('✅ Kirjautuminen onnistui:', user.uid);
 
         const wsId = localStorage.getItem('fap_active_ws') || 'work';
+        const lsKey = 'eis_v5_' + wsId;
         var statusEl = document.getElementById('fs-sync-status');
         if (statusEl) { statusEl.style.display = 'inline'; }
 
+        // Estä race: peru vireillä oleva pilvitallennus ennen latausta
+        clearTimeout(_fsSaveTimer);
+
         const fsData = await loadFromFirestore(user.uid, wsId);
 
-        if (fsData && Array.isArray(fsData.tasks) && fsData.tasks.length > 0) {
+        // Parsitaan paikallinen data aikaleimavertailua varten
+        let localData = null;
+        try { const lr = localStorage.getItem(lsKey); if (lr) localData = JSON.parse(lr); } catch(e) { localData = null; }
+
+        const fsHas = fsData && Array.isArray(fsData.tasks) && fsData.tasks.length > 0;
+        const localHas = localData && Array.isArray(localData.tasks) && localData.tasks.length > 0;
+        const fsTs = (fsData && fsData.updatedAt) || 0;
+        const localTs = (localData && localData.updatedAt) || 0;
+
+        if (fsHas && localHas) {
+          // Molemmilla dataa → uudempi voittaa. Tasapelissä Firestore (deterministinen).
+          if (localTs > fsTs) {
+            console.log('📦 localStorage uudempi (' + localTs + ' > ' + fsTs + ') → pilveen');
+            await saveToFirestore(user.uid, wsId, localData);
+          } else {
+            console.log('☁️ Firestore uudempi/tasapeli → localStorageen (' + fsData.tasks.length + ' tehtävää)');
+            localStorage.setItem(lsKey, JSON.stringify(fsData));
+          }
+        } else if (fsHas) {
           console.log('☁️ Data ladattu Firestoresta (' + fsData.tasks.length + ' tehtävää)');
-          localStorage.setItem('eis_v5_' + wsId, JSON.stringify(fsData));
-        } else if (fsData) {
-          console.log('☁️ Firestore-data tyhjä, säilytetään localStorage-data');
-          const localRaw2 = localStorage.getItem('eis_v5_' + wsId);
-          if (localRaw2) {
-            try {
-              const localParsed = JSON.parse(localRaw2);
-              if (localParsed.tasks && localParsed.tasks.length > 0) {
-                console.log('📦 Palautetaan localStorage-data Firestoreen');
-                await saveToFirestore(user.uid, wsId, localParsed);
-              }
-            } catch(e) { console.warn('⚠️ Palautus epäonnistui:', e); }
-          }
-        } else {
-          const localRaw = localStorage.getItem('eis_v5_' + wsId);
-          if (localRaw) {
-            console.log('📦 Migraatio: localStorage → Firestore');
-            try {
-              await saveToFirestore(user.uid, wsId, JSON.parse(localRaw));
-              console.log('✅ Migraatio valmis');
-            } catch(e) { console.warn('⚠️ Migraatio epäonnistui:', e); }
-          }
+          localStorage.setItem(lsKey, JSON.stringify(fsData));
+        } else if (localHas) {
+          console.log('📦 Migraatio/palautus: localStorage → Firestore');
+          await saveToFirestore(user.uid, wsId, localData);
         }
+        // else: ei dataa kummallakaan → ei tehdä mitään
 
         if (statusEl) { statusEl.style.display = 'none'; }
 
@@ -7423,7 +7428,7 @@ function generatePresetId(title){
 // ── /TEHTÄVÄPOHJAT ────────────────────────────────────────────────
 function save(){
   try{
-    localStorage.setItem(wsStorageKey(),JSON.stringify({tasks:tasks,nid:nid,active:active,turn:turn,pomoDone:pomoDone,totalPomos:totalPomos,date:dtEl.value,projects:projects,pnid:pnid}));
+    localStorage.setItem(wsStorageKey(),JSON.stringify({tasks:tasks,nid:nid,active:active,turn:turn,pomoDone:pomoDone,totalPomos:totalPomos,date:dtEl.value,projects:projects,pnid:pnid,updatedAt:Date.now()}));
   }catch(e){
     if(e.name==='QuotaExceededError'||e.name==='NS_ERROR_DOM_QUOTA_REACHED'){
       notify('Tallennus epäonnistui: selain muisti täynnä');
