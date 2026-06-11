@@ -60,7 +60,7 @@ Jokainen tiedosto on itsenäinen: kaikki CSS ja JS sisäänrakennettu HTML-tiedo
 - Firebase API-avain client-side koodissa on tarkoituksella julkinen, ei tietoturvariski
 - Python `content.replace(old, new, 1)` on luotettava fallback kun `str_replace` epäonnistuu isoissa JS-funktioissa
 - `backdrop-filter` on pääsyyllinen hitaaseen suorituskykyyn MacBook Pro 2010:llä (Intel HD Graphics, ei NVIDIA) — `html[data-perf="lite"]`-attribuutti poistaa sen kaikista elementeistä
-- Usvametsä-teeman `--paper` (rgba .35) ja `--surface` (rgba .42) ovat läpinäkyviä ja luottavat backdrop-filteriin — nopean tilan CSS ylikirjoittaa ne opaakeiksi (.97)
+- Usvametsä-teeman `--surface-xs` (rgba .35) ja `--surface` (rgba .42) ovat läpinäkyviä ja luottavat backdrop-filteriin — nopean tilan CSS ylikirjoittaa ne opaakeiksi (.97)
 - `html[data-perf="lite"]` kuittaa kaikki CSS-transitiot automaattisesti `transition-duration:.01ms!important` — uusille animaatioille ei tarvita nopea-tila-erikoistapauksia
 - `transform:translateX(-50%)`-elementteihin (esim. `.notif`) lisää `translateY()` samaan `transform`-arvoon: `translateX(-50%) translateY(8px)` — erillinen `translateY`-sääntö ylikirjoittaa edellisen ja rikkoo keskityksen
 - Asetusnapit kuuluvat hampuriaisvalikkoon (Asetukset-osio), ei profiilipaneeliin — käyttäjä ei löydä piilotettujakin modaaleja
@@ -146,7 +146,7 @@ ICS-kalenteri aktivoituu automaattisesti verbeille: Sovi, Aikatauluta, Varaa (--
 - `havu` — Havumetsä: syvä tumma metsä
 - `aurinko` — Aurinko: lämmin vaalea/terracotta
 
-CSS custom properties: `--ink`, `--paper`, `--accent`, `--surface`, `--surface-md`, `--surface-strong`, `--border`, `--accent-dim`. Q2-värit ja logo-SVG:t pysyvät vihreinä.
+CSS custom properties: `--ink`, `--surface-xs`, `--surface`, `--surface-md`, `--surface-strong`, `--border`, `--subtle`, `--accent`, `--accent-dim`, `--muted`. Q2-värit ja logo-SVG:t pysyvät vihreinä.
 
 ## Keskeiset käsitteet
 
@@ -191,7 +191,7 @@ MacBook Pro 2010 (Intel HD, ei GPU) suorituskykyoptionointi Chromessa.
 | Muutos | Tiedosto | Mitä |
 |--------|----------|------|
 | `html[data-perf="lite"]` CSS-lohko | index.html:~682 | `backdrop-filter:none`, transitiot pois kaikista elementeistä |
-| Opaakki `--paper`/`--surface` | index.html:~696 | Usva .35→.97, havu/aurinko omat arvot |
+| Opaakki `--surface-xs`/`--surface` | index.html:~696 | Usva .35→.97, havu/aurinko omat arvot |
 | `togglePerfMode()`, `initPerfMode()` | index.html:~7537 | localStorage `fap_perf`, `data-perf` attribute |
 | Hampurilaisvalikko → Asetukset | index.html:~9137 | `#ham-perf-btn` nappi |
 
