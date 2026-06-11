@@ -81,6 +81,11 @@ Jokainen tiedosto on itsenäinen: kaikki CSS ja JS sisäänrakennettu HTML-tiedo
 - `.wrap { overflow:hidden }` katkaisee gridin ulkopuolelle menevän sisällön — piilota elementit `translateY(100%)`:llä, älä siirrä fyysisesti gridin ulkopuolelle
 - Grid-rivi säilyttää korkeutensa vaikka sen sisältö on `position:fixed` — käytä tätä pitämään muut elementit (esim. arena-kortti) paikallaan viuhkan avautuessa
 - `startTmr()` ei kutsu `render()` — kutsu manuaalisesti heti perään jos UI pitää päivittää (esim. nappi-teksti)
+- Mobiilikaappaus headlessilla: `google-chrome --headless=new --no-sandbox --disable-gpu --window-size=390,844 --screenshot=/tmp/out.png "http://localhost:8765/file.html"`
+- Impeccable-detektori: `node /home/jaakko/.agents/skills/impeccable/scripts/detect.mjs --json index.html`
+- Projektiväri-indikaattori: `box-shadow: inset 0 3px 0 <väri>` — ei `border-left` eikä `border-top` (detektori ampuu kaikista `border-top:Npx solid` -säännöistä)
+- Piilotettava sisältö: `.wrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows .18s}` + sisältö `min-height:0;overflow:hidden` — ei max-height-animaatiota
+- `git stash` tarvitaan ennen `git checkout main` jos working treessä on muutoksia muissa tiedostoissa
 
 ## Core data model
 
@@ -204,9 +209,23 @@ MacBook Pro 2010 (Intel HD, ei GPU) suorituskykyoptionointi Chromessa.
 | `togglePerfMode()`, `initPerfMode()` | index.html:~7537 | localStorage `fap_perf`, `data-perf` attribute |
 | Hampurilaisvalikko → Asetukset | index.html:~9137 | `#ham-perf-btn` nappi |
 
+### Firestore-synkronointi (2026-06-11) — valmis
+
+| Vaihe | Mitä | Status |
+|-------|------|--------|
+| A — login-sync | Aikaleimat + last-write-wins kirjautuessa | ✅ |
+| B — popup-synkka | aamu.html + swipe.html opener-delegoinnilla | ✅ |
+| C1 — offline | `persistentLocalCache` (IndexedDB-välimuisti) | ✅ |
+| C2 — real-time | `onSnapshot` + echo-esto (`_lastFsWriteTs`) | ✅ |
+| C3 — indikaattori | `_setSyncStatus` syncing/ok/offline/error | ✅ |
+| D — Security Rules | `users/{uid}/**` vain omalle käyttäjälle | ✅ |
+| Uloskirjautuminen | `signOut`, hampurilaisvalikko + auth-elementti | ✅ |
+| Tilinvalinta | `prompt: select_account` Google-provideriin | ✅ |
+
+Suunnitelma: `docs/firestore-synkronointi-suunnitelma.md`
+
 ### Jäljellä (manuaalinen)
 
-- **SEC-007** — Firestore Security Rules -auditointi Firebase-konsolissa (ei koodimuutosta)
 - **`renderCardNew()`-jako** — `renderArenaCard()` tehty ✅; `renderDeckCard()` tekemättä
 
 ### Impeccable-jono (critique-score 16/20 harden+audit tehty, snapshot `.impeccable/critique/2026-06-11T10-44-50Z__index-html.md`)
@@ -264,8 +283,8 @@ Firebase-integraatiosuunnitelma: `docs/firebase-integraatio-suunnitelma.md`
 | | Nyt | Tavoite |
 |---|---|---|
 | `index.html` | Firebase Auth + Firestore ✅ | — |
-| `aamu.html` | localStorage only ❌ | Firebase sync |
-| `swipe.html` | localStorage only ❌ | Firebase sync |
+| `aamu.html` | Firebase sync ✅ | — |
+| `swipe.html` | Firebase sync ✅ | — |
 | Maksut | Ei mitään ❌ | Stripe + Vercel functions |
 | Freemium-rajat | Ei enforcea ❌ | 30 tehtävää / 1 työtila ilmaisella |
 
@@ -286,7 +305,7 @@ Fokuksen etu: ohjattu aamurutiini metodologiana (ei vain näkymänä), selkeämp
 
 ### Seuraavat askeleet prioriteettijärjestyksessä
 
-- [ ] Firebase-integraatio `aamu.html` ja `swipe.html`:ään (ks. `docs/firebase-integraatio-suunnitelma.md`)
+- [x] Firebase-integraatio `aamu.html` ja `swipe.html`:ään ✅
 - [ ] Stripe + Vercel-funktiot (checkout, webhook, portal)
 - [ ] Freemium-rajojen enforkointi Firestoresta
 - [ ] Email-kirjautuminen Google-kirjautumisen rinnalle
