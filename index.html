@@ -4294,12 +4294,18 @@ function popoutTimer(){
   var popup=window.open('','FokusTimer','width=320,height=520,resizable=yes,scrollbars=no');
   if(!popup){notify('Salli ponnahdusikkunat selaimessa');return;}
 
+  var theme=localStorage.getItem('fap_theme')||'aurinko';
+  var rootCss=theme==='usva'
+    ?':root{--ink:rgba(255,255,255,.95);--surface-xs:rgba(30,50,40,.85);--accent:#c49a3a;--pomo:#a84c28;--muted:rgba(255,255,255,.72);--subtle:rgba(255,255,255,.2);--wait:#3a6b8a;--border:rgba(255,255,255,.25)}'
+    :theme==='havu'
+    ?':root{--ink:rgba(255,255,255,.92);--surface-xs:rgba(6,22,13,.97);--accent:#4fa870;--pomo:#c0432b;--muted:rgba(255,255,255,.65);--subtle:rgba(255,255,255,.15);--wait:#3a6b8a;--border:rgba(255,255,255,.2)}'
+    :':root{--ink:#2d2417;--surface-xs:rgba(255,255,255,.92);--accent:#c4681e;--pomo:#c4681e;--muted:#7a6a4a;--subtle:rgba(220,190,140,.22);--wait:#4a7a9a;--border:rgba(180,130,70,.22)}';
   var html='<!DOCTYPE html><html lang="fi"><head><meta charset="UTF-8">'
     +'<title>Fokus A Priori — Ajastin</title>'
     +'<style>'
     +'@import url(\'https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap\');'
     +'*{box-sizing:border-box;margin:0;padding:0}'
-    +':root{--ink:#1a1c18;--surface-xs:#f2f0e8;--accent:#c49a3a;--pomo:#a84c28;--muted:#6b7060;--subtle:#dddbd0;--wait:#3a6b8a}'
+    +rootCss
     +'body{background:var(--surface-xs);font-family:\'DM Sans\',sans-serif;display:flex;flex-direction:column;min-height:100vh}'
     +'.top{display:flex;flex-direction:column;align-items:center;padding:1.25rem 1rem .75rem;gap:.5rem}'
     +'.logo{font-family:\'DM Serif Display\',serif;font-size:.85rem;color:var(--muted);font-style:italic}'
