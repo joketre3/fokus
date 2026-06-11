@@ -7516,6 +7516,8 @@ window.addEventListener('storage', function(e){
   var mainKey = 'eis_v5_' + wsId;
   if(e.key === mainKey || e.key === WS_ACTIVE){
     load(); render();
+    // Popup (aamu/swipe) kirjoitti localStorageen → flushaa pilveen
+    if(window._scheduleFsSave) window._scheduleFsSave();
   }
 });
 // Päivitä myös kun käyttäjä palaa ikkunaan (aamu.html popup suljettu)

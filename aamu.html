@@ -558,7 +558,10 @@ function saveData(){
   d.active = newQueue.length>0 ? newQueue[0] : null;
   d.turn = newQueue.slice(1);
   delete d.queue; // poistetaan vanha kenttä
+  d.updatedAt = Date.now(); // last-write-wins -leima pilvisynkkaan
   localStorage.setItem(key, JSON.stringify(d));
+  // Delegoi pilvitallennus pääikkunalle (Firebase-SDK vain siellä)
+  try { if(window.opener && window.opener._scheduleFsSave) window.opener._scheduleFsSave(); } catch(e){}
 }
 
 // ── STEP 1: Q1 ────────────────────────────────────────
