@@ -11,11 +11,18 @@ PRODUCT.md luotu 2026-06-10. P0 valmis.
 
 **P0 ✅ valmis (2026-06-10):** Aurinko-teema kerma → puhdas valkoinen; aamu.html usva-synkronointi; --muted .55 → .72
 
-**P1 seuraavaksi:**
-- text-xs .65rem → .72rem
-- SVG-ajastinvärit hardkoodattu #c0392b → var(--pomo)
-- reduced-motion media query puuttuu
-- Empty states: waiting/turn-paneelit
+**P1 ✅ valmis (2026-06-11):** text-xs tokenoitu; SVG-ajastinvärit → var(--pomo); reduced-motion aamu+swipe; empty states dashed-border
+
+**P2 ✅ valmis (2026-06-11) — Eisenhower-peek + navigaatio:**
+- Eisenhower-matriisi yhdistetty: vanha full-screen modaali poistettu → uusi `#eise-peek` areenan yläreunassa
+- Handle (48px, koko areenan leveys, mini 2×2-matriisi kvadranttiväreillä, tehtävämäärät per kvadrantti)
+- Peek liukuu ylhäältä alas areenan päälle — ei peitä sivupaneeleja (ODOTTAVAT / TEHTÄVÄJONO)
+- Drag-and-drop kvadrantista toiseen + klikkauspohjainen siirtovalikko (mobiili)
+- ↑-nappi suoraan matriisista jonoon; indikaattorit: 🐸 sammakko, ⌛ odottava, 🍅 jonossa
+- Timer käynnistyessä: handle piiloutuu automaattisesti; pysähtyessä: tulee takaisin
+- Tauon alkaessa (sbrk/lbrk): peek aukeaa automaattisesti tarjolle
+- Ham-btn näkymätunnus: näyttää "Matriisi" / "Tehty" / "Projektit" kun ei olla Tehtävälistalla
+- Toimii sekä desktopilla että mobiililla (CSS siirretty globaaliksi)
 
 ## Project overview
 
@@ -201,6 +208,16 @@ MacBook Pro 2010 (Intel HD, ei GPU) suorituskykyoptionointi Chromessa.
 
 - **SEC-007** — Firestore Security Rules -auditointi Firebase-konsolissa (ei koodimuutosta)
 - **`renderCardNew()`-jako** — `renderArenaCard()` tehty ✅; `renderDeckCard()` tekemättä
+
+### Impeccable-jono (critique-score 16/20 harden+audit tehty, snapshot `.impeccable/critique/2026-06-11T10-44-50Z__index-html.md`)
+
+| Komento | Mitä | Prioriteetti |
+|---------|------|-------------|
+| ~~`$impeccable harden index.html`~~ | ~~Undo-toast poisto/valmis-toiminnoille~~ | ~~P1~~ ✅ |
+| ~~`$impeccable audit index.html`~~ | ~~Touch targets 44px, focus-indikaattorit~~ | ~~P1~~ ✅ |
+| ~~`$impeccable polish index.html`~~ | ~~6 side-tab border-left → poistettu, box-shadow inset~~ | ~~P2~~ ✅ |
+| ~~`$impeccable optimize index.html`~~ | ~~6 layout-animaatiota → transform/grid-template-rows~~ | ~~P2~~ ✅ |
+| ~~`$impeccable document index.html`~~ | ~~DESIGN.md + .impeccable/design.json~~ | ~~P2~~ ✅ |
 
 ### TCG-korttipeli-ilme (2026-06-04/05) — haara `claude/graphic-design-skills-t3mNx`, PR auki
 

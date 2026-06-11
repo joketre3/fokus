@@ -195,8 +195,10 @@ input[type=date]{font-family:'DM Sans',sans-serif;font-size:var(--text-sm);color
 .ttxt.done{text-decoration:line-through;color:var(--muted);opacity:.6}
 /* Card top row: always visible */
 /* Action row collapses on hover — stays open if needsReview */
-.tact{display:flex;gap:.3rem;align-items:center;flex-wrap:wrap;justify-content:flex-end;width:100%;max-height:0;overflow:hidden;transition:max-height .18s ease,opacity .18s ease;opacity:0}
-.card:hover .tact,.card.needs-review .tact{max-height:40px;opacity:1}
+.tact-wrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows .18s ease;width:100%}
+.card:hover .tact-wrap,.card.needs-review .tact-wrap{grid-template-rows:1fr}
+.tact{overflow:hidden;min-height:0;display:flex;gap:.3rem;align-items:center;flex-wrap:wrap;justify-content:flex-end;width:100%;opacity:0;transition:opacity .15s ease}
+.card:hover .tact,.card.needs-review .tact{opacity:1}
 .tact .qb.on{opacity:1}
 .qb{font-family:'DM Sans',sans-serif;font-size:var(--text-xs);font-weight:500;padding:.2rem .45rem;border-radius:var(--r-sm);border:1.5px solid;cursor:pointer;background:var(--surface);white-space:nowrap}
 .qb.q1{border-color:var(--q1);color:var(--q1)} .qb.q1.on{background:var(--q1);color:white}
@@ -241,12 +243,12 @@ input[type=date]{font-family:'DM Sans',sans-serif;font-size:var(--text-sm);color
 .hud-editor-input:focus{border-color:var(--accent)}
 .hud-editor-input.sub{font-size:.72rem;font-weight:300;padding:.3rem .55rem;flex:1}
 .hud-editor-row{display:flex;align-items:center;gap:.45rem}
-.hud-editor-lbl{font-size:.65rem;font-weight:500;color:var(--muted);min-width:50px;letter-spacing:.03em}
+.hud-editor-lbl{font-size:var(--text-xs);font-weight:500;color:var(--muted);min-width:50px;letter-spacing:.03em}
 .hud-editor-actions{display:flex;gap:.3rem;flex-wrap:wrap}
 .hud-action-btn{font-family:'DM Sans',sans-serif;font-size:.7rem;font-weight:400;padding:.25rem .55rem;border-radius:var(--r-sm);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer;transition:border-color .15s,color .15s,transform .15s}
 .hud-action-btn:hover{border-color:var(--accent);color:var(--accent)}
 .hud-action-btn:active{transform:scale(.97)}
-.hud-chip{font-family:'DM Sans',sans-serif;font-size:.65rem;font-weight:500;padding:.18rem .55rem;border-radius:20px;border:1.5px solid var(--border);color:var(--muted);background:transparent;cursor:pointer;transition:border-color .15s,color .15s,background .15s,transform .15s;white-space:nowrap}
+.hud-chip{font-family:'DM Sans',sans-serif;font-size:var(--text-xs);font-weight:500;padding:.18rem .55rem;border-radius:20px;border:1.5px solid var(--border);color:var(--muted);background:transparent;cursor:pointer;transition:border-color .15s,color .15s,background .15s,transform .15s;white-space:nowrap}
 .hud-chip:hover{border-color:var(--accent);color:var(--accent)}
 .hud-chip:active{transform:scale(.97)}
 .hud-chip.active{background:var(--accent);color:white;border-color:var(--accent)}
@@ -1116,15 +1118,15 @@ html[data-theme="aurinko"][data-perf="lite"] body{
           <svg class="pring" viewBox="0 0 80 80" style="cursor:pointer" onclick="toggleTimer()" role="button" tabindex="0" id="pringBtn" aria-label="Aloita pomodoro" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleTimer();}"
 >
             <circle cx="40" cy="40" r="34" fill="none" stroke="#e8e2d6" stroke-width="4"/>
-            <circle id="ring" cx="40" cy="40" r="34" fill="none" stroke="#c0392b" stroke-width="4"
+            <circle id="ring" cx="40" cy="40" r="34" fill="none" stroke-width="4"
               stroke-dasharray="213.6" stroke-dashoffset="0" stroke-linecap="round"
               transform="rotate(-90 40 40)" style="transition:stroke-dashoffset 1s linear,stroke .4s"/>
             <!-- phase label -->
             <text id="tphase" x="40" y="44" style="font-family:'DM Sans',sans-serif;font-size:6.5px;text-transform:uppercase;letter-spacing:.08em;dominant-baseline:middle;text-anchor:middle;fill:#8a8278"></text>
             <!-- play triangle -->
-            <polygon id="iconPlay" points="33,27 33,53 57,40" fill="#c0392b" opacity="0.7"/>
+            <polygon id="iconPlay" points="33,27 33,53 57,40" opacity="0.7"/>
             <!-- stop square -->
-            <rect id="iconStop" x="28" y="28" width="24" height="24" rx="4" fill="#c0392b" opacity="0" style="transition:opacity .15s"/>
+            <rect id="iconStop" x="28" y="28" width="24" height="24" rx="4" opacity="0" style="transition:opacity .15s"/>
           </svg>
           <div style="display:flex;align-items:center;gap:.5rem;margin-top:.2rem">
             <div class="pomo-dots" id="pdots"></div>
@@ -1162,10 +1164,28 @@ html[data-theme="aurinko"][data-perf="lite"] body{
           <span class="side-panel__count" id="waiting-count">0</span>
         </div>
         <div id="waiting-list" class="waiting-list"></div>
-        <div id="waiting-empty" class="side-panel__empty">Ei odottavia — hyvin menee!</div>
+        <div id="waiting-empty" class="side-panel__empty">Ei odottavia.<br>Hyvin menee!</div>
       </div>
       <!-- Keskellä: Areena -->
-      <div id="arena" class="tcg-arena" role="region" aria-label="Areena — aktiivinen tehtävä"></div>
+      <div id="arena" class="tcg-arena" role="region" aria-label="Areena — aktiivinen tehtävä">
+        <button id="eise-handle" onclick="toggleEisePeek()" aria-label="Avaa Eisenhower-matriisi">
+          <div class="eise-hgrid" aria-hidden="true">
+            <div class="eise-hcell hc1"></div><div class="eise-hcell hc2"></div>
+            <div class="eise-hcell hc3"></div><div class="eise-hcell hc4"></div>
+          </div>
+          <span class="eise-hlabel">Matriisi</span>
+          <span class="eise-hcounts" id="eise-handle-counts"></span>
+          <span class="eise-hchev">▾</span>
+        </button>
+        <div id="eise-peek" role="dialog" aria-label="Eisenhower-matriisi" aria-modal="false">
+          <div class="eise-peek-hdr">
+            <span class="eise-peek-ttl">Eisenhower-matriisi</span>
+            <span class="eise-peek-sub" id="eise-peek-sub"></span>
+            <button class="eise-peek-close" onclick="closeEisePeek()" aria-label="Sulje">×</button>
+          </div>
+          <div class="eise-peek-grid" id="eise-peek-grid"></div>
+        </div>
+      </div>
       <!-- Oikea: Tehtäväjono -->
       <div id="turn-panel" class="turn-panel side-panel side-panel--right tcg-right" role="region" aria-label="Tehtäväjono — seuraavat tehtävät">
         <div class="side-panel__header">
@@ -1173,7 +1193,7 @@ html[data-theme="aurinko"][data-perf="lite"] body{
           <span class="side-panel__count" id="turn-count">0</span>
         </div>
         <div id="turn-list" class="turn-list"></div>
-        <div id="turn-empty" class="side-panel__empty" style="display:none">Ei jonossa — lisää ↑-napilla</div>
+        <div id="turn-empty" class="side-panel__empty" style="display:none">Jono tyhjä.<br>Lisää tehtäviä ↑-napilla.</div>
       </div>
 
     <!-- ── Vaihe 5A TCG: Tehtäväkäsi-baari (desktop) ── -->
@@ -1263,7 +1283,7 @@ html[data-theme="aurinko"][data-perf="lite"] body{
 /* PROJECT PICKER */
 
 /* PROJECT CARDS */
-.proj-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:1rem 1.1rem;margin-bottom:.85rem;border-left:4px solid}
+.proj-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:1rem 1.1rem;margin-bottom:.85rem;}
 
 /* ── HAMPURILAISVALIKKO (Vaihe 6) ── */
 #ham-btn{
@@ -1288,6 +1308,7 @@ html[data-theme="aurinko"][data-perf="lite"] body{
   box-shadow:0 2px 10px rgba(0,0,0,.18);
 }
 #ham-btn:hover{border-color:var(--accent-dim,var(--accent));background:var(--surface-strong,var(--surface))}
+.ham-view-label{font-size:var(--text-xs);font-weight:500;color:var(--accent);margin-left:.35rem;letter-spacing:.04em;vertical-align:middle}
 
 #ham-overlay{
   position:fixed;
@@ -1551,10 +1572,8 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 }
 .inv-cat-item:hover{background:var(--surface);color:var(--ink)}
 .inv-cat-item.inv-active{
-  background:var(--surface-md,var(--surface));
+  background:var(--surface-strong,var(--surface-md));
   color:var(--ink);font-weight:500;
-  border-left:2px solid var(--accent-dim,var(--accent));
-  padding-left:calc(.85rem - 2px);
 }
 .inv-cat-item .inv-cat-count{
   margin-left:auto;font-size:9px;
@@ -1668,7 +1687,7 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 .proj-card-name{font-family:'DM Serif Display',serif;font-size:1rem;font-style:italic;color:var(--ink)}
 .proj-card-meta{font-size:var(--text-xs);color:var(--muted);font-weight:300;margin-bottom:.6rem;display:flex;gap:.75rem;flex-wrap:wrap}
 .proj-progress-bar{height:5px;background:var(--subtle);border-radius:3px;margin-bottom:.75rem;overflow:hidden}
-.proj-progress-fill{height:100%;border-radius:3px;transition:width .4s ease}
+.proj-progress-fill{height:100%;width:100%;transform-origin:left;transform:scaleX(0);transition:transform .4s ease}
 .proj-task-list{display:flex;flex-direction:column;gap:.25rem}
 .proj-task-item{font-size:var(--text-xs);font-weight:300;color:var(--muted);padding:.2rem 0;display:flex;align-items:center;gap:.4rem}
 .proj-task-item.done{text-decoration:line-through;opacity:.5}
@@ -1682,37 +1701,7 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 <div id="a11y-live" aria-live="polite" aria-atomic="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden"></div>
 
 <!-- EISENHOWER MODAL (Vaihe 9) -->
-<div class="eise-overlay" id="eise-overlay" onclick="if(event.target===this)closeEisenhower()"></div>
-<div class="eise-modal" id="eise-modal" role="dialog" aria-label="Eisenhower-matriisi" aria-modal="true">
-  <div class="eise-hdr">
-    <div class="eise-ttl">Eisenhower-matriisi</div>
-    <div class="eise-sub">Raahaa tehtävä toiseen ruutuun vaihtaaksesi kvadrantin.</div>
-    <button class="eise-close" onclick="closeEisenhower()" aria-label="Sulje">×</button>
-  </div>
-  <div class="eise-grid">
-    <div></div>
-    <div class="eise-clbl">Kiireinen</div>
-    <div class="eise-clbl">Ei kiireinen</div>
-    <div class="eise-rlbl">Tärkeä</div>
-    <div class="eise-quad eise-q1q" data-quad="q1">
-      <div class="eise-qhdr"><div class="eise-qdot"></div><h4>TEE HETI</h4></div>
-      <div class="eise-qlist" id="eq1"></div>
-    </div>
-    <div class="eise-quad eise-q2q" data-quad="q2">
-      <div class="eise-qhdr"><div class="eise-qdot"></div><h4>AIKATAULUTA</h4></div>
-      <div class="eise-qlist" id="eq2"></div>
-    </div>
-    <div class="eise-rlbl">Ei tärkeä</div>
-    <div class="eise-quad eise-q3q" data-quad="q3">
-      <div class="eise-qhdr"><div class="eise-qdot"></div><h4>DELEGOI</h4></div>
-      <div class="eise-qlist" id="eq3"></div>
-    </div>
-    <div class="eise-quad eise-q4q" data-quad="q4">
-      <div class="eise-qhdr"><div class="eise-qdot"></div><h4>POISTA</h4></div>
-      <div class="eise-qlist" id="eq4"></div>
-    </div>
-  </div>
-</div>
+<!-- eise-modal poistettu käytöstä — käytetään #eise-peek areenan yläreunassa -->
 
 <!-- PROJECT MODAL -->
 <div id="proj-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)" onclick="if(event.target===this)closeProjectModal()"></div>
@@ -1825,7 +1814,7 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   z-index:1;
 }
 .side-panel__title{
-  font-size:.65rem;
+  font-size:var(--text-xs);
   font-weight:600;
   color:var(--muted);
   letter-spacing:.15em;
@@ -1833,7 +1822,7 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   flex:1;
 }
 .side-panel__count{
-  font-size:.65rem;
+  font-size:var(--text-xs);
   font-weight:500;
   color:var(--muted);
   background:var(--surface-md);
@@ -1846,10 +1835,13 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 .side-panel__empty{
   font-size:var(--text-xs);
   color:var(--muted);
-  padding:.6rem .4rem;
+  padding:1.4rem .8rem;
   font-style:italic;
-  opacity:.6;
   text-align:center;
+  line-height:1.6;
+  border:1px dashed var(--subtle);
+  border-radius:var(--r-md);
+  margin:.4rem .2rem;
 }
 
 /* Tehtäväjono (oikea) — aktiivisella kullaisella vasenreunalla */
@@ -1860,7 +1852,8 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   gap:0;
 }
 .turn-card:first-child{
-  border-left:3px solid var(--accent);
+  border-color:var(--accent);
+  border-width:1.5px;
 }
 
 /* Odottavat (vasen) — katkoviivakortteja, hieman haalistuneena */
@@ -1965,6 +1958,7 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 #arena{
   flex:0 0 50%;
   min-width:0;
+  padding-top:calc(48px + .75rem);
 }
 .card-new--arena{
   width:100%;
@@ -2069,7 +2063,7 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   height:30px;
   padding:0 .85rem 0 .55rem;
   font-family:'DM Sans',sans-serif;
-  font-size:.65rem;
+  font-size:var(--text-xs);
   font-weight:600;
   letter-spacing:.05em;
   color:var(--accent);
@@ -2444,7 +2438,7 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
   border-top:none;
 }
 /* Sisäelementtien vaiheistettu transitio */
-.pbox--arena .pring{transition:width .25s ease, height .25s ease;}
+.pbox--arena .pring{transition:opacity .25s ease;}
 .pbox--arena .pctrl{transition:gap .2s ease;}
 .pbox--arena #ttime{transition:font-size .2s ease;}
 .pbox--arena.pbox--mini .prow{
@@ -2511,7 +2505,7 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
   border-radius:var(--r-md);
   font-family:'DM Sans',sans-serif;
   cursor:pointer;
-  transition:transform .15s,box-shadow .15s,max-height .2s;
+  transition:transform .15s,box-shadow .15s;
   user-select:none;
 }
 /* Pakka — pieni tila */
@@ -3094,7 +3088,7 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
 }
 .tcg-card__notes-tcg{
   font-size:.7rem;color:rgba(255,255,255,.5);line-height:1.4;
-  font-style:italic;border-left:2px solid rgba(196,154,58,.4);padding-left:.5rem;
+  font-style:italic;padding-left:.75rem;
 }
 .tcg-card__meta-tcg{
   margin-top:auto;display:flex;align-items:center;gap:.5rem;
@@ -3421,9 +3415,8 @@ svg[aria-hidden="true"]{pointer-events:none;}
     align-items: center;
     justify-content: center;
     gap: .5rem;
-    padding: 1rem;
-    overflow: hidden;
-    position: relative;
+    padding: 1rem 1rem 1rem;
+    padding-top: calc(48px + .75rem);
     min-height: 0;
   }
   /* Sankarikortti: kiinteä leveys, ei venyvä */
@@ -3471,6 +3464,40 @@ svg[aria-hidden="true"]{pointer-events:none;}
     left: 4.25rem;
   }
 }
+/* ── EISENHOWER PEEK — globaali (toimii myös mobiililla) ── */
+#arena{position:relative;overflow:hidden}
+#eise-handle{position:absolute;top:0;left:0;right:0;z-index:10;height:48px;padding:0 1rem;background:var(--surface-strong,var(--surface));border-bottom:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:.75rem;transition:background .15s;pointer-events:auto;text-align:left}
+#eise-handle:hover{background:var(--surface-xs,var(--surface))}
+#eise-handle.eise-handle--hidden{display:none!important}
+.eise-hgrid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;width:30px;height:24px;gap:2px;flex-shrink:0}
+.eise-hcell{border-radius:2px;opacity:.75}
+.eise-hcell.hc1{background:var(--q1)}.eise-hcell.hc2{background:var(--q2)}.eise-hcell.hc3{background:var(--q3)}.eise-hcell.hc4{background:var(--q4)}
+.eise-hlabel{font-size:var(--text-xs);font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;flex-shrink:0}
+.eise-hcounts{display:flex;gap:.55rem;flex:1;flex-wrap:wrap}
+.eise-hcount{display:flex;align-items:center;gap:.22rem;font-size:var(--text-xs);color:var(--subtle);font-weight:300}
+.eise-hdot{width:6px;height:6px;border-radius:1px;flex-shrink:0}
+.eise-hchev{color:var(--subtle);font-size:.65rem;flex-shrink:0;margin-left:auto}
+#eise-peek{position:absolute;top:0;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--border);transform:translateY(-100%);transition:transform 300ms cubic-bezier(.22,.61,.36,1);overflow-y:auto;display:flex;flex-direction:column;pointer-events:auto}
+#eise-peek.on{transform:translateY(0)}
+@media(prefers-reduced-motion:reduce){#eise-peek{transition:none}}
+.eise-peek-hdr{display:flex;align-items:center;gap:.5rem;padding:.55rem .85rem .4rem;flex-shrink:0;border-bottom:1px solid var(--border)}
+.eise-peek-ttl{font-size:var(--text-xs);font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.eise-peek-sub{font-size:var(--text-xs);color:var(--subtle);flex:1}
+.eise-peek-close{background:none;border:none;cursor:pointer;color:var(--muted);font-size:1.1rem;line-height:1;padding:.15rem .4rem;border-radius:4px;margin-left:auto}
+.eise-peek-close:hover{color:var(--ink)}
+.eise-peek-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;flex:1;min-height:0}
+.eise-peek-quad{padding:.45rem .55rem;overflow-y:auto;border:1px solid var(--border);margin:2px;border-radius:var(--r-sm,6px)}
+.eise-peek-qlabel{font-size:var(--text-xs);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.3rem;opacity:.75}
+.eise-q1q .eise-peek-qlabel{color:var(--q1)}
+.eise-q2q .eise-peek-qlabel{color:var(--q2)}
+.eise-q3q .eise-peek-qlabel{color:var(--q3)}
+.eise-q4q .eise-peek-qlabel{color:var(--q4)}
+.eise-peek-card{display:flex;align-items:center;gap:.3rem;padding:.28rem .38rem;margin-bottom:.18rem;background:var(--surface-xs);border:1px solid var(--border);border-radius:var(--r-sm,6px);font-size:var(--text-xs);font-weight:300;cursor:grab;user-select:none}
+.eise-peek-card.eise-dragging{opacity:.3}
+.eise-peek-card-txt{flex:1;min-width:0;word-break:break-word}
+.eise-peek-q-btn{flex-shrink:0;width:22px;height:22px;border:1px solid var(--border);border-radius:4px;background:none;cursor:pointer;font-size:.75rem;color:var(--muted);display:flex;align-items:center;justify-content:center;transition:background .12s,color .12s,border-color .12s}
+.eise-peek-q-btn:hover,.eise-peek-q-btn.in-queue{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.eise-peek-empty{font-size:var(--text-xs);color:var(--subtle);padding:.3rem .2rem}
 </style>
 <div id="profile-overlay" style="position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)"></div>
 <div id="profile-panel" style="position:fixed;top:50%;left:50%;width:min(480px,96vw);max-height:90vh;background:var(--surface-xs);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.15);z-index:201;flex-direction:column;overflow:hidden;display:flex">
@@ -3618,8 +3645,8 @@ svg[aria-hidden="true"]{pointer-events:none;}
       <div style="font-size:var(--text-xs);color:var(--muted);font-weight:300;margin-top:.15rem">Tekoäly lukee listasi ja ehdottaa</div>
     </div>
     <div style="display:flex;align-items:center;gap:.5rem">
-      <button onclick="openProfile()" style="font-family:'DM Sans',sans-serif;font-size:.65rem;font-weight:400;padding:.25rem .55rem;border-radius:var(--r-sm);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer" title="Muokkaa profiilia">⚙ Profiili</button>
-      <button onclick="openPresets()" style="font-family:'DM Sans',sans-serif;font-size:.65rem;font-weight:400;padding:.25rem .55rem;border-radius:var(--r-sm);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer" title="Tehtäväpohjat">📋 Pohjat</button>
+      <button onclick="openProfile()" style="font-family:'DM Sans',sans-serif;font-size:var(--text-xs);font-weight:400;padding:.25rem .55rem;border-radius:var(--r-sm);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer" title="Muokkaa profiilia">⚙ Profiili</button>
+      <button onclick="openPresets()" style="font-family:'DM Sans',sans-serif;font-size:var(--text-xs);font-weight:400;padding:.25rem .55rem;border-radius:var(--r-sm);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer" title="Tehtäväpohjat">📋 Pohjat</button>
       <button onclick="closeAI()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:1.2rem;padding:.2rem">×</button>
     </div>
   </div>
@@ -3645,26 +3672,123 @@ function esc(s){if(s==null)return '';return String(s).replace(/&/g,'&amp;').repl
 // ── VAIHE 9: Eisenhower-modal ──
 var _eiseOpen=false;
 
-function openEisenhower(){
-  var ov=document.getElementById('eise-overlay'),md=document.getElementById('eise-modal');
-  if(!ov||!md)return;
-  renderEisenhower();
-  ov.classList.add('on');
-  md.classList.add('on');
-  _eiseOpen=true;
-  // Fokusointi saavutettavuutta varten
-  var closeBtn=md.querySelector('.eise-close');
-  if(closeBtn)setTimeout(function(){closeBtn.focus();},50);
-}
+function openEisenhower(){openEisePeek(false);}
+function closeEisenhower(){closeEisePeek();}
+var _eiseOpen=false;
 
-function closeEisenhower(){
-  var ov=document.getElementById('eise-overlay'),md=document.getElementById('eise-modal');
-  if(!ov||!md)return;
-  ov.classList.remove('on');
-  md.classList.remove('on');
-  _eiseOpen=false;
+// ── EISENHOWER PEEK ──
+var _eisePeekOpen=false;
+function openEisePeek(isAuto){
+  var p=document.getElementById('eise-peek'),h=document.getElementById('eise-handle');
+  if(!p)return;
+  renderEisePeek();
+  p.classList.add('on');
+  if(h)h.classList.add('eise-handle--hidden');
+  _eisePeekOpen=true;
+  var sub=document.getElementById('eise-peek-sub');
+  if(sub)sub.textContent=isAuto?'Hyvä hetki tarkistaa prioriteetit':'';
 }
+function closeEisePeek(){
+  var p=document.getElementById('eise-peek'),h=document.getElementById('eise-handle');
+  if(!p)return;
+  p.classList.remove('on');
+  if(h)h.classList.remove('eise-handle--hidden');
+  _eisePeekOpen=false;
+}
+function toggleEisePeek(){_eisePeekOpen?closeEisePeek():openEisePeek(false);}
+function renderEisePeek(){
+  var grid=document.getElementById('eise-peek-grid');
+  if(!grid)return;
+  grid.innerHTML='';
+  var inbox=(typeof tasks!=='undefined'?tasks:[]).filter(function(t){return !t.done;});
+  var qdefs=[
+    {q:'q1',label:'Tee heti',qcls:'eise-q1q'},
+    {q:'q2',label:'Aikatauluta',qcls:'eise-q2q'},
+    {q:'q3',label:'Delegoi',qcls:'eise-q3q'},
+    {q:'q4',label:'Poista',qcls:'eise-q4q'}
+  ];
+  qdefs.forEach(function(qd,i){
+    var quadEl=document.createElement('div');
+    quadEl.className='eise-peek-quad eise-quad '+qd.qcls;
 
+    var lbl=document.createElement('div');
+    lbl.className='eise-peek-qlabel';
+    lbl.textContent=qd.label;
+    quadEl.appendChild(lbl);
+
+    var list=document.createElement('div');
+    list.className='eise-qlist eise-peek-list';
+
+    var items=inbox.filter(function(t){return t.quad===qd.q;});
+    items.sort(function(a,b){
+      if(a.frog&&!b.frog)return -1;if(!a.frog&&b.frog)return 1;
+      return (a.order||0)-(b.order||0);
+    });
+
+    if(!items.length){
+      var em=document.createElement('div');em.className='eise-peek-empty';em.textContent='Tyhjä';list.appendChild(em);
+    } else {
+      items.forEach(function(t){
+        var card=document.createElement('div');
+        card.className='eise-peek-card'+(t.frog?' eise-frog':'');
+        card.draggable=true;card.dataset.id=t.id;card.dataset.quad=qd.q;
+
+        card.onclick=function(e){
+          e.stopPropagation();
+          if(_eiseMoveMenu&&_eiseMoveMenu.parentNode===card){eiseCloseMoveMenu();return;}
+          eiseOpenMoveMenu(card,t.id,qd.q);
+        };
+        card.ondragstart=function(e){
+          e.dataTransfer.setData('text/plain',String(t.id));
+          e.dataTransfer.effectAllowed='move';
+          setTimeout(function(){card.classList.add('eise-dragging');},0);
+        };
+        card.ondragend=function(){card.classList.remove('eise-dragging');};
+
+        var txt=document.createElement('span');txt.className='eise-peek-card-txt';txt.textContent=t.text;card.appendChild(txt);
+
+        var ind=document.createElement('span');ind.className='eise-card-ind';
+        if(t.frog){var fi=document.createElement('span');fi.style.cssText='display:flex;align-items:center;flex-shrink:0';fi.appendChild(svgFrogFilled(12));ind.appendChild(fi);}
+        if(t.waiting){var wi=document.createElement('span');wi.style.cssText='color:#3a6b8a;display:flex;align-items:center';wi.appendChild(svgHourglass(10));ind.appendChild(wi);}
+        var isQ=t.id===active||turn.indexOf(t.id)>=0;
+        if(isQ){var ti=document.createElement('span');ti.style.cssText='display:flex;align-items:center;opacity:.7';ti.appendChild(svgTomatoFilled(11));ind.appendChild(ti);}
+        if(ind.childNodes.length)card.appendChild(ind);
+
+        var qBtn=document.createElement('button');
+        qBtn.className='eise-peek-q-btn'+(isQ?' in-queue':'');
+        qBtn.title=isQ?'Poista jonosta':'Lisää jonoon';qBtn.textContent='↑';
+        qBtn.onclick=function(e){e.stopPropagation();eisePeekToggleQueue(t.id);};
+        card.appendChild(qBtn);
+
+        list.appendChild(card);
+      });
+    }
+    quadEl.appendChild(list);
+    eiseSetDropZone(list,qd.q);
+    grid.appendChild(quadEl);
+  });
+}
+function eisePeekToggleQueue(id){
+  tqToggle(id);save();render();renderEisePeek();
+}
+function updateEiseHandleCounts(){
+  var el=document.getElementById('eise-handle-counts');
+  if(!el)return;
+  var inbox=(typeof tasks!=='undefined'?tasks:[]).filter(function(t){return !t.done;});
+  var counts={q1:0,q2:0,q3:0,q4:0};
+  inbox.forEach(function(t){if(counts[t.quad]!==undefined)counts[t.quad]++;});
+  var cols={q1:'var(--q1)',q2:'var(--q2)',q3:'var(--q3)',q4:'var(--q4)'};
+  var labels={q1:'Tee heti',q2:'Aikatauluta',q3:'Delegoi',q4:'Poista'};
+  var html='';
+  ['q1','q2','q3','q4'].forEach(function(q){
+    if(counts[q]>0){
+      html+='<span class="eise-hcount" title="'+labels[q]+'">'
+        +'<span class="eise-hdot" style="background:'+cols[q]+'"></span>'
+        +counts[q]+'</span>';
+    }
+  });
+  el.innerHTML=html||'<span class="eise-hcount" style="font-style:italic">Tyhjä</span>';
+}
 // ESC sulkee modalin — lisätään document-tason kuuntelija
 // ── Vaihe 12D: aria-live apufunktio ──────────────────────────
 function a11yAnnounce(msg){
@@ -3720,92 +3844,7 @@ document.addEventListener('keydown',function(e){
 });
 
 // ── VAIHE 9 OSA 3: Eisenhower-modalin renderöinti ──
-function renderEisenhower(){
-  var inbox=tasks.filter(function(t){return !t.done&&!t.scheduled_hidden;});
-
-  ['q1','q2','q3','q4'].forEach(function(q){
-    var list=document.getElementById('e'+q);
-    if(!list)return;
-    list.innerHTML='';
-
-    var qt=inbox.filter(function(t){return t.quad===q;});
-    if(qt.length===0){
-      list.innerHTML='<div class="eise-qemp">Ei tehtäviä</div>';
-      return;
-    }
-
-    // Järjestys: frog ensin, sitten order
-    qt.sort(function(a,b){
-      if(a.frog&&!b.frog)return -1;
-      if(!a.frog&&b.frog)return 1;
-      return (a.order||0)-(b.order||0);
-    });
-
-    qt.forEach(function(t){
-      var card=document.createElement('div');
-      card.className='eise-card'+(t.frog?' eise-frog':'');
-      card.draggable=true;
-      card.dataset.id=t.id;
-      card.dataset.quad=q;
-
-      // Klikkaus avaa siirtovalikon (mobiiliystävällinen vaihtoehto raahaukselle)
-      card.onclick=function(e){
-        e.stopPropagation();
-        if(_eiseMoveMenu&&_eiseMoveMenu.parentNode===card){
-          eiseCloseMoveMenu();return;
-        }
-        eiseOpenMoveMenu(card,t.id,q);
-      };
-
-      // Drag-start: tallenna raahattavan kortin id
-      card.ondragstart=function(e){
-        e.dataTransfer.setData('text/plain',String(t.id));
-        e.dataTransfer.effectAllowed='move';
-        setTimeout(function(){card.classList.add('eise-dragging');},0);
-      };
-      card.ondragend=function(){
-        card.classList.remove('eise-dragging');
-      };
-
-      // Indikaattorit (frog, waiting, tomato)
-      var ind=document.createElement('span');
-      ind.className='eise-card-ind';
-
-      if(t.frog){
-        var fi=document.createElement('span');
-        fi.style.cssText='display:flex;align-items:center;flex-shrink:0';
-        fi.appendChild(svgFrogFilled(12));
-        ind.appendChild(fi);
-      }
-      if(t.waiting){
-        var wi=document.createElement('span');
-        wi.style.cssText='color:#3a6b8a;display:flex;align-items:center';
-        wi.appendChild(svgHourglass(10));
-        ind.appendChild(wi);
-      }
-      var isQ=t.id===active||turn.indexOf(t.id)>=0;
-      if(isQ){
-        var ti=document.createElement('span');
-        ti.style.cssText='display:flex;align-items:center;opacity:.7';
-        ti.appendChild(svgTomatoFilled(11));
-        ind.appendChild(ti);
-      }
-
-      // Tehtäväteksti
-      var txt=document.createElement('span');
-      txt.className='eise-card-txt';
-      txt.textContent=t.text;
-
-      card.appendChild(txt);
-      if(ind.childNodes.length)card.appendChild(ind);
-
-      list.appendChild(card);
-    });
-
-    // Kvadrantti on drop-zone: sallitaan dragover ja drop
-    eiseSetDropZone(list,q);
-  });
-}
+function renderEisenhower(){renderEisePeek();}
 
 // Drop-zone: kvadranttiruudun lista vastaanottaa kortteja
 function eiseSetDropZone(list,targetQuad){
@@ -3839,8 +3878,8 @@ function eiseSetDropZone(list,targetQuad){
     else if(targetQuad==='q4'){dragTask.important=false;dragTask.urgent=false;}
 
     save();
-    render();           // päivittää matriisi-välilehden
-    renderEisenhower(); // päivittää modalin
+    render();
+    renderEisenhower();
     notify('Siirretty: '+QL[targetQuad]);
   }
 
@@ -4859,7 +4898,7 @@ function renderAIResults(result,inbox){
   // Yleiskuva
   if(result.yleiskuva){
     var ov=document.createElement('div');
-    ov.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:1rem 1.1rem;font-size:.82rem;font-weight:300;color:rgba(255,255,255,.85);line-height:1.65;border-left:3px solid var(--accent)';
+    ov.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:1rem 1.1rem;font-size:.82rem;font-weight:300;color:rgba(255,255,255,.85);line-height:1.65';
     ov.textContent=result.yleiskuva;
     el.appendChild(ov);
   }
@@ -4869,7 +4908,7 @@ function renderAIResults(result,inbox){
     var ft=inbox.find(function(t){return t.id===result.sammakko.id});
     if(ft){
       var fc=document.createElement('div');
-      fc.style.cssText='background:var(--surface);border:1px solid #4a6e22;border-radius:var(--r-md);padding:1rem 1.1rem;border-left:3px solid #4a6e22';
+      fc.style.cssText='background:var(--surface);border:1px solid #4a6e22;border-radius:var(--r-md);padding:1rem 1.1rem';
       fc.innerHTML='<div style="font-size:.65rem;font-weight:500;color:#4a6e22;letter-spacing:.07em;text-transform:uppercase;margin-bottom:.35rem">🐸 Sammakkoehdotus</div>'
         +'<div style="font-size:.85rem;font-weight:400;color:var(--ink);margin-bottom:.3rem">'+esc(ft.text)+'</div>'
         +'<div style="font-size:.72rem;color:var(--muted);font-weight:300;margin-bottom:.75rem;line-height:1.5">'+esc(result.sammakko.perustelu)+'</div>'
@@ -5096,7 +5135,7 @@ function renderProjects(){
 
     var card=document.createElement('div');
     card.className='proj-card';
-    card.style.borderLeftColor=p.color||'var(--accent)';
+    card.style.boxShadow='inset 0 3px 0 '+(p.color||'var(--accent)');
 
     // Header
     var hdr=document.createElement('div');hdr.className='proj-card-hdr';
@@ -5123,7 +5162,7 @@ function renderProjects(){
     // Progress bar
     var bar=document.createElement('div');bar.className='proj-progress-bar';
     var fill=document.createElement('div');fill.className='proj-progress-fill';
-    fill.style.cssText='height:100%;border-radius:3px;width:'+pct+'%;background:'+(p.color||'var(--accent)');
+    fill.style.cssText='background:'+(p.color||'var(--accent)')+';transform:scaleX('+(pct/100)+')';
     bar.appendChild(fill);card.appendChild(bar);
 
     // Task list
@@ -5155,13 +5194,22 @@ function renderProjects(){
 }
 
 // ── TABS ──
+var _curView='inbox';
 function sv(n){
   document.querySelectorAll('.view').forEach(function(v){v.classList.remove('on')});
   document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on')});
   document.getElementById('v-'+n).classList.add('on');
   var m={inbox:'Tehtävälista',matrix:'Matriisi',done:'Tehty',projects:'Projektit'};
   document.querySelectorAll('.tab').forEach(function(t){if(t.textContent.trim().startsWith(m[n]))t.classList.add('on')});
+  _curView=n;
+  _updateHamViewLabel();
   render();
+}
+function _updateHamViewLabel(){
+  var label=document.getElementById('ham-view-label');
+  var names={inbox:'',matrix:'Matriisi',done:'Tehty',projects:'Projektit'};
+  var name=names[_curView]||'';
+  if(label){label.textContent=name;label.hidden=!name;}
 }
 
 // ── TASKS ──
@@ -5906,6 +5954,9 @@ function toggleTimer(){
     if(bar){ bar.classList.remove('hand-bar--open'); }
     if(_handHideTimer){ clearTimeout(_handHideTimer); _handHideTimer=null; }
   }
+  // Piilota eise-handle kun ajastin käynnistyy
+  var _eh=document.getElementById('eise-handle');if(_eh)_eh.classList.add('eise-handle--hidden');
+  if(_eisePeekOpen)closeEisePeek();
   startTmr();
   render();
   var act=getActive();
@@ -6086,8 +6137,10 @@ function onPhaseEnd(){
       a11yAnnounce('Pomodoro valmis. Tauko '+smin+' minuuttia alkaa.');
     }
     startTmr();
+    openEisePeek(true);
   } else if(phase==='sbrk'||phase==='lbrk'){
     phase='work';tleft=WORK;startAt=null;
+    closeEisePeek();
     soundWater();
     pushNotif('⏰ Tauko ohi','Paina ▶ aloittaaksesi seuraavan pomodoran.');
     notify('⏰ Tauko ohi — paina ▶ aloittaaksesi seuraavan pomodoran.');
@@ -6117,6 +6170,8 @@ function stopAll(){
       },5000);
     }
   }
+  // Näytä eise-handle kun ajastin pysähtyy
+  var _seh=document.getElementById('eise-handle');if(_seh)_seh.classList.remove('eise-handle--hidden');
   document.getElementById('btnNx').style.display='none';
   document.getElementById('btnDn').style.display='none';
   var wt=document.getElementById('btnWt');if(wt)wt.style.display='none';
@@ -6632,7 +6687,7 @@ function renderArenaCard(t, container, anyFrog, mode){
   // Projektin reunaväri
   if(t.projectId){
     var pj2=projects.find(function(p){return p.id===t.projectId;});
-    if(pj2) card.style.borderLeft='3px solid '+pj2.color;
+    if(pj2) card.style.boxShadow='inset 0 3px 0 '+pj2.color;
   }
 
   // Land-pulssi (vain areena)
@@ -6987,7 +7042,7 @@ function renderCardNew(t,container,anyFrog){
   // Reunan väri projektin mukaan
   if(t.projectId){
     var pj2=projects.find(function(p){return p.id===t.projectId});
-    if(pj2)card.style.borderLeft='3px solid '+pj2.color;
+    if(pj2)card.style.boxShadow='inset 0 3px 0 '+pj2.color;
   }
 
   // Vaihe 10: fade-in animaatio juuri luodulle kortille
@@ -7403,7 +7458,7 @@ function render(){
   // ── Vaihe 6a: Areena — renderöi queue[0] isona kortina ──
   var arenaEl=document.getElementById('arena');
   if(arenaEl){
-    arenaEl.innerHTML='';
+    Array.from(arenaEl.children).forEach(function(ch){if(ch.id!=='eise-peek'&&ch.id!=='eise-handle')ch.remove();});
     if(window._useCardUI){
       var label=document.createElement('div');
       label.id='arena-label';
@@ -7425,6 +7480,7 @@ function render(){
   renderTurnPanel(inbox);
   renderWaitingPanel(inbox);
   renderHandBar(inbox); // Vaihe 5B TCG
+  updateEiseHandleCounts();
 
   // MATRIX
   ['q1','q2','q3','q4'].forEach(function(q){
@@ -7502,12 +7558,13 @@ function render(){
   done.forEach(function(t){
     var card=document.createElement('div');card.className='card';
     var tx=document.createElement('span');tx.className='ttxt done';tx.textContent=t.text;
+    var tw=document.createElement('div');tw.className='tact-wrap';
     var ac=document.createElement('div');ac.className='tact';
     if(t.quad){var bg=document.createElement('span');bg.className='qbdg '+t.quad;bg.textContent=QL[t.quad];ac.appendChild(bg)}
     var st=document.createElement('span');st.className='pstat';st.textContent=(t.pomos||0)+'/'+fe(t.est||1)+' 🍅';ac.appendChild(st);
     var rb=document.createElement('button');rb.className='rbtn';rb.textContent='Palauta';rb.onclick=(function(i){return function(){restore(i)}})(t.id);ac.appendChild(rb);
     var xb=document.createElement('button');xb.className='delbtn';xb.textContent='×';xb.onclick=(function(i){return function(){del(i)}})(t.id);ac.appendChild(xb);
-    card.appendChild(tx);card.appendChild(ac);dl.appendChild(card);
+    tw.appendChild(ac);card.appendChild(tx);card.appendChild(tw);dl.appendChild(card);
   });
 
   updClock();
@@ -7676,7 +7733,7 @@ function renderSummary(){
     html+='<div style="display:flex;align-items:center;gap:.5rem">';
     html+='<span style="font-size:.72rem;color:var(--muted);width:80px;flex-shrink:0">'+qd.label+'</span>';
     html+='<div style="flex:1;height:6px;background:var(--subtle);border-radius:3px;overflow:hidden">';
-    html+='<div style="height:100%;width:'+pct+'%;background:'+qd.color+';border-radius:3px;transition:width .4s"></div></div>';
+    html+='<div style="height:100%;width:100%;background:'+qd.color+';transform-origin:left;transform:scaleX('+(pct/100)+')"></div></div>';
     html+='<span style="font-size:.7rem;color:var(--muted);width:40px;text-align:right">'+p+' 🍅</span>';
     html+='</div>';
   });
@@ -8895,7 +8952,7 @@ function closeChainView(){
   <div style="padding:.9rem 1.2rem .75rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
     <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;font-style:italic;letter-spacing:-0.02em;color:var(--ink)">📋 Tehtäväpohjat</div>
     <div style="display:flex;gap:.4rem;align-items:center">
-      <button onclick="openPresetEditor(null)" style="font-family:'DM Sans',sans-serif;font-size:.65rem;padding:.22rem .55rem;border-radius:var(--r-sm);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer">+ Uusi pohja</button>
+      <button onclick="openPresetEditor(null)" style="font-family:'DM Sans',sans-serif;font-size:var(--text-xs);padding:.22rem .55rem;border-radius:var(--r-sm);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer">+ Uusi pohja</button>
       <button onclick="closePresets()" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--muted);padding:.1rem .3rem;line-height:1;font-family:inherit">×</button>
     </div>
   </div>
@@ -9133,7 +9190,7 @@ function closeChainView(){
             autocapitalize="none"
             onkeydown="if(event.key==='Enter')wizToStep3()"
             oninput="checkJaSplit(this.value);"
-            style="width:100%;font-family:'DM Sans',sans-serif;font-size:var(--text-base);font-weight:300;color:rgba(255,255,255,.85);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:.65rem 1rem;outline:none;transition:padding-left .15s">
+            style="width:100%;font-family:'DM Sans',sans-serif;font-size:var(--text-base);font-weight:300;color:rgba(255,255,255,.85);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:.65rem 1rem;outline:none">
         </div>
         <button id="wiz-next-btn" onclick="wizToStep3()" disabled
           style="font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;padding:.65rem 1.1rem;border-radius:var(--r-md);border:none;background:var(--accent);color:white;cursor:not-allowed;opacity:.35;transition:opacity .2s;flex-shrink:0">→</button>
@@ -9354,7 +9411,7 @@ document.addEventListener('DOMContentLoaded', function() {
   var ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
   ring.id = 'hdr-ring';
   ring.setAttribute('cx','40'); ring.setAttribute('cy','40'); ring.setAttribute('r','34');
-  ring.setAttribute('fill','none'); ring.setAttribute('stroke','#c0392b');
+  ring.setAttribute('fill','none');
   ring.setAttribute('stroke-width','5');
   ring.setAttribute('stroke-dasharray','213.6');
   ring.setAttribute('stroke-dashoffset','0');
@@ -9364,12 +9421,12 @@ document.addEventListener('DOMContentLoaded', function() {
   var play = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
   play.id = 'hdr-play';
   play.setAttribute('points','32,27 32,53 56,40');
-  play.setAttribute('fill','#c0392b'); play.setAttribute('opacity','0.8');
+  play.setAttribute('opacity','0.8');
   var stopEl = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
   stopEl.id = 'hdr-stop';
   stopEl.setAttribute('x','28'); stopEl.setAttribute('y','28');
   stopEl.setAttribute('width','24'); stopEl.setAttribute('height','24');
-  stopEl.setAttribute('rx','4'); stopEl.setAttribute('fill','#c0392b');
+  stopEl.setAttribute('rx','4');
   stopEl.setAttribute('opacity','0'); stopEl.style.cssText = 'transition:opacity .15s';
   svg.appendChild(track); svg.appendChild(ring); svg.appendChild(play); svg.appendChild(stopEl);
   ringDiv.appendChild(svg);
@@ -9491,7 +9548,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (hs && mp) hs.textContent = mp.textContent;
     if (hr && mr) {
       hr.setAttribute('stroke-dashoffset', mr.getAttribute('stroke-dashoffset') || '0');
-      hr.setAttribute('stroke', mr.getAttribute('stroke') || '#c0392b');
+      hr.setAttribute('stroke', mr.style.stroke || getComputedStyle(document.documentElement).getPropertyValue('--pomo').trim());
     }
     if (hpl && mpl) hpl.setAttribute('opacity', mpl.getAttribute('opacity') || '0.8');
     if (hst2 && mst) hst2.setAttribute('opacity', mst.getAttribute('opacity') || '0');
@@ -9514,7 +9571,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <!-- ── HAMPURILAISVALIKKO (Vaihe 6) ── -->
-<button id="ham-btn" onclick="openHamMenu()" aria-label="Valikko" title="Valikko">☰</button>
+<button id="ham-btn" onclick="openHamMenu()" aria-label="Valikko" title="Valikko">☰<span id="ham-view-label" hidden class="ham-view-label"></span></button>
 
 <!-- Taustatummennus -->
 <div id="ham-overlay" onclick="closeHamMenu()"></div>

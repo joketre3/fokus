@@ -92,6 +92,7 @@ html[data-theme="aurinko"] .step-num.done{background:rgba(196,104,30,.12);color:
 .step-label{font-size:.7rem;font-weight:300;color:var(--muted);white-space:nowrap;}
 .step-label.active{color:var(--ink);font-weight:400;}
 .step-divider{flex:1;height:1px;background:var(--light);max-width:30px;}
+@media(max-width:420px){.step-label:not(.active){display:none;}}
 
 /* SCREEN */
 .screen{
@@ -363,6 +364,9 @@ html[data-theme="aurinko"] .done-summary{background:#f8f8f8;border-color:#e8d8b8
 }
 .time-badge{
   font-size:.68rem;color:var(--muted);font-weight:300;
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
 </style>
 </head>

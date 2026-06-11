@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-11T00:00:00Z",
+  "title": "Design System: Fokus A Priori",
+  "extensions": {
+    "colorMeta": {
+      "gold": {
+        "role": "primary",
+        "displayName": "Rituaalikulta",
+        "canonical": "#c49a3a",
+        "tonalRamp": ["#3a2d0e", "#5c4716", "#7d611f", "#9e7c28", "#c49a3a", "#d4b060", "#e2c880", "#f0dda8"]
+      },
+      "forest-green": {
+        "role": "secondary",
+        "displayName": "Havumetsänvihreä",
+        "canonical": "#4fa870",
+        "tonalRamp": ["#0c2418", "#163d26", "#215836", "#2d7348", "#4fa870", "#72c090", "#96d4ac", "#bce8ca"]
+      },
+      "terracotta": {
+        "role": "secondary",
+        "displayName": "Aurinko-aksentti",
+        "canonical": "#c4681e",
+        "tonalRamp": ["#3a1e09", "#5e3011", "#83421a", "#a65522", "#c4681e", "#d4854a", "#e4a276", "#f2c4a6"]
+      },
+      "pomo-red": {
+        "role": "semantic-danger",
+        "displayName": "Pomodoro-terracotta",
+        "canonical": "#a84c28",
+        "tonalRamp": ["#300e06", "#521810", "#74241a", "#963224", "#a84c28", "#c27050", "#d89478", "#ecb8a4"]
+      },
+      "wait-blue": {
+        "role": "semantic-wait",
+        "displayName": "Odotussininen",
+        "canonical": "#3a6b8a",
+        "tonalRamp": ["#0c1e28", "#163248", "#204866", "#2c5e80", "#3a6b8a", "#5888a4", "#7aa8c0", "#9ec8d8"]
+      },
+      "frog-olive": {
+        "role": "semantic-focus",
+        "displayName": "Sammakko-oliivi",
+        "canonical": "#6b8a30",
+        "tonalRamp": ["#1a240c", "#2c3e14", "#3e561e", "#506e28", "#6b8a30", "#88a450", "#a6be72", "#c4d898"]
+      },
+      "q1-urgent-important": {
+        "role": "quadrant",
+        "displayName": "TEE HETI -terracotta",
+        "canonical": "#a84c28"
+      },
+      "q2-important": {
+        "role": "quadrant",
+        "displayName": "AIKATAULUTA -metsänvihreä",
+        "canonical": "#2d5a3d"
+      },
+      "q3-urgent": {
+        "role": "quadrant",
+        "displayName": "DELEGOI -okra",
+        "canonical": "#7a6a50"
+      },
+      "q4-low": {
+        "role": "quadrant",
+        "displayName": "POISTA -kivi",
+        "canonical": "#9a9a8e"
+      },
+      "surface-usva": {
+        "role": "neutral-bg",
+        "displayName": "Usvametsä-pohja",
+        "canonical": "#162818"
+      },
+      "surface-havu": {
+        "role": "neutral-bg",
+        "displayName": "Havumetsä-pohja",
+        "canonical": "#040e09"
+      },
+      "surface-aurinko": {
+        "role": "neutral-bg",
+        "displayName": "Aurinko-pohja",
+        "canonical": "#faf8f0"
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display / Ajastin", "purpose": "Ajastimen aika, modaaliotsikot, logo. Max 2 esiintymää näkymässä." },
+      "headline": { "displayName": "Otsikko", "purpose": "Paneeliotsikot, projektikorttien nimet." },
+      "body": { "displayName": "Runko", "purpose": "Pääsisältö, tehtävätekstit. Max ~65ch." },
+      "label": { "displayName": "Etiketti / Badge", "purpose": "Kvadranttimerkinnät, pieni infomerkintä. Vain 1-4 sanaa." },
+      "tcg": { "displayName": "TCG-typelinja (Cinzel)", "purpose": "Ainoastaan TCG-arennakortin tyyppilinjateksti." }
+    },
+    "shadows": [
+      { "name": "hover-lift", "value": "0 6px 20px rgba(0,0,0,.18)", "purpose": "Tehtäväkortit hover — aina yhdistettynä scale(1.02) translateY(-2px) transformiin." },
+      { "name": "status-ring", "value": "0 0 0 2px rgba(väri,.08)", "purpose": "Erikoistilaiset kortit (frog, waiting, needs-review). Täydennetään border-color-muutoksella." },
+      { "name": "arena-glow", "value": "0 0 0 1px rgba(196,154,58,.35), 0 0 40px 8px rgba(196,154,58,.30), 0 0 80px 16px rgba(196,154,58,.15), 0 12px 36px rgba(196,154,58,.20)", "purpose": "Ainoastaan TCG-arennakortti. Kultainen hehku = aktiivinen tehtävä." },
+      { "name": "modal", "value": "0 12px 40px rgba(0,0,0,.2)", "purpose": "Modaalit ja sivupaneelit." },
+      { "name": "eise-peek-hover", "value": "0 2px 6px rgba(0,0,0,.08)", "purpose": "Eisenhower-peek-kortit hover. Keveimmän tason varjo." }
+    ],
+    "motion": [
+      { "name": "state-transition", "value": "0.15s ease", "purpose": "Oletustransitio tilan muutoksille (hover, active, focus)." },
+      { "name": "reveal", "value": "0.18s ease", "purpose": "Sisällön paljastaminen (tact-wrap grid-template-rows, opacity)." },
+      { "name": "modal-enter", "value": "opacity 0.2s ease, transform 0.2s ease", "purpose": "Modaalien avaus: scale(.95) → scale(1)." },
+      { "name": "card-enter", "value": "translateY(-6px) scale(.97) → translateY(0) scale(1), 0.2s ease-out", "purpose": "Uusien korttien ilmestyminen listaan." },
+      { "name": "card-exit", "value": "opacity → 0, translateY(20px) scale(.96), 0.4s ease-in", "purpose": "Korttien poistuminen (tehty/poistettu)." },
+      { "name": "lite-mode-override", "value": "transition-duration: 0.01ms !important", "purpose": "html[data-perf='lite'] — kaikki animaatiot pois MacBook 2010 -optimoinnissa." }
+    ],
+    "themes": [
+      { "name": "usva", "displayName": "Usvametsä", "description": "Oletus. Translucent dark-green glasspinnat usvametsätaustan päällä. Kulta-aksentti.", "accentColor": "#c49a3a" },
+      { "name": "havu", "displayName": "Havumetsä", "description": "Syvin tumma — ei taustakuvaa, kiinteät rgba-opaakki-pinnat. Metsänvihreä aksentti.", "accentColor": "#4fa870" },
+      { "name": "aurinko", "displayName": "Aurinko", "description": "Valoisa vaihtoehto. Valkoinen pohja, terracotta-aksentti, lämmin muste (#2d2417).", "accentColor": "#c4681e" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primäärinappi (kultainen)",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Päätoimintokutsun nappi. Kulta-aksentti, valkoinen teksti. Käytetään säästellen.",
+      "html": "<button class=\"ds-btn-primary\">Aloita →</button>",
+      "css": ".ds-btn-primary { font-family: 'DM Sans', system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; padding: 0.6rem 1.4rem; background: #c49a3a; color: white; border: none; border-radius: 8px; cursor: pointer; transition: background 0.15s; } .ds-btn-primary:hover { background: #b8882a; } .ds-btn-primary:focus-visible { outline: 2px solid #c49a3a; outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }"
+    },
+    {
+      "name": "Ghost-nappi",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Toissijainen toiminto. Läpinäkyvä, aksenttivärinen reuna ja teksti.",
+      "html": "<button class=\"ds-btn-ghost\">Muokkaa</button>",
+      "css": ".ds-btn-ghost { font-family: 'DM Sans', system-ui, sans-serif; font-size: 0.72rem; font-weight: 500; padding: 0.4rem 0.9rem; background: transparent; color: #c49a3a; border: 1.5px solid #c49a3a; border-radius: 8px; cursor: pointer; transition: background 0.15s; } .ds-btn-ghost:hover { background: rgba(196,154,58,.15); } .ds-btn-ghost:focus-visible { outline: 2px solid #c49a3a; outline-offset: 2px; }"
+    },
+    {
+      "name": "Tehtäväkortti",
+      "kind": "card",
+      "refersTo": null,
+      "description": "Perustehtäväkortti odottavat/tehty-listassa. Hover-nosto, piilotettu toimintorivi.",
+      "html": "<div class=\"ds-task-card\"><span class=\"ds-task-text\">Soita asiakkaalle</span><div class=\"ds-tact-wrap\"><div class=\"ds-tact\"><span class=\"ds-quad-badge q2\">AIKATAULUTA</span><button class=\"ds-delbtn\">×</button></div></div></div>",
+      "css": ".ds-task-card { background: rgba(30,55,40,.42); border: 1px solid rgba(255,255,255,.25); border-radius: 8px; padding: 0.7rem 1rem; display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; transition: box-shadow 0.15s, transform 0.15s; cursor: pointer; } .ds-task-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.18); transform: scale(1.02) translateY(-2px); } .ds-task-text { flex: 1; font-family: 'DM Sans', system-ui, sans-serif; font-size: 0.875rem; font-weight: 300; color: rgba(255,255,255,.95); } .ds-tact-wrap { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.18s ease; width: 100%; } .ds-task-card:hover .ds-tact-wrap { grid-template-rows: 1fr; } .ds-tact { overflow: hidden; min-height: 0; display: flex; gap: 0.3rem; align-items: center; justify-content: flex-end; width: 100%; opacity: 0; transition: opacity 0.15s ease; } .ds-task-card:hover .ds-tact { opacity: 1; } .ds-quad-badge { font-family: 'DM Sans', system-ui, sans-serif; font-size: 0.65rem; font-weight: 500; padding: 0.15rem 0.45rem; border-radius: 4px; } .ds-quad-badge.q2 { background: #2d5a3d; color: white; } .ds-delbtn { font-family: 'DM Sans', system-ui, sans-serif; font-size: 0.75rem; background: transparent; border: none; color: rgba(255,255,255,.5); cursor: pointer; padding: 0.2rem 0.4rem; }"
+    },
+    {
+      "name": "Tekstikenttä",
+      "kind": "input",
+      "refersTo": "input-default",
+      "description": "Pääsyötekenttä tehtävien lisäämiseen ja modaaleissa. Minimalistinen, ei erillisiä placeholder-tyylejä.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Tehtävän nimi...\">",
+      "css": ".ds-input { font-family: 'DM Sans', system-ui, sans-serif; font-size: 0.875rem; font-weight: 300; color: rgba(255,255,255,.85); background: rgba(30,55,40,.42); border: 1px solid rgba(255,255,255,.25); border-radius: 8px; padding: 0.65rem 1rem; width: 100%; box-sizing: border-box; outline: none; transition: border-color 0.15s; } .ds-input:focus { border-color: rgba(196,154,58,.6); } .ds-input::placeholder { color: rgba(255,255,255,.35); }"
+    },
+    {
+      "name": "Kvadranttinappi (Eisenhower)",
+      "kind": "chip",
+      "refersTo": "chip-quad-q1",
+      "description": "Pieni prioriteettinappi tehtäväkortissa. Maastokoodit: terracotta=Q1, metsänvihreä=Q2, okra=Q3, kivi=Q4.",
+      "html": "<div class=\"ds-quad-row\"><button class=\"ds-qb q1\">Q1</button><button class=\"ds-qb q2 on\">Q2</button><button class=\"ds-qb q3\">Q3</button><button class=\"ds-qb q4\">Q4</button></div>",
+      "css": ".ds-quad-row { display: flex; gap: 0.3rem; } .ds-qb { font-family: 'DM Sans', system-ui, sans-serif; font-size: 0.72rem; font-weight: 500; padding: 0.2rem 0.45rem; border-radius: 4px; border: 1.5px solid; cursor: pointer; background: rgba(30,55,40,.42); white-space: nowrap; transition: background 0.12s, color 0.12s; } .ds-qb.q1 { border-color: #a84c28; color: #a84c28; } .ds-qb.q1.on, .ds-qb.q1:hover { background: #a84c28; color: white; } .ds-qb.q2 { border-color: #2d5a3d; color: #4fa870; } .ds-qb.q2.on, .ds-qb.q2:hover { background: #2d5a3d; color: white; } .ds-qb.q3 { border-color: #7a6a50; color: #9a8a70; } .ds-qb.q3.on, .ds-qb.q3:hover { background: #7a6a50; color: white; } .ds-qb.q4 { border-color: #9a9a8e; color: #9a9a8e; } .ds-qb.q4.on, .ds-qb.q4:hover { background: #9a9a8e; color: white; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Pohjoismainen Rituaali",
+    "overview": "Fokus A Priori on suomalainen tuottavuusrituaali. Ei ohjelmistoprojektin kojelauta — rituaali, joka alkaa aamusuunnittelulla, kulkee läpi päivän yhden tehtävän kerrallaan, ja päättyy selkeytymisen tunteeseen. Visuaalinen kieli on lainattu pohjoisesta metsästä: tummat, rauhalliset pinnat, kulta-aksentti kuin auringonvalo havupuiden läpi. Kaikki turha on karsittu.\n\nJärjestelmässä on kolme teemaa. Usvametsä (oletus) on tumma lasipinta usvaisella metsätaustalla. Havumetsä on tätäkin tummempi, puhdas, ilman kuvaa. Aurinko on valoisa vaihtoehto. Kaikki kolme käyttävät samaa typografista hierarkiaa ja samat Eisenhower-maastokoodit.",
+    "keyCharacteristics": [
+      "Yksi aktiivinen tehtävä — areena hallitsee, kaikki muu taka-alalla",
+      "Rauhallinen varmuus — käyttöliittymä ei kilpaile tehtävien kanssa huomiosta",
+      "Kolme teemaa samalla tokenijärjestelmällä",
+      "TCG-korttiesteetiikka areenakortissa — ainutlaatuinen, ei geneerinen",
+      "Nopea tila hitaille laitteille — suorituskyky on ominaisuus"
+    ],
+    "rules": [
+      { "name": "The One Accent Rule", "body": "Kultainen (#c49a3a) esiintyy korkeintaan 10% mistä tahansa näkymästä. Sen harvinaisuus on pointti.", "section": "colors" },
+      { "name": "The Terrain Code Rule", "body": "Eisenhower-värit ovat ainoastaan kvadranttimerkintöjä. Niitä ei käytetä yleisinä UI-aksentteina tai dekoraationa.", "section": "colors" },
+      { "name": "The Two Families Rule", "body": "DM Serif Display ja DM Sans. Cinzel on erillinen TCG-kontekstin leimasimetri — ei typografinen valinta muuhun käyttöön.", "section": "typography" },
+      { "name": "The Weight-Not-Size Rule", "body": "Hierarkia ensin painon kontrastilla (300 → 500), sitten koolla.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "Elementit ovat litteissä lepotilassa. Varjot ovat tilan muutoksia — hover, status, focus — eivät pintatekstuuria.", "section": "elevation" },
+      { "name": "The Depth-Through-Surface Rule", "body": "Syvyys syntyy rgba-pintatasoilla (--surface-xs .35 → --surface-strong .65), ei varjoilla.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do käytä DM Serif Display italisoituna otsikko- ja display-elementeissä.",
+      "Do käytä rgba-pintatasoja syvyyteen tummissa teemoissa varjojen sijasta.",
+      "Do pidä kultainen (#c49a3a) harvinaisena: vain primäärinen CTA, aktiivinen focus.",
+      "Do käytä box-shadow: inset 0 3px 0 <väri> projektivärien näyttämiseen — ei border-left side-tabeja.",
+      "Do käytä grid-template-rows: 0fr → 1fr piilotettavaan sisältöön max-height-transitioiden sijasta.",
+      "Do lisää html[data-perf='lite'] -yhteensopivuus uusille animaatioille."
+    ],
+    "donts": [
+      "Don't käytä border-left tai border-right yli 1px väriaksenttina korteissa tai listakohteissa.",
+      "Don't lisää backdrop-filter ilman fallbackia — Nopea tila poistaa sen.",
+      "Don't käytä gradientteja tai glassmorphismia dekoraationa.",
+      "Don't käytä Cinzel-fonttia muualla kuin TCG-areenakortilla.",
+      "Don't animoi width, height, max-height tai padding-ominaisuuksia.",
+      "Don't laita asetuksia profiilipaneeliin — kaikki asetukset hampurilaisvalikon Asetukset-osioon.",
+      "Don't käytä Eisenhower-maastokoodeja yleisinä UI-aksentteina.",
+      "Don't käytä position: fixed elementtiä transformatun vanhemman sisällä."
+    ]
+  }
+}
