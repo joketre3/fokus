@@ -789,6 +789,7 @@ html[data-theme="aurinko"][data-perf="lite"] body{
   let _lastFsWriteTs = 0;
   let _fsSnapshotUnsub = null;
   let _syncOkTimer = null;
+  let _fsSaveDirty = false; // paikallinen muokkaus odottaa debounce-pushia — älä ylikirjoita snapshotilla
 
   window._setSyncStatus = function(state) {
     var el = document.getElementById('fs-sync-status');
@@ -819,6 +820,7 @@ html[data-theme="aurinko"][data-perf="lite"] body{
       const ref = doc(db, 'users', uid, 'workspaces', wsId);
       await setDoc(ref, data, {merge: true});
       _lastFsWriteTs = data.updatedAt || 0;
+      _fsSaveDirty = false;
       window._setSyncStatus('ok');
       console.log('☁️ Firestore tallennettu:', wsId);
     } catch(e) {
@@ -836,9 +838,14 @@ html[data-theme="aurinko"][data-perf="lite"] body{
       const data = snap.data();
       const ts = data.updatedAt || 0;
       if (ts !== 0 && ts === _lastFsWriteTs) return; // oma echo, sivuutetaan
+      if (_fsSaveDirty) {
+        // Paikallinen muokkaus on lähdössä pilveen (debounce) — last-write-wins hoitaa loput
+        console.log('☁️ onSnapshot: paikallinen muokkaus vireillä, snapshot ohitettu');
+        return;
+      }
       const lsKey = 'eis_v5_' + wsId;
       let localData = null;
-      try { const lr = localStorage.getItem(lsKey); if (lr) localData = JSON.parse(lr); } catch(e) {}
+      try { const lr = localStorage.getItem(lsKey); if (lr) localData = JSON.parse(lr); } catch(e) { console.warn('Fokus: onSnapshot LS-parse epäonnistui', e); }
       const localTs = (localData && localData.updatedAt) || 0;
       if (ts > localTs) {
         console.log('☁️ onSnapshot: uudempi data pilvestä (' + (data.tasks ? data.tasks.length : 0) + ' tehtävää)');
@@ -867,16 +874,17 @@ html[data-theme="aurinko"][data-perf="lite"] body{
   // ── Debounce-ajastin Firestore-tallennukselle ──────────────────
   let _fsSaveTimer = null;
   window._scheduleFsSave = function() {
+    _fsSaveDirty = true;
     clearTimeout(_fsSaveTimer);
     _fsSaveTimer = setTimeout(function() {
-      if (!window.currentUser) return;
+      if (!window.currentUser) { _fsSaveDirty = false; return; }
       const uid = window.currentUser.uid;
       const wsId = localStorage.getItem('fap_active_ws') || 'work';
       const key = 'eis_v5_' + wsId;
       const raw = localStorage.getItem(key);
-      if (!raw) return;
+      if (!raw) { _fsSaveDirty = false; return; }
       let data;
-      try { data = JSON.parse(raw); } catch(e) { return; }
+      try { data = JSON.parse(raw); } catch(e) { _fsSaveDirty = false; console.warn('Fokus: FS-save LS-parse epäonnistui', e); return; }
       saveToFirestore(uid, wsId, data);
     }, 500);
   };
@@ -6117,7 +6125,7 @@ function soundClick(){
     var g=ctx.createGain();g.gain.setValueAtTime(0.35,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.06);
     src.connect(f);f.connect(g);g.connect(ctx.destination);
     src.start(t);
-  }catch(e){}
+  }catch(e){/* ääni ei-kriittinen */}
 }
 
 // Linnunlaulu — pomodoro valmis (kolme selkeää vihellystä, kovempi)
@@ -6143,7 +6151,7 @@ function soundBird(){
       osc2.connect(g2);g2.connect(ctx.destination);
       osc2.start(t+delay+0.06);osc2.stop(t+delay+0.28);
     });
-  }catch(e){}
+  }catch(e){/* ääni ei-kriittinen */}
 }
 
 // Vesipisara — tauko ohi (laskeva pisara)
@@ -6169,7 +6177,7 @@ function soundWater(){
     g2.gain.exponentialRampToValueAtTime(0.001,t+0.38);
     osc2.connect(g2);g2.connect(ctx.destination);
     osc2.start(t+0.12);osc2.stop(t+0.4);
-  }catch(e){}
+  }catch(e){/* ääni ei-kriittinen */}
 }
 
 // Metsäkello — tehtävä tehty (pehmeä pitkä sointi)
@@ -6185,7 +6193,7 @@ function soundBell(){
       osc.connect(g);g.connect(ctx.destination);
       osc.start(t);osc.stop(t+1.8);
     });
-  }catch(e){}
+  }catch(e){/* ääni ei-kriittinen */}
 }
 // ── NOTIFICATIONS ──
 function requestNotifPermission(){
@@ -6217,10 +6225,10 @@ function keepAwake(){
     _audioNode.loop=true;
     _audioNode.connect(_audioCtx.destination);
     _audioNode.start();
-  }catch(e){}
+  }catch(e){/* ääni ei-kriittinen */}
 }
 function stopKeepAwake(){
-  try{if(_audioNode){_audioNode.stop();_audioNode=null;}}catch(e){}
+  try{if(_audioNode){_audioNode.stop();_audioNode=null;}}catch(e){/* ääni ei-kriittinen */}
 }
 
 function tick(){
@@ -7209,7 +7217,7 @@ function toggleHandBar(){
     bar.classList.remove('hand-bar--open');
     document.body.classList.remove('hand-open');
   }
-  try{ localStorage.setItem('fap_hand_open', _handBarOpen ? '1' : '0'); }catch(e){}
+  try{ localStorage.setItem('fap_hand_open', _handBarOpen ? '1' : '0'); }catch(e){/* UI-tila ei-kriittinen */}
 }
 
 function initHandBarState(){
@@ -7228,7 +7236,7 @@ function initHandBarState(){
         document.body.classList.add('hand-open');
       }
     }
-  }catch(e){}
+  }catch(e){/* UI-tila ei-kriittinen */}
 }
 
 function _attachHandHoverDesktop(){
@@ -7998,7 +8006,7 @@ function _syncPresetsToFirestore(){
     try{
       var ref=window.doc(window.db,'users',uid,'presets',p.id);
       window.setDoc(ref,p).catch(function(e){console.warn('Preset sync failed',e);});
-    }catch(e){}
+    }catch(e){console.warn('Fokus: preset-synkka epäonnistui',e);}
   });
 }
 
@@ -8026,7 +8034,7 @@ function _loadPresetsFromFirestore(){
         renderPresetList();
       }
     }).catch(function(e){console.warn('Preset load failed',e);});
-  }catch(e){}
+  }catch(e){console.warn('Fokus: preset-lataus epäonnistui',e);}
 }
 
 function generatePresetId(title){
@@ -8037,10 +8045,27 @@ function generatePresetId(title){
 // ── /TEHTÄVÄPOHJAT ────────────────────────────────────────────────
 function save(){
   try{
-    localStorage.setItem(wsStorageKey(),JSON.stringify({tasks:tasks,nid:nid,active:active,turn:turn,pomoDone:pomoDone,totalPomos:totalPomos,date:dtEl.value,projects:projects,pnid:pnid,updatedAt:Date.now()}));
+    // Stale-write-suoja: jos localStorageen on kirjoitettu uudempaa dataa
+    // latauksemme jälkeen (toinen välilehti/laite), tuoreempi voittaa.
+    var cur=localStorage.getItem(wsStorageKey());
+    if(cur){
+      var curTs=0;
+      try{curTs=(JSON.parse(cur).updatedAt)||0;}catch(e2){}
+      if(curTs>(window._loadedTs||0)){
+        console.warn('Fokus: save() ohitettu — localStoragessa uudempi data (ts '+curTs+' > '+(window._loadedTs||0)+')');
+        load();
+        notify('Tiedot päivittyivät toisesta ikkunasta');
+        return;
+      }
+    }
+    var now=Date.now();
+    localStorage.setItem(wsStorageKey(),JSON.stringify({tasks:tasks,nid:nid,active:active,turn:turn,pomoDone:pomoDone,totalPomos:totalPomos,date:dtEl.value,projects:projects,pnid:pnid,updatedAt:now}));
+    window._loadedTs=now;
   }catch(e){
     if(e.name==='QuotaExceededError'||e.name==='NS_ERROR_DOM_QUOTA_REACHED'){
       notify('Tallennus epäonnistui: selain muisti täynnä');
+    }else{
+      console.error('Fokus: save() epäonnistui',e);
     }
   }
   if(window._scheduleFsSave) window._scheduleFsSave();
@@ -8057,7 +8082,8 @@ function load(){
     }
   }
   if(r){
-    var d;try{d=JSON.parse(r);}catch(e){d={};}
+    var d;try{d=JSON.parse(r);}catch(e){d={};console.warn('Fokus: load() JSON-parse epäonnistui',e);}
+    window._loadedTs=d.updatedAt||0;
     tasks=d.tasks||[];nid=d.nid||1;
     // Migraatio: lisää chain-kentät vanhoille tehtäville
     tasks.forEach(function(t){
@@ -8157,7 +8183,7 @@ function setTheme(t){
       window._swipeWin.document.documentElement.setAttribute('data-theme',t);
       window._swipeWin.localStorage.setItem('fap_theme',t);
     }
-  }catch(e){}
+  }catch(e){/* popup suljettu */}
 }
 (function initTheme(){
   var saved=localStorage.getItem('fap_theme')||'usva';
@@ -8539,8 +8565,8 @@ function deletePreset(id){
   if(window.currentUser&&window.db){
     try{
       var ref=window.doc(window.db,'users',window.currentUser.uid,'presets',id);
-      window.deleteDoc(ref).catch(function(){});
-    }catch(e){}
+      window.deleteDoc(ref).catch(function(e){console.warn('Preset delete failed',e);});
+    }catch(e){console.warn('Fokus: preset-poisto epäonnistui',e);}
   }
   savePresets();
   renderPresetList();
@@ -10110,7 +10136,7 @@ function renderInventory(){
     subCategory: invState.subCategory,
     sort: invState.sort,
     hideActive: invState.hideActive
-  })); }catch(e){}
+  })); }catch(e){console.warn('Fokus: inventory-tilan tallennus epäonnistui',e);}
 
   var sorted = getInventoryFilteredTasks();
 
@@ -10217,7 +10243,7 @@ function openInventory(){
     if(saved.subCategory !== undefined) invState.subCategory = saved.subCategory;
     if(saved.sort) invState.sort = saved.sort;
     if(saved.hideActive !== undefined) invState.hideActive = saved.hideActive;
-  }catch(e){}
+  }catch(e){console.warn('Fokus: inventory-tilan luku epäonnistui',e);}
 
   var modal = document.getElementById('inv-modal');
   if(!modal) return;
