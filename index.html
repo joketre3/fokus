@@ -3766,13 +3766,6 @@ svg[aria-hidden="true"]{pointer-events:none;}
 // XSS-suojaus: sanitoi käyttäjädata ennen innerHTML-insertiä
 function esc(s){if(s==null)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
-// ── VAIHE 9: Eisenhower-modal ──
-var _eiseOpen=false;
-
-function openEisenhower(){openEisePeek(false);}
-function closeEisenhower(){closeEisePeek();}
-var _eiseOpen=false;
-
 // ── EISENHOWER PEEK ──
 var _eisePeekOpen=false;
 function openEisePeek(isAuto){
@@ -3898,8 +3891,8 @@ function a11yAnnounce(msg){
 
 document.addEventListener('keydown',function(e){
   // ESC: sulje modaalit
-  if(e.key==='Escape'&&_eiseOpen){
-    closeEisenhower();
+  if(e.key==='Escape'&&_eisePeekOpen){
+    closeEisePeek();
   }
   if(e.key==='Escape'){
     var panel=document.getElementById('tset-panel');
@@ -3941,7 +3934,6 @@ document.addEventListener('keydown',function(e){
 });
 
 // ── VAIHE 9 OSA 3: Eisenhower-modalin renderöinti ──
-function renderEisenhower(){renderEisePeek();}
 
 // Drop-zone: kvadranttiruudun lista vastaanottaa kortteja
 function eiseSetDropZone(list,targetQuad){
@@ -3976,7 +3968,7 @@ function eiseSetDropZone(list,targetQuad){
 
     save();
     render();
-    renderEisenhower();
+    renderEisePeek();
     notify('Siirretty: '+QL[targetQuad]);
   }
 
@@ -4021,7 +4013,7 @@ function eiseOpenMoveMenu(card,taskId,currentQuad){
       else if(q==='q2'){dragTask.important=true;dragTask.urgent=false;}
       else if(q==='q3'){dragTask.important=false;dragTask.urgent=true;}
       else if(q==='q4'){dragTask.important=false;dragTask.urgent=false;}
-      save();render();renderEisenhower();
+      save();render();renderEisePeek();
       notify('Siirretty: '+QL[q]);
     };
     menu.appendChild(item);
@@ -7893,10 +7885,18 @@ function renderSummary(){
   wsEl.innerHTML=html;
 }
 
+var _ntTimer=null;
 function notify(msg){
   var e=document.getElementById('nt');
+  if(!e)return;
+  clearTimeout(_ntTimer);
+  if(e.classList.contains('on')){
+    e.classList.remove('on');
+    void e.offsetWidth; // pakota reflow, jotta transitio restarttaa
+  }
   e.textContent=msg;e.classList.add('on');
-  setTimeout(function(){e.classList.remove('on')},4000);
+  _ntTimer=setTimeout(function(){e.classList.remove('on')},4000);
+  if(typeof a11yAnnounce==='function')a11yAnnounce(msg);
 }
 
 // ── SAVE / LOAD ──
@@ -9766,7 +9766,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <span class="ham-row__label">Selaa tehtäviä</span>
   </button>
 
-  <button class="ham-row" onclick="closeHamMenu();openEisenhower()">
+  <button class="ham-row" onclick="closeHamMenu();openEisePeek(false)">
     <span class="ham-row__icon">▦</span>
     <span class="ham-row__label">Eisenhower-matriisi</span>
   </button>
