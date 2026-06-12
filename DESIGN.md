@@ -231,7 +231,35 @@ Fokuksen selkein identiteettielementti. Kun ajastin käynnistyy, aktiivinen teht
 
 Kaksi tilaa: **täysi** (130×130px SVG-ring, iso kellonaika DM Serif Display 2.2rem) ja **mini** (kiinnitetty yläpalkkiin, 42px ring, 1.2rem aika). Tila vaihtuu kun ajastin käynnistyy. Ring: `stroke: var(--pomo)` (terracotta tai teeman mukainen). Transitio: vain `opacity`, ei width/height (näkymän muutos on välitön, ei animoitu).
 
-## 6. Do's and Don'ts
+## 6. Z-index-skaala
+
+| Taso | Käyttö |
+|---|---|
+| 0–9 | Komponentin sisäiset kerrostumat |
+| 10–99 | Kiinteä chrome (handle, sticky-palkit) |
+| 100–199 | Notifikaatiot (`.notif`, `#nt`) |
+| 200–399 | Paneelit ja perusmodaalit (overlay 200, modaali 201, eise-move-menu 210, verb-pop 300) |
+| 400–499 | Pinotut modaalit (jatko 401, wiz 401) |
+| 500–599 | Ylin perusmodaali (edit-modal 500) |
+| 600 | Lisätiedot-popup (voi avautua edit-modalin päältä) |
+| 700 | Undo-banner (aina päällimmäinen) |
+
+## 7. TCG-rarity
+
+Rarity = **tärkeys** (Eisenhower) — väri-identiteetti = kvadrantti, manakustannus = est:
+
+| Tier | Ehto | Visuaali |
+|---|---|---|
+| mythic | `frog` | kultakehysgradientti + holo + 🐸-sinetti |
+| rare | q1/q2 | kultainen sisärengas + kullattu set-symboli |
+| uncommon | q3 | hopearengas + hopeinen set-symboli |
+| common | q4 | ei metallia, himmeä set-symboli |
+
+Set-symboli = työtilan alkukirjain (Cinzel) typelinen oikeassa reunassa. Holo vain mythicillä — niukkuus (yksi sammakko/päivä) on osa metodologiaa. Metallisävyt ovat neutraaleja → 60-30-10-värisääntö säilyy.
+
+**Metalli- ja levytokenit:** `--gold` `#c49a3a` / `--gold-hi` `#e8c66a` / `--gold-deep` `#6b4f1c` (eivät seuraa `--accent`ia), `--metal-silver` `#b8bcc0` / `--metal-silver-hi` `#e2e6ea`, `--tcg-plate-ink` `#f4f0e4` / `--tcg-plate-ink-dim` `#e8dcc0` / `--tcg-gold-ink` `#f0d9a8`, `--tcg-stop` `#7a2020`, `--ink-on-art` `#fff`, `--pomo-hi` `#e8623a`, `--q2-bright` `#4a8a4a`, `--frog-deep` `#3d7a52`. Plate pysyy tummana kaikissa teemoissa (aurinko asettaa tumman `--plate-top`in tarkoituksella).
+
+## 8. Do's and Don'ts
 
 ### Do
 

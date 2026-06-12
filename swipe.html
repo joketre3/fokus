@@ -124,6 +124,9 @@ html[data-theme="aurinko"] .done-btn:hover{background:#c4681e;color:white}
 html[data-theme="aurinko"] .chip.inq{color:#c4681e;background:rgba(196,104,30,.10)}
 html[data-theme="aurinko"] .tint.yes{background:rgba(196,104,30,.08)}
 
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;}
+}
 </style>
 </head>
 <body>
@@ -144,7 +147,7 @@ html[data-theme="aurinko"] .tint.yes{background:rgba(196,104,30,.08)}
   </div>
   <div class="custom-time">
     <span style="font-size:.75rem;color:var(--muted);font-weight:300">Tai kirjoita:</span>
-    <input type="number" id="customMin" min="15" max="480" placeholder="min">
+    <input type="number" id="customMin" min="15" max="480" placeholder="min" aria-label="Mukautettu aika minuutteina">
     <span style="font-size:.75rem;color:var(--muted);font-weight:300">min</span>
   </div>
   <button class="start-btn" onclick="startSwipe()">Aloita selaus →</button>
@@ -195,20 +198,20 @@ html[data-theme="aurinko"] .tint.yes{background:rgba(196,104,30,.08)}
   <div style="background:#f2f0e8;border-radius:14px 14px 0 0;padding:1.5rem;width:100%;max-width:480px;display:flex;flex-direction:column;gap:.85rem">
     <input type="hidden" id="edit-id">
     <div style="font-family:'DM Serif Display',serif;font-size:1rem;font-style:italic;color:#1a1c18">Muokkaa tehtävää</div>
-    <input id="edit-name" type="text" style="width:100%;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:300;padding:.6rem .85rem;border-radius:8px;border:1.5px solid #dddbd0;outline:none;color:#1a1c18;background:white">
+    <input id="edit-name" type="text" aria-label="Tehtävän nimi" style="width:100%;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:300;padding:.6rem .85rem;border-radius:8px;border:1.5px solid #dddbd0;outline:none;color:#1a1c18;background:white">
     <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
       <label style="display:flex;align-items:center;gap:.35rem;font-size:.78rem;font-weight:300;cursor:pointer"><input type="checkbox" id="edit-important" style="accent-color:#c49a3a"> Tärkeä</label>
       <label style="display:flex;align-items:center;gap:.35rem;font-size:.78rem;font-weight:300;cursor:pointer"><input type="checkbox" id="edit-urgent" style="accent-color:#a84c28"> Kiireinen</label>
       <div style="display:flex;align-items:center;gap:.4rem;margin-left:.5rem">
         <span style="font-size:.72rem;color:#6b7060">🍅</span>
         <button onclick="var s=document.getElementById('edit-est');s.value=Math.max(.5,parseFloat(s.value)-.5);document.getElementById('edit-est-val').textContent=fe(parseFloat(s.value))" style="background:none;border:none;cursor:pointer;color:#6b7060;font-size:.9rem;padding:0 .1rem">‹</button>
-        <input type="range" id="edit-est" min="0.5" max="8" step="0.5" value="1" oninput="document.getElementById('edit-est-val').textContent=fe(parseFloat(this.value))" style="-webkit-appearance:none;width:80px;height:4px;border-radius:2px;background:#dddbd0;outline:none;cursor:pointer">
+        <input type="range" id="edit-est" aria-label="Pomodoro-arvio" min="0.5" max="8" step="0.5" value="1" oninput="document.getElementById('edit-est-val').textContent=fe(parseFloat(this.value))" style="-webkit-appearance:none;width:80px;height:4px;border-radius:2px;background:#dddbd0;outline:none;cursor:pointer">
         <button onclick="var s=document.getElementById('edit-est');s.value=Math.min(8,parseFloat(s.value)+.5);document.getElementById('edit-est-val').textContent=fe(parseFloat(s.value))" style="background:none;border:none;cursor:pointer;color:#6b7060;font-size:.9rem;padding:0 .1rem">›</button>
         <span id="edit-est-val" style="font-size:.78rem;font-weight:500;color:#a84c28;min-width:1.5rem">1</span>
       </div>
     </div>
-    <textarea id="edit-notes" rows="2" placeholder="💬 Lisätiedot..." style="width:100%;box-sizing:border-box;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:300;padding:.55rem .85rem;border-radius:8px;border:1.5px solid #dddbd0;outline:none;color:#1a1c18;background:white;resize:vertical;min-height:48px"></textarea>
-    <input id="edit-link" type="url" placeholder="🔗 Linkki (https://...)" style="width:100%;box-sizing:border-box;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:300;padding:.55rem .85rem;border-radius:8px;border:1.5px solid #dddbd0;outline:none;color:#1a1c18;background:white">
+    <textarea id="edit-notes" rows="2" aria-label="Lisätiedot" placeholder="💬 Lisätiedot..." style="width:100%;box-sizing:border-box;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:300;padding:.55rem .85rem;border-radius:8px;border:1.5px solid #dddbd0;outline:none;color:#1a1c18;background:white;resize:vertical;min-height:48px"></textarea>
+    <input id="edit-link" type="url" aria-label="Linkki" placeholder="🔗 Linkki (https://...)" style="width:100%;box-sizing:border-box;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:300;padding:.55rem .85rem;border-radius:8px;border:1.5px solid #dddbd0;outline:none;color:#1a1c18;background:white">
     <div style="display:flex;gap:.5rem">
       <button onclick="saveEditCard()" style="font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;padding:.6rem 1.2rem;border-radius:8px;border:none;background:#c49a3a;color:white;cursor:pointer;flex:1">Tallenna</button>
       <button onclick="document.getElementById('edit-panel').style.display='none'" style="font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:400;padding:.6rem .9rem;border-radius:8px;border:1.5px solid #dddbd0;color:#6b7060;background:white;cursor:pointer">Peruuta</button>

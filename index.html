@@ -57,6 +57,20 @@
   --hand-card-h:182px;
   --hand-peek-h:36px;
   --frog:#6b8a30;
+  --frog-deep:#3d7a52;
+  /* TCG-metallit ja levyteksti — neutraaleja, eivät seuraa --accentia */
+  --gold:#c49a3a;
+  --gold-hi:#e8c66a;
+  --gold-deep:#6b4f1c;
+  --metal-silver:#b8bcc0;
+  --metal-silver-hi:#e2e6ea;
+  --tcg-plate-ink:#f4f0e4;
+  --tcg-plate-ink-dim:#e8dcc0;
+  --tcg-gold-ink:#f0d9a8;
+  --tcg-stop:#7a2020;
+  --ink-on-art:#fff;
+  --pomo-hi:#e8623a;
+  --q2-bright:#4a8a4a;
 }
 body{
   color:var(--ink);
@@ -711,6 +725,7 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
     animation-iteration-count:1!important;
     transition-duration:.01ms!important;
   }
+  .tcg-card--holo .tcg-card__plate::before{display:none!important;}
 }
 
 /* Ajastimen SVG-elementit — teemaväri var(--pomo) */
@@ -789,6 +804,7 @@ html[data-theme="aurinko"][data-perf="lite"] body{
   let _lastFsWriteTs = 0;
   let _fsSnapshotUnsub = null;
   let _syncOkTimer = null;
+  let _fsSaveDirty = false; // paikallinen muokkaus odottaa debounce-pushia — älä ylikirjoita snapshotilla
 
   window._setSyncStatus = function(state) {
     var el = document.getElementById('fs-sync-status');
@@ -819,6 +835,7 @@ html[data-theme="aurinko"][data-perf="lite"] body{
       const ref = doc(db, 'users', uid, 'workspaces', wsId);
       await setDoc(ref, data, {merge: true});
       _lastFsWriteTs = data.updatedAt || 0;
+      _fsSaveDirty = false;
       window._setSyncStatus('ok');
       console.log('☁️ Firestore tallennettu:', wsId);
     } catch(e) {
@@ -836,9 +853,14 @@ html[data-theme="aurinko"][data-perf="lite"] body{
       const data = snap.data();
       const ts = data.updatedAt || 0;
       if (ts !== 0 && ts === _lastFsWriteTs) return; // oma echo, sivuutetaan
+      if (_fsSaveDirty) {
+        // Paikallinen muokkaus on lähdössä pilveen (debounce) — last-write-wins hoitaa loput
+        console.log('☁️ onSnapshot: paikallinen muokkaus vireillä, snapshot ohitettu');
+        return;
+      }
       const lsKey = 'eis_v5_' + wsId;
       let localData = null;
-      try { const lr = localStorage.getItem(lsKey); if (lr) localData = JSON.parse(lr); } catch(e) {}
+      try { const lr = localStorage.getItem(lsKey); if (lr) localData = JSON.parse(lr); } catch(e) { console.warn('Fokus: onSnapshot LS-parse epäonnistui', e); }
       const localTs = (localData && localData.updatedAt) || 0;
       if (ts > localTs) {
         console.log('☁️ onSnapshot: uudempi data pilvestä (' + (data.tasks ? data.tasks.length : 0) + ' tehtävää)');
@@ -867,16 +889,17 @@ html[data-theme="aurinko"][data-perf="lite"] body{
   // ── Debounce-ajastin Firestore-tallennukselle ──────────────────
   let _fsSaveTimer = null;
   window._scheduleFsSave = function() {
+    _fsSaveDirty = true;
     clearTimeout(_fsSaveTimer);
     _fsSaveTimer = setTimeout(function() {
-      if (!window.currentUser) return;
+      if (!window.currentUser) { _fsSaveDirty = false; return; }
       const uid = window.currentUser.uid;
       const wsId = localStorage.getItem('fap_active_ws') || 'work';
       const key = 'eis_v5_' + wsId;
       const raw = localStorage.getItem(key);
-      if (!raw) return;
+      if (!raw) { _fsSaveDirty = false; return; }
       let data;
-      try { data = JSON.parse(raw); } catch(e) { return; }
+      try { data = JSON.parse(raw); } catch(e) { _fsSaveDirty = false; console.warn('Fokus: FS-save LS-parse epäonnistui', e); return; }
       saveToFirestore(uid, wsId, data);
     }, 500);
   };
@@ -1707,7 +1730,7 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   font-weight:600;opacity:.65;z-index:1;
 }
 .inv-card__q--q1{color:var(--pomo)}
-.inv-card__q--q2{color:#4a8a4a}
+.inv-card__q--q2{color:var(--q2-bright)}
 .inv-card__q--q3{color:var(--muted)}
 .inv-card__q--q4{color:var(--subtle)}
 .inv-card__name{
@@ -1794,13 +1817,13 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 
 <!-- PROJECT MODAL -->
 <div id="proj-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)" onclick="if(event.target===this)closeProjectModal()"></div>
-<div id="proj-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(400px,96vw);background:var(--surface-xs);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.15);z-index:201;padding:1.5rem">
+<div id="proj-modal" role="dialog" aria-modal="true" aria-label="Projekti" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(400px,96vw);background:var(--surface-xs);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.15);z-index:201;padding:1.5rem">
   <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;font-style:italic;letter-spacing:-0.02em;color:var(--ink);margin-bottom:1.1rem" id="proj-modal-title">Uusi projekti</div>
   <input type="hidden" id="proj-edit-id">
   <div style="display:flex;flex-direction:column;gap:.85rem">
     <div>
       <label for="proj-name" style="font-size:var(--text-xs);font-weight:500;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:.35rem">Projektin nimi</label>
-      <input id="proj-name" type="text" placeholder="esim. Asiakastyö Q2, Kehityshanke..." style="width:100%;font-family:'DM Sans',sans-serif;font-size:var(--text-base);font-weight:300;padding:.6rem .85rem;border-radius:var(--r-md);border:1.5px solid var(--border);outline:none;color:rgba(255,255,255,.85);background:white">
+      <input id="proj-name" type="text" placeholder="esim. Asiakastyö Q2, Kehityshanke..." style="width:100%;font-family:'DM Sans',sans-serif;font-size:var(--text-base);font-weight:300;padding:.6rem .85rem;border-radius:var(--r-md);border:1.5px solid var(--border);outline:none;color:var(--ink);background:var(--surface)">
     </div>
     <div>
       <label id="proj-color-lbl" style="font-size:var(--text-xs);font-weight:500;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:.35rem">Väri</label>
@@ -1819,7 +1842,7 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 
 <!-- SCHEDULE PICKER MODAL -->
 <div id="schedule-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)" onclick="if(event.target===this)closeSchedulePicker()"></div>
-<div id="schedule-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(380px,96vw);background:var(--surface-xs);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.15);z-index:201;padding:1.5rem">
+<div id="schedule-modal" role="dialog" aria-modal="true" aria-label="Aikataulutus" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(380px,96vw);background:var(--surface-xs);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.15);z-index:201;padding:1.5rem">
   <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;font-style:italic;letter-spacing:-0.02em;color:var(--ink);margin-bottom:1.1rem">🕐 Ajasta tehtävä</div>
   <!-- Type -->
   <div style="display:flex;gap:.5rem;margin-bottom:1rem">
@@ -2240,9 +2263,9 @@ body.hand-open #hand-toggle{bottom:calc(var(--hand-card-h,182px) + 12px);}
 }
 /* Käsikortin sisältö: pienempi fontti */
 .tcg-card--hand .tcg-card__title{font-size:.72rem;}
-.tcg-card--hand .tcg-card__typeline{font-size:.52rem;}
+.tcg-card--hand .tcg-card__typeline{font-size:.65rem;}
 .tcg-card--hand .tcg-card__art{flex-basis:36%;}
-.tcg-card--hand .tcg-card__meta-tcg{font-size:.58rem;}
+.tcg-card--hand .tcg-card__meta-tcg{font-size:.65rem;}
 .card-new__star-mark{
   position:absolute;
   top:.3rem;
@@ -2464,8 +2487,8 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
 }
 /* Frog-korostus kädessä */
 .card-new--hand.is-frog{
-  border-color:#3d7a52;
-  box-shadow:0 0 0 1px rgba(61,122,82,.25);
+  border-color:var(--frog-deep);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--frog-deep) 25%,transparent);
 }
 /* Tooltip-vihje klikkaamista varten */
 .card-new--hand::after{
@@ -2649,7 +2672,7 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
   letter-spacing:.14em;
   text-transform:uppercase;
   color:var(--accent);
-  font-weight:600;
+  font-weight:500;
 }
 .card-new__arena-pips{
   display:flex;
@@ -2689,7 +2712,7 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
   font-size:clamp(.78rem, 3.2vw, .95rem);
   font-weight:500;
   line-height:1.22;
-  color:#fff;
+  color:var(--ink-on-art);
   text-shadow:0 2px 8px rgba(0,0,0,.7), 0 1px 2px rgba(0,0,0,.9);
   background:linear-gradient(to bottom,
     transparent 0%,
@@ -2785,7 +2808,7 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
 .notes-modal-backdrop{
   position:fixed; inset:0;
   background:rgba(0,0,0,.6);
-  z-index:9000;
+  z-index:600;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -2992,7 +3015,7 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
   padding:.1rem .4rem;border-radius:20px;
   border:1px solid currentColor;letter-spacing:.04em;
 }
-.card-new__quad-badge.q1{color:#c49a3a;border-color:#c49a3a}
+.card-new__quad-badge.q1{color:var(--accent);border-color:var(--accent)}
 .card-new__quad-badge.q2{color:#2d8a52;border-color:#2d8a52}
 .card-new__quad-badge.q3{color:var(--muted);border-color:var(--border)}
 .card-new__quad-badge.q4{color:var(--muted);border-color:var(--border)}
@@ -3011,7 +3034,7 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
 .card-new__btn:hover{color:var(--ink);background:var(--subtle)}
 .card-new__btn.imp-on{color:#c49a3a}
 .card-new__btn.urg-on{color:#a84c28}
-.card-new__btn.frog-on{color:#3d7a52}
+.card-new__btn.frog-on{color:var(--frog-deep)}
 /* Tehty / poista-rivi */
 .card-new__footer{
   display:flex;align-items:center;justify-content:space-between;
@@ -3099,8 +3122,8 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
   isolation:isolate;
 }
 .tcg-card--frog{
-  background:#c49a3a;
-  background:linear-gradient(160deg,#e8c66a 0%,#6b4f1c 42%,#c49a3a 100%);
+  background:var(--gold);
+  background:linear-gradient(160deg,var(--gold-hi) 0%,var(--gold-deep) 42%,var(--gold) 100%);
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,.25),
     inset 0 0 0 3px rgba(70,50,12,.6),
@@ -3120,21 +3143,21 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
 }
 .tcg-card__pip{
   width:17px;height:17px;border-radius:50%;
-  background:radial-gradient(circle at 35% 30%,#e8623a,#a84c28 72%);
+  background:radial-gradient(circle at 35% 30%,var(--pomo-hi),var(--pomo) 72%);
   box-shadow:inset 0 1px 1px rgba(255,255,255,.5),0 1px 2px rgba(0,0,0,.55);
 }
 .tcg-card__pip--half{
-  background:linear-gradient(90deg,#e8623a 50%,rgba(168,76,40,.25) 50%);
+  background:linear-gradient(90deg,var(--pomo-hi) 50%,color-mix(in srgb,var(--pomo) 25%,transparent) 50%);
 }
 .tcg-card__pip-x{
   font-family:'Cinzel',serif;font-weight:700;font-size:.7rem;
-  color:#f0d9a8;text-shadow:0 1px 2px rgba(0,0,0,.7);
+  color:var(--tcg-gold-ink);text-shadow:0 1px 2px rgba(0,0,0,.7);
 }
 .tcg-card__frog-seal{
   position:absolute;top:9px;left:9px;z-index:4;
   width:25px;height:25px;border-radius:50%;
-  background:radial-gradient(circle at 35% 30%,#2d5a3d,#14241c);
-  box-shadow:0 0 0 2px #c49a3a,inset 0 1px 2px rgba(255,255,255,.3);
+  background:radial-gradient(circle at 35% 30%,var(--q2),var(--plate-bot));
+  box-shadow:0 0 0 2px var(--gold),inset 0 1px 2px rgba(255,255,255,.3);
   display:flex;align-items:center;justify-content:center;font-size:14px;
 }
 .tcg-card__art{
@@ -3159,9 +3182,9 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
   margin:6px 6px 0;padding:.28rem .55rem;
   font-family:'Cinzel',serif;font-weight:600;
   font-size:.6rem;letter-spacing:.13em;text-transform:uppercase;
-  color:#e8dcc0;border-radius:4px;
-  background:linear-gradient(180deg,rgba(196,154,58,.30),rgba(196,154,58,.08));
-  border-top:1px solid rgba(196,154,58,.5);
+  color:var(--tcg-plate-ink-dim);border-radius:4px;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--gold) 30%,transparent),color-mix(in srgb,var(--gold) 8%,transparent));
+  border-top:1px solid color-mix(in srgb,var(--gold) 50%,transparent);
   border-bottom:1px solid rgba(0,0,0,.45);
   text-shadow:0 1px 1px rgba(0,0,0,.6);
 }
@@ -3173,11 +3196,13 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
 }
 .tcg-card__title{
   font-family:'DM Sans',sans-serif;font-weight:600;font-size:.92rem;
-  line-height:1.25;color:#f4f0e4;
+  line-height:1.25;color:var(--tcg-plate-ink);
 }
 .tcg-card__notes-tcg{
   font-size:.7rem;color:rgba(255,255,255,.5);line-height:1.4;
   font-style:italic;padding-left:.75rem;
+  box-shadow:inset 0 1px 0 color-mix(in srgb,var(--gold) 18%,transparent);
+  padding-top:.35rem;margin-top:.1rem;
 }
 .tcg-card__meta-tcg{
   margin-top:auto;display:flex;align-items:center;gap:.5rem;
@@ -3187,17 +3212,17 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
 .tcg-card__actions-tcg{display:flex;gap:.3rem;padding:.4rem .55rem .55rem;}
 .tcg-card__actions-tcg button{
   font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:600;
-  border:1px solid rgba(196,154,58,.4);border-radius:6px;cursor:pointer;
-  padding:.4rem .5rem;background:rgba(0,0,0,.25);color:#f0e6cc;
+  border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);border-radius:6px;cursor:pointer;
+  padding:.4rem .5rem;background:rgba(0,0,0,.25);color:var(--tcg-plate-ink-dim);
   transition:background .15s,transform .1s;
 }
-.tcg-card__actions-tcg button:hover{background:rgba(196,154,58,.25);}
+.tcg-card__actions-tcg button:hover{background:color-mix(in srgb,var(--gold) 25%,transparent);}
 .tcg-card__actions-tcg button:active{transform:translateY(1px);}
 .tcg-card__actions-tcg .act-start{
-  flex:1;background:var(--accent);color:#fff;border-color:var(--accent);
+  flex:1;background:var(--accent);color:var(--ink-on-art);border-color:var(--accent);
 }
 .tcg-card__actions-tcg .act-start--running{
-  background:#7a2020;border-color:#7a2020;
+  background:var(--tcg-stop);border-color:var(--tcg-stop);
 }
 .tcg-card__actions-tcg .act-start:hover{filter:brightness(1.1);}
 /* Stats-rivi (tärkeä/kiireinen/muokkaa-napit) */
@@ -3228,6 +3253,27 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
   0%{-webkit-mask-position:0% 0%;mask-position:0% 0%;}
   100%{-webkit-mask-position:100% 100%;mask-position:100% 100%;}
 }
+/* ── Rarity = tärkeys: mythic (frog) · rare (q1/q2) · uncommon (q3) · common (q4)
+   Metalli näkyy hiuksenhienona sisärenkaana ja set-symbolin värissä — ei uusia hehkuja */
+.tcg-card--rare .tcg-card__plate{
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.06),inset 0 -2px 6px rgba(0,0,0,.4),
+    inset 0 0 0 1px color-mix(in srgb,var(--gold) 55%,transparent);
+}
+.tcg-card--uncommon .tcg-card__plate{
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.06),inset 0 -2px 6px rgba(0,0,0,.4),
+    inset 0 0 0 1px color-mix(in srgb,var(--metal-silver) 40%,transparent);
+}
+.tcg-card__set{
+  flex:none;margin-left:auto;font-family:'Cinzel',serif;font-weight:700;font-size:.72rem;line-height:1;letter-spacing:0;
+}
+.tcg-card__typeline .tl-quad+.tcg-card__set{margin-left:0;}
+.tcg-card__set--mythic{color:var(--gold-hi);text-shadow:0 0 5px color-mix(in srgb,var(--gold) 70%,transparent);}
+.tcg-card__set--rare{color:var(--gold);}
+.tcg-card__set--uncommon{color:var(--metal-silver-hi);}
+.tcg-card__set--common{color:var(--tcg-plate-ink-dim);opacity:.5;}
+.tcg-card--hand .tcg-card__set{font-size:.62rem;}
+/* Käsikortti 130px: kvadranttiteksti pois — väri-identiteetti näkyy kehyksessä */
+.tcg-card--hand .tcg-card__typeline .tl-quad{display:none;}
 /* Areena-kortti isompi + kultainen hehku */
 .tcg-card.tcg-card--arena-size{
   width:100%;max-width:300px;
@@ -3598,12 +3644,12 @@ svg[aria-hidden="true"]{pointer-events:none;}
 
     <div>
       <label for="p1" style="font-size:var(--text-xs);font-weight:500;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:.4rem">1. Mikä on roolisi tai ammattisi?</label>
-      <input id="p1" type="text" placeholder="esim. sosiaaliohjaaja, opettaja, projektipäällikkö..." style="width:100%;font-family:'DM Sans',sans-serif;font-size:var(--text-base);font-weight:300;padding:.6rem .85rem;border-radius:var(--r-md);border:1.5px solid var(--border);outline:none;color:rgba(255,255,255,.85);background:white">
+      <input id="p1" type="text" placeholder="esim. sosiaaliohjaaja, opettaja, projektipäällikkö..." style="width:100%;font-family:'DM Sans',sans-serif;font-size:var(--text-base);font-weight:300;padding:.6rem .85rem;border-radius:var(--r-md);border:1.5px solid var(--border);outline:none;color:var(--ink);background:var(--surface)">
     </div>
 
     <div>
       <label for="p2" style="font-size:var(--text-xs);font-weight:500;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:.4rem">2. Mikä on työssäsi suurin haaste tällä hetkellä?</label>
-      <input id="p2" type="text" placeholder="esim. liikaa keskeytyksiä, vaikea priorisoida, energia hupenee iltapäivällä..." style="width:100%;font-family:'DM Sans',sans-serif;font-size:var(--text-base);font-weight:300;padding:.6rem .85rem;border-radius:var(--r-md);border:1.5px solid var(--border);outline:none;color:rgba(255,255,255,.85);background:white">
+      <input id="p2" type="text" placeholder="esim. liikaa keskeytyksiä, vaikea priorisoida, energia hupenee iltapäivällä..." style="width:100%;font-family:'DM Sans',sans-serif;font-size:var(--text-base);font-weight:300;padding:.6rem .85rem;border-radius:var(--r-md);border:1.5px solid var(--border);outline:none;color:var(--ink);background:var(--surface)">
     </div>
 
     <div>
@@ -3758,13 +3804,6 @@ svg[aria-hidden="true"]{pointer-events:none;}
 // XSS-suojaus: sanitoi käyttäjädata ennen innerHTML-insertiä
 function esc(s){if(s==null)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
-// ── VAIHE 9: Eisenhower-modal ──
-var _eiseOpen=false;
-
-function openEisenhower(){openEisePeek(false);}
-function closeEisenhower(){closeEisePeek();}
-var _eiseOpen=false;
-
 // ── EISENHOWER PEEK ──
 var _eisePeekOpen=false;
 function openEisePeek(isAuto){
@@ -3776,12 +3815,16 @@ function openEisePeek(isAuto){
   _eisePeekOpen=true;
   var sub=document.getElementById('eise-peek-sub');
   if(sub)sub.textContent=isAuto?'Hyvä hetki tarkistaa prioriteetit':'';
+  if(!isAuto){
+    var first=p.querySelector('.eise-peek-card');
+    if(first)first.focus();
+  }
 }
 function closeEisePeek(){
   var p=document.getElementById('eise-peek'),h=document.getElementById('eise-handle');
   if(!p)return;
   p.classList.remove('on');
-  if(h)h.classList.remove('eise-handle--hidden');
+  if(h){h.classList.remove('eise-handle--hidden');h.focus();}
   _eisePeekOpen=false;
 }
 function toggleEisePeek(){_eisePeekOpen?closeEisePeek():openEisePeek(false);}
@@ -3821,11 +3864,21 @@ function renderEisePeek(){
         var card=document.createElement('div');
         card.className='eise-peek-card'+(t.frog?' eise-frog':'');
         card.draggable=true;card.dataset.id=t.id;card.dataset.quad=qd.q;
+        card.tabIndex=0;
+        card.setAttribute('role','button');
+        card.setAttribute('aria-label',t.text+', '+qd.label+'. Avaa siirtovalikko Enterillä');
 
         card.onclick=function(e){
           e.stopPropagation();
           if(_eiseMoveMenu&&_eiseMoveMenu.parentNode===card){eiseCloseMoveMenu();return;}
           eiseOpenMoveMenu(card,t.id,qd.q);
+        };
+        card.onkeydown=function(e){
+          if(e.key==='Enter'||e.key===' '){
+            e.preventDefault();e.stopPropagation();
+            if(_eiseMoveMenu&&_eiseMoveMenu.parentNode===card){eiseCloseMoveMenu();return;}
+            eiseOpenMoveMenu(card,t.id,qd.q);
+          }
         };
         card.ondragstart=function(e){
           e.dataTransfer.setData('text/plain',String(t.id));
@@ -3888,10 +3941,44 @@ function a11yAnnounce(msg){
   setTimeout(function(){el.textContent=msg;},50);
 }
 
+// Fokusvankila modaaleille: Tab kiertää modaalin sisällä, release palauttaa fokuksen
+function trapFocus(modal){
+  var prev=document.activeElement;
+  function focusables(){
+    return Array.prototype.filter.call(
+      modal.querySelectorAll('button:not([disabled]),[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'),
+      function(el){return el.offsetParent!==null;});
+  }
+  function onKey(e){
+    if(e.key!=='Tab')return;
+    var f=focusables();
+    if(f.length===0)return;
+    var first=f[0],last=f[f.length-1];
+    if(e.shiftKey&&(document.activeElement===first||!modal.contains(document.activeElement))){
+      e.preventDefault();last.focus();
+    }else if(!e.shiftKey&&(document.activeElement===last||!modal.contains(document.activeElement))){
+      e.preventDefault();first.focus();
+    }
+  }
+  modal.addEventListener('keydown',onKey);
+  // Fokusoi ensimmäinen ellei avauskoodi ehtinyt fokusoida itse (50ms setTimeout-kutsut)
+  setTimeout(function(){
+    if(!modal.contains(document.activeElement)){
+      var f=focusables();if(f.length)f[0].focus();
+    }
+  },80);
+  return function(){
+    modal.removeEventListener('keydown',onKey);
+    if(prev&&prev.focus&&document.contains(prev))prev.focus();
+  };
+}
+function _trapOn(id){var m=document.getElementById(id);if(!m)return;if(m._focusRelease)m._focusRelease();m._focusRelease=trapFocus(m);}
+function _trapOff(id){var m=document.getElementById(id);if(m&&m._focusRelease){m._focusRelease();m._focusRelease=null;}}
+
 document.addEventListener('keydown',function(e){
   // ESC: sulje modaalit
-  if(e.key==='Escape'&&_eiseOpen){
-    closeEisenhower();
+  if(e.key==='Escape'&&_eisePeekOpen){
+    closeEisePeek();
   }
   if(e.key==='Escape'){
     var panel=document.getElementById('tset-panel');
@@ -3933,7 +4020,6 @@ document.addEventListener('keydown',function(e){
 });
 
 // ── VAIHE 9 OSA 3: Eisenhower-modalin renderöinti ──
-function renderEisenhower(){renderEisePeek();}
 
 // Drop-zone: kvadranttiruudun lista vastaanottaa kortteja
 function eiseSetDropZone(list,targetQuad){
@@ -3968,7 +4054,7 @@ function eiseSetDropZone(list,targetQuad){
 
     save();
     render();
-    renderEisenhower();
+    renderEisePeek();
     notify('Siirretty: '+QL[targetQuad]);
   }
 
@@ -3987,6 +4073,8 @@ function eiseOpenMoveMenu(card,taskId,currentQuad){
 
   var menu=document.createElement('div');
   menu.className='eise-move-menu';
+  menu.setAttribute('role','menu');
+  menu._returnFocus=card;
   _eiseMoveMenu=menu;
 
   var quadColors={q1:'var(--q1)',q2:'var(--q2)',q3:'var(--q3)',q4:'var(--q4)'};
@@ -3996,6 +4084,8 @@ function eiseOpenMoveMenu(card,taskId,currentQuad){
     if(q===currentQuad)return; // ei tarjota nykyistä
     var item=document.createElement('div');
     item.className='eise-move-item';
+    item.setAttribute('role','menuitem');
+    item.tabIndex=0;
     var dot=document.createElement('span');
     dot.className='eise-move-dot';
     dot.style.background=quadColors[q];
@@ -4003,6 +4093,17 @@ function eiseOpenMoveMenu(card,taskId,currentQuad){
     lbl.textContent='→ '+quadLabels[q];
     item.appendChild(dot);
     item.appendChild(lbl);
+    item.onkeydown=function(e){
+      if(e.key==='Enter'||e.key===' '){e.preventDefault();item.onclick(e);return;}
+      if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+        e.preventDefault();
+        var its=Array.prototype.slice.call(menu.querySelectorAll('.eise-move-item'));
+        var idx=its.indexOf(item);
+        var next=e.key==='ArrowDown'?its[(idx+1)%its.length]:its[(idx-1+its.length)%its.length];
+        next.focus();
+      }
+      if(e.key==='Escape'){e.stopPropagation();eiseCloseMoveMenu();}
+    };
     item.onclick=function(e){
       e.stopPropagation();
       eiseCloseMoveMenu();
@@ -4013,13 +4114,15 @@ function eiseOpenMoveMenu(card,taskId,currentQuad){
       else if(q==='q2'){dragTask.important=true;dragTask.urgent=false;}
       else if(q==='q3'){dragTask.important=false;dragTask.urgent=true;}
       else if(q==='q4'){dragTask.important=false;dragTask.urgent=false;}
-      save();render();renderEisenhower();
+      save();render();renderEisePeek();
       notify('Siirretty: '+QL[q]);
     };
     menu.appendChild(item);
   });
 
   card.appendChild(menu);
+  var firstItem=menu.querySelector('.eise-move-item');
+  if(firstItem)firstItem.focus();
 
   // Sulje klikkaamalla muualle
   setTimeout(function(){
@@ -4029,8 +4132,10 @@ function eiseOpenMoveMenu(card,taskId,currentQuad){
 
 function eiseCloseMoveMenu(){
   if(_eiseMoveMenu){
+    var rf=_eiseMoveMenu._returnFocus;
     _eiseMoveMenu.remove();
     _eiseMoveMenu=null;
+    if(rf&&document.contains(rf))rf.focus();
   }
 }
 
@@ -4657,6 +4762,7 @@ function openTimerSettings(){
   document.getElementById('tset-lbrk-val').textContent=Math.round(LBRK/60);
   document.getElementById('tset-overlay').classList.add('fap-open');
   document.getElementById('tset-panel').classList.add('fap-open');
+  _trapOn('tset-panel');
   // Siirretään fokus modaaliin ruudunlukijaa varten
   setTimeout(function(){
     var first=document.getElementById('tset-work');
@@ -4665,6 +4771,7 @@ function openTimerSettings(){
 }
 
 function closeTimerSettings(){
+  _trapOff('tset-panel');
   document.getElementById('tset-overlay').classList.remove('fap-open');
   document.getElementById('tset-panel').classList.remove('fap-open');
   // Palautetaan fokus asetusnapille
@@ -4767,9 +4874,9 @@ function openEditModal(id){
   document.getElementById('edit-urgent').classList.toggle('on',!!t.urgent);
   var fb=document.getElementById('edit-frog');
   fb.classList.toggle('on',!!t.frog);
-  fb.style.background=t.frog?'#3d7a52':'';
+  fb.style.background=t.frog?'var(--frog-deep)':'';
   fb.style.color=t.frog?'white':'';
-  fb.style.borderColor=t.frog?'#3d7a52':'';
+  fb.style.borderColor=t.frog?'var(--frog-deep)':'';
 
   // Arvio-slider
   var esl=document.getElementById('edit-esl');
@@ -4813,19 +4920,21 @@ function openEditModal(id){
 
   fb.onclick=function(){
     var on=fb.classList.toggle('on');
-    fb.style.background=on?'#3d7a52':'';
+    fb.style.background=on?'var(--frog-deep)':'';
     fb.style.color=on?'white':'';
-    fb.style.borderColor=on?'#3d7a52':'';
+    fb.style.borderColor=on?'var(--frog-deep)':'';
   };
 
   var ov=document.getElementById('edit-overlay');
   var md=document.getElementById('edit-modal');
   ov.style.display='block';
   md.style.display='flex';
+  _trapOn('edit-modal');
   setTimeout(function(){document.getElementById('edit-text').focus();},50);
 }
 
 function closeEditModal(){
+  _trapOff('edit-modal');
   document.getElementById('edit-overlay').style.display='none';
   document.getElementById('edit-modal').style.display='none';
 }
@@ -4979,6 +5088,22 @@ async function runAnalysis(){
 }
 
 function renderAIResults(result,inbox){
+  // AI-vastaus on epäluotettavaa syötettä — normalisoi kentät ennen DOM-insertiä
+  var VALID_Q=['q1','q2','q3','q4'];
+  function normQuad(q){return VALID_Q.indexOf(q)>=0?q:null;}
+  function normEst(v){v=Number(v);if(!isFinite(v)||v<=0)return null;return Math.min(8,Math.max(.5,Math.round(v*2)/2));}
+  if(result.sammakko){
+    var fid=Number(result.sammakko.id);
+    result.sammakko.id=isFinite(fid)&&fid>0?fid:null;
+  }
+  result.ehdotukset=(result.ehdotukset||[]).filter(function(e){
+    var n=Number(e.id);return isFinite(n)&&n>0;
+  }).map(function(e){
+    e.id=Number(e.id);
+    e.ehdotettu_quad=normQuad(e.ehdotettu_quad);
+    e.ehdotettu_est=normEst(e.ehdotettu_est);
+    return e;
+  });
   document.getElementById('ai-loading').style.display='none';
   var el=document.getElementById('ai-results');
   el.style.display='block';
@@ -4997,12 +5122,20 @@ function renderAIResults(result,inbox){
     var ft=inbox.find(function(t){return t.id===result.sammakko.id});
     if(ft){
       var fc=document.createElement('div');
+      fc.id='ai-card-frog';
       fc.style.cssText='background:var(--surface);border:1px solid #4a6e22;border-radius:var(--r-md);padding:1rem 1.1rem';
       fc.innerHTML='<div style="font-size:.65rem;font-weight:500;color:#4a6e22;letter-spacing:.07em;text-transform:uppercase;margin-bottom:.35rem">🐸 Sammakkoehdotus</div>'
         +'<div style="font-size:.85rem;font-weight:400;color:var(--ink);margin-bottom:.3rem">'+esc(ft.text)+'</div>'
-        +'<div style="font-size:.72rem;color:var(--muted);font-weight:300;margin-bottom:.75rem;line-height:1.5">'+esc(result.sammakko.perustelu)+'</div>'
-        +'<button onclick="acceptFrog('+ft.id+')" style="font-family:\'DM Sans\',sans-serif;font-size:.75rem;font-weight:500;padding:.35rem .85rem;border-radius:var(--r-sm);border:1.5px solid #4a6e22;color:#4a6e22;background:var(--surface);cursor:pointer;margin-right:.4rem">Hyväksy sammakko</button>'
-        +'<button onclick="this.closest(\'div[style]\').style.opacity=\'.4\'" style="font-family:\'DM Sans\',sans-serif;font-size:.75rem;font-weight:300;padding:.35rem .6rem;border-radius:var(--r-sm);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer">Ohita</button>';
+        +'<div style="font-size:.72rem;color:var(--muted);font-weight:300;margin-bottom:.75rem;line-height:1.5">'+esc(result.sammakko.perustelu)+'</div>';
+      var fAcc=document.createElement('button');
+      fAcc.textContent='Hyväksy sammakko';
+      fAcc.style.cssText='font-family:\'DM Sans\',sans-serif;font-size:.75rem;font-weight:500;padding:.35rem .85rem;border-radius:var(--r-sm);border:1.5px solid #4a6e22;color:#4a6e22;background:var(--surface);cursor:pointer;margin-right:.4rem';
+      fAcc.addEventListener('click',function(){acceptFrog(ft.id);});
+      var fSkip=document.createElement('button');
+      fSkip.textContent='Ohita';
+      fSkip.style.cssText='font-family:\'DM Sans\',sans-serif;font-size:.75rem;font-weight:300;padding:.35rem .6rem;border-radius:var(--r-sm);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer';
+      fSkip.addEventListener('click',function(){fc.style.opacity='.4';});
+      fc.appendChild(fAcc);fc.appendChild(fSkip);
       el.appendChild(fc);
     }
   }
@@ -5018,29 +5151,36 @@ function renderAIResults(result,inbox){
       var card=document.createElement('div');
       card.id='ai-card-'+e.id;
       card.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:.9rem 1rem';
-      var hasQuad=e.ehdotettu_quad&&e.ehdotettu_quad!==e.nykyinen_quad;
-      var hasEst=e.ehdotettu_est&&e.ehdotettu_est!==e.nykyinen_est;
+      // "nykyinen" luetaan oikeasta tehtävästä, ei AI:n kaiuttamasta arvosta
+      var curQuad=t.quad,curEst=t.est;
+      var hasQuad=e.ehdotettu_quad&&e.ehdotettu_quad!==curQuad;
+      var hasEst=e.ehdotettu_est&&e.ehdotettu_est!==curEst;
       var QL3={q1:'TEE HETI',q2:'AIKATAULUTA',q3:'DELEGOI',q4:'POISTA'};
       var QC3={q1:'var(--q1)',q2:'var(--q2)',q3:'var(--q3)',q4:'var(--q4)'};
       var inner='<div style="font-size:.8rem;font-weight:400;color:var(--ink);margin-bottom:.4rem">'+esc(e.teksti)+'</div>';
       if(hasQuad){
         inner+='<div style="font-size:.7rem;color:var(--muted);font-weight:300;margin-bottom:.25rem">'
-          +'<span style="color:'+QC3[e.nykyinen_quad]+'">'+QL3[e.nykyinen_quad]+'</span>'
+          +'<span style="color:'+(QC3[curQuad]||'var(--muted)')+'">'+(QL3[curQuad]||'—')+'</span>'
           +' → <span style="color:'+QC3[e.ehdotettu_quad]+';font-weight:500">'+QL3[e.ehdotettu_quad]+'</span></div>';
       }
       if(hasEst){
         inner+='<div style="font-size:.7rem;color:var(--muted);font-weight:300;margin-bottom:.25rem">'
-          +'Arvio: <span style="text-decoration:line-through">'+e.nykyinen_est+'</span>'
+          +'Arvio: <span style="text-decoration:line-through">'+(Number(curEst)||'—')+'</span>'
           +' → <span style="color:var(--pomo);font-weight:500">'+e.ehdotettu_est+' pomodoroa</span></div>';
       }
       if(e.kommentti){
         inner+='<div style="font-size:.7rem;color:var(--muted);font-weight:300;font-style:italic;margin-bottom:.6rem;line-height:1.5">'+esc(e.kommentti)+'</div>';
       }
-      inner+='<button onclick="acceptSuggestion('+e.id+',\''+( e.ehdotettu_quad||'')+'\','+( e.ehdotettu_est||'null')+')" '
-        +'style="font-family:\'DM Sans\',sans-serif;font-size:.72rem;font-weight:500;padding:.3rem .75rem;border-radius:var(--r-sm);border:1.5px solid var(--accent);color:var(--accent);background:var(--surface);cursor:pointer;margin-right:.35rem">Hyväksy</button>'
-        +'<button onclick="document.getElementById(\'ai-card-'+e.id+'\').style.opacity=\'.4\'" '
-        +'style="font-family:\'DM Sans\',sans-serif;font-size:.72rem;font-weight:300;padding:.3rem .55rem;border-radius:var(--r-sm);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer">Ohita</button>';
       card.innerHTML=inner;
+      var sAcc=document.createElement('button');
+      sAcc.textContent='Hyväksy';
+      sAcc.style.cssText='font-family:\'DM Sans\',sans-serif;font-size:.72rem;font-weight:500;padding:.3rem .75rem;border-radius:var(--r-sm);border:1.5px solid var(--accent);color:var(--accent);background:var(--surface);cursor:pointer;margin-right:.35rem';
+      sAcc.addEventListener('click',function(){acceptSuggestion(e.id,e.ehdotettu_quad,e.ehdotettu_est);});
+      var sSkip=document.createElement('button');
+      sSkip.textContent='Ohita';
+      sSkip.style.cssText='font-family:\'DM Sans\',sans-serif;font-size:.72rem;font-weight:300;padding:.3rem .55rem;border-radius:var(--r-sm);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer';
+      sSkip.addEventListener('click',function(){card.style.opacity='.4';});
+      card.appendChild(sAcc);card.appendChild(sSkip);
       el.appendChild(card);
     });
   }
@@ -5117,6 +5257,7 @@ function openNewProject(){
   buildColorPicker();
   document.getElementById('proj-overlay').style.display='block';
   document.getElementById('proj-modal').style.display='block';
+  _trapOn('proj-modal');
   setTimeout(function(){document.getElementById('proj-name').focus()},50);
 }
 
@@ -5130,9 +5271,11 @@ function openEditProject(id){
   buildColorPicker();
   document.getElementById('proj-overlay').style.display='block';
   document.getElementById('proj-modal').style.display='block';
+  _trapOn('proj-modal');
 }
 
 function closeProjectModal(){
+  _trapOff('proj-modal');
   document.getElementById('proj-overlay').style.display='none';
   document.getElementById('proj-modal').style.display='none';
 }
@@ -5328,9 +5471,11 @@ function wizOpen(){
   var modal=document.getElementById('wiz-modal');
   if(ov) ov.style.display='block';
   if(modal) modal.style.display='flex';
+  _trapOn('wiz-modal');
 }
 
 function wizClose(){
+  _trapOff('wiz-modal');
   var ov=document.getElementById('wiz-overlay');
   var modal=document.getElementById('wiz-modal');
   if(ov) ov.style.display='none';
@@ -5913,7 +6058,7 @@ function _showUndoBanner(){
   if(!b){
     b=document.createElement('div');
     b.id='undo-banner';
-    b.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--surface-md,var(--surface));border:1.5px solid var(--accent);border-radius:10px;padding:.65rem 1rem;display:flex;align-items:center;gap:.75rem;z-index:9999;box-shadow:0 6px 20px rgba(0,0,0,.25);font-family:\'DM Sans\',sans-serif;font-size:.8rem;color:var(--ink);backdrop-filter:blur(10px)';
+    b.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--surface-md,var(--surface));border:1.5px solid var(--accent);border-radius:10px;padding:.65rem 1rem;display:flex;align-items:center;gap:.75rem;z-index:700;box-shadow:0 6px 20px rgba(0,0,0,.25);font-family:\'DM Sans\',sans-serif;font-size:.8rem;color:var(--ink);backdrop-filter:blur(10px)';
     document.body.appendChild(b);
   }
   b.innerHTML='<span>Tehtävä poistettu</span><button onclick="undoDelete()" style="font-family:inherit;font-size:.78rem;font-weight:500;padding:.3rem .7rem;border-radius:6px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);cursor:pointer">↶ Kumoa</button><span id="undo-count" style="font-size:.7rem;color:var(--muted);min-width:1.5rem;text-align:right">5s</span>';
@@ -6086,7 +6231,7 @@ function soundClick(){
     var g=ctx.createGain();g.gain.setValueAtTime(0.35,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.06);
     src.connect(f);f.connect(g);g.connect(ctx.destination);
     src.start(t);
-  }catch(e){}
+  }catch(e){/* ääni ei-kriittinen */}
 }
 
 // Linnunlaulu — pomodoro valmis (kolme selkeää vihellystä, kovempi)
@@ -6112,7 +6257,7 @@ function soundBird(){
       osc2.connect(g2);g2.connect(ctx.destination);
       osc2.start(t+delay+0.06);osc2.stop(t+delay+0.28);
     });
-  }catch(e){}
+  }catch(e){/* ääni ei-kriittinen */}
 }
 
 // Vesipisara — tauko ohi (laskeva pisara)
@@ -6138,7 +6283,7 @@ function soundWater(){
     g2.gain.exponentialRampToValueAtTime(0.001,t+0.38);
     osc2.connect(g2);g2.connect(ctx.destination);
     osc2.start(t+0.12);osc2.stop(t+0.4);
-  }catch(e){}
+  }catch(e){/* ääni ei-kriittinen */}
 }
 
 // Metsäkello — tehtävä tehty (pehmeä pitkä sointi)
@@ -6154,7 +6299,7 @@ function soundBell(){
       osc.connect(g);g.connect(ctx.destination);
       osc.start(t);osc.stop(t+1.8);
     });
-  }catch(e){}
+  }catch(e){/* ääni ei-kriittinen */}
 }
 // ── NOTIFICATIONS ──
 function requestNotifPermission(){
@@ -6186,10 +6331,10 @@ function keepAwake(){
     _audioNode.loop=true;
     _audioNode.connect(_audioCtx.destination);
     _audioNode.start();
-  }catch(e){}
+  }catch(e){/* ääni ei-kriittinen */}
 }
 function stopKeepAwake(){
-  try{if(_audioNode){_audioNode.stop();_audioNode=null;}}catch(e){}
+  try{if(_audioNode){_audioNode.stop();_audioNode=null;}}catch(e){/* ääni ei-kriittinen */}
 }
 
 function tick(){
@@ -6567,6 +6712,13 @@ var _TCG_VERB_ID = {
   'Tee':'verb-i-tee','Selvitä':'verb-i-selvita','Vie':'verb-i-vie',
   'Tarkista':'verb-i-tarkista','Varaa':'verb-i-varaa'
 };
+/* Rarity = tärkeys (Eisenhower): kortisto opettaa metodologiaa */
+function rarityOf(t){
+  if(t.frog)return 'mythic';
+  if(t.quad==='q1'||t.quad==='q2')return 'rare';
+  if(t.quad==='q3')return 'uncommon';
+  return 'common';
+}
 function _tcgIconId(verbi){
   if(!verbi) return 'verb-i-tee';
   if(_TCG_VERB_ID[verbi]) return _TCG_VERB_ID[verbi];
@@ -6590,12 +6742,13 @@ function _tcgSvgIcon(id, size){
 function renderArenaCard(t, container, anyFrog, mode){
   mode = mode || 'arena';
   var q = t.quad && {q1:'Tee heti',q2:'Aikatauluta',q3:'Delegoi',q4:'Poista'}[t.quad];
-  var qc = t.quad && {'q1':'#a84c28','q2':'#2d5a3d','q3':'#7a6a50','q4':'#9a9a8e'}[t.quad] || '#9a9a8e';
+  var qc = t.quad && {'q1':'var(--q1)','q2':'var(--q2)','q3':'var(--q3)','q4':'var(--q4)'}[t.quad] || 'var(--q4)';
   var iconId = _tcgIconId(t.verbi);
 
   var card=document.createElement('div');
   var modeClass = mode==='hand' ? 'tcg-card--hand' : 'tcg-card--arena-size';
-  card.className='tcg-card '+modeClass+(t.frog?' tcg-card--frog':'')+(t.frog||t.important?' tcg-card--holo':'')+(t.handForced?' tcg-card--star':'');
+  var rar=rarityOf(t);
+  card.className='tcg-card '+modeClass+' tcg-card--'+rar+(t.frog?' tcg-card--frog':'')+(t.frog?' tcg-card--holo':'')+(t.handForced?' tcg-card--star':'');
   card.setAttribute('tabindex','0');
   card.style.setProperty('--qc',qc);
   var _albl=(t.frog?'Sammakko. ':'')+(t.verbi||'')+' '+t.text+(q?', '+q:'')+(t.est?' — '+fe(t.est)+' pomodoro':'');
@@ -6628,6 +6781,14 @@ function renderArenaCard(t, container, anyFrog, mode){
   tl.appendChild(_tcgSvgIcon(iconId));
   if(t.verbi){var vs=document.createElement('span');vs.textContent=t.verbi;tl.appendChild(vs);}
   if(q){var qs=document.createElement('span');qs.className='tl-quad';qs.textContent=q;tl.appendChild(qs);}
+  var setEl=document.createElement('span');
+  setEl.className='tcg-card__set tcg-card__set--'+rar;
+  var wsName='';
+  try{var wsId=getActiveWsId();var ws=getWorkspaces().find(function(w){return w.id===wsId;});wsName=(ws&&ws.name)||'';}catch(e){/* työtila ei pakollinen */}
+  setEl.textContent=(wsName.charAt(0)||'F').toUpperCase();
+  if(wsName)setEl.title='Työtila: '+wsName;
+  setEl.setAttribute('aria-hidden','true');
+  tl.appendChild(setEl);
   plate.appendChild(tl);
 
   // Runko
@@ -7178,7 +7339,7 @@ function toggleHandBar(){
     bar.classList.remove('hand-bar--open');
     document.body.classList.remove('hand-open');
   }
-  try{ localStorage.setItem('fap_hand_open', _handBarOpen ? '1' : '0'); }catch(e){}
+  try{ localStorage.setItem('fap_hand_open', _handBarOpen ? '1' : '0'); }catch(e){/* UI-tila ei-kriittinen */}
 }
 
 function initHandBarState(){
@@ -7197,7 +7358,7 @@ function initHandBarState(){
         document.body.classList.add('hand-open');
       }
     }
-  }catch(e){}
+  }catch(e){/* UI-tila ei-kriittinen */}
 }
 
 function _attachHandHoverDesktop(){
@@ -7675,9 +7836,11 @@ function openSchedulePicker(){
   setSchedType('once');
   document.getElementById('schedule-overlay').style.display='block';
   document.getElementById('schedule-modal').style.display='block';
+  _trapOn('schedule-modal');
 }
 
 function closeSchedulePicker(){
+  _trapOff('schedule-modal');
   document.getElementById('schedule-overlay').style.display='none';
   document.getElementById('schedule-modal').style.display='none';
 }
@@ -7854,10 +8017,18 @@ function renderSummary(){
   wsEl.innerHTML=html;
 }
 
+var _ntTimer=null;
 function notify(msg){
   var e=document.getElementById('nt');
+  if(!e)return;
+  clearTimeout(_ntTimer);
+  if(e.classList.contains('on')){
+    e.classList.remove('on');
+    void e.offsetWidth; // pakota reflow, jotta transitio restarttaa
+  }
   e.textContent=msg;e.classList.add('on');
-  setTimeout(function(){e.classList.remove('on')},4000);
+  _ntTimer=setTimeout(function(){e.classList.remove('on')},4000);
+  if(typeof a11yAnnounce==='function')a11yAnnounce(msg);
 }
 
 // ── SAVE / LOAD ──
@@ -7967,7 +8138,7 @@ function _syncPresetsToFirestore(){
     try{
       var ref=window.doc(window.db,'users',uid,'presets',p.id);
       window.setDoc(ref,p).catch(function(e){console.warn('Preset sync failed',e);});
-    }catch(e){}
+    }catch(e){console.warn('Fokus: preset-synkka epäonnistui',e);}
   });
 }
 
@@ -7995,7 +8166,7 @@ function _loadPresetsFromFirestore(){
         renderPresetList();
       }
     }).catch(function(e){console.warn('Preset load failed',e);});
-  }catch(e){}
+  }catch(e){console.warn('Fokus: preset-lataus epäonnistui',e);}
 }
 
 function generatePresetId(title){
@@ -8006,10 +8177,27 @@ function generatePresetId(title){
 // ── /TEHTÄVÄPOHJAT ────────────────────────────────────────────────
 function save(){
   try{
-    localStorage.setItem(wsStorageKey(),JSON.stringify({tasks:tasks,nid:nid,active:active,turn:turn,pomoDone:pomoDone,totalPomos:totalPomos,date:dtEl.value,projects:projects,pnid:pnid,updatedAt:Date.now()}));
+    // Stale-write-suoja: jos localStorageen on kirjoitettu uudempaa dataa
+    // latauksemme jälkeen (toinen välilehti/laite), tuoreempi voittaa.
+    var cur=localStorage.getItem(wsStorageKey());
+    if(cur){
+      var curTs=0;
+      try{curTs=(JSON.parse(cur).updatedAt)||0;}catch(e2){}
+      if(curTs>(window._loadedTs||0)){
+        console.warn('Fokus: save() ohitettu — localStoragessa uudempi data (ts '+curTs+' > '+(window._loadedTs||0)+')');
+        load();
+        notify('Tiedot päivittyivät toisesta ikkunasta');
+        return;
+      }
+    }
+    var now=Date.now();
+    localStorage.setItem(wsStorageKey(),JSON.stringify({tasks:tasks,nid:nid,active:active,turn:turn,pomoDone:pomoDone,totalPomos:totalPomos,date:dtEl.value,projects:projects,pnid:pnid,updatedAt:now}));
+    window._loadedTs=now;
   }catch(e){
     if(e.name==='QuotaExceededError'||e.name==='NS_ERROR_DOM_QUOTA_REACHED'){
       notify('Tallennus epäonnistui: selain muisti täynnä');
+    }else{
+      console.error('Fokus: save() epäonnistui',e);
     }
   }
   if(window._scheduleFsSave) window._scheduleFsSave();
@@ -8026,7 +8214,8 @@ function load(){
     }
   }
   if(r){
-    var d;try{d=JSON.parse(r);}catch(e){d={};}
+    var d;try{d=JSON.parse(r);}catch(e){d={};console.warn('Fokus: load() JSON-parse epäonnistui',e);}
+    window._loadedTs=d.updatedAt||0;
     tasks=d.tasks||[];nid=d.nid||1;
     // Migraatio: lisää chain-kentät vanhoille tehtäville
     tasks.forEach(function(t){
@@ -8126,7 +8315,7 @@ function setTheme(t){
       window._swipeWin.document.documentElement.setAttribute('data-theme',t);
       window._swipeWin.localStorage.setItem('fap_theme',t);
     }
-  }catch(e){}
+  }catch(e){/* popup suljettu */}
 }
 (function initTheme(){
   var saved=localStorage.getItem('fap_theme')||'usva';
@@ -8314,10 +8503,12 @@ function openJatkokortti(parentId) {
   document.getElementById('jatko-save-btn').style.cursor = 'not-allowed';
   document.getElementById('jatko-overlay').style.display = 'block';
   document.getElementById('jatko-modal').style.display = 'flex';
+  _trapOn('jatko-modal');
   setTimeout(function(){ document.getElementById('jatko-ni').focus(); }, 80);
 }
 
 function closeJatkoModal() {
+  _trapOff('jatko-modal');
   document.getElementById('jatko-overlay').style.display = 'none';
   document.getElementById('jatko-modal').style.display = 'none';
   _jatkoParentId = null;
@@ -8440,8 +8631,10 @@ function openPresets(){
   document.getElementById('presets-overlay').style.display='block';
   document.getElementById('presets-panel').style.display='flex';
   showPresetsList();
+  _trapOn('presets-panel');
 }
 function closePresets(){
+  _trapOff('presets-panel');
   document.getElementById('presets-overlay').style.display='none';
   document.getElementById('presets-panel').style.display='none';
 }
@@ -8508,8 +8701,8 @@ function deletePreset(id){
   if(window.currentUser&&window.db){
     try{
       var ref=window.doc(window.db,'users',window.currentUser.uid,'presets',id);
-      window.deleteDoc(ref).catch(function(){});
-    }catch(e){}
+      window.deleteDoc(ref).catch(function(e){console.warn('Preset delete failed',e);});
+    }catch(e){console.warn('Fokus: preset-poisto epäonnistui',e);}
   }
   savePresets();
   renderPresetList();
@@ -8525,7 +8718,7 @@ function openSharePreset(id){
   p.isPublic=true;
   savePresets();
   var code=p.shareCode;
-  var url='https://joketre3.github.io/fokus/faptcg.html?preset='+code;
+  var url='https://joketre3.github.io/fokus/index.html?preset='+code;
   // Näytä share-modaali
   var ov=document.getElementById('share-preset-overlay');
   var box=document.getElementById('share-preset-box');
@@ -9039,7 +9232,7 @@ function closeChainView(){
 
 <!-- ── TEHTÄVÄPOHJAT-PANEELI (Vaihe 11) ── -->
 <div id="presets-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)" onclick="if(event.target===this)closePresets()"></div>
-<div id="presets-panel" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(480px,96vw);height:90vh;max-height:90vh;background:var(--surface-xs);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.18);z-index:201;flex-direction:column;overflow:hidden;">
+<div id="presets-panel" role="dialog" aria-modal="true" aria-label="Tehtäväpohjat" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(480px,96vw);height:90vh;max-height:90vh;background:var(--surface-xs);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.18);z-index:201;flex-direction:column;overflow:hidden;">
   <div style="padding:.9rem 1.2rem .75rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
     <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;font-style:italic;letter-spacing:-0.02em;color:var(--ink)">📋 Tehtäväpohjat</div>
     <div style="display:flex;gap:.4rem;align-items:center">
@@ -9709,7 +9902,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <span class="ham-row__label">Selaa tehtäviä</span>
   </button>
 
-  <button class="ham-row" onclick="closeHamMenu();openEisenhower()">
+  <button class="ham-row" onclick="closeHamMenu();openEisePeek(false)">
     <span class="ham-row__icon">▦</span>
     <span class="ham-row__label">Eisenhower-matriisi</span>
   </button>
@@ -9778,10 +9971,12 @@ function openHamMenu(){
   var doneCount = (typeof tasks !== 'undefined') ? tasks.filter(function(t){return t.done}).length : 0;
   var countEl = document.getElementById('ham-done-count');
   if(countEl) countEl.textContent = doneCount > 0 ? doneCount + ' kpl' : '';
+  _trapOn('ham-sheet');
   document.addEventListener('keydown', hamEscHandler);
 }
 
 function closeHamMenu(){
+  _trapOff('ham-sheet');
   document.getElementById('ham-overlay').classList.remove('ham-open');
   document.getElementById('ham-sheet').classList.remove('ham-open');
   document.removeEventListener('keydown', hamEscHandler);
@@ -9809,10 +10004,12 @@ function openDoneModal(){
   }
   document.getElementById('done-modal-overlay').classList.add('ham-open');
   document.getElementById('done-modal').classList.add('ham-open');
+  _trapOn('done-modal');
   document.addEventListener('keydown', doneEscHandler);
 }
 
 function closeDoneModal(){
+  _trapOff('done-modal');
   document.getElementById('done-modal-overlay').classList.remove('ham-open');
   document.getElementById('done-modal').classList.remove('ham-open');
   document.removeEventListener('keydown', doneEscHandler);
@@ -10079,7 +10276,7 @@ function renderInventory(){
     subCategory: invState.subCategory,
     sort: invState.sort,
     hideActive: invState.hideActive
-  })); }catch(e){}
+  })); }catch(e){console.warn('Fokus: inventory-tilan tallennus epäonnistui',e);}
 
   var sorted = getInventoryFilteredTasks();
 
@@ -10186,7 +10383,7 @@ function openInventory(){
     if(saved.subCategory !== undefined) invState.subCategory = saved.subCategory;
     if(saved.sort) invState.sort = saved.sort;
     if(saved.hideActive !== undefined) invState.hideActive = saved.hideActive;
-  }catch(e){}
+  }catch(e){console.warn('Fokus: inventory-tilan luku epäonnistui',e);}
 
   var modal = document.getElementById('inv-modal');
   if(!modal) return;
@@ -10202,11 +10399,13 @@ function openInventory(){
 
   buildInvSidebar();
   renderInventory();
+  _trapOn('inv-modal');
   document.addEventListener('keydown', invEscHandler);
   if(searchEl) setTimeout(function(){ searchEl.focus(); }, 300);
 }
 
 function closeInventory(){
+  _trapOff('inv-modal');
   var modal = document.getElementById('inv-modal');
   if(modal) modal.classList.remove('inv-open');
   document.removeEventListener('keydown', invEscHandler);

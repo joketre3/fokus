@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="fi" data-theme="usva">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; script-src 'self' 'unsafe-inline';">
+<title>Fokus — Rarity-mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@1&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────────────────────────────────────────────
+   FOKUS — RARITY-MOCKUP. Rarity = tärkeys (Eisenhower):
+   mythic = sammakko · rare = q1/q2 · uncommon = q3 · common = q4
+   Väri-identiteetti = kvadrantti (--qc), manakustannus = est.
+   Metallit ovat neutraaleja → 60-30-10 säilyy.
+   ───────────────────────────────────────────────────────── */
+:root{
+  --accent:#c49a3a;
+  --ink:rgba(255,255,255,.95);
+  --muted:rgba(255,255,255,.55);
+  --q1:#a84c28; --q2:#2d5a3d; --q3:#7a6a50; --q4:#9a9a8e;
+  --pomo:#a84c28; --pomo-hi:#e8623a;
+  --bg-a:#16302a; --bg-b:#0c1a14; --bg-c:#101f18;
+  --plate-top:#1a2e26; --plate-bot:#13211b;
+  --gold:#c49a3a; --gold-hi:#e8c66a; --gold-deep:#6b4f1c;
+  --metal-silver:#b8bcc0; --metal-silver-hi:#e2e6ea;
+  --tcg-plate-ink:#f4f0e4; --tcg-plate-ink-dim:#e8dcc0; --tcg-gold-ink:#f0d9a8;
+  --tcg-stop:#7a2020; --ink-on-art:#fff;
+}
+html[data-theme="havu"]{
+  --accent:#4fa870;
+  --bg-a:#0a1c12; --bg-b:#04100a; --bg-c:#06140d;
+  --plate-top:#13241b; --plate-bot:#0c1812;
+}
+html[data-theme="aurinko"]{
+  --accent:#c4681e;
+  --ink:#2d2417; --muted:#7a6a4a;
+  --bg-a:#ffe8b8; --bg-b:#fdf3df; --bg-c:#ffedc0;
+  --plate-top:#1c2e26; --plate-bot:#14241c; /* kortit pysyvät tummina pöydällä */
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'DM Sans',system-ui,sans-serif;color:var(--ink);
+  background:radial-gradient(120% 80% at 50% 0%, var(--bg-a) 0%, var(--bg-b) 55%, var(--bg-c) 100%);
+  min-height:100vh;padding-bottom:3rem;
+}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;gap:1rem;flex-wrap:wrap;}
+.topbar h1{font-family:'Cinzel',serif;font-weight:700;font-size:1.25rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);}
+.topbar .sub{font-size:.72rem;color:var(--muted);}
+.theme-switch{display:flex;gap:.4rem;}
+.theme-switch button{font-family:'DM Sans',sans-serif;font-size:.75rem;padding:.4rem .8rem;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:var(--ink);cursor:pointer;}
+.theme-switch button.on{border-color:var(--accent);color:var(--accent);}
+html[data-theme="aurinko"] .theme-switch button{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.15);}
+.section{padding:0 1.5rem;margin-top:1.5rem;}
+.section h2{font-family:'DM Serif Display',serif;font-style:italic;font-weight:400;font-size:1.05rem;margin-bottom:.25rem;}
+.section .desc{font-size:.75rem;color:var(--muted);margin-bottom:1rem;max-width:640px;line-height:1.5;}
+.row{display:flex;gap:1.25rem;flex-wrap:wrap;align-items:flex-start;}
+.slot{display:flex;flex-direction:column;gap:.5rem;align-items:center;}
+.slot .tag{font-family:'Cinzel',serif;font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;}
+.tag--mythic{color:var(--gold-hi);}
+.tag--rare{color:var(--gold);}
+.tag--uncommon{color:var(--metal-silver);}
+.tag--common{color:var(--muted);}
+
+/* ── TUOTANTO-CSS (kopioitu index.html:stä) ── */
+.tcg-card{
+  --qc:#a84c28;
+  position:relative;
+  width:280px;aspect-ratio:5/7;
+  border-radius:14px;padding:7px;
+  background:var(--qc);
+  background:linear-gradient(160deg,
+    color-mix(in srgb,var(--qc) 55%,#14241c) 0%,
+    #0e1a14 60%,
+    color-mix(in srgb,var(--qc) 35%,#0e1a14) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.10),
+    inset 0 0 0 3px rgba(0,0,0,.35),
+    0 2px 0 rgba(0,0,0,.4),
+    0 10px 24px rgba(0,0,0,.45);
+  isolation:isolate;
+}
+.tcg-card--frog{
+  background:var(--gold);
+  background:linear-gradient(160deg,var(--gold-hi) 0%,var(--gold-deep) 42%,var(--gold) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.25),
+    inset 0 0 0 3px rgba(70,50,12,.6),
+    0 2px 0 rgba(0,0,0,.4),
+    0 12px 28px rgba(0,0,0,.5);
+}
+.tcg-card__plate{
+  position:relative;height:100%;
+  border-radius:8px;overflow:hidden;
+  background:linear-gradient(180deg,var(--plate-top) 0%,var(--plate-bot) 100%);
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.06),inset 0 -2px 6px rgba(0,0,0,.4);
+  display:flex;flex-direction:column;
+}
+.tcg-card__cost{
+  position:absolute;top:9px;right:9px;z-index:4;
+  display:flex;gap:3px;align-items:center;
+}
+.tcg-card__pip{
+  width:17px;height:17px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--pomo-hi),var(--pomo) 72%);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.5),0 1px 2px rgba(0,0,0,.55);
+}
+.tcg-card__pip--half{
+  background:linear-gradient(90deg,var(--pomo-hi) 50%,color-mix(in srgb,var(--pomo) 25%,transparent) 50%);
+}
+.tcg-card__pip-x{
+  font-family:'Cinzel',serif;font-weight:700;font-size:.7rem;
+  color:var(--tcg-gold-ink);text-shadow:0 1px 2px rgba(0,0,0,.7);
+}
+.tcg-card__frog-seal{
+  position:absolute;top:9px;left:9px;z-index:4;
+  width:25px;height:25px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--q2),var(--plate-bot));
+  box-shadow:0 0 0 2px var(--gold),inset 0 1px 2px rgba(255,255,255,.3);
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+}
+.tcg-card__art{
+  position:relative;flex:0 0 40%;
+  display:flex;align-items:center;justify-content:center;
+  margin:6px 6px 0;border-radius:6px;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 30%,
+    color-mix(in srgb,var(--qc) 42%,transparent) 0%,#0c1611 82%);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.5),inset 0 0 18px rgba(0,0,0,.55);
+}
+.tcg-card__art svg{
+  width:52%;height:52%;opacity:.95;position:relative;z-index:1;
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.6));
+}
+.tcg-card__art::after{
+  content:"";position:absolute;inset:0;
+  background-image:radial-gradient(circle,rgba(255,255,255,.05) 1px,transparent 1px);
+  background-size:6px 6px;
+}
+.tcg-card__typeline{
+  display:flex;align-items:center;gap:.4rem;
+  margin:6px 6px 0;padding:.28rem .55rem;
+  font-family:'Cinzel',serif;font-weight:600;
+  font-size:.6rem;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--tcg-plate-ink-dim);border-radius:4px;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--gold) 30%,transparent),color-mix(in srgb,var(--gold) 8%,transparent));
+  border-top:1px solid color-mix(in srgb,var(--gold) 50%,transparent);
+  border-bottom:1px solid rgba(0,0,0,.45);
+  text-shadow:0 1px 1px rgba(0,0,0,.6);
+}
+.tcg-card__typeline svg{width:1.15em;height:1.15em;opacity:.9;flex:none;}
+.tcg-card__typeline .tl-quad{margin-left:auto;opacity:.85;letter-spacing:.1em;}
+.tcg-card__body{
+  flex:1;display:flex;flex-direction:column;
+  padding:.55rem .7rem;gap:.4rem;min-height:0;
+}
+.tcg-card__title{
+  font-family:'DM Sans',sans-serif;font-weight:600;font-size:.92rem;
+  line-height:1.25;color:var(--tcg-plate-ink);
+}
+.tcg-card__notes-tcg{
+  font-size:.7rem;color:rgba(255,255,255,.5);line-height:1.4;
+  font-style:italic;padding-left:.75rem;
+}
+.tcg-card__meta-tcg{
+  margin-top:auto;display:flex;align-items:center;gap:.5rem;
+  font-size:.68rem;color:rgba(255,255,255,.6);letter-spacing:.02em;
+}
+.tcg-card__meta-tcg .dot{opacity:.4;}
+.tcg-card__actions-tcg{display:flex;gap:.3rem;padding:.4rem .55rem .55rem;}
+.tcg-card__actions-tcg button{
+  font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:600;
+  border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);border-radius:6px;cursor:pointer;
+  padding:.4rem .5rem;background:rgba(0,0,0,.25);color:var(--tcg-plate-ink-dim);
+  transition:background .15s,transform .1s;
+}
+.tcg-card__actions-tcg button:hover{background:color-mix(in srgb,var(--gold) 25%,transparent);}
+.tcg-card__actions-tcg button:active{transform:translateY(1px);}
+.tcg-card__actions-tcg .act-start{
+  flex:1;background:var(--accent);color:var(--ink-on-art);border-color:var(--accent);
+}
+.tcg-card__actions-tcg .act-start--running{
+  background:var(--tcg-stop);border-color:var(--tcg-stop);
+}
+.tcg-card__actions-tcg .act-start:hover{filter:brightness(1.1);}
+/* Stats-rivi (tärkeä/kiireinen/muokkaa-napit) */
+.tcg-card__stats{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.35rem .55rem;gap:.3rem;flex-shrink:0;
+  border-bottom:1px solid rgba(196,154,58,.1);
+}
+.tcg-card__stats-left,.tcg-card__stats-right{
+  display:flex;align-items:center;gap:.3rem;
+}
+/* Holo-efekti: vain frog + important */
+.tcg-card--holo .tcg-card__plate::before{
+  content:"";position:absolute;inset:0;z-index:3;pointer-events:none;
+  border-radius:8px;
+  background:conic-gradient(from 0deg at 50% 50%,
+    rgba(255,80,80,.22),rgba(255,220,80,.20),rgba(80,255,160,.22),
+    rgba(80,180,255,.20),rgba(200,80,255,.22),rgba(255,80,80,.22));
+  mix-blend-mode:color-dodge;opacity:0;transition:opacity .35s;
+  -webkit-mask-image:linear-gradient(115deg,transparent 30%,#000 50%,transparent 70%);
+  mask-image:linear-gradient(115deg,transparent 30%,#000 50%,transparent 70%);
+  -webkit-mask-size:250% 250%;mask-size:250% 250%;
+  animation:holoSweep 5s linear infinite;
+}
+.tcg-card--holo:hover .tcg-card__plate::before{opacity:.5;}
+.tcg-card--arena.tcg-card--holo .tcg-card__plate::before{opacity:.45;}
+@keyframes holoSweep{
+  0%{-webkit-mask-position:0% 0%;mask-position:0% 0%;}
+  100%{-webkit-mask-position:100% 100%;mask-position:100% 100%;}
+}
+/* Areena-kortti isompi + kultainen hehku */
+.tcg-card.tcg-card--arena-size{
+  width:100%;max-width:300px;
+  transform:translateY(-4px);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.10),
+    inset 0 0 0 3px rgba(0,0,0,.35),
+    0 2px 0 rgba(0,0,0,.4),
+    0 14px 32px rgba(0,0,0,.5),
+    0 0 36px color-mix(in srgb,var(--accent) 40%,transparent);
+}
+.tcg-card.tcg-card--arena-size.tcg-card--frog{
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.25),
+    inset 0 0 0 3px rgba(70,50,12,.6),
+    0 14px 32px rgba(0,0,0,.55),
+    0 0 44px rgba(196,154,58,.45);
+}
+@keyframes arenaLand{
+  0%{box-shadow:0 0 0 0 rgba(196,154,58,.6),0 14px 32px rgba(0,0,0,.5);}
+  100%{box-shadow:0 0 0 16px rgba(196,154,58,0),0 14px 32px rgba(0,0,0,.5);}
+}
+/* Perf-lite: holo pois */
+html[data-perf="lite"] .tcg-card__plate::before{display:none!important;}
+
+
+
+/* ── UUSI: RARITY-KEHYKSET ─────────────────────────────────
+   Metalli näkyy hiuksenhienona sisärenkaana levyn reunassa
+   ja set-symbolin värissä (MTG-konventio). Ei uusia hehkuja. */
+.tcg-card--rare .tcg-card__plate{
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.06),inset 0 -2px 6px rgba(0,0,0,.4),
+    inset 0 0 0 1px color-mix(in srgb,var(--gold) 55%,transparent);
+}
+.tcg-card--uncommon .tcg-card__plate{
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.06),inset 0 -2px 6px rgba(0,0,0,.4),
+    inset 0 0 0 1px color-mix(in srgb,var(--metal-silver) 40%,transparent);
+}
+/* Set-symboli typelinen oikeassa reunassa: työtilan tunnus, rarity-väri */
+.tcg-card__set{
+  flex:none;font-family:'Cinzel',serif;font-weight:700;font-size:.72rem;line-height:1;letter-spacing:0;
+}
+.tcg-card__set--mythic{color:var(--gold-hi);text-shadow:0 0 5px color-mix(in srgb,var(--gold) 70%,transparent);}
+.tcg-card__set--rare{color:var(--gold);}
+.tcg-card__set--uncommon{color:var(--metal-silver-hi);}
+.tcg-card__set--common{color:var(--tcg-plate-ink-dim);opacity:.5;}
+/* Flavor-erotin lisätiedoille */
+.tcg-card__notes-tcg{
+  border-top:1px solid color-mix(in srgb,var(--gold) 18%,transparent);
+  padding-top:.35rem;margin-top:.1rem;
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;}
+  .tcg-card--holo .tcg-card__plate::before{display:none!important;}
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div>
+    <h1>Rarity-mockup</h1>
+    <div class="sub">rarity = tärkeys · väri = kvadrantti · mana = est</div>
+  </div>
+  <div class="theme-switch">
+    <button data-theme="usva" class="on">🌫 Usva</button>
+    <button data-theme="havu">🌲 Havu</button>
+    <button data-theme="aurinko">✻ Aurinko</button>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Neljä harvinaisuutta</h2>
+  <div class="desc">Sammakko on mythic — yksi per päivä, holo + kultasinetti. Tärkeät (q1/q2) ovat
+  rare-kortteja: kultainen sisärengas + kullattu set-symboli. Q3 saa hopean, q4 jää maalaamatta.
+  Tärkeys ratkaisee arvon, ei kiire — kortisto opettaa Eisenhoweria.</div>
+  <div class="row" id="row-main"></div>
+</div>
+
+<div class="section">
+  <h2>Holo-vaihtoehdot vertailuun</h2>
+  <div class="desc">Vasen: holo VAIN sammakolla (suositus — mythic-niukkuus, rauhallisempi pöytä).
+  Oikea: holo myös tärkeillä (nykyinen käytös index.html:ssä). Vie hiiri kortin päälle nähdäksesi efektin.</div>
+  <div class="row" id="row-holo"></div>
+</div>
+
+<script>
+document.querySelectorAll('.theme-switch button').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    document.documentElement.setAttribute('data-theme',btn.getAttribute('data-theme'));
+    document.querySelectorAll('.theme-switch button').forEach(function(b){b.classList.toggle('on',b===btn);});
+  });
+});
+
+var QC={q1:'var(--q1)',q2:'var(--q2)',q3:'var(--q3)',q4:'var(--q4)'};
+var QL={q1:'Tee heti',q2:'Aikatauluta',q3:'Delegoi',q4:'Poista'};
+
+function rarityOf(t){
+  if(t.frog)return 'mythic';
+  if(t.quad==='q1'||t.quad==='q2')return 'rare';
+  if(t.quad==='q3')return 'uncommon';
+  return 'common';
+}
+
+function mkPips(est){
+  var c=document.createElement('div');c.className='tcg-card__cost';
+  var full=Math.floor(est),half=est%1>=0.5;
+  if(est>4){
+    var x=document.createElement('span');x.className='tcg-card__pip-x';x.textContent=String(est)+'\u00d7';c.appendChild(x);
+    var p=document.createElement('span');p.className='tcg-card__pip';c.appendChild(p);
+    return c;
+  }
+  for(var i=0;i<full;i++){var p2=document.createElement('span');p2.className='tcg-card__pip';c.appendChild(p2);}
+  if(half){var h=document.createElement('span');h.className='tcg-card__pip tcg-card__pip--half';c.appendChild(h);}
+  return c;
+}
+
+function mkCard(t,holoMode){
+  var rar=rarityOf(t);
+  var holo = holoMode==='wide' ? (t.frog||t.important) : t.frog;
+  var card=document.createElement('div');
+  card.className='tcg-card tcg-card--arena-size tcg-card--'+rar
+    +(t.frog?' tcg-card--frog':'')+(holo?' tcg-card--holo':'');
+  card.style.setProperty('--qc',QC[t.quad]||'var(--q4)');
+  card.appendChild(mkPips(t.est||1));
+  if(t.frog){var seal=document.createElement('div');seal.className='tcg-card__frog-seal';seal.textContent='\ud83d\udc38';card.appendChild(seal);}
+  var plate=document.createElement('div');plate.className='tcg-card__plate';
+  var art=document.createElement('div');art.className='tcg-card__art';
+  var em=document.createElement('span');em.style.fontSize='52px';em.style.position='relative';em.style.zIndex='1';em.textContent=t.emoji;art.appendChild(em);
+  plate.appendChild(art);
+  var tl=document.createElement('div');tl.className='tcg-card__typeline';
+  var vs=document.createElement('span');vs.textContent=t.verbi;tl.appendChild(vs);
+  var qs=document.createElement('span');qs.className='tl-quad';qs.textContent=QL[t.quad]||'';tl.appendChild(qs);
+  var set=document.createElement('span');set.className='tcg-card__set tcg-card__set--'+rar;set.textContent='T';set.title='Työtila: Työ';tl.appendChild(set);
+  plate.appendChild(tl);
+  var body=document.createElement('div');body.className='tcg-card__body';
+  var title=document.createElement('div');title.className='tcg-card__title';title.textContent=t.text;body.appendChild(title);
+  if(t.notes){var no=document.createElement('div');no.className='tcg-card__notes-tcg';no.textContent=t.notes;body.appendChild(no);}
+  var meta=document.createElement('div');meta.className='tcg-card__meta-tcg';
+  var tom=document.createElement('span');tom.textContent='\ud83c\udf45 \u00d7'+(t.est||1);meta.appendChild(tom);
+  body.appendChild(meta);
+  plate.appendChild(body);
+  card.appendChild(plate);
+  return card;
+}
+
+var samples=[
+  {tag:'Mythic — sammakko',cls:'tag--mythic',t:{frog:true,important:true,quad:'q1',est:2,verbi:'Soita',emoji:'\ud83d\udc38',text:'Soita asiakkaan omaiselle hoitopalaverista',notes:'P\u00e4iv\u00e4n t\u00e4rkein. Sy\u00f6 sammakko ensin.'}},
+  {tag:'Rare — t\u00e4rke\u00e4',cls:'tag--rare',t:{quad:'q2',important:true,est:1.5,verbi:'Kirjaa',emoji:'\u270d\ufe0f',text:'Kirjaa asiakask\u00e4ynnin muistiinpanot j\u00e4rjestelm\u00e4\u00e4n',notes:'Deadline perjantaina.'}},
+  {tag:'Uncommon — delegoi',cls:'tag--uncommon',t:{quad:'q3',est:1,verbi:'Vie',emoji:'\ud83d\udce6',text:'Vie kokousmuistio tiimin kansioon'}},
+  {tag:'Common — poista',cls:'tag--common',t:{quad:'q4',est:0.5,verbi:'Tarkista',emoji:'\ud83d\udd0d',text:'Tarkista uutiskirjeen tilaukset'}}
+];
+
+var rowMain=document.getElementById('row-main');
+samples.forEach(function(s){
+  var slot=document.createElement('div');slot.className='slot';
+  var tag=document.createElement('div');tag.className='tag '+s.cls;tag.textContent=s.tag;
+  slot.appendChild(tag);slot.appendChild(mkCard(s.t,'frog-only'));
+  rowMain.appendChild(slot);
+});
+
+var rowHolo=document.getElementById('row-holo');
+[['Suositus: holo vain sammakolla','frog-only'],['Vertailu: holo my\u00f6s t\u00e4rkeill\u00e4','wide']].forEach(function(pair){
+  var slot=document.createElement('div');slot.className='slot';
+  var tag=document.createElement('div');tag.className='tag tag--rare';tag.textContent=pair[0];
+  slot.appendChild(tag);slot.appendChild(mkCard(samples[1].t,pair[1]));
+  rowHolo.appendChild(slot);
+});
+</script>
+</body>
+</html>
