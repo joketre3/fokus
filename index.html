@@ -4979,6 +4979,22 @@ async function runAnalysis(){
 }
 
 function renderAIResults(result,inbox){
+  // AI-vastaus on epäluotettavaa syötettä — normalisoi kentät ennen DOM-insertiä
+  var VALID_Q=['q1','q2','q3','q4'];
+  function normQuad(q){return VALID_Q.indexOf(q)>=0?q:null;}
+  function normEst(v){v=Number(v);if(!isFinite(v)||v<=0)return null;return Math.min(8,Math.max(.5,Math.round(v*2)/2));}
+  if(result.sammakko){
+    var fid=Number(result.sammakko.id);
+    result.sammakko.id=isFinite(fid)&&fid>0?fid:null;
+  }
+  result.ehdotukset=(result.ehdotukset||[]).filter(function(e){
+    var n=Number(e.id);return isFinite(n)&&n>0;
+  }).map(function(e){
+    e.id=Number(e.id);
+    e.ehdotettu_quad=normQuad(e.ehdotettu_quad);
+    e.ehdotettu_est=normEst(e.ehdotettu_est);
+    return e;
+  });
   document.getElementById('ai-loading').style.display='none';
   var el=document.getElementById('ai-results');
   el.style.display='block';
@@ -4997,12 +5013,20 @@ function renderAIResults(result,inbox){
     var ft=inbox.find(function(t){return t.id===result.sammakko.id});
     if(ft){
       var fc=document.createElement('div');
+      fc.id='ai-card-frog';
       fc.style.cssText='background:var(--surface);border:1px solid #4a6e22;border-radius:var(--r-md);padding:1rem 1.1rem';
       fc.innerHTML='<div style="font-size:.65rem;font-weight:500;color:#4a6e22;letter-spacing:.07em;text-transform:uppercase;margin-bottom:.35rem">🐸 Sammakkoehdotus</div>'
         +'<div style="font-size:.85rem;font-weight:400;color:var(--ink);margin-bottom:.3rem">'+esc(ft.text)+'</div>'
-        +'<div style="font-size:.72rem;color:var(--muted);font-weight:300;margin-bottom:.75rem;line-height:1.5">'+esc(result.sammakko.perustelu)+'</div>'
-        +'<button onclick="acceptFrog('+ft.id+')" style="font-family:\'DM Sans\',sans-serif;font-size:.75rem;font-weight:500;padding:.35rem .85rem;border-radius:var(--r-sm);border:1.5px solid #4a6e22;color:#4a6e22;background:var(--surface);cursor:pointer;margin-right:.4rem">Hyväksy sammakko</button>'
-        +'<button onclick="this.closest(\'div[style]\').style.opacity=\'.4\'" style="font-family:\'DM Sans\',sans-serif;font-size:.75rem;font-weight:300;padding:.35rem .6rem;border-radius:var(--r-sm);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer">Ohita</button>';
+        +'<div style="font-size:.72rem;color:var(--muted);font-weight:300;margin-bottom:.75rem;line-height:1.5">'+esc(result.sammakko.perustelu)+'</div>';
+      var fAcc=document.createElement('button');
+      fAcc.textContent='Hyväksy sammakko';
+      fAcc.style.cssText='font-family:\'DM Sans\',sans-serif;font-size:.75rem;font-weight:500;padding:.35rem .85rem;border-radius:var(--r-sm);border:1.5px solid #4a6e22;color:#4a6e22;background:var(--surface);cursor:pointer;margin-right:.4rem';
+      fAcc.addEventListener('click',function(){acceptFrog(ft.id);});
+      var fSkip=document.createElement('button');
+      fSkip.textContent='Ohita';
+      fSkip.style.cssText='font-family:\'DM Sans\',sans-serif;font-size:.75rem;font-weight:300;padding:.35rem .6rem;border-radius:var(--r-sm);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer';
+      fSkip.addEventListener('click',function(){fc.style.opacity='.4';});
+      fc.appendChild(fAcc);fc.appendChild(fSkip);
       el.appendChild(fc);
     }
   }
@@ -5018,29 +5042,36 @@ function renderAIResults(result,inbox){
       var card=document.createElement('div');
       card.id='ai-card-'+e.id;
       card.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:.9rem 1rem';
-      var hasQuad=e.ehdotettu_quad&&e.ehdotettu_quad!==e.nykyinen_quad;
-      var hasEst=e.ehdotettu_est&&e.ehdotettu_est!==e.nykyinen_est;
+      // "nykyinen" luetaan oikeasta tehtävästä, ei AI:n kaiuttamasta arvosta
+      var curQuad=t.quad,curEst=t.est;
+      var hasQuad=e.ehdotettu_quad&&e.ehdotettu_quad!==curQuad;
+      var hasEst=e.ehdotettu_est&&e.ehdotettu_est!==curEst;
       var QL3={q1:'TEE HETI',q2:'AIKATAULUTA',q3:'DELEGOI',q4:'POISTA'};
       var QC3={q1:'var(--q1)',q2:'var(--q2)',q3:'var(--q3)',q4:'var(--q4)'};
       var inner='<div style="font-size:.8rem;font-weight:400;color:var(--ink);margin-bottom:.4rem">'+esc(e.teksti)+'</div>';
       if(hasQuad){
         inner+='<div style="font-size:.7rem;color:var(--muted);font-weight:300;margin-bottom:.25rem">'
-          +'<span style="color:'+QC3[e.nykyinen_quad]+'">'+QL3[e.nykyinen_quad]+'</span>'
+          +'<span style="color:'+(QC3[curQuad]||'var(--muted)')+'">'+(QL3[curQuad]||'—')+'</span>'
           +' → <span style="color:'+QC3[e.ehdotettu_quad]+';font-weight:500">'+QL3[e.ehdotettu_quad]+'</span></div>';
       }
       if(hasEst){
         inner+='<div style="font-size:.7rem;color:var(--muted);font-weight:300;margin-bottom:.25rem">'
-          +'Arvio: <span style="text-decoration:line-through">'+e.nykyinen_est+'</span>'
+          +'Arvio: <span style="text-decoration:line-through">'+(Number(curEst)||'—')+'</span>'
           +' → <span style="color:var(--pomo);font-weight:500">'+e.ehdotettu_est+' pomodoroa</span></div>';
       }
       if(e.kommentti){
         inner+='<div style="font-size:.7rem;color:var(--muted);font-weight:300;font-style:italic;margin-bottom:.6rem;line-height:1.5">'+esc(e.kommentti)+'</div>';
       }
-      inner+='<button onclick="acceptSuggestion('+e.id+',\''+( e.ehdotettu_quad||'')+'\','+( e.ehdotettu_est||'null')+')" '
-        +'style="font-family:\'DM Sans\',sans-serif;font-size:.72rem;font-weight:500;padding:.3rem .75rem;border-radius:var(--r-sm);border:1.5px solid var(--accent);color:var(--accent);background:var(--surface);cursor:pointer;margin-right:.35rem">Hyväksy</button>'
-        +'<button onclick="document.getElementById(\'ai-card-'+e.id+'\').style.opacity=\'.4\'" '
-        +'style="font-family:\'DM Sans\',sans-serif;font-size:.72rem;font-weight:300;padding:.3rem .55rem;border-radius:var(--r-sm);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer">Ohita</button>';
       card.innerHTML=inner;
+      var sAcc=document.createElement('button');
+      sAcc.textContent='Hyväksy';
+      sAcc.style.cssText='font-family:\'DM Sans\',sans-serif;font-size:.72rem;font-weight:500;padding:.3rem .75rem;border-radius:var(--r-sm);border:1.5px solid var(--accent);color:var(--accent);background:var(--surface);cursor:pointer;margin-right:.35rem';
+      sAcc.addEventListener('click',function(){acceptSuggestion(e.id,e.ehdotettu_quad,e.ehdotettu_est);});
+      var sSkip=document.createElement('button');
+      sSkip.textContent='Ohita';
+      sSkip.style.cssText='font-family:\'DM Sans\',sans-serif;font-size:.72rem;font-weight:300;padding:.3rem .55rem;border-radius:var(--r-sm);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer';
+      sSkip.addEventListener('click',function(){card.style.opacity='.4';});
+      card.appendChild(sAcc);card.appendChild(sSkip);
       el.appendChild(card);
     });
   }
