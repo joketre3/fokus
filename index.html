@@ -3201,6 +3201,8 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
 .tcg-card__notes-tcg{
   font-size:.7rem;color:rgba(255,255,255,.5);line-height:1.4;
   font-style:italic;padding-left:.75rem;
+  box-shadow:inset 0 1px 0 color-mix(in srgb,var(--gold) 18%,transparent);
+  padding-top:.35rem;margin-top:.1rem;
 }
 .tcg-card__meta-tcg{
   margin-top:auto;display:flex;align-items:center;gap:.5rem;
@@ -3251,6 +3253,27 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
   0%{-webkit-mask-position:0% 0%;mask-position:0% 0%;}
   100%{-webkit-mask-position:100% 100%;mask-position:100% 100%;}
 }
+/* ── Rarity = tärkeys: mythic (frog) · rare (q1/q2) · uncommon (q3) · common (q4)
+   Metalli näkyy hiuksenhienona sisärenkaana ja set-symbolin värissä — ei uusia hehkuja */
+.tcg-card--rare .tcg-card__plate{
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.06),inset 0 -2px 6px rgba(0,0,0,.4),
+    inset 0 0 0 1px color-mix(in srgb,var(--gold) 55%,transparent);
+}
+.tcg-card--uncommon .tcg-card__plate{
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.06),inset 0 -2px 6px rgba(0,0,0,.4),
+    inset 0 0 0 1px color-mix(in srgb,var(--metal-silver) 40%,transparent);
+}
+.tcg-card__set{
+  flex:none;margin-left:auto;font-family:'Cinzel',serif;font-weight:700;font-size:.72rem;line-height:1;letter-spacing:0;
+}
+.tcg-card__typeline .tl-quad+.tcg-card__set{margin-left:0;}
+.tcg-card__set--mythic{color:var(--gold-hi);text-shadow:0 0 5px color-mix(in srgb,var(--gold) 70%,transparent);}
+.tcg-card__set--rare{color:var(--gold);}
+.tcg-card__set--uncommon{color:var(--metal-silver-hi);}
+.tcg-card__set--common{color:var(--tcg-plate-ink-dim);opacity:.5;}
+.tcg-card--hand .tcg-card__set{font-size:.62rem;}
+/* Käsikortti 130px: kvadranttiteksti pois — väri-identiteetti näkyy kehyksessä */
+.tcg-card--hand .tcg-card__typeline .tl-quad{display:none;}
 /* Areena-kortti isompi + kultainen hehku */
 .tcg-card.tcg-card--arena-size{
   width:100%;max-width:300px;
@@ -6689,6 +6712,13 @@ var _TCG_VERB_ID = {
   'Tee':'verb-i-tee','Selvitä':'verb-i-selvita','Vie':'verb-i-vie',
   'Tarkista':'verb-i-tarkista','Varaa':'verb-i-varaa'
 };
+/* Rarity = tärkeys (Eisenhower): kortisto opettaa metodologiaa */
+function rarityOf(t){
+  if(t.frog)return 'mythic';
+  if(t.quad==='q1'||t.quad==='q2')return 'rare';
+  if(t.quad==='q3')return 'uncommon';
+  return 'common';
+}
 function _tcgIconId(verbi){
   if(!verbi) return 'verb-i-tee';
   if(_TCG_VERB_ID[verbi]) return _TCG_VERB_ID[verbi];
@@ -6712,12 +6742,13 @@ function _tcgSvgIcon(id, size){
 function renderArenaCard(t, container, anyFrog, mode){
   mode = mode || 'arena';
   var q = t.quad && {q1:'Tee heti',q2:'Aikatauluta',q3:'Delegoi',q4:'Poista'}[t.quad];
-  var qc = t.quad && {'q1':'#a84c28','q2':'#2d5a3d','q3':'#7a6a50','q4':'#9a9a8e'}[t.quad] || '#9a9a8e';
+  var qc = t.quad && {'q1':'var(--q1)','q2':'var(--q2)','q3':'var(--q3)','q4':'var(--q4)'}[t.quad] || 'var(--q4)';
   var iconId = _tcgIconId(t.verbi);
 
   var card=document.createElement('div');
   var modeClass = mode==='hand' ? 'tcg-card--hand' : 'tcg-card--arena-size';
-  card.className='tcg-card '+modeClass+(t.frog?' tcg-card--frog':'')+(t.frog||t.important?' tcg-card--holo':'')+(t.handForced?' tcg-card--star':'');
+  var rar=rarityOf(t);
+  card.className='tcg-card '+modeClass+' tcg-card--'+rar+(t.frog?' tcg-card--frog':'')+(t.frog?' tcg-card--holo':'')+(t.handForced?' tcg-card--star':'');
   card.setAttribute('tabindex','0');
   card.style.setProperty('--qc',qc);
   var _albl=(t.frog?'Sammakko. ':'')+(t.verbi||'')+' '+t.text+(q?', '+q:'')+(t.est?' — '+fe(t.est)+' pomodoro':'');
@@ -6750,6 +6781,14 @@ function renderArenaCard(t, container, anyFrog, mode){
   tl.appendChild(_tcgSvgIcon(iconId));
   if(t.verbi){var vs=document.createElement('span');vs.textContent=t.verbi;tl.appendChild(vs);}
   if(q){var qs=document.createElement('span');qs.className='tl-quad';qs.textContent=q;tl.appendChild(qs);}
+  var setEl=document.createElement('span');
+  setEl.className='tcg-card__set tcg-card__set--'+rar;
+  var wsName='';
+  try{var wsId=getActiveWsId();var ws=getWorkspaces().find(function(w){return w.id===wsId;});wsName=(ws&&ws.name)||'';}catch(e){/* työtila ei pakollinen */}
+  setEl.textContent=(wsName.charAt(0)||'F').toUpperCase();
+  if(wsName)setEl.title='Työtila: '+wsName;
+  setEl.setAttribute('aria-hidden','true');
+  tl.appendChild(setEl);
   plate.appendChild(tl);
 
   // Runko
