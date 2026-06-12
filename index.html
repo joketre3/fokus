@@ -1802,7 +1802,7 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 
 <!-- PROJECT MODAL -->
 <div id="proj-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)" onclick="if(event.target===this)closeProjectModal()"></div>
-<div id="proj-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(400px,96vw);background:var(--surface-xs);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.15);z-index:201;padding:1.5rem">
+<div id="proj-modal" role="dialog" aria-modal="true" aria-label="Projekti" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(400px,96vw);background:var(--surface-xs);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.15);z-index:201;padding:1.5rem">
   <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;font-style:italic;letter-spacing:-0.02em;color:var(--ink);margin-bottom:1.1rem" id="proj-modal-title">Uusi projekti</div>
   <input type="hidden" id="proj-edit-id">
   <div style="display:flex;flex-direction:column;gap:.85rem">
@@ -1827,7 +1827,7 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 
 <!-- SCHEDULE PICKER MODAL -->
 <div id="schedule-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)" onclick="if(event.target===this)closeSchedulePicker()"></div>
-<div id="schedule-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(380px,96vw);background:var(--surface-xs);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.15);z-index:201;padding:1.5rem">
+<div id="schedule-modal" role="dialog" aria-modal="true" aria-label="Aikataulutus" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(380px,96vw);background:var(--surface-xs);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.15);z-index:201;padding:1.5rem">
   <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;font-style:italic;letter-spacing:-0.02em;color:var(--ink);margin-bottom:1.1rem">🕐 Ajasta tehtävä</div>
   <!-- Type -->
   <div style="display:flex;gap:.5rem;margin-bottom:1rem">
@@ -2248,9 +2248,9 @@ body.hand-open #hand-toggle{bottom:calc(var(--hand-card-h,182px) + 12px);}
 }
 /* Käsikortin sisältö: pienempi fontti */
 .tcg-card--hand .tcg-card__title{font-size:.72rem;}
-.tcg-card--hand .tcg-card__typeline{font-size:.52rem;}
+.tcg-card--hand .tcg-card__typeline{font-size:.65rem;}
 .tcg-card--hand .tcg-card__art{flex-basis:36%;}
-.tcg-card--hand .tcg-card__meta-tcg{font-size:.58rem;}
+.tcg-card--hand .tcg-card__meta-tcg{font-size:.65rem;}
 .card-new__star-mark{
   position:absolute;
   top:.3rem;
@@ -3777,12 +3777,16 @@ function openEisePeek(isAuto){
   _eisePeekOpen=true;
   var sub=document.getElementById('eise-peek-sub');
   if(sub)sub.textContent=isAuto?'Hyvä hetki tarkistaa prioriteetit':'';
+  if(!isAuto){
+    var first=p.querySelector('.eise-peek-card');
+    if(first)first.focus();
+  }
 }
 function closeEisePeek(){
   var p=document.getElementById('eise-peek'),h=document.getElementById('eise-handle');
   if(!p)return;
   p.classList.remove('on');
-  if(h)h.classList.remove('eise-handle--hidden');
+  if(h){h.classList.remove('eise-handle--hidden');h.focus();}
   _eisePeekOpen=false;
 }
 function toggleEisePeek(){_eisePeekOpen?closeEisePeek():openEisePeek(false);}
@@ -3822,11 +3826,21 @@ function renderEisePeek(){
         var card=document.createElement('div');
         card.className='eise-peek-card'+(t.frog?' eise-frog':'');
         card.draggable=true;card.dataset.id=t.id;card.dataset.quad=qd.q;
+        card.tabIndex=0;
+        card.setAttribute('role','button');
+        card.setAttribute('aria-label',t.text+', '+qd.label+'. Avaa siirtovalikko Enterillä');
 
         card.onclick=function(e){
           e.stopPropagation();
           if(_eiseMoveMenu&&_eiseMoveMenu.parentNode===card){eiseCloseMoveMenu();return;}
           eiseOpenMoveMenu(card,t.id,qd.q);
+        };
+        card.onkeydown=function(e){
+          if(e.key==='Enter'||e.key===' '){
+            e.preventDefault();e.stopPropagation();
+            if(_eiseMoveMenu&&_eiseMoveMenu.parentNode===card){eiseCloseMoveMenu();return;}
+            eiseOpenMoveMenu(card,t.id,qd.q);
+          }
         };
         card.ondragstart=function(e){
           e.dataTransfer.setData('text/plain',String(t.id));
@@ -3888,6 +3902,40 @@ function a11yAnnounce(msg){
   el.textContent='';
   setTimeout(function(){el.textContent=msg;},50);
 }
+
+// Fokusvankila modaaleille: Tab kiertää modaalin sisällä, release palauttaa fokuksen
+function trapFocus(modal){
+  var prev=document.activeElement;
+  function focusables(){
+    return Array.prototype.filter.call(
+      modal.querySelectorAll('button:not([disabled]),[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'),
+      function(el){return el.offsetParent!==null;});
+  }
+  function onKey(e){
+    if(e.key!=='Tab')return;
+    var f=focusables();
+    if(f.length===0)return;
+    var first=f[0],last=f[f.length-1];
+    if(e.shiftKey&&(document.activeElement===first||!modal.contains(document.activeElement))){
+      e.preventDefault();last.focus();
+    }else if(!e.shiftKey&&(document.activeElement===last||!modal.contains(document.activeElement))){
+      e.preventDefault();first.focus();
+    }
+  }
+  modal.addEventListener('keydown',onKey);
+  // Fokusoi ensimmäinen ellei avauskoodi ehtinyt fokusoida itse (50ms setTimeout-kutsut)
+  setTimeout(function(){
+    if(!modal.contains(document.activeElement)){
+      var f=focusables();if(f.length)f[0].focus();
+    }
+  },80);
+  return function(){
+    modal.removeEventListener('keydown',onKey);
+    if(prev&&prev.focus&&document.contains(prev))prev.focus();
+  };
+}
+function _trapOn(id){var m=document.getElementById(id);if(!m)return;if(m._focusRelease)m._focusRelease();m._focusRelease=trapFocus(m);}
+function _trapOff(id){var m=document.getElementById(id);if(m&&m._focusRelease){m._focusRelease();m._focusRelease=null;}}
 
 document.addEventListener('keydown',function(e){
   // ESC: sulje modaalit
@@ -3987,6 +4035,8 @@ function eiseOpenMoveMenu(card,taskId,currentQuad){
 
   var menu=document.createElement('div');
   menu.className='eise-move-menu';
+  menu.setAttribute('role','menu');
+  menu._returnFocus=card;
   _eiseMoveMenu=menu;
 
   var quadColors={q1:'var(--q1)',q2:'var(--q2)',q3:'var(--q3)',q4:'var(--q4)'};
@@ -3996,6 +4046,8 @@ function eiseOpenMoveMenu(card,taskId,currentQuad){
     if(q===currentQuad)return; // ei tarjota nykyistä
     var item=document.createElement('div');
     item.className='eise-move-item';
+    item.setAttribute('role','menuitem');
+    item.tabIndex=0;
     var dot=document.createElement('span');
     dot.className='eise-move-dot';
     dot.style.background=quadColors[q];
@@ -4003,6 +4055,17 @@ function eiseOpenMoveMenu(card,taskId,currentQuad){
     lbl.textContent='→ '+quadLabels[q];
     item.appendChild(dot);
     item.appendChild(lbl);
+    item.onkeydown=function(e){
+      if(e.key==='Enter'||e.key===' '){e.preventDefault();item.onclick(e);return;}
+      if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+        e.preventDefault();
+        var its=Array.prototype.slice.call(menu.querySelectorAll('.eise-move-item'));
+        var idx=its.indexOf(item);
+        var next=e.key==='ArrowDown'?its[(idx+1)%its.length]:its[(idx-1+its.length)%its.length];
+        next.focus();
+      }
+      if(e.key==='Escape'){e.stopPropagation();eiseCloseMoveMenu();}
+    };
     item.onclick=function(e){
       e.stopPropagation();
       eiseCloseMoveMenu();
@@ -4020,6 +4083,8 @@ function eiseOpenMoveMenu(card,taskId,currentQuad){
   });
 
   card.appendChild(menu);
+  var firstItem=menu.querySelector('.eise-move-item');
+  if(firstItem)firstItem.focus();
 
   // Sulje klikkaamalla muualle
   setTimeout(function(){
@@ -4029,8 +4094,10 @@ function eiseOpenMoveMenu(card,taskId,currentQuad){
 
 function eiseCloseMoveMenu(){
   if(_eiseMoveMenu){
+    var rf=_eiseMoveMenu._returnFocus;
     _eiseMoveMenu.remove();
     _eiseMoveMenu=null;
+    if(rf&&document.contains(rf))rf.focus();
   }
 }
 
@@ -4657,6 +4724,7 @@ function openTimerSettings(){
   document.getElementById('tset-lbrk-val').textContent=Math.round(LBRK/60);
   document.getElementById('tset-overlay').classList.add('fap-open');
   document.getElementById('tset-panel').classList.add('fap-open');
+  _trapOn('tset-panel');
   // Siirretään fokus modaaliin ruudunlukijaa varten
   setTimeout(function(){
     var first=document.getElementById('tset-work');
@@ -4665,6 +4733,7 @@ function openTimerSettings(){
 }
 
 function closeTimerSettings(){
+  _trapOff('tset-panel');
   document.getElementById('tset-overlay').classList.remove('fap-open');
   document.getElementById('tset-panel').classList.remove('fap-open');
   // Palautetaan fokus asetusnapille
@@ -4822,10 +4891,12 @@ function openEditModal(id){
   var md=document.getElementById('edit-modal');
   ov.style.display='block';
   md.style.display='flex';
+  _trapOn('edit-modal');
   setTimeout(function(){document.getElementById('edit-text').focus();},50);
 }
 
 function closeEditModal(){
+  _trapOff('edit-modal');
   document.getElementById('edit-overlay').style.display='none';
   document.getElementById('edit-modal').style.display='none';
 }
@@ -5148,6 +5219,7 @@ function openNewProject(){
   buildColorPicker();
   document.getElementById('proj-overlay').style.display='block';
   document.getElementById('proj-modal').style.display='block';
+  _trapOn('proj-modal');
   setTimeout(function(){document.getElementById('proj-name').focus()},50);
 }
 
@@ -5161,9 +5233,11 @@ function openEditProject(id){
   buildColorPicker();
   document.getElementById('proj-overlay').style.display='block';
   document.getElementById('proj-modal').style.display='block';
+  _trapOn('proj-modal');
 }
 
 function closeProjectModal(){
+  _trapOff('proj-modal');
   document.getElementById('proj-overlay').style.display='none';
   document.getElementById('proj-modal').style.display='none';
 }
@@ -5359,9 +5433,11 @@ function wizOpen(){
   var modal=document.getElementById('wiz-modal');
   if(ov) ov.style.display='block';
   if(modal) modal.style.display='flex';
+  _trapOn('wiz-modal');
 }
 
 function wizClose(){
+  _trapOff('wiz-modal');
   var ov=document.getElementById('wiz-overlay');
   var modal=document.getElementById('wiz-modal');
   if(ov) ov.style.display='none';
@@ -7706,9 +7782,11 @@ function openSchedulePicker(){
   setSchedType('once');
   document.getElementById('schedule-overlay').style.display='block';
   document.getElementById('schedule-modal').style.display='block';
+  _trapOn('schedule-modal');
 }
 
 function closeSchedulePicker(){
+  _trapOff('schedule-modal');
   document.getElementById('schedule-overlay').style.display='none';
   document.getElementById('schedule-modal').style.display='none';
 }
@@ -8371,10 +8449,12 @@ function openJatkokortti(parentId) {
   document.getElementById('jatko-save-btn').style.cursor = 'not-allowed';
   document.getElementById('jatko-overlay').style.display = 'block';
   document.getElementById('jatko-modal').style.display = 'flex';
+  _trapOn('jatko-modal');
   setTimeout(function(){ document.getElementById('jatko-ni').focus(); }, 80);
 }
 
 function closeJatkoModal() {
+  _trapOff('jatko-modal');
   document.getElementById('jatko-overlay').style.display = 'none';
   document.getElementById('jatko-modal').style.display = 'none';
   _jatkoParentId = null;
@@ -8497,8 +8577,10 @@ function openPresets(){
   document.getElementById('presets-overlay').style.display='block';
   document.getElementById('presets-panel').style.display='flex';
   showPresetsList();
+  _trapOn('presets-panel');
 }
 function closePresets(){
+  _trapOff('presets-panel');
   document.getElementById('presets-overlay').style.display='none';
   document.getElementById('presets-panel').style.display='none';
 }
@@ -9096,7 +9178,7 @@ function closeChainView(){
 
 <!-- ── TEHTÄVÄPOHJAT-PANEELI (Vaihe 11) ── -->
 <div id="presets-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)" onclick="if(event.target===this)closePresets()"></div>
-<div id="presets-panel" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(480px,96vw);height:90vh;max-height:90vh;background:var(--surface-xs);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.18);z-index:201;flex-direction:column;overflow:hidden;">
+<div id="presets-panel" role="dialog" aria-modal="true" aria-label="Tehtäväpohjat" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(480px,96vw);height:90vh;max-height:90vh;background:var(--surface-xs);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.18);z-index:201;flex-direction:column;overflow:hidden;">
   <div style="padding:.9rem 1.2rem .75rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
     <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;font-style:italic;letter-spacing:-0.02em;color:var(--ink)">📋 Tehtäväpohjat</div>
     <div style="display:flex;gap:.4rem;align-items:center">
@@ -9835,10 +9917,12 @@ function openHamMenu(){
   var doneCount = (typeof tasks !== 'undefined') ? tasks.filter(function(t){return t.done}).length : 0;
   var countEl = document.getElementById('ham-done-count');
   if(countEl) countEl.textContent = doneCount > 0 ? doneCount + ' kpl' : '';
+  _trapOn('ham-sheet');
   document.addEventListener('keydown', hamEscHandler);
 }
 
 function closeHamMenu(){
+  _trapOff('ham-sheet');
   document.getElementById('ham-overlay').classList.remove('ham-open');
   document.getElementById('ham-sheet').classList.remove('ham-open');
   document.removeEventListener('keydown', hamEscHandler);
@@ -9866,10 +9950,12 @@ function openDoneModal(){
   }
   document.getElementById('done-modal-overlay').classList.add('ham-open');
   document.getElementById('done-modal').classList.add('ham-open');
+  _trapOn('done-modal');
   document.addEventListener('keydown', doneEscHandler);
 }
 
 function closeDoneModal(){
+  _trapOff('done-modal');
   document.getElementById('done-modal-overlay').classList.remove('ham-open');
   document.getElementById('done-modal').classList.remove('ham-open');
   document.removeEventListener('keydown', doneEscHandler);
@@ -10259,11 +10345,13 @@ function openInventory(){
 
   buildInvSidebar();
   renderInventory();
+  _trapOn('inv-modal');
   document.addEventListener('keydown', invEscHandler);
   if(searchEl) setTimeout(function(){ searchEl.focus(); }, 300);
 }
 
 function closeInventory(){
+  _trapOff('inv-modal');
   var modal = document.getElementById('inv-modal');
   if(modal) modal.classList.remove('inv-open');
   document.removeEventListener('keydown', invEscHandler);
