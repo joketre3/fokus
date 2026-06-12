@@ -42,10 +42,11 @@ Ei testejä, ei lintteriä, ei CI:tä.
 | File | Purpose |
 |------|---------|
 | `index.html` | Pääsovellus — Eisenhower-matriisi, Pomodoro, AI-analyysi, työtilat |
-| `faptcg.html` | Identtinen kopio index.html:stä (referenssisnapshot) |
-| `index.html.bak` | Vanhempi varmuuskopio |
 | `aamu.html` | Aamusuunnitteluvelho (popup pääsovelluksesta) |
 | `swipe.html` | Korttiselausnäkymä tehtäväjonon rakentamiseen (popup) |
+| `landing.html` | Markkinointisivu |
+| `mockup-kortti.html` | TCG-kortti-ilmeen mockup (referenssi) |
+| `mockup-rarity.html` | Rarity-järjestelmän mockup (4 tieriä + holo-vertailu) |
 
 Pääsovellus avaa `swipe.html` ja `aamu.html` popup-ikkunoina (`window.open`). Timer aukeaa JS:llä generoituna popuppina. Kaikki ikkunat jakavat datan `localStorage`n kautta.
 
@@ -184,6 +185,23 @@ CSS custom properties: `--ink`, `--surface-xs`, `--surface`, `--surface-md`, `--
 - **Massamuutokset:** sed tai Python-skriptit, ei manuaalisia rivirivi-muutoksia.
 - DOM-haut: käytä aina id-pohjaisia selektoreja. Style-attribuuttiselektorit (`closest('div[style*="display:flex"]')`) ovat hauraita.
 
+## Parannuskierros 2026-06-12 — valmis
+
+| Paketti | Mitä |
+|---|---|
+| fix(security) | AI-vastauksen normalisointi (id/est Number, quad whitelist), onclick-stringit → addEventListener |
+| fix(sync) | `_fsSaveDirty`-lippu (snapshot ei ylikirjoita debounce-ikkunassa), `save()` stale-write-suoja `_loadedTs`-vertailulla |
+| refactor | Kuollut Eisenhower-koodi pois; ESC sulkee peekin (oli rikki); `notify()`-timer-jono + a11y-kuulutus |
+| feat(a11y) | `trapFocus()`-helper kaikkiin modaaleihin (Tab-kierto + fokuspalautus); peek-kortit + siirtovalikko näppäimistöllä; swipe.html reduced-motion + aria-labelit; käsikortin fontit ≥.65rem |
+| refactor(css) | TCG-värit tokenisoitu (`--gold*`, `--metal-silver*`, `--tcg-plate-ink*`, `--tcg-stop`, `--ink-on-art`, `--pomo-hi`, `--q2-bright`, `--frog-deep`); `background:white`-teemarikko korjattu; z-index 9000→600, 9999→700 |
+| feat(tcg) | `rarityOf(t)`: mythic=frog, rare=q1/q2, uncommon=q3, common=q4; metallirengas + set-symboli (työtilan alkukirjain); holo vain frogille; `--qc` var()-tokeneiksi |
+
+**Tietämys:**
+- `render()` käyttää `on*`-propertyjä uusiin elementteihin ja `innerHTML=''` tuhoaa vanhat → EI listener-vuotoa, ei tarvitse tutkia uudelleen
+- `trapFocus(modal)` palauttaa release-funktion; kytkentä `_trapOn(id)`/`_trapOff(id)` open/close-pareissa
+- `renderDeckCard` jätetty tekemättä tarkoituksella: inventory käyttää tiheää `.inv-card`-ruudukkoa, TCG-kuvasuhde romuttaisi sen — backlogissa kevyt välimuoto (rarity-värinen set-symboli inv-cardiin)
+- Z-index-skaala dokumentoitu DESIGN.md:ssä
+
 ## Nykyinen kehitystila
 
 ### Modernization-prosessi (2026-05-28) — valmis
@@ -226,7 +244,7 @@ Suunnitelma: `docs/firestore-synkronointi-suunnitelma.md`
 
 ### Jäljellä (manuaalinen)
 
-- **`renderCardNew()`-jako** — `renderArenaCard()` tehty ✅; `renderDeckCard()` tekemättä
+- **`renderCardNew()`-jako** — `renderArenaCard()` tehty ✅; `renderDeckCard()` jätetty pois tarkoituksella (ks. Parannuskierros 2026-06-12)
 
 ### Impeccable-jono (critique-score 16/20 harden+audit tehty, snapshot `.impeccable/critique/2026-06-11T10-44-50Z__index-html.md`)
 
