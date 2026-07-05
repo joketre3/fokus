@@ -162,12 +162,12 @@ input[type=date]{font-family:'DM Sans',sans-serif;font-size:var(--text-sm);color
 
 /* controls */
 .pctrl{display:flex;flex-direction:column;gap:.4rem;align-items:flex-end}
-.pbtn{font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:500;padding:.45rem 1rem;border-radius:7px;border:1.5px solid;cursor:pointer;background:var(--surface);white-space:nowrap;min-width:88px;text-align:center;transition:background .15s,color .15s,transform .15s}
+.pbtn{font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:500;padding:.45rem 1rem;border-radius:7px;border:1.5px solid;cursor:pointer;background:var(--surface);white-space:nowrap;min-width:88px;text-align:center;box-shadow:var(--chip-shadow);transition:background .15s,color .15s,transform .15s,box-shadow .15s}
 .pbtn.go{border-color:var(--pomo);color:var(--pomo)} .pbtn.go:hover,.pbtn.go.active{background:var(--pomo);color:white}
 .pbtn.stp{border-color:var(--muted);color:var(--muted)} .pbtn.stp:hover{background:var(--muted);color:white}
 .pbtn.nxt{border-color:var(--accent);color:var(--accent);font-size:.7rem} .pbtn.nxt:hover{background:var(--accent);color:white}
 .pbtn.dnx{border-color:var(--accent);color:var(--accent);font-size:.7rem} .pbtn.dnx:hover{background:var(--accent);color:white}
-.pbtn:active{transform:scale(.97)}
+.pbtn:active{transform:translateY(1px);box-shadow:var(--chip-shadow-dn)}
 
 /* VERB BUTTONS */
 .vbtn{font-family:'DM Sans',sans-serif;font-size:var(--text-xs);font-weight:500;padding:.38rem .5rem;border-radius:var(--r-sm);border:1.5px solid var(--border);background:var(--surface);color:rgba(255,255,255,.65);cursor:pointer;transition:border-color .15s,color .15s,background .15s,transform .15s;white-space:nowrap;text-align:center;width:100%}
@@ -711,6 +711,13 @@ html[data-theme="aurinko"] .card.waiting{border-color:rgba(74,122,154,.48)!impor
 html[data-theme="aurinko"] .card.needs-review{border-color:rgba(196,160,50,.40)!important}
 /* Header divider */
 html[data-theme="aurinko"] .hdr{border-bottom-color:rgba(180,130,70,.30)!important}
+/* Vaihe 6: yläpalkin varjo lämpimänä ruskeana desktopilla (tumma rgba liian kova vaalealla) */
+@media (min-width: 900px){
+  html[data-theme="aurinko"] .hdr{box-shadow:0 1px 0 var(--engrave-dim), 0 2px 0 rgba(120,80,30,.22)}
+}
+/* Vaihe 5: jonopino — vaalea kortti aurinko-teemassa */
+html[data-theme="aurinko"] .turn-card{background:var(--surface-strong);box-shadow:inset 0 1px 0 rgba(255,255,255,.8), 0 1px 0 rgba(120,80,30,.3), 0 2px 0 rgba(120,80,30,.15)}
+html[data-theme="aurinko"] .turn-card:first-child{box-shadow:inset 0 1px 0 rgba(255,255,255,.8), 0 1px 0 rgba(120,80,30,.3), 0 2px 0 rgba(120,80,30,.15), 0 3px 8px rgba(120,80,30,.18)}
 /* Schedule modal days */
 html[data-theme="aurinko"] #schedule-modal .sched-day-btn{background:rgba(180,130,70,.12)!important;border-color:rgba(180,130,70,.25)!important;color:#4a3a20!important}
 html[data-theme="aurinko"] #schedule-modal .sched-day-btn.on{background:rgba(196,104,30,.72)!important;border-color:rgba(196,104,30,.55)!important;color:white!important}
@@ -1351,6 +1358,7 @@ html[data-perf="lite"] .wrap{
       <div id="turn-panel" class="turn-panel side-panel side-panel--right tcg-right" role="region" aria-label="Tehtäväjono — seuraavat tehtävät">
         <div class="side-panel__header">
           <span class="side-panel__title">TEHTÄVÄJONO</span>
+          <span class="pile-ico" aria-hidden="true"></span>
           <span class="side-panel__count" id="turn-count">0</span>
         </div>
         <div id="turn-list" class="turn-list"></div>
@@ -1465,9 +1473,10 @@ html[data-perf="lite"] .wrap{
   z-index:150;
   backdrop-filter:blur(10px);
   -webkit-backdrop-filter:blur(10px);
-  transition:border-color .2s,background .2s;
-  box-shadow:0 2px 10px rgba(0,0,0,.18);
+  transition:border-color .2s,background .2s,transform .15s,box-shadow .15s;
+  box-shadow:var(--chip-shadow);
 }
+#ham-btn:active{transform:translateY(1px);box-shadow:var(--chip-shadow-dn)}
 #ham-btn:hover{border-color:var(--accent-dim,var(--accent));background:var(--surface-strong,var(--surface))}
 .ham-view-label{font-size:var(--text-xs);font-weight:500;color:var(--accent);margin-left:.35rem;letter-spacing:.04em;vertical-align:middle}
 
@@ -1636,9 +1645,10 @@ html[data-perf="lite"] .wrap{
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;z-index:150;
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  transition:border-color .2s,background .2s;
-  box-shadow:0 2px 10px rgba(0,0,0,.18);
+  transition:border-color .2s,background .2s,transform .15s,box-shadow .15s;
+  box-shadow:var(--chip-shadow);
 }
+#inv-btn:active{transform:translateY(1px);box-shadow:var(--chip-shadow-dn)}
 #inv-btn:hover{border-color:var(--accent-dim,var(--accent));background:var(--surface-strong,var(--surface))}
 
 #inv-modal{
@@ -1934,9 +1944,9 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   </div>
 </div>
 <style>
-.sched-day-btn{font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;width:36px;height:36px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:border-color .15s,color .15s,background .15s,transform .15s}
+.sched-day-btn{font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;width:36px;height:36px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;box-shadow:var(--chip-shadow);transition:border-color .15s,color .15s,background .15s,transform .15s,box-shadow .15s}
 .sched-day-btn.on{border-color:var(--accent);background:var(--accent);color:white}
-.sched-day-btn:active{transform:scale(.93)}
+.sched-day-btn:active{transform:translateY(1px);box-shadow:var(--chip-shadow-dn)}
 
 /* ── Vaihe 4 TCG: Areena-rivi kolmisarakkeena ─────────────────── */
 .arena-row{
@@ -1991,6 +2001,12 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   text-align:center;
   flex:0 0 auto;
 }
+/* Pinoikoni — 3 limittäistä korttisuorakulmiota (mockup-poyta) */
+.pile-ico{position:relative;width:13px;height:9px;flex:none;margin-left:.45rem}
+.pile-ico,.pile-ico::before,.pile-ico::after{border:1px solid var(--engrave);border-radius:2px;background:transparent}
+.pile-ico::before,.pile-ico::after{content:"";position:absolute;width:13px;height:9px}
+.pile-ico::before{top:-3px;left:-3px;opacity:.65}
+.pile-ico::after{top:-6px;left:-6px;opacity:.35}
 .side-panel__count{
   font-size:var(--text-xs);
   font-weight:500;
@@ -2026,6 +2042,10 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 .turn-card:first-child{
   border-color:var(--accent);
   border-width:1.5px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),
+             0 1px 0 rgba(0,0,0,.45),
+             0 2px 0 rgba(0,0,0,.22),
+             0 3px 8px rgba(0,0,0,.3);
 }
 
 /* Odottavat (vasen) — katkoviivakortteja, hieman haalistuneena */
@@ -2046,16 +2066,31 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   align-items:center;
   gap:.45rem;
   padding:.38rem .55rem;
+  margin-bottom:3px;
   border-radius:var(--r-md);
-  background:var(--surface-md);
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--plate-top) 55%, transparent),
+      color-mix(in srgb, var(--plate-bot) 55%, transparent)),
+    var(--surface-md);
   border:1px solid var(--border);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),
+             0 1px 0 rgba(0,0,0,.45),
+             0 2px 0 rgba(0,0,0,.22);
   cursor:grab;
   user-select:none;
   transition:background .12s, border-color .12s;
   min-width:0;
   box-sizing:border-box;
 }
-.turn-card:hover{background:var(--surface-strong);border-color:var(--muted)}
+.turn-card:hover{
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--plate-top) 55%, transparent),
+      color-mix(in srgb, var(--plate-bot) 55%, transparent)),
+    var(--surface-strong);
+  border-color:var(--muted);
+}
 .turn-card.dragging{opacity:.45;cursor:grabbing}
 .turn-card.drag-over{border-color:var(--accent);background:var(--surface-strong)}
 .turn-card__quad{
@@ -2248,10 +2283,11 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   align-items:center;
   gap:.4rem;
   white-space:nowrap;
-  box-shadow:0 2px 10px rgba(0,0,0,.35);
-  transition:background .15s,border-color .15s,bottom 300ms cubic-bezier(.22,.61,.36,1);
+  box-shadow:var(--chip-shadow), 0 2px 10px rgba(0,0,0,.35);
+  transition:background .15s,border-color .15s,transform .15s,box-shadow .15s,bottom 300ms cubic-bezier(.22,.61,.36,1);
   pointer-events:auto;
 }
+#hand-toggle:active{transform:translateY(1px);box-shadow:var(--chip-shadow-dn)}
 #hand-toggle:hover{background:rgba(196,154,58,.14);border-color:var(--accent);}
 body.hand-open #hand-toggle{bottom:calc(var(--hand-card-h,182px) + 12px);}
 /* Korttiviuhka-ikoni */
@@ -3539,7 +3575,9 @@ svg[aria-hidden="true"]{pointer-events:none;}
     flex-wrap: nowrap;
     padding: .5rem 1rem;
     margin-bottom: 0;
-    border-bottom: 1px solid var(--border);
+    border-bottom: none;
+    background: linear-gradient(180deg, rgba(0,0,0,.14), transparent);
+    box-shadow: 0 1px 0 var(--engrave-dim), 0 2px 0 rgba(0,0,0,.35);
     gap: .75rem;
     min-height: 0;
   }
@@ -3717,8 +3755,8 @@ svg[aria-hidden="true"]{pointer-events:none;}
 }
 /* ── EISENHOWER PEEK — globaali (toimii myös mobiililla) ── */
 #arena{position:relative;overflow:hidden}
-#eise-handle{position:absolute;top:0;left:0;right:0;z-index:10;height:48px;padding:0 1rem;background:var(--surface-strong,var(--surface));border-bottom:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:.75rem;transition:background .15s;pointer-events:auto;text-align:left}
-#eise-handle:hover{background:var(--surface-xs,var(--surface))}
+#eise-handle{position:absolute;top:0;left:0;right:0;z-index:10;height:48px;padding:0 1rem;background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.18)),var(--surface-strong,var(--surface));border-bottom:1px solid var(--border);box-shadow:inset 0 1px 0 rgba(255,255,255,.07), 0 1px 0 var(--engrave-dim);cursor:pointer;display:flex;align-items:center;gap:.75rem;transition:background .15s;pointer-events:auto;text-align:left}
+#eise-handle:hover{background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.18)),var(--surface-xs,var(--surface));box-shadow:inset 0 1px 0 rgba(255,255,255,.07), 0 1px 0 var(--engrave)}
 #eise-handle.eise-handle--hidden{display:none!important}
 .eise-hgrid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;width:30px;height:24px;gap:2px;flex-shrink:0}
 .eise-hcell{border-radius:2px;opacity:.75}
