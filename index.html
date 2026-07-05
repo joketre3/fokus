@@ -7846,38 +7846,7 @@ function renderTurnPanel(inbox){
     row.style.marginBottom=_nextIsChild?'1px':'.3rem';
     listEl.appendChild(row);
   });
-}
 
-function renderWaitingPanel(inbox){
-  var listEl=document.getElementById('waiting-list');
-  var emptyEl=document.getElementById('waiting-empty');
-  var countEl=document.getElementById('waiting-count');
-  if(!listEl)return;
-  listEl.innerHTML='';
-  var waiting=inbox.filter(function(t){return t.waiting&&!t.done;});
-  if(countEl)countEl.textContent=waiting.length>0?waiting.length:'0';
-  if(emptyEl)emptyEl.style.display=waiting.length?'none':'block';
-  var quadColors={q1:'#c49a3a',q2:'#2d8a52',q3:'var(--muted)',q4:'var(--muted)'};
-  waiting.forEach(function(t){
-    var row=document.createElement('div');
-    row.className='waiting-item';
-    var dot=document.createElement('span');
-    dot.className='waiting-item__quad';
-    dot.style.background=quadColors[t.quad]||'var(--muted)';
-    var txt=document.createElement('span');
-    txt.className='waiting-item__text';
-    txt.textContent=t.text;
-    var btn=document.createElement('button');
-    btn.className='waiting-item__restore';
-    btn.title='Palauta käteen';
-    btn.setAttribute('aria-label','Palauta tehtävä käteen');
-    btn.textContent='↩';
-    btn.addEventListener('click',(function(id){return function(){clearWaiting(id);};})(t.id));
-    row.appendChild(dot);
-    row.appendChild(txt);
-    row.appendChild(btn);
-    listEl.appendChild(row);
-  });
   _prevTurnIds = turnTasks.map(function(t){return t.id;});
 
   // FLIP Last/Invert/Play: jäljelle jäävät liukuvat vanhasta paikasta uuteen
@@ -7910,6 +7879,38 @@ function renderWaitingPanel(inbox){
       g.style.transform='translateX(14px)';
     });
     setTimeout(function(){if(g.parentNode)g.parentNode.removeChild(g);},240);
+  });
+}
+
+function renderWaitingPanel(inbox){
+  var listEl=document.getElementById('waiting-list');
+  var emptyEl=document.getElementById('waiting-empty');
+  var countEl=document.getElementById('waiting-count');
+  if(!listEl)return;
+  listEl.innerHTML='';
+  var waiting=inbox.filter(function(t){return t.waiting&&!t.done;});
+  if(countEl)countEl.textContent=waiting.length>0?waiting.length:'0';
+  if(emptyEl)emptyEl.style.display=waiting.length?'none':'block';
+  var quadColors={q1:'#c49a3a',q2:'#2d8a52',q3:'var(--muted)',q4:'var(--muted)'};
+  waiting.forEach(function(t){
+    var row=document.createElement('div');
+    row.className='waiting-item';
+    var dot=document.createElement('span');
+    dot.className='waiting-item__quad';
+    dot.style.background=quadColors[t.quad]||'var(--muted)';
+    var txt=document.createElement('span');
+    txt.className='waiting-item__text';
+    txt.textContent=t.text;
+    var btn=document.createElement('button');
+    btn.className='waiting-item__restore';
+    btn.title='Palauta käteen';
+    btn.setAttribute('aria-label','Palauta tehtävä käteen');
+    btn.textContent='↩';
+    btn.addEventListener('click',(function(id){return function(){clearWaiting(id);};})(t.id));
+    row.appendChild(dot);
+    row.appendChild(txt);
+    row.appendChild(btn);
+    listEl.appendChild(row);
   });
 }
 
