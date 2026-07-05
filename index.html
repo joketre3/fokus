@@ -5035,8 +5035,8 @@ function openEditModal(id){
   document.getElementById('edit-urgent').classList.toggle('on',!!t.urgent);
   var fb=document.getElementById('edit-frog');
   fb.classList.toggle('on',!!t.frog);
-  fb.style.background=t.frog?'var(--frog-deep)':'';
-  fb.style.color=t.frog?'white':'';
+  fb.style.background=t.frog?'var(--frog-deep)':'var(--surface)';
+  fb.style.color=t.frog?'white':'var(--muted)';
   fb.style.borderColor=t.frog?'var(--frog-deep)':'var(--border)';
 
   // Arvio-slider
@@ -9880,7 +9880,7 @@ function closeChainView(){
       </div>
       <!-- Vakionäkymä -->
       <div id="wiz-s3-normal" style="display:flex;flex-direction:column;gap:.5rem">
-      <div id="wiz-preview" style="font-family:'DM Serif Display',serif;font-style:italic;font-size:1.35rem;line-height:1.25;font-weight:400;color:var(--ink);padding:.15rem 0 .3rem;letter-spacing:-.01em"></div>
+      <div id="wiz-preview" style="font-family:'DM Serif Display',serif;font-style:italic;font-size:1.35rem;line-height:1.25;font-weight:400;color:var(--accent);padding:.15rem 0 .3rem;letter-spacing:-.01em"></div>
       <div style="font-size:var(--text-xs);font-weight:500;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;display:block">Luokittele tehtävä</div>
       <div style="display:flex;gap:.4rem">
         <button id="f-important" class="qb q2" onclick="newImportant=!newImportant;this.classList.toggle('on',newImportant)" style="flex:1;justify-content:center;padding:.6rem">Tärkeä</button>
