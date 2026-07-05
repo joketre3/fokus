@@ -87,7 +87,7 @@
   --well-bg:rgba(0,0,0,.24);
   --well-shadow:inset 0 2px 8px rgba(0,0,0,.45), inset 0 1px 2px rgba(0,0,0,.55), inset 0 -1px 0 rgba(255,255,255,.05);
   --engrave:rgba(196,154,58,.34); --engrave-dim:rgba(196,154,58,.15);
-  --etch-ink:rgba(255,255,255,.34); --etch-shadow:0 1px 0 rgba(0,0,0,.6);
+  --etch-ink:rgba(255,255,255,.38); --etch-shadow:0 1px 0 rgba(0,0,0,.6);
   --chip-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 2px 0 rgba(0,0,0,.35), 0 3px 8px rgba(0,0,0,.25);
   --chip-shadow-dn:inset 0 1px 0 rgba(255,255,255,.04), 0 1px 0 rgba(0,0,0,.35);
 }
@@ -117,7 +117,7 @@ body::before{
   z-index:0;
   pointer-events:none;
 }
-.wrap{position:relative;z-index:1}
+.wrap{position:relative;z-index:1;background:radial-gradient(ellipse 130% 130% at 50% 50%,transparent 60%,var(--vignette) 100%)}
 .wrap{max-width:800px;margin:0 auto}
 
 /* HEADER */
@@ -636,7 +636,7 @@ html[data-theme="aurinko"] {
   --well-bg:rgba(120,80,30,.07);
   --well-shadow:inset 0 2px 6px rgba(120,80,30,.18), inset 0 1px 2px rgba(120,80,30,.14), inset 0 -1px 0 rgba(255,255,255,.7);
   --engrave:rgba(150,100,35,.4); --engrave-dim:rgba(150,100,35,.18);
-  --etch-ink:rgba(45,36,23,.42); --etch-shadow:0 1px 0 rgba(255,255,255,.65);
+  --etch-ink:rgba(45,36,23,.55); --etch-shadow:0 1px 0 rgba(255,255,255,.65);
   --chip-shadow:inset 0 1px 0 rgba(255,255,255,.8), 0 2px 0 rgba(120,80,30,.2), 0 3px 8px rgba(120,80,30,.12);
   --chip-shadow-dn:inset 0 1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(120,80,30,.2);
 }
@@ -3785,7 +3785,7 @@ svg[aria-hidden="true"]{pointer-events:none;}
 .eise-peek-card.eise-dragging{opacity:.3}
 .eise-peek-card-txt{flex:1;min-width:0;word-break:break-word}
 .eise-peek-q-btn{flex-shrink:0;width:22px;height:22px;border:1px solid var(--border);border-radius:4px;background:none;cursor:pointer;font-size:.75rem;color:var(--muted);display:flex;align-items:center;justify-content:center;transition:background .12s,color .12s,border-color .12s}
-.eise-peek-q-btn:hover,.eise-peek-q-btn.in-queue{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.eise-peek-q-btn:hover,.eise-peek-q-btn.in-queue{background:var(--accent);color:#fff;border-color:var(--accent)}
 .eise-peek-empty{font-size:var(--text-xs);color:var(--subtle);padding:.3rem .2rem}
 </style>
 <div id="profile-overlay" style="position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)"></div>

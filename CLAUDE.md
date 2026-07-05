@@ -242,6 +242,21 @@ MacBook Pro 2010 (Intel HD, ei GPU) suorituskykyoptionointi Chromessa.
 
 Suunnitelma: `docs/firestore-synkronointi-suunnitelma.md`
 
+### Korttipöytä-ilme (2026-07-05) — valmis, haara `korttipoyta`
+
+| Vaihe | Mitä | Status |
+|-------|------|--------|
+| 0 | `mockup-poyta.html` — suunnan hyväksyntä, teema+lite-kytkimet | ✅ |
+| 1–2 | Pöytätokenit (12 kpl, 3 teemaa) + felt-pinta `.wrap`iin, blur(1px) pois | ✅ |
+| 3–4 | `#arena::after`-slotti (border-image-SVG) + upotetut vyöhykkeet, `var(--bg)`-bugit korjattu | ✅ |
+| 5–6 | `.turn-card`-pino + chip-napit + hdr/eise-handle-materiaalit | ✅ |
+| 7 | Mobiilivinjetti, kontrastikorjaukset (etch-ink .38/.55), DESIGN.md §8 | ✅ |
+
+Opit:
+- `#arena::after` desktopilla vaatii `inset:auto` ennen left/top-arvoja — mobiilisääntö asettaa `bottom:-4px` joka muuten venyttää laatikon
+- Slotti pseudo-elementtinä koska `render()` tyhjentää `#arena`n lapset (keep-lista vain eise-peek/handle)
+- Chip-napit: paino vain box-shadow+translateY — teemojen `!important` omistaa `.pbtn`-backgroundin
+
 ### Jäljellä (manuaalinen)
 
 - **`renderCardNew()`-jako** — `renderArenaCard()` tehty ✅; `renderDeckCard()` jätetty pois tarkoituksella (ks. Parannuskierros 2026-06-12)
