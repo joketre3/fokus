@@ -753,6 +753,13 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
 .tcg-card__done-check{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:30;pointer-events:none;animation:done-check-pop var(--dur-macro) var(--ease-out-back) both;}
 .tcg-card__done-flash{position:absolute;inset:-10%;z-index:1;pointer-events:none;border-radius:50%;background:radial-gradient(circle,var(--accent) 0%,transparent 70%);animation:done-flash .35s var(--ease-out) both;}
 .tcg-card__particle{position:absolute;width:7px;height:7px;border-radius:50%;background:var(--accent);z-index:40;pointer-events:none;animation:frog-particle .5s var(--ease-out) both;}
+/* Lisää tehtävä — kutsuva hehku (C-variantti) */
+#btn-add-task{box-shadow:var(--chip-shadow),0 0 16px rgba(196,154,58,.35);transition:transform .15s,box-shadow .15s}
+#btn-add-task:active{transform:translateY(1px);box-shadow:var(--chip-shadow-dn);animation:none}
+@keyframes add-glow{0%,100%{box-shadow:var(--chip-shadow),0 0 12px rgba(196,154,58,.25)}50%{box-shadow:var(--chip-shadow),0 0 22px rgba(196,154,58,.45)}}
+@media (prefers-reduced-motion:no-preference){#btn-add-task{animation:add-glow 3s ease-in-out infinite}}
+html[data-perf="lite"] #btn-add-task{animation:none!important;box-shadow:var(--chip-shadow)!important}
+html[data-theme="aurinko"] #btn-add-task{box-shadow:var(--chip-shadow),0 0 14px rgba(196,104,30,.3);animation:none}
 
 /* Modaalit — avaus (eise-modal jo määritetty, tämä on yleinen helper) */
 
@@ -1220,7 +1227,7 @@ html[data-perf="lite"] .wrap{
         <polygon points="37.5,7 54,19 30,19" fill="rgba(255,255,255,.92)" filter="url(#crownBlur2)"/>
         <polygon points="37.5,15 56,30 28,30" fill="rgba(255,255,255,.72)" filter="url(#crownBlur2)"/>
       </svg>
-      <button onclick="wizIsOpen()?wizReset():wizStart()" title="Lisää uusi tehtävä" id="btn-add-task" style="margin-top:.5rem;font-family:DM Sans,sans-serif;font-size:.78rem;font-weight:600;padding:.35rem .8rem;border-radius:20px;border:1.5px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer">+ Lisää tehtävä</button>
+      <button onclick="wizIsOpen()?wizReset():wizStart()" title="Lisää uusi tehtävä" id="btn-add-task" style="margin-top:.5rem;font-family:DM Sans,sans-serif;font-size:.9rem;font-weight:600;padding:.6rem 1.2rem;border-radius:var(--r-md);border:1.5px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer">+ Lisää tehtävä</button>
 
     </div>
     <div id="hdr-right" style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
@@ -1900,8 +1907,8 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 </div>
 
 <!-- SCHEDULE PICKER MODAL -->
-<div id="schedule-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)" onclick="if(event.target===this)closeSchedulePicker()"></div>
-<div id="schedule-modal" role="dialog" aria-modal="true" aria-label="Aikataulutus" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(380px,96vw);background:var(--surface-xs);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.15);z-index:201;padding:1.5rem">
+<div id="schedule-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:599;backdrop-filter:blur(2px)" onclick="if(event.target===this)closeSchedulePicker()"></div>
+<div id="schedule-modal" role="dialog" aria-modal="true" aria-label="Aikataulutus" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(380px,96vw);background:linear-gradient(180deg,var(--plate-top),var(--plate-bot));border-radius:var(--r-lg);border:1px solid var(--engrave);box-shadow:0 24px 64px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);z-index:600;padding:1.5rem">
   <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;font-style:italic;letter-spacing:-0.02em;color:var(--ink);margin-bottom:1.1rem">🕐 Ajasta tehtävä</div>
   <!-- Type -->
   <div style="display:flex;gap:.5rem;margin-bottom:1rem">
@@ -9707,7 +9714,7 @@ function closeChainView(){
 <!-- EDIT CARD MODAL (Vaihe 18) -->
 <!-- ── WIZARD-MODAALI ── -->
 <div id="wiz-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)" onclick="if(event.target===this)wizReset()"></div>
-<div id="wiz-modal" role="dialog" aria-modal="true" aria-label="Lisää tehtävä" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(440px,96vw);max-height:90vh;background:var(--surface-xs);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.18);z-index:401;flex-direction:column;overflow:visible">
+<div id="wiz-modal" role="dialog" aria-modal="true" aria-label="Lisää tehtävä" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(560px,96vw);max-height:90vh;background:linear-gradient(180deg,var(--plate-top),var(--plate-bot));border-radius:var(--r-lg);border:1px solid var(--engrave);box-shadow:0 24px 64px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);z-index:401;flex-direction:column;overflow:visible">
   <!-- Vaihe 9.5 B+: Verbinvaihto-popover -->
   <div id="verb-pop" class="verb-pop" data-target="2">
     <button type="button" data-verb="Soita" onclick="pickVerbForSplit('Soita')">Soita</button>
@@ -9895,7 +9902,7 @@ function closeChainView(){
       <div style="display:flex;gap:.3rem;flex-wrap:wrap">
         <button onclick="wizToggleExtra()" style="font-family:'DM Sans',sans-serif;font-size:var(--text-xs);padding:.22rem .55rem;border-radius:var(--r-sm);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer">📝 Lisätiedot</button>
         <button onclick="wizToggleTags()" style="font-family:'DM Sans',sans-serif;font-size:var(--text-xs);padding:.22rem .55rem;border-radius:var(--r-sm);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer;display:none">🏷 Tagi</button>
-        <button onclick="openSchedulePicker()" id="schedule-btn" style="font-family:'DM Sans',sans-serif;font-size:var(--text-xs);padding:.22rem .55rem;border-radius:var(--r-sm);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer">🕐 Ajasta</button>
+        <button onclick="openSchedulePicker()" id="schedule-btn" style="font-family:'DM Sans',sans-serif;font-size:var(--text-xs);padding:.4rem .8rem;border-radius:var(--r-md);border:1.5px solid var(--accent);color:var(--accent);background:transparent;cursor:pointer">🕐 Ajasta</button>
         <span id="schedule-preview" style="font-size:var(--text-xs);color:#3a6b8a;font-weight:300;display:none">🕐 <span id="schedule-preview-text"></span> <button onclick="clearNewSchedule()" style="background:none;border:none;cursor:pointer;color:var(--subtle);font-size:.7rem;padding:0;line-height:1">×</button></span>
       </div>
       <div id="extra-row" style="display:none;flex-direction:column;gap:.35rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:.6rem .85rem">
