@@ -6005,14 +6005,6 @@ function setFlag(id,flag){
   save();render();
 }
 
-// M1c — rariteetti: efektin koko vastaa teon kokoa
-function rarityOf(t){
-  if(!t) return 'common';
-  if(t.frog) return 'mythic';
-  if(t.quad==='q1'||t.quad==='q2') return 'rare';
-  if(t.quad==='q3') return 'uncommon';
-  return 'common';
-}
 // Kulta-check-pop (kaikki rariteetit) — SVG createElementNS, ei innerHTML-template
 function doneCheckPop(cardEl){
   var SVGNS='http://www.w3.org/2000/svg';
@@ -6816,6 +6808,7 @@ var _TCG_VERB_ID = {
 };
 /* Rarity = tärkeys (Eisenhower): kortisto opettaa metodologiaa */
 function rarityOf(t){
+  if(!t)return 'common';
   if(t.frog)return 'mythic';
   if(t.quad==='q1'||t.quad==='q2')return 'rare';
   if(t.quad==='q3')return 'uncommon';
