@@ -5037,7 +5037,7 @@ function openEditModal(id){
   fb.classList.toggle('on',!!t.frog);
   fb.style.background=t.frog?'var(--frog-deep)':'';
   fb.style.color=t.frog?'white':'';
-  fb.style.borderColor=t.frog?'var(--frog-deep)':'';
+  fb.style.borderColor=t.frog?'var(--frog-deep)':'var(--border)';
 
   // Arvio-slider
   var esl=document.getElementById('edit-esl');
@@ -8164,11 +8164,11 @@ function setSchedType(type){
   var repF=document.getElementById('sched-repeat-fields');
   if(type==='once'){
     onceBtn.style.background='var(--accent)';onceBtn.style.color='white';onceBtn.style.borderColor='var(--accent)';
-    repBtn.style.background='white';repBtn.style.color='var(--muted)';repBtn.style.borderColor='var(--subtle)';
+    repBtn.style.background='var(--surface)';repBtn.style.color='var(--muted)';repBtn.style.borderColor='var(--border)';
     onceF.style.display='flex';repF.style.display='none';
   } else {
     repBtn.style.background='var(--accent)';repBtn.style.color='white';repBtn.style.borderColor='var(--accent)';
-    onceBtn.style.background='white';onceBtn.style.color='var(--muted)';onceBtn.style.borderColor='var(--subtle)';
+    onceBtn.style.background='var(--surface)';onceBtn.style.color='var(--muted)';onceBtn.style.borderColor='var(--border)';
     onceF.style.display='none';repF.style.display='flex';
   }
 }
@@ -8212,7 +8212,7 @@ function clearNewSchedule(){
   newSchedule=null;
   var el=document.getElementById('schedule-preview');if(el)el.style.display='none';
   var btn=document.getElementById('schedule-btn');
-  if(btn){btn.style.borderColor='var(--subtle)';btn.style.background='white';}
+  if(btn){btn.style.borderColor='var(--accent)';btn.style.background='transparent';}
 }
 
 // ── SCHEDULED TASK CHECKING ──
@@ -9880,7 +9880,7 @@ function closeChainView(){
       </div>
       <!-- Vakionäkymä -->
       <div id="wiz-s3-normal" style="display:flex;flex-direction:column;gap:.5rem">
-      <div id="wiz-preview" style="font-size:var(--text-sm);font-weight:500;color:var(--accent);padding:.1rem 0;letter-spacing:-.01em"></div>
+      <div id="wiz-preview" style="font-family:'DM Serif Display',serif;font-style:italic;font-size:1.35rem;line-height:1.25;font-weight:400;color:var(--ink);padding:.15rem 0 .3rem;letter-spacing:-.01em"></div>
       <div style="font-size:var(--text-xs);font-weight:500;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;display:block">Luokittele tehtävä</div>
       <div style="display:flex;gap:.4rem">
         <button id="f-important" class="qb q2" onclick="newImportant=!newImportant;this.classList.toggle('on',newImportant)" style="flex:1;justify-content:center;padding:.6rem">Tärkeä</button>
@@ -9943,7 +9943,7 @@ function closeChainView(){
     <div style="display:flex;gap:.4rem">
       <button id="edit-important" onclick="this.classList.toggle('on')" class="qb q2" style="flex:1;justify-content:center;padding:.6rem">Tärkeä</button>
       <button id="edit-urgent" onclick="this.classList.toggle('on')" class="qb q1" style="flex:1;justify-content:center;padding:.6rem">Kiireinen</button>
-      <button id="edit-frog" style="font-family:'DM Sans',sans-serif;font-size:var(--text-sm);font-weight:500;padding:.6rem .9rem;border-radius:var(--r-md);border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:border-color .15s,color .15s,background .15s;white-space:nowrap" title="Aseta sammakoksi (tärkein tehtävä)">🐸 Sammakko</button>
+      <button id="edit-frog" onclick="var on=this.classList.toggle('on');this.style.background=on?'var(--frog-deep)':'var(--surface)';this.style.color=on?'white':'var(--muted)';this.style.borderColor=on?'var(--frog-deep)':'var(--border)'" style="font-family:'DM Sans',sans-serif;font-size:var(--text-sm);font-weight:500;padding:.6rem .9rem;border-radius:var(--r-md);border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:border-color .15s,color .15s,background .15s;white-space:nowrap" title="Aseta sammakoksi (tärkein tehtävä)">🐸 Sammakko</button>
     </div>
     <!-- Arvio -->
     <div style="display:flex;align-items:center;gap:.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:.45rem .85rem">
