@@ -71,6 +71,25 @@
   --ink-on-art:#fff;
   --pomo-hi:#e8623a;
   --q2-bright:#4a8a4a;
+
+  /* M1 — game feel */
+  --ease-out:      cubic-bezier(.22,.61,.36,1);   /* saapuminen */
+  --ease-out-back: cubic-bezier(.34,1.40,.64,1);  /* maltillinen overshoot, ei pomppiva */
+  --ease-in:       cubic-bezier(.40,0,1,1);        /* poistuminen */
+  --dur-micro: 140ms;   /* joka klik, painallus, vuoronvaihto */
+  --dur-meso:  220ms;   /* kortti areenalle, pomodoro loppuu */
+  --dur-macro: 320ms;   /* Valmis */
+
+  /* ── Korttipöytä — pöytämateriaali ── */
+  --table-felt:#1d3527; --table-felt-deep:#10211a;
+  --table-light:rgba(196,154,58,.07);
+  --vignette:rgba(0,0,0,.48);
+  --well-bg:rgba(0,0,0,.24);
+  --well-shadow:inset 0 2px 8px rgba(0,0,0,.45), inset 0 1px 2px rgba(0,0,0,.55), inset 0 -1px 0 rgba(255,255,255,.05);
+  --engrave:rgba(196,154,58,.34); --engrave-dim:rgba(196,154,58,.15);
+  --etch-ink:rgba(255,255,255,.38); --etch-shadow:0 1px 0 rgba(0,0,0,.6);
+  --chip-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 2px 0 rgba(0,0,0,.35), 0 3px 8px rgba(0,0,0,.25);
+  --chip-shadow-dn:inset 0 1px 0 rgba(255,255,255,.04), 0 1px 0 rgba(0,0,0,.35);
 }
 body{
   color:var(--ink);
@@ -98,7 +117,7 @@ body::before{
   z-index:0;
   pointer-events:none;
 }
-.wrap{position:relative;z-index:1}
+.wrap{position:relative;z-index:1;background:radial-gradient(ellipse 130% 130% at 50% 50%,transparent 60%,var(--vignette) 100%)}
 .wrap{max-width:800px;margin:0 auto}
 
 /* HEADER */
@@ -143,12 +162,12 @@ input[type=date]{font-family:'DM Sans',sans-serif;font-size:var(--text-sm);color
 
 /* controls */
 .pctrl{display:flex;flex-direction:column;gap:.4rem;align-items:flex-end}
-.pbtn{font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:500;padding:.45rem 1rem;border-radius:7px;border:1.5px solid;cursor:pointer;background:var(--surface);white-space:nowrap;min-width:88px;text-align:center;transition:background .15s,color .15s,transform .15s}
+.pbtn{font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:500;padding:.45rem 1rem;border-radius:7px;border:1.5px solid;cursor:pointer;background:var(--surface);white-space:nowrap;min-width:88px;text-align:center;box-shadow:var(--chip-shadow);transition:background .15s,color .15s,transform .15s,box-shadow .15s}
 .pbtn.go{border-color:var(--pomo);color:var(--pomo)} .pbtn.go:hover,.pbtn.go.active{background:var(--pomo);color:white}
 .pbtn.stp{border-color:var(--muted);color:var(--muted)} .pbtn.stp:hover{background:var(--muted);color:white}
 .pbtn.nxt{border-color:var(--accent);color:var(--accent);font-size:.7rem} .pbtn.nxt:hover{background:var(--accent);color:white}
 .pbtn.dnx{border-color:var(--accent);color:var(--accent);font-size:.7rem} .pbtn.dnx:hover{background:var(--accent);color:white}
-.pbtn:active{transform:scale(.97)}
+.pbtn:active{transform:translateY(1px);box-shadow:var(--chip-shadow-dn)}
 
 /* VERB BUTTONS */
 .vbtn{font-family:'DM Sans',sans-serif;font-size:var(--text-xs);font-weight:500;padding:.38rem .5rem;border-radius:var(--r-sm);border:1.5px solid var(--border);background:var(--surface);color:rgba(255,255,255,.65);cursor:pointer;transition:border-color .15s,color .15s,background .15s,transform .15s;white-space:nowrap;text-align:center;width:100%}
@@ -455,7 +474,6 @@ button{color:rgba(255,255,255,.85)}
 .bulk-toggle:hover{color:white !important}
 
 /* Schedule button */
-#schedule-btn{background:var(--surface-md) !important;border-color:var(--border) !important}
 #schedule-btn svg circle{fill:rgba(196,154,58,.25) !important}
 
 /* Header buttons */
@@ -564,6 +582,11 @@ html[data-theme="havu"] {
   --pomo:#c0432b;
   --q2:#265535;
   --frog:#4a8a40;
+
+  /* Korttipöytä — pöytämateriaali */
+  --table-felt:#0c1c12; --table-felt-deep:#050e08;
+  --vignette:rgba(0,0,0,.6);
+  --well-bg:rgba(0,0,0,.3);
 }
 html[data-theme="havu"] body::before {
   background:linear-gradient(to bottom,rgba(4,16,9,.85) 0%,rgba(4,14,8,.70) 30%,rgba(3,12,7,.75) 100%) !important;
@@ -604,6 +627,17 @@ html[data-theme="aurinko"] {
   --r-md:10px;
   --r-lg:16px;
   --frog:#5a8a30;
+
+  /* Korttipöytä — VAALEA koivu/pellava-pöytä, EI tummu */
+  --table-felt:#efe5d0; --table-felt-deep:#e2d3b8;
+  --table-light:rgba(255,250,235,.5);
+  --vignette:rgba(120,80,30,.18);
+  --well-bg:rgba(120,80,30,.07);
+  --well-shadow:inset 0 2px 6px rgba(120,80,30,.18), inset 0 1px 2px rgba(120,80,30,.14), inset 0 -1px 0 rgba(255,255,255,.7);
+  --engrave:rgba(150,100,35,.4); --engrave-dim:rgba(150,100,35,.18);
+  --etch-ink:rgba(45,36,23,.55); --etch-shadow:0 1px 0 rgba(255,255,255,.65);
+  --chip-shadow:inset 0 1px 0 rgba(255,255,255,.8), 0 2px 0 rgba(120,80,30,.2), 0 3px 8px rgba(120,80,30,.12);
+  --chip-shadow-dn:inset 0 1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(120,80,30,.2);
 }
 /* Aurinko-teema: vuoristotausta auringonlaskussa */
 html[data-theme="aurinko"] body{
@@ -619,7 +653,7 @@ html[data-theme="aurinko"] body::before {
 }
 /* Panels */
 html[data-theme="aurinko"] .pbox{background:rgba(250,250,250,.90)!important;border-color:rgba(180,130,70,.30)!important;color:#2d2417!important}
-html[data-theme="aurinko"] #proj-modal,html[data-theme="aurinko"] #profile-panel,html[data-theme="aurinko"] #schedule-modal,html[data-theme="aurinko"] #eise-modal,html[data-theme="aurinko"] #edit-modal,html[data-theme="aurinko"] #wiz-modal{background:rgba(255,255,255,.98)!important;border-color:rgba(180,130,70,.30)!important;color:#2d2417!important;backdrop-filter:blur(20px)}
+html[data-theme="aurinko"] #proj-modal,html[data-theme="aurinko"] #profile-panel,html[data-theme="aurinko"] #schedule-modal,html[data-theme="aurinko"] #eise-modal,html[data-theme="aurinko"] #edit-modal,html[data-theme="aurinko"] #jatko-modal,html[data-theme="aurinko"] #wiz-modal{background:rgba(255,255,255,.98)!important;border-color:rgba(180,130,70,.30)!important;color:#2d2417!important;backdrop-filter:blur(20px)}
 html[data-theme="aurinko"] #eise-overlay{background:rgba(80,50,10,.35)!important}
 html[data-theme="aurinko"] .eise-quad{background:rgba(248,248,248,.75)!important;border-color:rgba(180,130,70,.25)!important}
 html[data-theme="aurinko"] .eise-card{background:rgba(255,255,255,.95)!important;border-color:rgba(180,130,70,.28)!important;color:#2d2417!important}
@@ -676,6 +710,13 @@ html[data-theme="aurinko"] .card.waiting{border-color:rgba(74,122,154,.48)!impor
 html[data-theme="aurinko"] .card.needs-review{border-color:rgba(196,160,50,.40)!important}
 /* Header divider */
 html[data-theme="aurinko"] .hdr{border-bottom-color:rgba(180,130,70,.30)!important}
+/* Vaihe 6: yläpalkin varjo lämpimänä ruskeana desktopilla (tumma rgba liian kova vaalealla) */
+@media (min-width: 900px){
+  html[data-theme="aurinko"] .hdr{box-shadow:0 1px 0 var(--engrave-dim), 0 2px 0 rgba(120,80,30,.22)}
+}
+/* Vaihe 5: jonopino — vaalea kortti aurinko-teemassa */
+html[data-theme="aurinko"] .turn-card{background:var(--surface-strong);box-shadow:inset 0 1px 0 rgba(255,255,255,.8), 0 1px 0 rgba(120,80,30,.3), 0 2px 0 rgba(120,80,30,.15)}
+html[data-theme="aurinko"] .turn-card:first-child{box-shadow:inset 0 1px 0 rgba(255,255,255,.8), 0 1px 0 rgba(120,80,30,.3), 0 2px 0 rgba(120,80,30,.15), 0 3px 8px rgba(120,80,30,.18)}
 /* Schedule modal days */
 html[data-theme="aurinko"] #schedule-modal .sched-day-btn{background:rgba(180,130,70,.12)!important;border-color:rgba(180,130,70,.25)!important;color:#4a3a20!important}
 html[data-theme="aurinko"] #schedule-modal .sched-day-btn.on{background:rgba(196,104,30,.72)!important;border-color:rgba(196,104,30,.55)!important;color:white!important}
@@ -701,6 +742,26 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
 }
 .card-entering{animation:card-enter .2s ease-out both}
 .card-exiting{animation:card-exit .4s ease-in both;pointer-events:none}
+/* Saapuva kortti (käsi/jono) — opacity-only, ei sotke viuhka-rotaatiota/rivilayoutia */
+@keyframes card-fade-in{from{opacity:0}to{opacity:1}}
+.card-arriving{animation:card-fade-in var(--dur-meso) var(--ease-out) both}
+/* M1c — Valmis-hetken rariteettiporras */
+@keyframes done-check-pop{ 0%{opacity:0;transform:scale(.4)} 55%{opacity:1;transform:scale(1.06)} 100%{opacity:1;transform:scale(1)} }
+@keyframes done-flash{ 0%{opacity:.55;transform:scale(.85)} 100%{opacity:0;transform:scale(1.5)} }
+@keyframes frog-particle{ 0%{opacity:1;transform:translate(0,0) scale(1)} 100%{opacity:0;transform:translate(var(--px),var(--py)) scale(.4)} }
+.tcg-card__done-check{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:30;pointer-events:none;animation:done-check-pop var(--dur-macro) var(--ease-out-back) both;}
+.tcg-card__done-flash{position:absolute;inset:-10%;z-index:1;pointer-events:none;border-radius:50%;background:radial-gradient(circle,var(--accent) 0%,transparent 70%);animation:done-flash .35s var(--ease-out) both;}
+.tcg-card__particle{position:absolute;width:7px;height:7px;border-radius:50%;background:var(--accent);z-index:40;pointer-events:none;animation:frog-particle .5s var(--ease-out) both;}
+/* Lisää tehtävä — kutsuva hehku (C-variantti).
+   Hehku ::afterissa ja animoidaan vain opacityä (komposoitava, ei repaint-loopia);
+   väri seuraa teeman accentia (usva kulta, havu vihreä, aurinko terracotta). */
+#btn-add-task{position:relative;box-shadow:var(--chip-shadow);transition:transform .15s,box-shadow .15s}
+#btn-add-task::after{content:'';position:absolute;inset:-3px;border-radius:inherit;pointer-events:none;z-index:-1;box-shadow:0 0 18px color-mix(in srgb, var(--accent) 45%, transparent);opacity:.55}
+@keyframes add-glow-o{0%,100%{opacity:.3}50%{opacity:.95}}
+@media (prefers-reduced-motion:no-preference){#btn-add-task::after{animation:add-glow-o 3s ease-in-out infinite}}
+#btn-add-task:active{transform:translateY(1px);box-shadow:var(--chip-shadow-dn)}
+html[data-perf="lite"] #btn-add-task::after{display:none!important}
+html[data-theme="aurinko"] #btn-add-task::after{animation:none;opacity:.4}
 
 /* Modaalit — avaus (eise-modal jo määritetty, tämä on yleinen helper) */
 
@@ -767,6 +828,12 @@ html[data-perf="lite"] body::before{
 }
 html[data-theme="aurinko"][data-perf="lite"] body{
   background-color:#ede4d4;
+}
+/* Nopea tila: pöytäpinta ilman kohinatekstuuria — tasainen huopa + vinjetti (vain desktop-pöytä) */
+@media (min-width:900px){
+  html[data-perf="lite"] .wrap{
+    background: radial-gradient(ellipse 130% 130% at 50% 50%, transparent 52%, var(--vignette) 100%), var(--table-felt) !important;
+  }
 }
 
 </style>
@@ -1164,7 +1231,7 @@ html[data-theme="aurinko"][data-perf="lite"] body{
         <polygon points="37.5,7 54,19 30,19" fill="rgba(255,255,255,.92)" filter="url(#crownBlur2)"/>
         <polygon points="37.5,15 56,30 28,30" fill="rgba(255,255,255,.72)" filter="url(#crownBlur2)"/>
       </svg>
-      <button onclick="wizIsOpen()?wizReset():wizStart()" title="Lisää uusi tehtävä" id="btn-add-task" style="margin-top:.5rem;font-family:DM Sans,sans-serif;font-size:.78rem;font-weight:600;padding:.35rem .8rem;border-radius:20px;border:1.5px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer">+ Lisää tehtävä</button>
+      <button onclick="wizIsOpen()?wizReset():wizStart()" title="Lisää uusi tehtävä" id="btn-add-task" style="margin-top:.5rem;font-family:DM Sans,sans-serif;font-size:.9rem;font-weight:600;padding:.6rem 1.2rem;border-radius:var(--r-md);border:1.5px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer">+ Lisää tehtävä</button>
 
     </div>
     <div id="hdr-right" style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
@@ -1302,6 +1369,7 @@ html[data-theme="aurinko"][data-perf="lite"] body{
       <div id="turn-panel" class="turn-panel side-panel side-panel--right tcg-right" role="region" aria-label="Tehtäväjono — seuraavat tehtävät">
         <div class="side-panel__header">
           <span class="side-panel__title">TEHTÄVÄJONO</span>
+          <span class="pile-ico" aria-hidden="true"></span>
           <span class="side-panel__count" id="turn-count">0</span>
         </div>
         <div id="turn-list" class="turn-list"></div>
@@ -1416,9 +1484,10 @@ html[data-theme="aurinko"][data-perf="lite"] body{
   z-index:150;
   backdrop-filter:blur(10px);
   -webkit-backdrop-filter:blur(10px);
-  transition:border-color .2s,background .2s;
-  box-shadow:0 2px 10px rgba(0,0,0,.18);
+  transition:border-color .2s,background .2s,transform .15s,box-shadow .15s;
+  box-shadow:var(--chip-shadow);
 }
+#ham-btn:active{transform:translateY(1px);box-shadow:var(--chip-shadow-dn)}
 #ham-btn:hover{border-color:var(--accent-dim,var(--accent));background:var(--surface-strong,var(--surface))}
 .ham-view-label{font-size:var(--text-xs);font-weight:500;color:var(--accent);margin-left:.35rem;letter-spacing:.04em;vertical-align:middle}
 
@@ -1587,9 +1656,10 @@ html[data-theme="aurinko"][data-perf="lite"] body{
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;z-index:150;
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  transition:border-color .2s,background .2s;
-  box-shadow:0 2px 10px rgba(0,0,0,.18);
+  transition:border-color .2s,background .2s,transform .15s,box-shadow .15s;
+  box-shadow:var(--chip-shadow);
 }
+#inv-btn:active{transform:translateY(1px);box-shadow:var(--chip-shadow-dn)}
 #inv-btn:hover{border-color:var(--accent-dim,var(--accent));background:var(--surface-strong,var(--surface))}
 
 #inv-modal{
@@ -1841,8 +1911,8 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 </div>
 
 <!-- SCHEDULE PICKER MODAL -->
-<div id="schedule-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)" onclick="if(event.target===this)closeSchedulePicker()"></div>
-<div id="schedule-modal" role="dialog" aria-modal="true" aria-label="Aikataulutus" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(380px,96vw);background:var(--surface-xs);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.15);z-index:201;padding:1.5rem">
+<div id="schedule-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:599;backdrop-filter:blur(2px)" onclick="if(event.target===this)closeSchedulePicker()"></div>
+<div id="schedule-modal" role="dialog" aria-modal="true" aria-label="Aikataulutus" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(380px,96vw);background:linear-gradient(180deg,var(--plate-top),var(--plate-bot));border-radius:var(--r-lg);border:1px solid var(--engrave);box-shadow:0 24px 64px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);z-index:600;padding:1.5rem">
   <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;font-style:italic;letter-spacing:-0.02em;color:var(--ink);margin-bottom:1.1rem">🕐 Ajasta tehtävä</div>
   <!-- Type -->
   <div style="display:flex;gap:.5rem;margin-bottom:1rem">
@@ -1885,9 +1955,9 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   </div>
 </div>
 <style>
-.sched-day-btn{font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;width:36px;height:36px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:border-color .15s,color .15s,background .15s,transform .15s}
+.sched-day-btn{font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;width:36px;height:36px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;box-shadow:var(--chip-shadow);transition:border-color .15s,color .15s,background .15s,transform .15s,box-shadow .15s}
 .sched-day-btn.on{border-color:var(--accent);background:var(--accent);color:white}
-.sched-day-btn:active{transform:scale(.93)}
+.sched-day-btn:active{transform:translateY(1px);box-shadow:var(--chip-shadow-dn)}
 
 /* ── Vaihe 4 TCG: Areena-rivi kolmisarakkeena ─────────────────── */
 .arena-row{
@@ -1918,21 +1988,36 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   align-items:center;
   gap:.45rem;
   padding-bottom:.4rem;
-  border-bottom:1px solid var(--border);
   margin-bottom:.2rem;
   position:sticky;
   top:0;
-  background:var(--bg);
+  background:var(--surface-strong);
   z-index:1;
+}
+/* Kaiverretut sivuviivat otsikon molemmin puolin */
+.side-panel__header::before,
+.side-panel__header::after{
+  content:'';
+  flex:1;
+  height:1px;
+  background:var(--engrave-dim);
 }
 .side-panel__title{
   font-size:var(--text-xs);
   font-weight:600;
-  color:var(--muted);
-  letter-spacing:.15em;
+  color:var(--etch-ink);
+  text-shadow:var(--etch-shadow);
+  letter-spacing:.18em;
   text-transform:uppercase;
-  flex:1;
+  text-align:center;
+  flex:0 0 auto;
 }
+/* Pinoikoni — 3 limittäistä korttisuorakulmiota (mockup-poyta) */
+.pile-ico{position:relative;width:13px;height:9px;flex:none;margin-left:.45rem}
+.pile-ico,.pile-ico::before,.pile-ico::after{border:1px solid var(--engrave);border-radius:2px;background:transparent}
+.pile-ico::before,.pile-ico::after{content:"";position:absolute;width:13px;height:9px}
+.pile-ico::before{top:-3px;left:-3px;opacity:.65}
+.pile-ico::after{top:-6px;left:-6px;opacity:.35}
 .side-panel__count{
   font-size:var(--text-xs);
   font-weight:500;
@@ -1943,6 +2028,7 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   min-width:1.4rem;
   text-align:center;
   border:1px solid var(--border);
+  box-shadow:var(--chip-shadow-dn);
 }
 .side-panel__empty{
   font-size:var(--text-xs);
@@ -1962,16 +2048,22 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   display:flex;
   flex-direction:column;
   gap:0;
+  position:relative; /* FLIP: lähtevän rivin häipyvä overlay ankkuroituu tähän */
 }
 .turn-card:first-child{
   border-color:var(--accent);
   border-width:1.5px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),
+             0 1px 0 rgba(0,0,0,.45),
+             0 2px 0 rgba(0,0,0,.22),
+             0 3px 8px rgba(0,0,0,.3);
 }
 
 /* Odottavat (vasen) — katkoviivakortteja, hieman haalistuneena */
 .side-panel--left .waiting-item,
 .waiting-list .waiting-item{
   border-style:dashed;
+  border-color:var(--engrave-dim);
   opacity:.72;
 }
 .waiting-list{
@@ -1985,16 +2077,31 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   align-items:center;
   gap:.45rem;
   padding:.38rem .55rem;
+  margin-bottom:3px;
   border-radius:var(--r-md);
-  background:var(--surface-md);
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--plate-top) 55%, transparent),
+      color-mix(in srgb, var(--plate-bot) 55%, transparent)),
+    var(--surface-md);
   border:1px solid var(--border);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),
+             0 1px 0 rgba(0,0,0,.45),
+             0 2px 0 rgba(0,0,0,.22);
   cursor:grab;
   user-select:none;
   transition:background .12s, border-color .12s;
   min-width:0;
   box-sizing:border-box;
 }
-.turn-card:hover{background:var(--surface-strong);border-color:var(--muted)}
+.turn-card:hover{
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--plate-top) 55%, transparent),
+      color-mix(in srgb, var(--plate-bot) 55%, transparent)),
+    var(--surface-strong);
+  border-color:var(--muted);
+}
 .turn-card.dragging{opacity:.45;cursor:grabbing}
 .turn-card.drag-over{border-color:var(--accent);background:var(--surface-strong)}
 .turn-card__quad{
@@ -2187,10 +2294,11 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   align-items:center;
   gap:.4rem;
   white-space:nowrap;
-  box-shadow:0 2px 10px rgba(0,0,0,.35);
-  transition:background .15s,border-color .15s,bottom 300ms cubic-bezier(.22,.61,.36,1);
+  box-shadow:var(--chip-shadow), 0 2px 10px rgba(0,0,0,.35);
+  transition:background .15s,border-color .15s,transform .15s,box-shadow .15s,bottom 300ms cubic-bezier(.22,.61,.36,1);
   pointer-events:auto;
 }
+#hand-toggle:active{transform:translateY(1px);box-shadow:var(--chip-shadow-dn)}
 #hand-toggle:hover{background:rgba(196,154,58,.14);border-color:var(--accent);}
 body.hand-open #hand-toggle{bottom:calc(var(--hand-card-h,182px) + 12px);}
 /* Korttiviuhka-ikoni */
@@ -3293,12 +3401,21 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
     0 0 44px rgba(196,154,58,.45);
 }
 @keyframes arenaLand{
-  0%{box-shadow:0 0 0 0 rgba(196,154,58,.6),0 14px 32px rgba(0,0,0,.5);}
-  100%{box-shadow:0 0 0 16px rgba(196,154,58,0),0 14px 32px rgba(0,0,0,.5);}
+  0%{box-shadow:0 0 0 0 rgba(196,154,58,.6),0 8px 20px rgba(0,0,0,.4);}
+  100%{box-shadow:0 0 0 16px rgba(196,154,58,0),0 14px 32px rgba(0,0,0,.55);}
 }
-.tcg-card.just-landed{animation:arenaLand .6s ease-out;}
+/* M1b — kevyt sisääntulo: kortti settlaa 1.02→1, varjo syvenee samalla */
+@keyframes arenaLandIn{
+  0%{transform:scale(1.02);}
+  100%{transform:scale(1);}
+}
+.tcg-card.just-landed{animation:arenaLand .6s ease-out, arenaLandIn var(--dur-meso) var(--ease-out);}
 /* Perf-lite: holo pois */
 html[data-perf="lite"] .tcg-card__plate::before{display:none!important;}
+/* M1c — lite: ei välähdystä eikä partikkeleita (check-pop sallitaan, se on kevyt) */
+html[data-perf="lite"] .tcg-card__done-flash,
+html[data-perf="lite"] .tcg-card__particle{display:none!important;}
+html[data-perf="lite"] .just-landed{animation:none!important;}
 
 /* ── Vaihe 11: Responsiivisuus ──────────────────────────────── */
 
@@ -3448,12 +3565,17 @@ svg[aria-hidden="true"]{pointer-events:none;}
     border: none;
     border-radius: var(--r-lg);
     background:
-      radial-gradient(ellipse 70% 60% at 50% 50%, rgba(196,154,58,.10) 0%, rgba(196,154,58,.04) 40%, transparent 75%),
-      radial-gradient(ellipse 100% 100% at 50% 50%, rgba(0,0,0,.20) 0%, rgba(0,0,0,.05) 60%, transparent 100%);
-    backdrop-filter: blur(1px);
-    -webkit-backdrop-filter: blur(1px);
+      /* 1. valopooli */
+      radial-gradient(ellipse 70% 55% at 50% 42%, var(--table-light), transparent 70%),
+      /* 2. vinjetti */
+      radial-gradient(ellipse 130% 130% at 50% 50%, transparent 52%, var(--vignette) 100%),
+      /* 3. huopakuitu — feTurbulence-kohina */
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='64' height='64' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E"),
+      /* 4. huopa */
+      linear-gradient(180deg, var(--table-felt), var(--table-felt-deep));
+    background-repeat: no-repeat, no-repeat, repeat, no-repeat;
     overflow: hidden;
-    box-shadow: 0 4px 32px rgba(0,0,0,.18);
+    box-shadow: 0 8px 40px rgba(0,0,0,.35), inset 0 0 0 1px var(--engrave-dim);
   }
   /* Yläpalkki */
   .hdr {
@@ -3464,7 +3586,9 @@ svg[aria-hidden="true"]{pointer-events:none;}
     flex-wrap: nowrap;
     padding: .5rem 1rem;
     margin-bottom: 0;
-    border-bottom: 1px solid var(--border);
+    border-bottom: none;
+    background: linear-gradient(180deg, rgba(0,0,0,.14), transparent);
+    box-shadow: 0 1px 0 var(--engrave-dim), 0 2px 0 rgba(0,0,0,.35);
     gap: .75rem;
     min-height: 0;
   }
@@ -3539,8 +3663,11 @@ svg[aria-hidden="true"]{pointer-events:none;}
     min-height: 0;
     overflow-y: auto;
     scrollbar-width: none;
-    padding: .75rem;
-    border-right: 1px solid var(--border);
+    padding: .6rem;
+    margin: .75rem .6rem;
+    border-radius: var(--r-lg);
+    background: var(--well-bg);
+    box-shadow: var(--well-shadow), inset 0 0 0 1px var(--engrave-dim);
   }
   .tcg-left::-webkit-scrollbar { display: none; }
   .tcg-arena {
@@ -3566,9 +3693,40 @@ svg[aria-hidden="true"]{pointer-events:none;}
     text-align: center;
   }
   /* Kulmaornamentit pois desktopilla — koko areena-alue ei ole "kortti" enää */
-  #arena::before,
-  #arena::after {
+  #arena::before {
     display: none;
+  }
+  /* Kaiverrettu korttisyvennys (well) areenan taakse */
+  #arena {
+    isolation: isolate;
+  }
+  #arena::after {
+    content: '';
+    display: block;
+    position: absolute;
+    z-index: -1;
+    inset: auto;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%,-46%);
+    width: 312px;
+    height: auto;
+    aspect-ratio: 5/7;
+    border-radius: 18px;
+    background: var(--well-bg);
+    box-shadow: var(--well-shadow);
+    border: 14px solid transparent;
+    border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 84 84'%3E%3Cg fill='none' stroke='%23c49a3a' stroke-opacity='.35' stroke-width='2'%3E%3Crect x='4' y='4' width='76' height='76' rx='10'/%3E%3Cpath d='M22 8Q10 10 8 22M62 8Q74 10 76 22M8 62Q10 74 22 76M76 62Q74 74 62 76'/%3E%3C/g%3E%3Cg fill='%23c49a3a' fill-opacity='.35'%3E%3Ccircle cx='14' cy='14' r='2'/%3E%3Ccircle cx='70' cy='14' r='2'/%3E%3Ccircle cx='14' cy='70' r='2'/%3E%3Ccircle cx='70' cy='70' r='2'/%3E%3C/g%3E%3C/svg%3E") 28 / 14px stretch;
+    pointer-events: none;
+  }
+  /* Tyhjä tila: kaiverrettu teksti syvennyksen sisällä */
+  #arena-empty {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    color: var(--etch-ink);
+    text-shadow: var(--etch-shadow);
+    font-style: italic;
   }
   .tcg-right {
     grid-area: right;
@@ -3576,10 +3734,17 @@ svg[aria-hidden="true"]{pointer-events:none;}
     min-height: 0;
     overflow-y: auto;
     scrollbar-width: none;
-    padding: .75rem;
-    border-left: 1px solid var(--border);
+    padding: .6rem;
+    margin: .75rem .6rem;
+    border-radius: var(--r-lg);
+    background: var(--well-bg);
+    box-shadow: var(--well-shadow), inset 0 0 0 1px var(--engrave-dim);
   }
   .tcg-right::-webkit-scrollbar { display: none; }
+  /* Sticky-otsikko: huopa-liuku peittää scrollatun sisällön syvennyksessä */
+  .side-panel__header {
+    background: linear-gradient(180deg, var(--table-felt-deep) 75%, transparent);
+  }
   /* main-content-area ei ole enää grid-alue desktopilla */
   #main-content-area {
     display: contents;
@@ -3601,8 +3766,8 @@ svg[aria-hidden="true"]{pointer-events:none;}
 }
 /* ── EISENHOWER PEEK — globaali (toimii myös mobiililla) ── */
 #arena{position:relative;overflow:hidden}
-#eise-handle{position:absolute;top:0;left:0;right:0;z-index:10;height:48px;padding:0 1rem;background:var(--surface-strong,var(--surface));border-bottom:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:.75rem;transition:background .15s;pointer-events:auto;text-align:left}
-#eise-handle:hover{background:var(--surface-xs,var(--surface))}
+#eise-handle{position:absolute;top:0;left:0;right:0;z-index:10;height:48px;padding:0 1rem;background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.18)),var(--surface-strong,var(--surface));border-bottom:1px solid var(--border);box-shadow:inset 0 1px 0 rgba(255,255,255,.07), 0 1px 0 var(--engrave-dim);cursor:pointer;display:flex;align-items:center;gap:.75rem;transition:background .15s;pointer-events:auto;text-align:left}
+#eise-handle:hover{background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.18)),var(--surface-xs,var(--surface));box-shadow:inset 0 1px 0 rgba(255,255,255,.07), 0 1px 0 var(--engrave)}
 #eise-handle.eise-handle--hidden{display:none!important}
 .eise-hgrid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;width:30px;height:24px;gap:2px;flex-shrink:0}
 .eise-hcell{border-radius:2px;opacity:.75}
@@ -3631,7 +3796,7 @@ svg[aria-hidden="true"]{pointer-events:none;}
 .eise-peek-card.eise-dragging{opacity:.3}
 .eise-peek-card-txt{flex:1;min-width:0;word-break:break-word}
 .eise-peek-q-btn{flex-shrink:0;width:22px;height:22px;border:1px solid var(--border);border-radius:4px;background:none;cursor:pointer;font-size:.75rem;color:var(--muted);display:flex;align-items:center;justify-content:center;transition:background .12s,color .12s,border-color .12s}
-.eise-peek-q-btn:hover,.eise-peek-q-btn.in-queue{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.eise-peek-q-btn:hover,.eise-peek-q-btn.in-queue{background:var(--accent);color:#fff;border-color:var(--accent)}
 .eise-peek-empty{font-size:var(--text-xs);color:var(--subtle);padding:.3rem .2rem}
 </style>
 <div id="profile-overlay" style="position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)"></div>
@@ -4874,9 +5039,9 @@ function openEditModal(id){
   document.getElementById('edit-urgent').classList.toggle('on',!!t.urgent);
   var fb=document.getElementById('edit-frog');
   fb.classList.toggle('on',!!t.frog);
-  fb.style.background=t.frog?'var(--frog-deep)':'';
-  fb.style.color=t.frog?'white':'';
-  fb.style.borderColor=t.frog?'var(--frog-deep)':'';
+  fb.style.background=t.frog?'var(--frog-deep)':'var(--surface)';
+  fb.style.color=t.frog?'white':'var(--muted)';
+  fb.style.borderColor=t.frog?'var(--frog-deep)':'var(--border)';
 
   // Arvio-slider
   var esl=document.getElementById('edit-esl');
@@ -5977,6 +6142,53 @@ function setFlag(id,flag){
   save();render();
 }
 
+// Kulta-check-pop (kaikki rariteetit) — SVG createElementNS, ei innerHTML-template
+function doneCheckPop(cardEl){
+  var SVGNS='http://www.w3.org/2000/svg';
+  var pop=document.createElement('div');
+  pop.className='tcg-card__done-check';
+  var svg=document.createElementNS(SVGNS,'svg');
+  svg.setAttribute('viewBox','0 0 24 24');
+  svg.setAttribute('width','38'); svg.setAttribute('height','38');
+  svg.setAttribute('aria-hidden','true');
+  var path=document.createElementNS(SVGNS,'path');
+  path.setAttribute('d','M4 12.5l5 5L20 6');
+  path.setAttribute('fill','none');
+  path.style.stroke='var(--accent)';  // var() ei resolvoidu SVG-presentaatioattribuutissa
+  path.setAttribute('stroke-width','3');
+  path.setAttribute('stroke-linecap','round');
+  path.setAttribute('stroke-linejoin','round');
+  svg.appendChild(path);
+  pop.appendChild(svg);
+  cardEl.appendChild(pop);
+  setTimeout(function(){ if(pop.parentNode) pop.parentNode.removeChild(pop); }, 700);
+}
+// Radial kulta-välähdys kortin takaa (rare: q1/q2)
+function doneFlash(cardEl){
+  var f=document.createElement('div');
+  f.className='tcg-card__done-flash';
+  cardEl.insertBefore(f, cardEl.firstChild);
+  setTimeout(function(){ if(f.parentNode) f.parentNode.removeChild(f); }, 400);
+}
+// Kultahiukkaspurkaus (mythic: sammakko) — ainoa paikka sovelluksessa jossa partikkelit sallitaan
+function frogBurst(cardEl){
+  var n=11; // 8–12
+  for(var i=0;i<n;i++){
+    var p=document.createElement('div');
+    p.className='tcg-card__particle';
+    var ang=(Math.PI*2*i)/n;
+    var dist=58+(i%3)*14;
+    p.style.left='50%'; p.style.top='50%';
+    p.style.setProperty('--px',Math.round(Math.cos(ang)*dist)+'px');
+    p.style.setProperty('--py',Math.round(Math.sin(ang)*dist)+'px');
+    cardEl.appendChild(p);
+  }
+  setTimeout(function(){
+    var ps=cardEl.querySelectorAll('.tcg-card__particle');
+    for(var j=0;j<ps.length;j++){ if(ps[j].parentNode) ps[j].parentNode.removeChild(ps[j]); }
+  }, 550);
+}
+
 function markDone(id){
   var t=tasks.find(function(t){return t.id===id});
   if(t){
@@ -5987,12 +6199,33 @@ function markDone(id){
     soundBell();
     // 12D: ilmoita ruudunlukijalle
     a11yAnnounce('Valmis: '+(t.verbi?t.verbi+' ':'')+t.text);
+    save();  // persistoi heti — animaatio ei saa olla tallennuksen ehto
   }
   // Vaihe 10: animoi kortti ulos ennen render()
   var cardEl=document.querySelector('[data-task-id="'+id+'"]');
   if(cardEl){
-    cardEl.classList.add('card-exiting');
-    cardEl.addEventListener('animationend',function(){save();render();},{once:true});
+    // M1c — Valmis-hetken porras
+    var rar=rarityOf(t);
+    var lite=document.documentElement.getAttribute('data-perf')==='lite';
+    var rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+    doneCheckPop(cardEl);  // kaikki rariteetit
+    var _rendered=false;
+    var _renderOnce=function(){ if(!_rendered){_rendered=true;render();} };
+    var doExit=function(){
+      cardEl.classList.add('card-exiting');
+      cardEl.addEventListener('animationend',_renderOnce,{once:true});
+      setTimeout(_renderOnce,600);  // fallback: irronnut node ei laukaise animationendia
+    };
+    if((rar==='rare'||rar==='mythic') && !lite && !rm){
+      // radial-välähdys + scale-pop 1.06 ennen exitiä
+      doneFlash(cardEl);
+      if(rar==='mythic') frogBurst(cardEl);  // ansaittu wow — vain sammakko
+      cardEl.style.transition='transform 140ms var(--ease-out-back)';
+      cardEl.style.transform='scale(1.06)';
+      setTimeout(doExit,140);
+    } else {
+      doExit();
+    }
   } else {
     save();render();
   }
@@ -6015,6 +6248,8 @@ function del(id){
 var _pendingDelete=null;
 var _pendingDeleteTimer=null;
 var _newTaskId=null; // Vaihe 10: merkitsee juuri luodun tehtävän animaatiota varten
+var _lastArenaTaskId=null; // M1b: areenakortin land-animaatio vain kun kortti todella vaihtuu
+var _prevHandIds=[],_prevTurnIds=[]; // fade-in vain uusille saapujille per paikka
 function delUndoable(id){
   var t=tasks.find(function(x){return x.id===id});
   if(!t)return;
@@ -6714,6 +6949,7 @@ var _TCG_VERB_ID = {
 };
 /* Rarity = tärkeys (Eisenhower): kortisto opettaa metodologiaa */
 function rarityOf(t){
+  if(!t)return 'common';
   if(t.frog)return 'mythic';
   if(t.quad==='q1'||t.quad==='q2')return 'rare';
   if(t.quad==='q3')return 'uncommon';
@@ -6940,9 +7176,14 @@ function renderArenaCard(t, container, anyFrog, mode){
     if(pj2) card.style.boxShadow='inset 0 3px 0 '+pj2.color;
   }
 
-  // Land-pulssi (vain areena)
-  card.classList.add('just-landed');
-  setTimeout(function(){card.classList.remove('just-landed');},650);
+  // Land-pulssi (vain areena) — vain kun areenakortti TODELLA vaihtuu, ei joka renderissä
+  if(mode!=='hand'){
+    if(t.id!==_lastArenaTaskId){
+      card.classList.add('just-landed');
+      setTimeout(function(){card.classList.remove('just-landed');},650);
+    }
+    _lastArenaTaskId=t.id;
+  }
 
   // Fade-in uudelle kortille
   if(_newTaskId!==null&&t.id===_newTaskId){
@@ -7451,19 +7692,19 @@ function starFilteredToHand(){
 }
 
 function promoteToHand(id){
-  // Nosta tehtävä vuoron kärkeen (heti areenan jälkeen) tai areenalle jos tyhjä
+  // Lisää tehtävä vuoron loppuun (jonon viimeiseksi) tai areenalle jos tyhjä
   var hadActive=active!==null;
   // Poista mahdollinen olemassa oleva paikka
   if(active===id){active=turn.length>0?turn.shift():null;hadActive=false;}
   else{turn=turn.filter(function(i){return i!==id;});}
   if(hadActive){
-    // Lisää vuoron ensimmäiseksi
-    turn.unshift(id);
+    // Lisää vuoron viimeiseksi
+    turn.push(id);
   } else {
     // Ei areenaa — nosta suoraan areenalle
     active=id;
   }
-  notify(hadActive?'🎴 Kortti siirretty seuraavaksi':'🎴 Kortti nostettu areenalle');
+  notify(hadActive?'🎴 Kortti siirretty jonon perään':'🎴 Kortti nostettu areenalle');
   // Vaihe 10: animoi lähdekortti ulos, kohde sisään
   var srcEl=document.querySelector('[data-task-id="'+id+'"]');
   if(srcEl){
@@ -7483,10 +7724,32 @@ function renderTurnPanel(inbox){
   var emptyEl=document.getElementById('turn-empty');
   var countEl=document.getElementById('turn-count');
   if(!listEl)return;
-  listEl.innerHTML='';
 
   var turnIds=Array.isArray(turn)?turn:[];
   var turnTasks=turnIds.map(function(id){return inbox.find(function(t){return t.id===id&&!t.done});}).filter(Boolean);
+
+  // FLIP First: tallenna nykyiset rivipaikat + tunnista lähtevät rivit ennen tyhjennystä
+  // Portti: litessa/rm:ssa animaatio olisi nakymaton (.01ms) — ala maksa layout-lukuja;
+  // sama jos jonon jarjestys ei muuttunut (ei liikkuvia riveja).
+  var _ids=turnTasks.map(function(t){return t.id;});
+  var _orderSame=_ids.length===_prevTurnIds.length&&_ids.every(function(id,i){return id===_prevTurnIds[i];});
+  var _doFlip=!_orderSame
+    && document.documentElement.getAttribute('data-perf')!=='lite'
+    && !matchMedia('(prefers-reduced-motion:reduce)').matches;
+  var _flipFirst={},_leaving=[],_newIds={};
+  turnTasks.forEach(function(t){_newIds[t.id]=1;});
+  if(_doFlip){
+    var _lr=listEl.getBoundingClientRect();
+    Array.from(listEl.children).forEach(function(rw){
+      var rid=rw.dataset.id;if(!rid||rw.dataset.ghost)return;
+      var rr=rw.getBoundingClientRect();
+      var pos={top:rr.top-_lr.top,left:rr.left-_lr.left,w:rr.width};
+      _flipFirst[rid]=pos;
+      if(!_newIds[rid]) _leaving.push({row:rw,pos:pos});
+    });
+  }
+
+  listEl.innerHTML='';
 
   if(countEl)countEl.textContent=turnTasks.length;
   if(emptyEl)emptyEl.style.display=turnTasks.length?'none':'block';
@@ -7499,6 +7762,7 @@ function renderTurnPanel(inbox){
 
     var row=document.createElement('div');
     row.className='turn-card';
+    if(_prevTurnIds.indexOf(t.id)<0) row.classList.add('card-arriving'); // uusi jonoon → fade-in
     row.draggable=true;
     row.dataset.id=t.id;
     row.dataset.idx=idx;
@@ -7608,6 +7872,42 @@ function renderTurnPanel(inbox){
     row.style.marginBottom=_nextIsChild?'1px':'.3rem';
     listEl.appendChild(row);
   });
+
+  _prevTurnIds = _ids;
+
+  // FLIP Last/Invert/Play: jäljelle jäävät liukuvat vanhasta paikasta uuteen
+  if(!_doFlip) return;
+  var _lr2=listEl.getBoundingClientRect();
+  Array.from(listEl.children).forEach(function(rw){
+    var rid=rw.dataset.id;if(!rid||!_flipFirst[rid])return;
+    var rr=rw.getBoundingClientRect();
+    var dy=_flipFirst[rid].top-(rr.top-_lr2.top);
+    if(dy){
+      rw.style.transition='none';
+      rw.style.transform='translateY('+dy+'px)';
+      requestAnimationFrame(function(){
+        rw.style.transition='transform var(--dur-meso) var(--ease-out)';
+        rw.style.transform='';
+      });
+    }
+  });
+  // Lähtevät rivit: irrotettu node uudelleen overlayna vanhaan kohtaan, häipyy
+  _leaving.forEach(function(L){
+    var g=L.row;
+    g.style.position='absolute';
+    g.style.top=L.pos.top+'px';g.style.left=L.pos.left+'px';
+    g.style.width=L.pos.w+'px';g.style.margin='0';
+    g.style.pointerEvents='none';g.style.zIndex='1';
+    g.dataset.ghost='1';  // seuraava render ei mittaa haamua rivinä
+    g.classList.remove('card-arriving');
+    listEl.appendChild(g);
+    requestAnimationFrame(function(){
+      g.style.transition='opacity var(--dur-micro) var(--ease-in),transform var(--dur-micro) var(--ease-in)';
+      g.style.opacity='0';
+      g.style.transform='translateX(14px)';
+    });
+    setTimeout(function(){if(g.parentNode)g.parentNode.removeChild(g);},240);
+  });
 }
 
 function renderWaitingPanel(inbox){
@@ -7662,7 +7962,8 @@ function renderHandBar(inbox){
 
   handTasks.forEach(function(t){
     var card = renderArenaCard(t, null, anyFrog, 'hand');
-    card.title = 'Nosta areenalle';
+    if(_prevHandIds.indexOf(t.id)<0) card.classList.add('card-arriving'); // uusi käteen → fade-in
+    card.title = active===null ? 'Nosta areenalle' : 'Siirrä jonon perään';
     card.onclick = (function(tid){ return function(e){
       if(e.target.closest('button')) return;
       promoteToHand(tid);
@@ -7672,6 +7973,7 @@ function renderHandBar(inbox){
     }; })(t.id);
     barCards.appendChild(card);
   });
+  _prevHandIds = handTasks.map(function(t){return t.id;});
 }
 // ── /Vaihe 5B TCG ────────────────────────────────────────────────────
 
@@ -7689,7 +7991,42 @@ document.addEventListener('DOMContentLoaded', function(){
   setTimeout(_updatePbPlaceholder, 100);
   initHandBarState();
   _attachHandHoverDesktop();
+  initSolidius();
 });
+
+/* M1a — Solidius: kortti painuu pintaan, vapautuu painolla.
+   Delegoitu documentiin → selviää render()-uudelleenpiirrosta. */
+function initSolidius(){
+  /* inline !important → painallus säilyy myös lite-tilassa (kevyt transform, ei backdrop-filter) */
+  var pressed = null, pressedId = null;
+  function release(){
+    if(!pressed) return;
+    var el = pressed; pressed = null; pressedId = null;
+    el.style.setProperty('transition','transform var(--dur-micro) var(--ease-out-back)','important');
+    el.style.transform = '';  /* '' palauttaa CSS-pohjan (esim. viuhka-rotaatio) animoiden */
+  }
+  document.addEventListener('pointerdown', function(e){
+    if(matchMedia('(prefers-reduced-motion:reduce)').matches) return;  /* rm: ei squashia */
+    var card = e.target.closest && e.target.closest('.tcg-card, .turn-card');
+    if(!card) return;
+    if(pressed) release();  /* multitouch: vapauta edellinen ennen uutta */
+    pressed = card; pressedId = e.pointerId;
+    /* säilytä viuhka-rotaatio yms.: lue pohja, lisää squash */
+    var base = getComputedStyle(card).transform;
+    card._solidiusBase = (base && base !== 'none') ? base : '';
+    card.style.setProperty('transition','transform 80ms var(--ease-out)','important');
+    /* !important → voittaa myös .tcg-card--hand:hover-noston (transform !important) */
+    card.style.setProperty('transform',(card._solidiusBase + ' scale(.97) translateY(1px)').trim(),'important');
+  }, true);
+  document.addEventListener('pointerup', release, true);
+  document.addEventListener('pointercancel', release, true);
+  /* pointerleave ei kupli mutta capture näkee lapsien leavet — vapauta vain kun poistutaan itse kortista */
+  document.addEventListener('pointerleave', function(e){
+    if(pressed && e.target===pressed && e.pointerId===pressedId) release();
+  }, true);
+  /* HTML5-raahaus ei laukaise pointerup → vapauta squash heti dragstartissa, ettei rivi jää scale(.97):aan */
+  document.addEventListener('dragstart', release, true);
+}
 
 window.addEventListener('resize', function(){
   setTimeout(_updatePbPlaceholder, 100);
@@ -7720,7 +8057,7 @@ function render(){
       } else {
         var emptyEl=document.createElement('div');
         emptyEl.id='arena-empty';
-        emptyEl.innerHTML='Ei kortteja vuorossa.<br><span style="font-size:var(--text-xs);opacity:.7">Lisää kortti kädestä, pakasta tai aamusuunnittelusta.</span>';
+        emptyEl.innerHTML='Pöytä odottaa korttia.<br><span style="font-size:var(--text-xs);opacity:.7">Lisää kortti kädestä, pakasta tai aamusuunnittelusta.</span>';
         arenaEl.appendChild(emptyEl);
       }
     }
@@ -7853,11 +8190,11 @@ function setSchedType(type){
   var repF=document.getElementById('sched-repeat-fields');
   if(type==='once'){
     onceBtn.style.background='var(--accent)';onceBtn.style.color='white';onceBtn.style.borderColor='var(--accent)';
-    repBtn.style.background='white';repBtn.style.color='var(--muted)';repBtn.style.borderColor='var(--subtle)';
+    repBtn.style.background='var(--surface)';repBtn.style.color='var(--muted)';repBtn.style.borderColor='var(--border)';
     onceF.style.display='flex';repF.style.display='none';
   } else {
     repBtn.style.background='var(--accent)';repBtn.style.color='white';repBtn.style.borderColor='var(--accent)';
-    onceBtn.style.background='white';onceBtn.style.color='var(--muted)';onceBtn.style.borderColor='var(--subtle)';
+    onceBtn.style.background='var(--surface)';onceBtn.style.color='var(--muted)';onceBtn.style.borderColor='var(--border)';
     onceF.style.display='none';repF.style.display='flex';
   }
 }
@@ -7901,7 +8238,7 @@ function clearNewSchedule(){
   newSchedule=null;
   var el=document.getElementById('schedule-preview');if(el)el.style.display='none';
   var btn=document.getElementById('schedule-btn');
-  if(btn){btn.style.borderColor='var(--subtle)';btn.style.background='white';}
+  if(btn){btn.style.borderColor='var(--accent)';btn.style.background='transparent';}
 }
 
 // ── SCHEDULED TASK CHECKING ──
@@ -9281,14 +9618,14 @@ function closeChainView(){
 
 <!-- ── JATKOKORTTI-MODAALI ── -->
 <div id="jatko-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)" onclick="if(event.target===this)closeJatkoModal()"></div>
-<div id="jatko-modal" role="dialog" aria-modal="true" aria-label="Jatkokortti" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(440px,96vw);max-height:90vh;background:var(--surface-xs);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.18);z-index:401;flex-direction:column;overflow:visible">
+<div id="jatko-modal" role="dialog" aria-modal="true" aria-label="Jatkokortti" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(440px,96vw);max-height:90vh;background:linear-gradient(180deg,var(--plate-top),var(--plate-bot));border-radius:var(--r-lg);border:1px solid var(--engrave);box-shadow:0 24px 64px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);z-index:401;flex-direction:column;overflow:visible">
   <div style="padding:1.25rem 1.5rem 1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
     <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;font-style:italic;letter-spacing:-0.02em;color:var(--ink)">↳ Jatkokortti</div>
     <button onclick="closeJatkoModal()" aria-label="Sulje" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--muted);padding:.2rem .4rem;line-height:1">×</button>
   </div>
   <!-- Emotehtävä -->
   <div style="padding:.6rem 1.5rem;background:var(--surface);border-bottom:1px solid var(--border)">
-    <div style="font-size:var(--text-xs);color:var(--muted);font-weight:300;margin-bottom:.2rem">Emotehtävä</div>
+    <div style="font-size:var(--text-xs);font-weight:500;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:.3rem">Emotehtävä</div>
     <div id="jatko-parent-label" style="font-size:var(--text-sm);color:var(--accent);font-style:italic"></div>
   </div>
   <div style="padding:1.25rem 1.5rem;display:flex;flex-direction:column;gap:.9rem;overflow-y:auto">
@@ -9299,7 +9636,7 @@ function closeChainView(){
     </div>
     <!-- Verbi-paletit -->
     <div style="display:flex;flex-direction:column;gap:.5rem">
-      <div style="font-size:var(--text-xs);color:var(--muted);font-weight:300">Mitä tehdään?</div>
+      <div style="font-size:var(--text-xs);font-weight:500;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;display:block">Mitä tehdään?</div>
       <div id="jatko-verb-palette" style="display:grid;grid-template-columns:repeat(4,1fr);gap:.3rem">
         <button class="vbtn" onclick="jatkoPickVerb(this,'Soita')">Soita</button>
         <button class="vbtn" onclick="jatkoPickVerb(this,'Sovi')">Sovi</button>
@@ -9313,17 +9650,17 @@ function closeChainView(){
     </div>
     <!-- Tekstikenttä -->
     <div style="display:flex;flex-direction:column;gap:.5rem">
-      <div style="font-size:var(--text-xs);color:var(--muted);font-weight:300">Mitä tarkalleen?</div>
+      <div style="font-size:var(--text-xs);font-weight:500;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;display:block">Mitä tarkalleen?</div>
       <div style="position:relative">
         <div id="jatko-verb-prefix" style="display:none;position:absolute;left:.75rem;top:50%;transform:translateY(-50%);font-size:var(--text-base);font-weight:500;color:var(--accent);pointer-events:none;white-space:nowrap"></div>
         <input type="text" id="jatko-ni" placeholder="" autocapitalize="none"
           oninput="jatkoUpdateSaveBtn()"
-          style="width:100%;font-family:'DM Sans',sans-serif;font-size:var(--text-base);font-weight:300;color:rgba(255,255,255,.85);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:.65rem 1rem;outline:none;box-sizing:border-box">
+          style="width:100%;font-family:'DM Sans',sans-serif;font-size:var(--text-base);font-weight:300;color:var(--ink);background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r-md);padding:.65rem 1rem;outline:none;box-sizing:border-box">
       </div>
     </div>
     <!-- Tärkeä / Kiireinen -->
     <div style="display:flex;flex-direction:column;gap:.4rem">
-      <div style="font-size:var(--text-xs);color:var(--muted);font-weight:300">Luokittele tehtävä</div>
+      <div style="font-size:var(--text-xs);font-weight:500;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;display:block">Luokittele tehtävä</div>
       <div style="display:flex;gap:.4rem">
         <button id="jatko-important" class="qb q2" onclick="this.classList.toggle('on')" style="flex:1;justify-content:center;padding:.6rem">Tärkeä</button>
         <button id="jatko-urgent" class="qb q1" onclick="this.classList.toggle('on')" style="flex:1;justify-content:center;padding:.6rem">Kiireinen</button>
@@ -9343,12 +9680,12 @@ function closeChainView(){
       <button onclick="jatkoToggleExtra()" style="font-family:'DM Sans',sans-serif;font-size:var(--text-xs);padding:.22rem .55rem;border-radius:var(--r-sm);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer">📝 Lisätiedot</button>
     </div>
     <div id="jatko-extra-row" style="display:none;flex-direction:column;gap:.35rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:.6rem .85rem">
-      <textarea id="jatko-lisatiedot" rows="2" placeholder="Lisätiedot — taustaa, muistiinpanoja" style="width:100%;font-family:'DM Sans',sans-serif;font-size:var(--text-xs);font-weight:300;color:rgba(255,255,255,.75);background:var(--surface);border:1px solid rgba(255,255,255,.2);border-radius:var(--r-sm);padding:.45rem .7rem;outline:none;resize:vertical;min-height:52px;box-sizing:border-box"></textarea>
-      <input type="url" id="jatko-linkki" placeholder="🔗 Linkki..." style="width:100%;font-family:'DM Sans',sans-serif;font-size:var(--text-xs);font-weight:300;color:rgba(255,255,255,.75);background:var(--surface);border:1px solid rgba(255,255,255,.2);border-radius:var(--r-sm);padding:.45rem .7rem;outline:none;box-sizing:border-box">
+      <textarea id="jatko-lisatiedot" rows="2" placeholder="Lisätiedot — taustaa, muistiinpanoja" style="width:100%;font-family:'DM Sans',sans-serif;font-size:var(--text-sm);font-weight:300;color:var(--ink);background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r-md);padding:.5rem .75rem;outline:none;resize:vertical;min-height:52px;box-sizing:border-box"></textarea>
+      <input type="url" id="jatko-linkki" placeholder="🔗 Linkki..." style="width:100%;font-family:'DM Sans',sans-serif;font-size:var(--text-sm);font-weight:300;color:var(--ink);background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r-md);padding:.5rem .75rem;outline:none;box-sizing:border-box">
     </div>
     <!-- Footer napit -->
     <div style="display:flex;gap:.5rem;margin-top:.1rem">
-      <button onclick="closeJatkoModal()" style="font-family:'DM Sans',sans-serif;font-size:.78rem;padding:.55rem .9rem;border-radius:var(--r-md);border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;flex-shrink:0">✕</button>
+      <button onclick="closeJatkoModal()" style="font-family:'DM Sans',sans-serif;font-size:var(--text-base);font-weight:400;padding:.65rem .9rem;border-radius:var(--r-md);border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;flex-shrink:0">✕</button>
       <button class="badd" id="jatko-save-btn" onclick="addJatkokortti()" style="flex:1;opacity:.4;cursor:not-allowed" disabled>Luo jatkokortti</button>
     </div>
   </div>
@@ -9403,7 +9740,7 @@ function closeChainView(){
 <!-- EDIT CARD MODAL (Vaihe 18) -->
 <!-- ── WIZARD-MODAALI ── -->
 <div id="wiz-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)" onclick="if(event.target===this)wizReset()"></div>
-<div id="wiz-modal" role="dialog" aria-modal="true" aria-label="Lisää tehtävä" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(440px,96vw);max-height:90vh;background:var(--surface-xs);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.18);z-index:401;flex-direction:column;overflow:visible">
+<div id="wiz-modal" role="dialog" aria-modal="true" aria-label="Lisää tehtävä" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(560px,96vw);max-height:90vh;background:linear-gradient(180deg,var(--plate-top),var(--plate-bot));border-radius:var(--r-lg);border:1px solid var(--engrave);box-shadow:0 24px 64px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);z-index:401;flex-direction:column;overflow:visible">
   <!-- Vaihe 9.5 B+: Verbinvaihto-popover -->
   <div id="verb-pop" class="verb-pop" data-target="2">
     <button type="button" data-verb="Soita" onclick="pickVerbForSplit('Soita')">Soita</button>
@@ -9427,7 +9764,7 @@ function closeChainView(){
 
     <!-- VAIHE 1: Verbi -->
     <div id="wiz-s1" style="display:none;flex-direction:column;gap:.5rem">
-      <div style="font-size:var(--text-xs);color:var(--muted);font-weight:300">Mitä tehdään?</div>
+      <div style="font-size:var(--text-xs);font-weight:500;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;display:block">Mitä tehdään?</div>
       <div id="verb-palette" style="display:grid;grid-template-columns:repeat(4,1fr);gap:.3rem">
         <button class="vbtn" onclick="pickVerb(this,'Soita')">Soita</button>
         <button class="vbtn" onclick="pickVerb(this,'Sovi')">Sovi</button>
@@ -9444,7 +9781,7 @@ function closeChainView(){
         <button class="bulk-toggle" onclick="var b=document.getElementById('bulkBody');var open=b.style.display!=='none';b.style.display=open?'none':'block';this.textContent=open?'↓ Tuo lista kerralla':'↑ Sulje'">↓ Tuo lista kerralla</button>
         <div id="bulkBody" style="display:none;margin-top:.5rem">
           <div style="font-size:.68rem;color:var(--muted);font-weight:300;margin-bottom:.35rem">Liitä tehtävät pilkulla tai rivinvaihdolla eroteltuna</div>
-          <textarea id="bulkInput" placeholder="Tehtävä 1, Tehtävä 2&#10;tai yksi per rivi..." style="width:100%;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:300;color:rgba(255,255,255,.85);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.65rem 1rem;outline:none;resize:vertical;min-height:80px;line-height:1.5"></textarea>
+          <textarea id="bulkInput" placeholder="Tehtävä 1, Tehtävä 2&#10;tai yksi per rivi..." style="width:100%;font-family:'DM Sans',sans-serif;font-size:var(--text-sm);font-weight:300;color:var(--ink);background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r-md);padding:.5rem .75rem;outline:none;resize:vertical;min-height:80px;line-height:1.5"></textarea>
           <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:.5rem .85rem;margin-top:.4rem">
             <span style="font-size:var(--text-xs);color:var(--muted);font-weight:300;white-space:nowrap">Kaikille:</span>
             <div style="width:1px;height:14px;background:var(--subtle);flex-shrink:0"></div>
@@ -9466,7 +9803,7 @@ function closeChainView(){
 
     <!-- VAIHE 2: Mitä (tekstikenttä) -->
     <div id="wiz-s2" style="display:none;flex-direction:column;gap:.5rem">
-      <div style="font-size:var(--text-xs);color:var(--muted);font-weight:300">Mitä tarkalleen?</div>
+      <div style="font-size:var(--text-xs);font-weight:500;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;display:block">Mitä tarkalleen?</div>
       <div id="wiz-s2-input-row" style="display:flex;gap:.5rem">
         <div style="flex:1;position:relative">
           <div id="verb-prefix" style="display:none;position:absolute;left:.75rem;top:50%;transform:translateY(-50%);font-size:var(--text-base);font-weight:500;color:var(--accent);pointer-events:none;white-space:nowrap"></div>
@@ -9474,7 +9811,7 @@ function closeChainView(){
             autocapitalize="none"
             onkeydown="if(event.key==='Enter')wizToStep3()"
             oninput="checkJaSplit(this.value);"
-            style="width:100%;font-family:'DM Sans',sans-serif;font-size:var(--text-base);font-weight:300;color:rgba(255,255,255,.85);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:.65rem 1rem;outline:none">
+            style="width:100%;font-family:'DM Sans',sans-serif;font-size:var(--text-base);font-weight:300;color:var(--ink);background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r-md);padding:.65rem 1rem;outline:none">
         </div>
         <button id="wiz-next-btn" onclick="wizToStep3()" disabled
           style="font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;padding:.65rem 1.1rem;border-radius:var(--r-md);border:none;background:var(--accent);color:white;cursor:not-allowed;opacity:.35;transition:opacity .2s;flex-shrink:0">→</button>
@@ -9569,8 +9906,8 @@ function closeChainView(){
       </div>
       <!-- Vakionäkymä -->
       <div id="wiz-s3-normal" style="display:flex;flex-direction:column;gap:.5rem">
-      <div id="wiz-preview" style="font-size:var(--text-sm);font-weight:500;color:var(--accent);padding:.1rem 0;letter-spacing:-.01em"></div>
-      <div style="font-size:var(--text-xs);color:var(--muted);font-weight:300">Luokittele tehtävä</div>
+      <div id="wiz-preview" style="font-family:'DM Serif Display',serif;font-style:italic;font-size:1.35rem;line-height:1.25;font-weight:400;color:var(--accent);padding:.15rem 0 .3rem;letter-spacing:-.01em"></div>
+      <div style="font-size:var(--text-xs);font-weight:500;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;display:block">Luokittele tehtävä</div>
       <div style="display:flex;gap:.4rem">
         <button id="f-important" class="qb q2" onclick="newImportant=!newImportant;this.classList.toggle('on',newImportant)" style="flex:1;justify-content:center;padding:.6rem">Tärkeä</button>
         <button id="f-urgent" class="qb q1" onclick="newUrgent=!newUrgent;this.classList.toggle('on',newUrgent)" style="flex:1;justify-content:center;padding:.6rem">Kiireinen</button>
@@ -9591,7 +9928,7 @@ function closeChainView(){
       <div style="display:flex;gap:.3rem;flex-wrap:wrap">
         <button onclick="wizToggleExtra()" style="font-family:'DM Sans',sans-serif;font-size:var(--text-xs);padding:.22rem .55rem;border-radius:var(--r-sm);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer">📝 Lisätiedot</button>
         <button onclick="wizToggleTags()" style="font-family:'DM Sans',sans-serif;font-size:var(--text-xs);padding:.22rem .55rem;border-radius:var(--r-sm);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer;display:none">🏷 Tagi</button>
-        <button onclick="openSchedulePicker()" id="schedule-btn" style="font-family:'DM Sans',sans-serif;font-size:var(--text-xs);padding:.22rem .55rem;border-radius:var(--r-sm);border:1.5px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer">🕐 Ajasta</button>
+        <button onclick="openSchedulePicker()" id="schedule-btn" style="font-family:'DM Sans',sans-serif;font-size:var(--text-xs);padding:.4rem .8rem;border-radius:var(--r-md);border:1.5px solid var(--accent);color:var(--accent);background:transparent;cursor:pointer">🕐 Ajasta</button>
         <span id="schedule-preview" style="font-size:var(--text-xs);color:#3a6b8a;font-weight:300;display:none">🕐 <span id="schedule-preview-text"></span> <button onclick="clearNewSchedule()" style="background:none;border:none;cursor:pointer;color:var(--subtle);font-size:.7rem;padding:0;line-height:1">×</button></span>
       </div>
       <div id="extra-row" style="display:none;flex-direction:column;gap:.35rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:.6rem .85rem">
@@ -9600,8 +9937,8 @@ function closeChainView(){
           <input type="checkbox" id="split-copy-cb" onchange="if(_split)_split.copyDetails=this.checked" style="margin:0;cursor:pointer;accent-color:var(--accent)">
           <span>Sama lisätieto ja linkki myös tehtävälle 2</span>
         </label>
-        <textarea id="ni-lisatiedot" rows="2" placeholder="Lisätiedot — taustaa, muistiinpanoja" style="width:100%;font-family:'DM Sans',sans-serif;font-size:var(--text-xs);font-weight:300;color:rgba(255,255,255,.75);background:var(--surface);border:1px solid rgba(255,255,255,.2);border-radius:var(--r-sm);padding:.45rem .7rem;outline:none;resize:vertical;min-height:52px"></textarea>
-        <input type="url" id="ni-linkki" placeholder="🔗 Linkki..." style="width:100%;font-family:'DM Sans',sans-serif;font-size:var(--text-xs);font-weight:300;color:rgba(255,255,255,.75);background:var(--surface);border:1px solid rgba(255,255,255,.2);border-radius:var(--r-sm);padding:.45rem .7rem;outline:none">
+        <textarea id="ni-lisatiedot" rows="2" placeholder="Lisätiedot — taustaa, muistiinpanoja" style="width:100%;font-family:'DM Sans',sans-serif;font-size:var(--text-sm);font-weight:300;color:var(--ink);background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r-md);padding:.5rem .75rem;outline:none;resize:vertical;min-height:52px"></textarea>
+        <input type="url" id="ni-linkki" placeholder="🔗 Linkki..." style="width:100%;font-family:'DM Sans',sans-serif;font-size:var(--text-sm);font-weight:300;color:var(--ink);background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r-md);padding:.5rem .75rem;outline:none">
       </div>
       <span id="new-tags-preview" style="display:none"></span>
       <div id="new-proj-row" style="display:none"></div>
@@ -9609,7 +9946,7 @@ function closeChainView(){
       <div class="infobox" id="idef-urgent"><strong>Kiireinen</strong> — onko tällä deadline tällä viikolla?<br><em>Nyrkkisääntö: voisitko siirtää ensi viikolle ilman haittaa?</em></div>
       <!-- Toimintorivi -->
       <div style="display:flex;gap:.5rem;margin-top:.1rem">
-        <button onclick="wizReset()" style="font-family:'DM Sans',sans-serif;font-size:.78rem;padding:.55rem .9rem;border-radius:var(--r-md);border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;flex-shrink:0">✕</button>
+        <button onclick="wizReset()" style="font-family:'DM Sans',sans-serif;font-size:var(--text-base);font-weight:400;padding:.65rem .9rem;border-radius:var(--r-md);border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;flex-shrink:0">✕</button>
         <button class="badd" id="wiz-save-btn" onclick="addTask()" style="flex:1">Lisää tehtävä</button>
       </div>
     </div>
@@ -9617,10 +9954,10 @@ function closeChainView(){
   </div>
 </div>
 <div id="edit-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,25,18,.55);z-index:400;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)" onclick="if(event.target===this)closeEditModal()"></div>
-<div id="edit-modal" role="dialog" aria-modal="true" aria-label="Muokkaa korttia" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(440px,96vw);max-height:90vh;background:var(--surface-xs);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.18);z-index:500;flex-direction:column;overflow:hidden">
+<div id="edit-modal" role="dialog" aria-modal="true" aria-label="Muokkaa korttia" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(440px,96vw);max-height:90vh;background:linear-gradient(180deg,var(--plate-top),var(--plate-bot));border-radius:var(--r-lg);border:1px solid var(--engrave);box-shadow:0 24px 64px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);z-index:500;flex-direction:column;overflow:hidden">
   <input type="hidden" id="edit-modal-id">
   <div style="padding:1.25rem 1.5rem 1rem;border-bottom:1px solid var(--border)">
-    <div style="font-family:'DM Serif Display',serif;font-size:1.05rem;font-style:italic;color:var(--ink)">Muokkaa korttia</div>
+    <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;font-style:italic;letter-spacing:-0.02em;color:var(--ink)">Muokkaa korttia</div>
   </div>
   <div style="padding:1.25rem 1.5rem;display:flex;flex-direction:column;gap:.9rem;overflow-y:auto">
     <!-- Nimi -->
@@ -9632,7 +9969,7 @@ function closeChainView(){
     <div style="display:flex;gap:.4rem">
       <button id="edit-important" onclick="this.classList.toggle('on')" class="qb q2" style="flex:1;justify-content:center;padding:.6rem">Tärkeä</button>
       <button id="edit-urgent" onclick="this.classList.toggle('on')" class="qb q1" style="flex:1;justify-content:center;padding:.6rem">Kiireinen</button>
-      <button id="edit-frog" style="font-family:'DM Sans',sans-serif;font-size:var(--text-sm);font-weight:500;padding:.6rem .9rem;border-radius:var(--r-md);border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:border-color .15s,color .15s,background .15s;white-space:nowrap" title="Aseta sammakoksi (tärkein tehtävä)">🐸 Sammakko</button>
+      <button id="edit-frog" onclick="var on=this.classList.toggle('on');this.style.background=on?'var(--frog-deep)':'var(--surface)';this.style.color=on?'white':'var(--muted)';this.style.borderColor=on?'var(--frog-deep)':'var(--border)'" style="font-family:'DM Sans',sans-serif;font-size:var(--text-sm);font-weight:500;padding:.6rem .9rem;border-radius:var(--r-md);border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:border-color .15s,color .15s,background .15s;white-space:nowrap" title="Aseta sammakoksi (tärkein tehtävä)">🐸 Sammakko</button>
     </div>
     <!-- Arvio -->
     <div style="display:flex;align-items:center;gap:.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:.45rem .85rem">

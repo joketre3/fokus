@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="fi" data-theme="usva">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fokus — Korttipöytä-mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Serif+Display:ital@1&family=Cinzel:wght@600&display=swap" rel="stylesheet">
+<style>
+/* ═════════════════════════════════════════════════════════
+   FOKUS — KORTTIPÖYTÄ-mockup. Standalone, ei backdrop-filteriä.
+   Pöytäpinta + kaiverretut syvennykset + materiaalinapit.
+   ═════════════════════════════════════════════════════════ */
+:root{
+  /* ── Perustokenit (index.html:stä, samat nimet) ─────── */
+  --ink:rgba(255,255,255,.95);
+  --surface-xs:rgba(30,50,40,.35);
+  --surface:rgba(30,55,40,.42);
+  --surface-md:rgba(30,55,40,.5);
+  --surface-strong:rgba(30,55,40,.65);
+  --border:rgba(255,255,255,.25);
+  --muted:rgba(255,255,255,.72);
+  --subtle:rgba(255,255,255,.2);
+  --accent:#c49a3a;
+  --accent-dim:rgba(196,154,58,.15);
+  --wait:#3a6b8a;
+  --pomo:#a84c28;
+  --q1:#a84c28; --q2:#2d5a3d; --q3:#7a6a50; --q4:#9a9a8e;
+  --text-xs:.72rem; --text-sm:.75rem; --text-base:.875rem;
+  --text-md:1rem; --text-lg:1.4rem; --text-xl:1.8rem;
+  --r-sm:4px; --r-md:8px; --r-lg:12px; --r-full:50%;
+  --plate-top:#1a2e26; --plate-bot:#13211b;
+  --frog:#6b8a30; --frog-deep:#3d7a52;
+  --gold:#c49a3a; --gold-hi:#e8c66a; --gold-deep:#6b4f1c;
+  --metal-silver:#b8bcc0; --metal-silver-hi:#e2e6ea;
+  --tcg-plate-ink:#f4f0e4; --tcg-plate-ink-dim:#e8dcc0; --tcg-gold-ink:#f0d9a8;
+  --tcg-stop:#7a2020; --ink-on-art:#fff;
+  --pomo-hi:#e8623a; --q2-bright:#4a8a4a;
+  --ease-out:cubic-bezier(.22,.61,.36,1);
+  --ease-out-back:cubic-bezier(.34,1.40,.64,1);
+  --ease-in:cubic-bezier(.40,0,1,1);
+  --dur-micro:140ms; --dur-meso:220ms; --dur-macro:320ms;
+
+  /* ── KORTTIPÖYTÄ — uudet tokenit ─────────────────────── */
+  --page-bg:#0b110c;
+  --table-felt:#1d3527; --table-felt-deep:#10211a;
+  --table-light:rgba(196,154,58,.07);
+  --vignette:rgba(0,0,0,.48);
+  --well-bg:rgba(0,0,0,.24);
+  --well-shadow:inset 0 2px 8px rgba(0,0,0,.45), inset 0 1px 2px rgba(0,0,0,.55), inset 0 -1px 0 rgba(255,255,255,.05);
+  --engrave:rgba(196,154,58,.34); --engrave-dim:rgba(196,154,58,.15);
+  --etch-ink:rgba(255,255,255,.38); --etch-shadow:0 1px 0 rgba(0,0,0,.6);
+  --chip-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 2px 0 rgba(0,0,0,.35), 0 3px 8px rgba(0,0,0,.25);
+  --chip-shadow-dn:inset 0 1px 0 rgba(255,255,255,.04), 0 1px 0 rgba(0,0,0,.35);
+}
+html[data-theme="havu"]{
+  --ink:rgba(255,255,255,.97);
+  --surface-xs:rgba(12,30,20,.88);
+  --plate-top:#13241b; --plate-bot:#0c1812;
+  --muted:rgba(255,255,255,.72);
+  --subtle:rgba(255,255,255,.08);
+  --accent:#4fa870;
+  --pomo:#c0432b;
+  --q2:#265535;
+  --frog:#4a8a40;
+  --page-bg:#020604;
+  --table-felt:#0c1c12; --table-felt-deep:#050e08;
+  --vignette:rgba(0,0,0,.6);
+  --well-bg:rgba(0,0,0,.3);
+}
+html[data-theme="aurinko"]{
+  --ink:#2d2417;
+  --plate-top:#1c2e26; --plate-bot:#14241c; /* kortit pysyvät tummina pöydällä */
+  --surface-xs:rgba(255,255,255,.92);
+  --surface:rgba(250,250,250,.82);
+  --surface-md:rgba(245,245,245,.88);
+  --surface-strong:rgba(238,238,238,.95);
+  --border:rgba(180,130,70,.22);
+  --muted:#7a6a4a;
+  --subtle:rgba(220,190,140,.22);
+  --accent:#c4681e;
+  --wait:#4a7a9a;
+  --pomo:#c4681e;
+  --q1:#c4681e; --q2:#3d6b30; --q3:#8a7a5a; --q4:#a0988a;
+  --r-md:10px; --r-lg:16px;
+  --frog:#5a8a30;
+  /* VAALEA koivu/pellava-pöytä — EI tummu */
+  --page-bg:#dccfae;
+  --table-felt:#efe5d0; --table-felt-deep:#e2d3b8;
+  --table-light:rgba(255,250,235,.5);
+  --vignette:rgba(120,80,30,.18);
+  --well-bg:rgba(120,80,30,.07);
+  --well-shadow:inset 0 2px 6px rgba(120,80,30,.18), inset 0 1px 2px rgba(120,80,30,.14), inset 0 -1px 0 rgba(255,255,255,.7);
+  --engrave:rgba(150,100,35,.4); --engrave-dim:rgba(150,100,35,.18);
+  --etch-ink:rgba(45,36,23,.55); --etch-shadow:0 1px 0 rgba(255,255,255,.65);
+  --chip-shadow:inset 0 1px 0 rgba(255,255,255,.8), 0 2px 0 rgba(120,80,30,.2), 0 3px 8px rgba(120,80,30,.12);
+  --chip-shadow-dn:inset 0 1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(120,80,30,.2);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'DM Sans',system-ui,sans-serif;
+  font-weight:300;font-size:var(--text-base);line-height:1.55;
+  color:var(--ink);
+  background:var(--page-bg);
+  min-height:100vh;padding:1rem;
+}
+
+/* ── PÖYTÄPINTA ─────────────────────────────────────────── */
+.wrap{
+  position:relative;
+  min-height:calc(100vh - 2rem);
+  border-radius:var(--r-lg);
+  overflow:hidden;
+  display:grid;
+  grid-template-rows:auto 1fr 96px;
+  grid-template-columns:200px 1fr 200px;
+  grid-template-areas:
+    "topbar topbar topbar"
+    "left   arena  right"
+    "bottom bottom bottom";
+  background:
+    /* 1. valopooli */
+    radial-gradient(ellipse 70% 55% at 50% 42%, var(--table-light), transparent 70%),
+    /* 2. vinjetti */
+    radial-gradient(ellipse 130% 130% at 50% 50%, transparent 52%, var(--vignette) 100%),
+    /* 3. huopakuitu — feTurbulence-kohina */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='64' height='64' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E"),
+    /* 4. huopa */
+    linear-gradient(180deg, var(--table-felt), var(--table-felt-deep));
+  background-repeat:no-repeat,no-repeat,repeat,no-repeat;
+  box-shadow:0 8px 40px rgba(0,0,0,.35), inset 0 0 0 1px var(--engrave-dim);
+}
+
+/* ── YLÄPALKKIRAIDE ─────────────────────────────────────── */
+.hdr{
+  grid-area:topbar;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.65rem 1.25rem;gap:1rem;
+  background:linear-gradient(180deg, rgba(0,0,0,.14), transparent);
+  box-shadow:0 1px 0 var(--engrave-dim), 0 2px 0 rgba(0,0,0,.35);
+}
+html[data-theme="aurinko"] .hdr{
+  background:linear-gradient(180deg, rgba(120,80,30,.08), transparent);
+  box-shadow:0 1px 0 var(--engrave-dim), 0 2px 0 rgba(255,255,255,.5);
+}
+.hdr__logo{
+  font-family:'DM Serif Display',Georgia,serif;font-style:italic;
+  font-size:1.25rem;letter-spacing:-.01em;color:var(--ink);
+}
+.hdr__timer{display:flex;align-items:center;gap:.55rem;}
+.hdr__timer .t-dot{
+  width:9px;height:9px;border-radius:var(--r-full);
+  background:radial-gradient(circle at 35% 30%, var(--pomo-hi), var(--pomo) 72%);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.4), 0 1px 2px rgba(0,0,0,.4);
+}
+.hdr__timer .t-time{
+  font-family:'DM Serif Display',Georgia,serif;font-style:italic;
+  font-size:1.2rem;line-height:1;color:var(--ink);
+}
+.hdr__timer .t-label{
+  font-size:.65rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted);
+}
+
+/* ── EISE-KAHVA (messinkivedin areenan yllä) ────────────── */
+.eise-handle{
+  width:220px;height:48px;flex:none;
+  margin:0 auto;
+  border-radius:0 0 14px 14px;
+  background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.18)), var(--surface-strong);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07), 0 1px 0 var(--engrave-dim);
+  display:flex;align-items:center;justify-content:center;
+  cursor:grab;
+}
+.eise-handle:active{cursor:grabbing;}
+.eise-handle .quad-dots{
+  display:grid;grid-template-columns:6px 6px;gap:4px;
+}
+.eise-handle .quad-dots i{
+  width:6px;height:6px;border-radius:var(--r-full);opacity:.85;
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.25), 0 1px 1px rgba(0,0,0,.3);
+}
+.quad-dots i:nth-child(1){background:var(--q1);}
+.quad-dots i:nth-child(2){background:var(--q2);}
+.quad-dots i:nth-child(3){background:var(--q3);}
+.quad-dots i:nth-child(4){background:var(--q4);}
+
+/* ── AREENA-ALUE ────────────────────────────────────────── */
+.zone-arena{
+  grid-area:arena;
+  display:flex;flex-direction:column;align-items:center;
+  min-height:0;padding-bottom:1rem;
+}
+.arena-slots{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  gap:2.5rem;flex-wrap:wrap;padding:1.25rem;
+}
+.slot-col{display:flex;flex-direction:column;align-items:center;gap:.7rem;}
+
+/* Kaiverrettu korttisyvennys */
+.arena-slot{
+  position:relative;
+  width:312px;aspect-ratio:5/7;
+  border-radius:18px;
+  background:var(--well-bg);
+  box-shadow:var(--well-shadow);
+  border:14px solid transparent;
+  border-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 84 84'%3E%3Cg fill='none' stroke='%23c49a3a' stroke-opacity='.35' stroke-width='2'%3E%3Crect x='4' y='4' width='76' height='76' rx='10'/%3E%3Cpath d='M22 8Q10 10 8 22M62 8Q74 10 76 22M8 62Q10 74 22 76M76 62Q74 74 62 76'/%3E%3C/g%3E%3Cg fill='%23c49a3a' fill-opacity='.35'%3E%3Ccircle cx='14' cy='14' r='2'/%3E%3Ccircle cx='70' cy='14' r='2'/%3E%3Ccircle cx='14' cy='70' r='2'/%3E%3Ccircle cx='70' cy='70' r='2'/%3E%3C/g%3E%3C/svg%3E") 28 / 14px stretch;
+  display:flex;align-items:center;justify-content:center;
+}
+.arena-slot__empty{
+  text-align:center;padding:1.5rem;
+}
+.arena-slot__empty .e-title{
+  font-family:'DM Serif Display',Georgia,serif;font-style:italic;
+  font-size:1.15rem;color:var(--etch-ink);text-shadow:var(--etch-shadow);
+  margin-bottom:.5rem;
+}
+.arena-slot__empty .e-sub{
+  font-size:var(--text-xs);line-height:1.5;color:var(--etch-ink);
+  text-shadow:var(--etch-shadow);
+}
+.slot-caption{
+  font-size:.62rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--etch-ink);text-shadow:var(--etch-shadow);
+}
+
+/* ── MATERIAALINAPIT ────────────────────────────────────── */
+.btn-row{display:flex;align-items:center;gap:.6rem;padding:.25rem 0 .5rem;}
+.btn{
+  font-family:'DM Sans',sans-serif;font-weight:500;font-size:var(--text-sm);
+  border:none;border-radius:var(--r-md);cursor:pointer;
+  padding:.6rem 1.4rem;
+  background:var(--accent);color:#fff;
+  box-shadow:var(--chip-shadow);
+  transition:background var(--dur-micro) var(--ease-out), box-shadow var(--dur-micro) var(--ease-out), transform var(--dur-micro) var(--ease-out);
+}
+.btn:hover{background:#b8882a;}
+html[data-theme="havu"] .btn:hover{background:#449463;}
+html[data-theme="aurinko"] .btn:hover{background:#b05a15;}
+.btn--ghost{
+  background:transparent;color:var(--accent);
+  border:1.5px solid var(--accent);
+  padding:.45rem 1rem;
+}
+.btn--ghost:hover{background:var(--accent-dim);color:var(--accent);}
+.btn--icon{
+  padding:.45rem .7rem;
+  background:var(--surface-strong);color:var(--ink);
+  font-weight:400;
+}
+.btn--icon:hover{background:var(--surface-strong);}
+.btn:active{transform:translateY(1px);box-shadow:var(--chip-shadow-dn);}
+
+/* ── SIVUVYÖHYKKEET (upotetut syvennykset) ──────────────── */
+.zone{
+  border-radius:var(--r-lg);
+  background:var(--well-bg);
+  box-shadow:var(--well-shadow), inset 0 0 0 1px var(--engrave-dim);
+  padding:.8rem .7rem;
+  min-height:0;overflow-y:auto;scrollbar-width:none;
+}
+.zone::-webkit-scrollbar{display:none;}
+.zone-left{grid-area:left;margin:1rem 0 1rem 1rem;}
+.zone-right{grid-area:right;margin:1rem 1rem 1rem 0;}
+
+/* Kaiverrettu vyöhykenimi */
+.zone-label{
+  display:flex;align-items:center;gap:.5rem;
+  margin-bottom:.7rem;
+  font-size:.62rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--etch-ink);text-shadow:var(--etch-shadow);
+  white-space:nowrap;
+}
+.zone-label::before,.zone-label::after{
+  content:"";flex:1;height:1px;background:var(--engrave-dim);
+}
+.count-pill{
+  font-size:.6rem;font-weight:500;line-height:1;
+  padding:.18rem .45rem;border-radius:999px;
+  background:rgba(0,0,0,.18);color:var(--etch-ink);
+  box-shadow:var(--chip-shadow-dn);
+}
+html[data-theme="aurinko"] .count-pill{background:rgba(120,80,30,.08);}
+
+/* Pinoikoni (3 limittäistä korttisuorakulmiota) */
+.pile-ico{position:relative;width:13px;height:9px;flex:none;margin-left:.1rem;}
+.pile-ico,.pile-ico::before,.pile-ico::after{
+  border:1px solid var(--etch-ink);border-radius:2px;background:transparent;
+}
+.pile-ico::before,.pile-ico::after{content:"";position:absolute;width:13px;height:9px;}
+.pile-ico::before{top:-3px;left:-3px;opacity:.65;}
+.pile-ico::after{top:-6px;left:-6px;opacity:.35;}
+
+/* ── JONOPINO — fyysiset korttirivit ────────────────────── */
+.turn-card{
+  display:flex;align-items:center;gap:.45rem;
+  padding:.5rem .6rem;margin-bottom:3px;
+  border-radius:8px;border:1px solid transparent;
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--plate-top) 55%, transparent),
+      color-mix(in srgb, var(--plate-bot) 55%, transparent)),
+    var(--surface-md);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07), 0 1px 0 rgba(0,0,0,.45), 0 2px 0 rgba(0,0,0,.22);
+  font-size:var(--text-xs);color:var(--ink);
+}
+.turn-card:first-child{
+  border-color:var(--gold);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07), 0 1px 0 rgba(0,0,0,.45), 0 2px 0 rgba(0,0,0,.22), 0 3px 8px rgba(0,0,0,.3);
+}
+html[data-theme="aurinko"] .turn-card{
+  background:var(--surface-strong);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.8), 0 1px 0 rgba(120,80,30,.22), 0 2px 0 rgba(120,80,30,.1);
+}
+html[data-theme="aurinko"] .turn-card:first-child{
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.8), 0 1px 0 rgba(120,80,30,.22), 0 2px 0 rgba(120,80,30,.1), 0 3px 8px rgba(120,80,30,.16);
+}
+.turn-card .q-dot{
+  width:7px;height:7px;border-radius:var(--r-full);flex:none;
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.25);
+}
+.turn-card .t-text{
+  flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.turn-card .t-est{font-size:.6rem;color:var(--muted);flex:none;}
+
+/* ── ODOTTAVAT-rivit ────────────────────────────────────── */
+.wait-card{
+  display:flex;align-items:center;gap:.45rem;
+  padding:.5rem .6rem;margin-bottom:.4rem;
+  border-radius:8px;
+  border:1px dashed var(--engrave-dim);
+  opacity:.82;
+  font-size:var(--text-xs);color:var(--ink);
+}
+.wait-card .t-text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.wait-card .w-back{
+  flex:none;width:22px;height:22px;border-radius:var(--r-sm);
+  border:none;cursor:pointer;font-size:.75rem;line-height:1;
+  background:var(--surface-strong);color:var(--ink);
+  box-shadow:var(--chip-shadow-dn);
+}
+.wait-card .w-back:active{transform:translateY(1px);}
+
+/* ═════════════════════════════════════════════════════════
+   TCG-KORTTI (kopio index.html-järjestelmästä)
+   ═════════════════════════════════════════════════════════ */
+.tcg-card{
+  --qc:#a84c28;
+  position:relative;
+  width:280px;aspect-ratio:5/7;
+  border-radius:14px;padding:7px;
+  background:var(--qc);
+  background:linear-gradient(160deg,
+    color-mix(in srgb,var(--qc) 55%,#14241c) 0%,
+    #0e1a14 60%,
+    color-mix(in srgb,var(--qc) 35%,#0e1a14) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.10),
+    inset 0 0 0 3px rgba(0,0,0,.35),
+    0 2px 0 rgba(0,0,0,.4),
+    0 10px 24px rgba(0,0,0,.45);
+  isolation:isolate;
+}
+.tcg-card__plate{
+  position:relative;height:100%;
+  border-radius:8px;overflow:hidden;
+  background:linear-gradient(180deg,var(--plate-top) 0%,var(--plate-bot) 100%);
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.06),inset 0 -2px 6px rgba(0,0,0,.4);
+  display:flex;flex-direction:column;
+}
+/* rare = q1/q2 → kultainen sisärengas */
+.tcg-card--rare .tcg-card__plate{
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.06),inset 0 -2px 6px rgba(0,0,0,.4),
+    inset 0 0 0 1px color-mix(in srgb,var(--gold) 55%,transparent);
+}
+.tcg-card__cost{
+  position:absolute;top:9px;right:9px;z-index:4;
+  display:flex;gap:3px;align-items:center;
+}
+.tcg-card__pip{
+  width:17px;height:17px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--pomo-hi),var(--pomo) 72%);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.5),0 1px 2px rgba(0,0,0,.55);
+}
+.tcg-card__pip--half{
+  background:linear-gradient(90deg,var(--pomo-hi) 50%,color-mix(in srgb,var(--pomo) 25%,transparent) 50%);
+}
+.tcg-card__art{
+  position:relative;flex:0 0 40%;
+  display:flex;align-items:center;justify-content:center;
+  margin:6px 6px 0;border-radius:6px;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 30%,
+    color-mix(in srgb,var(--qc) 42%,transparent) 0%,#0c1611 82%);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.5),inset 0 0 18px rgba(0,0,0,.55);
+}
+.tcg-card__art svg{
+  width:52%;height:52%;opacity:.95;position:relative;z-index:1;
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.6));
+}
+.tcg-card__art::after{
+  content:"";position:absolute;inset:0;
+  background-image:radial-gradient(circle,rgba(255,255,255,.05) 1px,transparent 1px);
+  background-size:6px 6px;
+}
+.tcg-card__typeline{
+  display:flex;align-items:center;gap:.4rem;
+  margin:6px 6px 0;padding:.28rem .55rem;
+  font-family:'Cinzel',serif;font-weight:600;
+  font-size:.6rem;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--tcg-plate-ink-dim);border-radius:4px;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--gold) 30%,transparent),color-mix(in srgb,var(--gold) 8%,transparent));
+  border-top:1px solid color-mix(in srgb,var(--gold) 50%,transparent);
+  border-bottom:1px solid rgba(0,0,0,.45);
+  text-shadow:0 1px 1px rgba(0,0,0,.6);
+}
+.tcg-card__typeline svg{width:1.15em;height:1.15em;opacity:.9;flex:none;}
+.tcg-card__typeline .tl-quad{margin-left:auto;opacity:.85;letter-spacing:.1em;}
+.tcg-card__set{
+  flex:none;font-family:'Cinzel',serif;font-weight:600;font-size:.72rem;line-height:1;letter-spacing:0;
+}
+.tcg-card__set--rare{color:var(--gold);}
+.tcg-card__body{
+  flex:1;display:flex;flex-direction:column;
+  padding:.55rem .7rem;gap:.4rem;min-height:0;
+}
+.tcg-card__title{
+  font-family:'DM Sans',sans-serif;font-weight:500;font-size:.92rem;
+  line-height:1.25;color:var(--tcg-plate-ink);
+}
+.tcg-card__notes-tcg{
+  font-size:.7rem;color:rgba(255,255,255,.5);line-height:1.4;
+  font-style:italic;padding-left:.75rem;
+  box-shadow:inset 0 1px 0 color-mix(in srgb,var(--gold) 18%,transparent);
+  padding-top:.35rem;margin-top:.1rem;
+}
+.tcg-card__meta-tcg{
+  margin-top:auto;display:flex;align-items:center;gap:.5rem;
+  font-size:.68rem;color:rgba(255,255,255,.6);letter-spacing:.02em;
+}
+.tcg-card__meta-tcg .dot{opacity:.4;}
+.tcg-card__actions-tcg{display:flex;gap:.3rem;padding:.4rem .55rem .55rem;}
+.tcg-card__actions-tcg button{
+  font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;
+  border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);border-radius:6px;cursor:pointer;
+  padding:.4rem .5rem;background:rgba(0,0,0,.25);color:var(--tcg-plate-ink-dim);
+  transition:background .15s,transform .1s;
+}
+.tcg-card__actions-tcg button:hover{background:color-mix(in srgb,var(--gold) 25%,transparent);}
+.tcg-card__actions-tcg button:active{transform:translateY(1px);}
+.tcg-card__actions-tcg .act-start{
+  flex:1;background:var(--accent);color:var(--ink-on-art);border-color:var(--accent);
+}
+.tcg-card__actions-tcg .act-start:hover{filter:brightness(1.1);}
+/* Kortti istuu syvennyksessä — kevyempi ulkovarjo kuin vapaana */
+.arena-slot .tcg-card{
+  width:100%;max-width:280px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.10),
+    inset 0 0 0 3px rgba(0,0,0,.35),
+    0 2px 0 rgba(0,0,0,.4),
+    0 6px 16px rgba(0,0,0,.45);
+}
+
+/* ── VIUHKAVIHJE pöydän reunassa ────────────────────────── */
+.hand-area{
+  grid-area:bottom;position:relative;overflow:visible;
+}
+.hand-hint{
+  position:absolute;top:.4rem;left:0;right:0;text-align:center;
+  font-size:.62rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--etch-ink);text-shadow:var(--etch-shadow);
+}
+.fan{
+  position:absolute;bottom:-70px;left:50%;width:0;height:0;
+}
+.fan i{
+  position:absolute;left:-45px;bottom:0;
+  width:90px;aspect-ratio:5/7;border-radius:9px;
+  transform-origin:bottom center;
+  background:
+    repeating-linear-gradient(45deg, var(--plate-bot) 0 7px, var(--plate-top) 7px 14px),
+    linear-gradient(160deg, var(--plate-top), var(--plate-bot));
+  box-shadow:
+    inset 0 0 0 3px color-mix(in srgb, var(--gold) 22%, transparent),
+    inset 0 0 0 4px rgba(0,0,0,.5),
+    0 4px 10px rgba(0,0,0,.4);
+}
+.fan i:nth-child(1){transform:rotate(-8deg) translate(-58px,10px);}
+.fan i:nth-child(2){transform:translateY(0);}
+.fan i:nth-child(3){transform:rotate(8deg) translate(58px,10px);}
+
+/* ── OHJAIMET (kiinteä kulmapaneeli) ────────────────────── */
+.controls{
+  position:fixed;top:4.6rem;right:1.5rem;z-index:100;
+  display:flex;align-items:center;gap:.6rem;
+  padding:.4rem .6rem;border-radius:var(--r-md);
+  background:var(--surface-strong);
+  border:1px solid var(--border);
+  box-shadow:0 4px 14px rgba(0,0,0,.3);
+  font-size:.68rem;
+}
+.controls button{
+  font-family:'DM Sans',sans-serif;font-size:.68rem;font-weight:500;
+  padding:.28rem .55rem;border-radius:6px;cursor:pointer;
+  background:transparent;color:var(--ink);
+  border:1px solid var(--subtle);
+}
+.controls button.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+.controls label{
+  display:flex;align-items:center;gap:.3rem;color:var(--muted);cursor:pointer;
+  border-left:1px solid var(--subtle);padding-left:.6rem;
+}
+
+/* ── NOPEA TILA ─────────────────────────────────────────── */
+html[data-perf="lite"] .wrap{
+  background:
+    radial-gradient(ellipse 130% 130% at 50% 50%, transparent 52%, var(--vignette) 100%),
+    var(--table-felt);
+}
+html[data-perf="lite"] *{
+  transition-duration:.01ms !important;
+  animation:none !important;
+}
+
+/* ── SAAVUTETTAVUUS ─────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce){
+  *{animation:none !important;transition:none !important;}
+}
+
+/* ── KAPEA NÄYTTÖ ───────────────────────────────────────── */
+@media (max-width:900px){
+  .wrap{
+    grid-template-columns:1fr;
+    grid-template-rows:auto auto auto auto 96px;
+    grid-template-areas:"topbar" "arena" "left" "right" "bottom";
+  }
+  .zone-left,.zone-right{margin:0 1rem 1rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- Verbi-ikoni (Soita — kopio index.html-spritestä) -->
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+<defs>
+  <symbol id="verb-i-soita" viewBox="0 0 24 24">
+    <path fill="#f4f0e0" d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.5 0 1 .4 1 1V20c0 .5-.5 1-1 1C10.6 21 3 13.4 3 4c0-.5.5-1 1-1H7.5c.6 0 1 .5 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1z"/>
+    <path fill="#a8a290" d="M18.5 17.7l1.5 1.5c-.2.5-.7.8-1.5.8-2.9 0-5.7-.6-8.2-1.7l-.5-1.7 1.5-1c2 1.1 4.6 2 7.2 2.1z"/>
+    <circle cx="5.8" cy="5.5" r="1.6" fill="#c49a3a"/>
+    <circle cx="5.8" cy="5.5" r="0.7" fill="#2a1f10"/>
+  </symbol>
+</defs>
+</svg>
+
+<!-- Ohjaimet -->
+<div class="controls">
+  <div id="themes">
+    <button data-t="usva" class="on">Usva</button>
+    <button data-t="havu">Havu</button>
+    <button data-t="aurinko">Aurinko</button>
+  </div>
+  <label><input type="checkbox" id="lite"> Nopea tila</label>
+</div>
+
+<div class="wrap">
+
+  <!-- Yläpalkkiraide -->
+  <header class="hdr">
+    <div class="hdr__logo">Fokus A Priori</div>
+    <div class="hdr__timer">
+      <span class="t-dot"></span>
+      <span class="t-time">18:42</span>
+      <span class="t-label">Fokus</span>
+    </div>
+  </header>
+
+  <!-- Vasen syvennys: ODOTTAVAT -->
+  <aside class="zone zone-left">
+    <div class="zone-label"><span>Odottavat</span><span class="count-pill">2</span></div>
+    <div class="wait-card">
+      <span class="t-text">Vastaus Kelalta hakemukseen</span>
+      <button class="w-back" title="Palauta jonoon">&#8617;</button>
+    </div>
+    <div class="wait-card">
+      <span class="t-text">Esihenkilön kuittaus raporttiin</span>
+      <button class="w-back" title="Palauta jonoon">&#8617;</button>
+    </div>
+  </aside>
+
+  <!-- Areena -->
+  <main class="zone-arena">
+    <div class="eise-handle" title="Eisenhower-matriisi — vedä alas">
+      <div class="quad-dots"><i></i><i></i><i></i><i></i></div>
+    </div>
+
+    <div class="arena-slots">
+      <!-- (a) tyhjä syvennys -->
+      <div class="slot-col">
+        <div class="arena-slot">
+          <div class="arena-slot__empty">
+            <div class="e-title">Pöytä odottaa korttia.</div>
+            <div class="e-sub">Lisää kortti kädestä, pakasta tai aamusuunnittelusta.</div>
+          </div>
+        </div>
+        <div class="slot-caption">Tyhjä syvennys</div>
+      </div>
+
+      <!-- (b) kortti syvennyksessä -->
+      <div class="slot-col">
+        <div class="arena-slot">
+          <div class="tcg-card tcg-card--rare" style="--qc:var(--q1)">
+            <div class="tcg-card__cost">
+              <div class="tcg-card__pip"></div>
+              <div class="tcg-card__pip tcg-card__pip--half"></div>
+            </div>
+            <div class="tcg-card__plate">
+              <div class="tcg-card__art">
+                <svg viewBox="0 0 24 24"><use href="#verb-i-soita"/></svg>
+              </div>
+              <div class="tcg-card__typeline">
+                <svg viewBox="0 0 24 24"><use href="#verb-i-soita"/></svg>
+                <span>Soita</span>
+                <span class="tl-quad">Tee heti</span>
+                <span class="tcg-card__set tcg-card__set--rare">L</span>
+              </div>
+              <div class="tcg-card__body">
+                <div class="tcg-card__title">Soita asiakkaalle ajanvarauksesta</div>
+                <div class="tcg-card__notes-tcg">Lupasin soittaa ennen klo 15.</div>
+                <div class="tcg-card__meta-tcg">
+                  <span>&#127813; &times;1,5</span>
+                  <span class="dot">&middot;</span>
+                  <span>LUVN</span>
+                </div>
+              </div>
+              <div class="tcg-card__actions-tcg">
+                <button class="act-start">&#9654; Aloita</button>
+                <button>&#10003;</button>
+                <button>&#8594;</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="slot-caption">Kortti pelattu</div>
+      </div>
+    </div>
+
+    <!-- Materiaalinapit -->
+    <div class="btn-row">
+      <button class="btn">Aloita</button>
+      <button class="btn btn--ghost">Peruuta</button>
+      <button class="btn btn--icon" title="Valikko">&#9776;</button>
+    </div>
+  </main>
+
+  <!-- Oikea syvennys: TEHTÄVÄJONO -->
+  <aside class="zone zone-right">
+    <div class="zone-label"><span>Tehtäväjono</span><span class="pile-ico"></span><span class="count-pill">4</span></div>
+    <div class="turn-card">
+      <span class="q-dot" style="background:var(--q1)"></span>
+      <span class="t-text">Kirjaa asiakaskäynnin muistiinpanot</span>
+      <span class="t-est">&times;2</span>
+    </div>
+    <div class="turn-card">
+      <span class="q-dot" style="background:var(--q2)"></span>
+      <span class="t-text">Sovi palaveri tiimin kanssa</span>
+      <span class="t-est">&times;0,5</span>
+    </div>
+    <div class="turn-card">
+      <span class="q-dot" style="background:var(--q2)"></span>
+      <span class="t-text">Selvitä kuntoutustuen hakuprosessi</span>
+      <span class="t-est">&times;3</span>
+    </div>
+    <div class="turn-card">
+      <span class="q-dot" style="background:var(--q3)"></span>
+      <span class="t-text">Vie raportti esihenkilölle</span>
+      <span class="t-est">&times;0,5</span>
+    </div>
+  </aside>
+
+  <!-- Viuhkavihje pöydän reunassa -->
+  <footer class="hand-area">
+    <div class="hand-hint">Tehtäväkäsi</div>
+    <div class="fan"><i></i><i></i><i></i></div>
+  </footer>
+
+</div>
+
+<script>
+var ts=document.getElementById("themes");
+ts.addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b) return;
+  document.documentElement.setAttribute("data-theme",b.getAttribute("data-t"));
+  var all=ts.querySelectorAll("button");
+  for(var i=0;i<all.length;i++) all[i].classList.remove("on");
+  b.classList.add("on");
+});
+document.getElementById("lite").addEventListener("change",function(){
+  if(this.checked) document.documentElement.setAttribute("data-perf","lite");
+  else document.documentElement.removeAttribute("data-perf");
+});
+</script>
+</body>
+</html>

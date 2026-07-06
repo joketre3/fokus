@@ -259,7 +259,35 @@ Set-symboli = työtilan alkukirjain (Cinzel) typelinen oikeassa reunassa. Holo v
 
 **Metalli- ja levytokenit:** `--gold` `#c49a3a` / `--gold-hi` `#e8c66a` / `--gold-deep` `#6b4f1c` (eivät seuraa `--accent`ia), `--metal-silver` `#b8bcc0` / `--metal-silver-hi` `#e2e6ea`, `--tcg-plate-ink` `#f4f0e4` / `--tcg-plate-ink-dim` `#e8dcc0` / `--tcg-gold-ink` `#f0d9a8`, `--tcg-stop` `#7a2020`, `--ink-on-art` `#fff`, `--pomo-hi` `#e8623a`, `--q2-bright` `#4a8a4a`, `--frog-deep` `#3d7a52`. Plate pysyy tummana kaikissa teemoissa (aurinko asettaa tumman `--plate-top`in tarkoituksella).
 
-## 8. Do's and Don'ts
+## 8. Korttipöytä
+
+Sovellus on pelipöytä: `.wrap` on huopapinta (valolampi + vinjetti + feTurbulence-kuitu + felt-gradientti), areena on kaiverrettu korttisyvennys (`#arena::after`, border-image-SVG-kulmaornamentit), sivupaneelit ovat upotettuja vyöhykkeitä (well), jono on fyysinen korttipino ja napit ovat pelimerkkejä (chip). Kortit eivät leiju tyhjässä — ne ovat pöydällä.
+
+### Pöytätokenit
+
+| Token | Usva | Aurinko | Käyttö |
+|---|---|---|---|
+| `--table-felt` / `-deep` | `#1d3527` / `#10211a` | `#efe5d0` / `#e2d3b8` | huopa/pellavapinta |
+| `--table-light` | kulta .07 | valkoinen .5 | valolampi keskellä |
+| `--vignette` | musta .48 | ruskea .18 | reunatummennnus |
+| `--well-bg` / `--well-shadow` | musta .24 / inset-pino | ruskea .07 / inset-pino | upotettu vyöhyke |
+| `--engrave` / `-dim` | kulta .34 / .15 | ruskea .4 / .18 | kaiverrusviivat |
+| `--etch-ink` / `--etch-shadow` | valk. .38 / tumma alle | tumma .55 / vaalea alle | letterpress-labelit |
+| `--chip-shadow` / `-dn` | koho / painettu | lämmin koho / painettu | nappimateriaali |
+
+### Named Rules
+
+**The Engrave Rule.** Kaiverrus on kultaa matalalla alfalla ja lasketaan One Accent Rule -budjettiin — siksi vain ohuita viivoja (1px inset, border-image-viivat), ei täyttöjä.
+
+**The Letterpress Flip Rule.** Upotetun tekstin varjosuunta kääntyy teemassa: tumma teema = tumma varjo alle (`0 1px 0 rgba(0,0,0,.6)`), vaalea = valkoinen kiilto alle. Vain tokenien kautta — ei kovakoodattuja text-shadow'ja.
+
+**The Well Rule.** Upotukset tehdään aina inset-box-shadow'lla + `--well-bg`-täytöllä, ei koskaan bordereilla. Alahuulen kiilto (`inset 0 -1px 0`) myy syvyyden.
+
+**The Chip Rule.** Nappien paino = `box-shadow: var(--chip-shadow)` + `:active { transform:translateY(1px) }`. Ei background-muutoksia — teemojen `!important`-säännöt omistavat background-kerroksen.
+
+**The Slot Rule.** Areenaslotti on `#arena::after`-pseudo (`z-index:-1`, `isolation:isolate`) — `render()` tyhjentää areenan DOM-lapset, pseudot selviävät.
+
+## 9. Do's and Don'ts
 
 ### Do
 

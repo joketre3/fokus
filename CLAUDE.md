@@ -47,6 +47,7 @@ Ei testejä, ei lintteriä, ei CI:tä.
 | `landing.html` | Markkinointisivu |
 | `mockup-kortti.html` | TCG-kortti-ilmeen mockup (referenssi) |
 | `mockup-rarity.html` | Rarity-järjestelmän mockup (4 tieriä + holo-vertailu) |
+| `mockup-poyta.html` | Korttipöytä-ilmeen mockup (teema+lite-kytkimet) |
 
 Pääsovellus avaa `swipe.html` ja `aamu.html` popup-ikkunoina (`window.open`). Timer aukeaa JS:llä generoituna popuppina. Kaikki ikkunat jakavat datan `localStorage`n kautta.
 
@@ -84,6 +85,9 @@ Jokainen tiedosto on itsenäinen: kaikki CSS ja JS sisäänrakennettu HTML-tiedo
 - `startTmr()` ei kutsu `render()` — kutsu manuaalisesti heti perään jos UI pitää päivittää (esim. nappi-teksti)
 - Mobiilikaappaus headlessilla: `google-chrome --headless=new --no-sandbox --disable-gpu --window-size=390,844 --screenshot=/tmp/out.png "http://localhost:8765/file.html"`
 - Impeccable-detektori: `node /home/jaakko/.agents/skills/impeccable/scripts/detect.mjs --json index.html`
+- Impeccable-baseline: 3 tunnettua riketta jotka EIVÄT ole bugeja — bounce-easing (M1:n tarkoituksellinen overshoot), em-dash-overuse (suomen välimerkki), dark-glow r.~661 (aurinko-chip-token, väärä positiivi) — älä "korjaa", vertaa vain deltaa
+- Headless Chrome ei aja `initTheme`a (Firebase/CSP offline) — teemojen testaus headlessissa: temp-kopio kovakoodatulla `data-theme`-attribuutilla, ei localStorage
+- Rinnakkaishaarojen mergen/rebasen jälkeen tarkista funktioduplikaatit: `grep -c "function nimi" index.html` — auto-merge voi tuoda saman funktion kahdesti (esim. rarityOf PR #4 + M1)
 - Projektiväri-indikaattori: `box-shadow: inset 0 3px 0 <väri>` — ei `border-left` eikä `border-top` (detektori ampuu kaikista `border-top:Npx solid` -säännöistä)
 - Piilotettava sisältö: `.wrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows .18s}` + sisältö `min-height:0;overflow:hidden` — ei max-height-animaatiota
 - `git stash` tarvitaan ennen `git checkout main` jos working treessä on muutoksia muissa tiedostoissa
@@ -241,6 +245,21 @@ MacBook Pro 2010 (Intel HD, ei GPU) suorituskykyoptionointi Chromessa.
 | Tilinvalinta | `prompt: select_account` Google-provideriin | ✅ |
 
 Suunnitelma: `docs/firestore-synkronointi-suunnitelma.md`
+
+### Korttipöytä-ilme (2026-07-05) — valmis, haara `korttipoyta`
+
+| Vaihe | Mitä | Status |
+|-------|------|--------|
+| 0 | `mockup-poyta.html` — suunnan hyväksyntä, teema+lite-kytkimet | ✅ |
+| 1–2 | Pöytätokenit (12 kpl, 3 teemaa) + felt-pinta `.wrap`iin, blur(1px) pois | ✅ |
+| 3–4 | `#arena::after`-slotti (border-image-SVG) + upotetut vyöhykkeet, `var(--bg)`-bugit korjattu | ✅ |
+| 5–6 | `.turn-card`-pino + chip-napit + hdr/eise-handle-materiaalit | ✅ |
+| 7 | Mobiilivinjetti, kontrastikorjaukset (etch-ink .38/.55), DESIGN.md §8 | ✅ |
+
+Opit:
+- `#arena::after` desktopilla vaatii `inset:auto` ennen left/top-arvoja — mobiilisääntö asettaa `bottom:-4px` joka muuten venyttää laatikon
+- Slotti pseudo-elementtinä koska `render()` tyhjentää `#arena`n lapset (keep-lista vain eise-peek/handle)
+- Chip-napit: paino vain box-shadow+translateY — teemojen `!important` omistaa `.pbtn`-backgroundin
 
 ### Jäljellä (manuaalinen)
 
