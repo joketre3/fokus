@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="fi" data-theme="usva">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fokus — Lisää tehtävä -redesign-mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@1&display=swap" rel="stylesheet">
+<style>
+/* ═════════════════════════════════════════════════════════
+   FOKUS — "Lisää tehtävä" -redesign. Standalone mockup.
+   1) Lisää tehtävä -nappi (3 vaihtoehtoa)
+   2) Uusi wiz-modal (opaakki, leveämpi)
+   3) Ajasta-nappi ennen/jälkeen
+   ═════════════════════════════════════════════════════════ */
+:root{
+  --ink:rgba(255,255,255,.95);
+  --surface-xs:rgba(30,50,40,.35);
+  --surface:rgba(30,55,40,.42);
+  --surface-md:rgba(30,55,40,.5);
+  --surface-strong:rgba(30,55,40,.65);
+  --border:rgba(255,255,255,.25);
+  --muted:rgba(255,255,255,.72);
+  --subtle:rgba(255,255,255,.2);
+  --accent:#c49a3a;
+  --accent-dim:rgba(196,154,58,.15);
+  --wait:#3a6b8a;
+  --pomo:#a84c28;
+  --q1:#a84c28; --q2:#2d5a3d; --q3:#7a6a50; --q4:#9a9a8e;
+  --text-xs:.72rem; --text-sm:.75rem; --text-base:.875rem;
+  --text-md:1rem; --text-lg:1.4rem; --text-xl:1.8rem;
+  --r-sm:4px; --r-md:8px; --r-lg:12px; --r-full:50%;
+  --plate-top:#1a2e26; --plate-bot:#13211b;
+  --frog:#6b8a30; --frog-deep:#3d7a52;
+  --gold:#c49a3a; --gold-hi:#e8c66a; --gold-deep:#6b4f1c;
+  --pomo-hi:#e8623a; --q2-bright:#4a8a4a;
+  --ease-out:cubic-bezier(.22,.61,.36,1);
+  --ease-out-back:cubic-bezier(.34,1.40,.64,1);
+  --dur-micro:140ms; --dur-meso:220ms; --dur-macro:320ms;
+
+  /* ── KORTTIPÖYTÄ ─────────────────────────────────────── */
+  --page-bg:#0b110c;
+  --table-felt:#1d3527; --table-felt-deep:#10211a;
+  --table-light:rgba(196,154,58,.07);
+  --vignette:rgba(0,0,0,.48);
+  --well-bg:rgba(0,0,0,.24);
+  --well-shadow:inset 0 2px 8px rgba(0,0,0,.45), inset 0 1px 2px rgba(0,0,0,.55), inset 0 -1px 0 rgba(255,255,255,.05);
+  --engrave:rgba(196,154,58,.34); --engrave-dim:rgba(196,154,58,.15);
+  --etch-ink:rgba(255,255,255,.38); --etch-shadow:0 1px 0 rgba(0,0,0,.6);
+  --chip-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 2px 0 rgba(0,0,0,.35), 0 3px 8px rgba(0,0,0,.25);
+  --chip-shadow-dn:inset 0 1px 0 rgba(255,255,255,.04), 0 1px 0 rgba(0,0,0,.35);
+
+  /* ── MODAL-materiaali (opaakki levy) ─────────────────── */
+  --wm-bg:linear-gradient(180deg, var(--plate-top), var(--plate-bot));
+  --wm-ink:rgba(255,255,255,.95);
+  --wm-muted:rgba(255,255,255,.65);
+  --wm-field:rgba(0,0,0,.28);
+  --wm-field-border:rgba(255,255,255,.14);
+  --wm-chip:rgba(255,255,255,.06);
+}
+html[data-theme="havu"]{
+  --ink:rgba(255,255,255,.97);
+  --surface-xs:rgba(12,30,20,.88);
+  --plate-top:#13241b; --plate-bot:#0c1812;
+  --muted:rgba(255,255,255,.72);
+  --subtle:rgba(255,255,255,.08);
+  --accent:#4fa870;
+  --pomo:#c0432b;
+  --q2:#265535;
+  --frog:#4a8a40;
+  --page-bg:#020604;
+  --table-felt:#0c1c12; --table-felt-deep:#050e08;
+  --vignette:rgba(0,0,0,.6);
+  --well-bg:rgba(0,0,0,.3);
+}
+html[data-theme="aurinko"]{
+  --ink:#2d2417;
+  --plate-top:#1c2e26; --plate-bot:#14241c;
+  --surface-xs:rgba(255,255,255,.92);
+  --surface:rgba(250,250,250,.82);
+  --surface-md:rgba(245,245,245,.88);
+  --surface-strong:rgba(238,238,238,.95);
+  --border:rgba(180,130,70,.22);
+  --muted:#7a6a4a;
+  --subtle:rgba(220,190,140,.22);
+  --accent:#c4681e;
+  --wait:#4a7a9a;
+  --pomo:#c4681e;
+  --q1:#c4681e; --q2:#3d6b30; --q3:#8a7a5a; --q4:#a0988a;
+  --r-md:10px; --r-lg:16px;
+  --frog:#5a8a30;
+  --page-bg:#dccfae;
+  --table-felt:#efe5d0; --table-felt-deep:#e2d3b8;
+  --table-light:rgba(255,250,235,.5);
+  --vignette:rgba(120,80,30,.18);
+  --well-bg:rgba(120,80,30,.07);
+  --well-shadow:inset 0 2px 6px rgba(120,80,30,.18), inset 0 1px 2px rgba(120,80,30,.14), inset 0 -1px 0 rgba(255,255,255,.7);
+  --engrave:rgba(150,100,35,.4); --engrave-dim:rgba(150,100,35,.18);
+  --etch-ink:rgba(45,36,23,.55); --etch-shadow:0 1px 0 rgba(255,255,255,.65);
+  --chip-shadow:inset 0 1px 0 rgba(255,255,255,.8), 0 2px 0 rgba(120,80,30,.2), 0 3px 8px rgba(120,80,30,.12);
+  --chip-shadow-dn:inset 0 1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(120,80,30,.2);
+
+  /* Aurinko-modal: VAALEA, täysin opaakki */
+  --wm-bg:#faf5e8;
+  --wm-ink:#2d2417;
+  --wm-muted:#7a6a4a;
+  --wm-field:#fffdf6;
+  --wm-field-border:rgba(150,100,35,.3);
+  --wm-chip:rgba(150,100,35,.08);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'DM Sans',system-ui,sans-serif;
+  font-weight:300;font-size:var(--text-base);line-height:1.55;
+  color:var(--ink);
+  background:var(--page-bg);
+  min-height:100vh;padding:1rem;
+}
+
+/* ── PÖYTÄPINTA ─────────────────────────────────────────── */
+.wrap{
+  position:relative;
+  min-height:calc(100vh - 2rem);
+  border-radius:var(--r-lg);
+  overflow:hidden;
+  padding:0 0 3rem;
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 42%, var(--table-light), transparent 70%),
+    radial-gradient(ellipse 130% 130% at 50% 50%, transparent 52%, var(--vignette) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='64' height='64' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, var(--table-felt), var(--table-felt-deep));
+  background-repeat:no-repeat,no-repeat,repeat,no-repeat;
+  box-shadow:0 8px 40px rgba(0,0,0,.35), inset 0 0 0 1px var(--engrave-dim);
+}
+.hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.65rem 1.25rem;gap:1rem;
+  background:linear-gradient(180deg, rgba(0,0,0,.14), transparent);
+  box-shadow:0 1px 0 var(--engrave-dim), 0 2px 0 rgba(0,0,0,.35);
+}
+html[data-theme="aurinko"] .hdr{
+  background:linear-gradient(180deg, rgba(120,80,30,.08), transparent);
+  box-shadow:0 1px 0 var(--engrave-dim), 0 2px 0 rgba(255,255,255,.5);
+}
+.hdr__logo{
+  font-family:'DM Serif Display',Georgia,serif;font-style:italic;
+  font-size:1.25rem;letter-spacing:-.01em;color:var(--ink);
+}
+.hdr__sub{font-size:.65rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);}
+
+/* ── OHJAIMET ───────────────────────────────────────────── */
+.controls{
+  position:fixed;top:1.5rem;right:1.5rem;z-index:100;
+  display:flex;align-items:center;gap:.6rem;
+  padding:.4rem .6rem;border-radius:var(--r-md);
+  background:var(--surface-strong);
+  border:1px solid var(--border);
+  box-shadow:0 4px 14px rgba(0,0,0,.3);
+  font-size:.68rem;
+}
+.controls button{
+  font-family:'DM Sans',sans-serif;font-size:.68rem;font-weight:500;
+  padding:.28rem .55rem;border-radius:6px;cursor:pointer;
+  background:transparent;color:var(--ink);
+  border:1px solid var(--subtle);
+}
+.controls button.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* ── SEKTIOT ────────────────────────────────────────────── */
+.section{max-width:1100px;margin:2.5rem auto 0;padding:0 1.5rem;}
+.section-label{
+  display:flex;align-items:center;gap:.6rem;
+  margin-bottom:1.2rem;
+  font-size:.62rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--etch-ink);text-shadow:var(--etch-shadow);
+  white-space:nowrap;
+}
+.section-label::before,.section-label::after{
+  content:"";flex:1;height:1px;background:var(--engrave-dim);
+}
+.section-note{
+  max-width:520px;margin:-.6rem auto 1.2rem;text-align:center;
+  font-size:var(--text-xs);color:var(--etch-ink);text-shadow:var(--etch-shadow);
+}
+
+/* Vaihtoehtoruudukko */
+.variants{
+  display:flex;flex-wrap:wrap;justify-content:center;
+  gap:1.25rem;align-items:stretch;
+}
+.variant{
+  flex:1 1 200px;max-width:250px;
+  display:flex;flex-direction:column;align-items:center;gap:1rem;
+  padding:1.4rem 1rem 1.1rem;
+  border-radius:var(--r-lg);
+  background:var(--well-bg);
+  box-shadow:var(--well-shadow), inset 0 0 0 1px var(--engrave-dim);
+}
+.variant .v-stage{
+  flex:1;display:flex;align-items:center;justify-content:center;min-height:84px;
+}
+.variant .v-tag{
+  font-family:'DM Serif Display',Georgia,serif;font-style:italic;
+  font-size:.95rem;color:var(--ink);
+}
+.variant .v-tag b{
+  font-family:'DM Sans',sans-serif;font-style:normal;font-weight:600;font-size:.62rem;
+  letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-right:.45rem;vertical-align:.1em;
+}
+.variant .v-desc{
+  font-size:var(--text-xs);line-height:1.5;text-align:center;
+  color:var(--etch-ink);text-shadow:var(--etch-shadow);
+}
+.variant--current{opacity:.55;}
+.variant--current .v-tag b{color:var(--etch-ink);}
+
+/* NYKYINEN — pieni pilleri (vertailukohta) */
+.btn-add-old{
+  font-family:'DM Sans',sans-serif;font-weight:500;font-size:.78rem;
+  padding:.35rem .8rem;border:none;border-radius:999px;cursor:pointer;
+  background:var(--accent);color:#fff;
+}
+
+/* A — PELIMERKKI: isompi chip-nappi */
+.btn-add-a{
+  font-family:'DM Sans',sans-serif;font-weight:600;font-size:.9rem;
+  padding:.6rem 1.2rem;border:none;border-radius:8px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:.45rem;
+  background:var(--accent);color:#fff;
+  box-shadow:var(--chip-shadow);
+  transition:background var(--dur-micro) var(--ease-out), box-shadow var(--dur-micro) var(--ease-out), transform var(--dur-micro) var(--ease-out);
+}
+.btn-add-a .plus{font-size:1.1em;line-height:1;font-weight:600;}
+.btn-add-a:hover{background:#b8882a;}
+html[data-theme="havu"] .btn-add-a:hover{background:#449463;}
+html[data-theme="aurinko"] .btn-add-a:hover{background:#b05a15;}
+.btn-add-a:active{transform:translateY(1px);box-shadow:var(--chip-shadow-dn);}
+
+/* B — NOSTA KORTTI: pöydästä kurkistava korttireuna */
+.btn-add-b{
+  font-family:'DM Sans',sans-serif;font-weight:600;font-size:.85rem;
+  padding:.85rem 1.3rem .7rem;border-radius:9px 9px 4px 4px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:.45rem;
+  color:var(--gold-hi);
+  background:
+    repeating-linear-gradient(45deg, var(--plate-bot) 0 7px, var(--plate-top) 7px 14px),
+    linear-gradient(160deg, var(--plate-top), var(--plate-bot));
+  border:1.5px solid var(--gold);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.5), 0 3px 8px rgba(0,0,0,.4);
+  transform:rotate(-2deg);
+  transition:transform var(--dur-meso) var(--ease-out-back), box-shadow var(--dur-meso) var(--ease-out);
+  text-shadow:0 1px 2px rgba(0,0,0,.6);
+}
+.btn-add-b:hover{
+  transform:rotate(-2deg) translateY(-3px);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.5), 0 6px 14px rgba(0,0,0,.45);
+}
+.btn-add-b:active{transform:rotate(-2deg) translateY(0);}
+
+/* C — KUTSUVA HEHKU: A + pysyvä kultahehku */
+.btn-add-c{
+  font-family:'DM Sans',sans-serif;font-weight:600;font-size:.9rem;
+  padding:.6rem 1.2rem;border:none;border-radius:8px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:.45rem;
+  background:var(--accent);color:#fff;
+  box-shadow:var(--chip-shadow), 0 0 16px rgba(196,154,58,.35);
+  transition:background var(--dur-micro) var(--ease-out), transform var(--dur-micro) var(--ease-out);
+}
+.btn-add-c .plus{font-size:1.1em;line-height:1;font-weight:600;}
+.btn-add-c:hover{background:#b8882a;}
+html[data-theme="havu"] .btn-add-c:hover{background:#449463;}
+html[data-theme="aurinko"] .btn-add-c:hover{background:#b05a15;}
+.btn-add-c:active{transform:translateY(1px);box-shadow:var(--chip-shadow-dn), 0 0 16px rgba(196,154,58,.35);}
+@media (prefers-reduced-motion: no-preference){
+  .btn-add-c{animation:breathe 3s ease-in-out infinite;}
+  @keyframes breathe{
+    0%,100%{box-shadow:var(--chip-shadow), 0 0 12px rgba(196,154,58,.25);}
+    50%{box-shadow:var(--chip-shadow), 0 0 20px rgba(196,154,58,.45);}
+  }
+}
+
+/* ── SEKTIO 2: MODAL ────────────────────────────────────── */
+.modal-stage{
+  position:relative;
+  display:flex;align-items:center;justify-content:center;
+  padding:2.5rem 1rem;
+  border-radius:var(--r-lg);
+  background:rgba(0,0,0,.35);
+  box-shadow:var(--well-shadow);
+}
+html[data-theme="aurinko"] .modal-stage{background:rgba(120,80,30,.14);}
+
+.wm{
+  width:min(560px, 96vw);
+  border-radius:14px;
+  padding:1.4rem 1.6rem 1.5rem;
+  background:var(--wm-bg);           /* OPAAKKI — ei läpinäkyvyyttä */
+  border:1px solid var(--engrave);
+  box-shadow:0 24px 64px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06);
+  color:var(--wm-ink);
+}
+html[data-theme="aurinko"] .wm{
+  box-shadow:0 24px 64px rgba(80,50,15,.35), inset 0 1px 0 rgba(255,255,255,.9);
+}
+.wm__title{
+  display:flex;align-items:center;gap:.7rem;
+  margin-bottom:1.1rem;
+  font-family:'DM Serif Display',Georgia,serif;font-style:italic;
+  font-size:1.4rem;line-height:1.2;color:var(--wm-ink);
+  white-space:nowrap;
+}
+.wm__title::before,.wm__title::after{
+  content:"";flex:1;height:1px;background:var(--engrave);
+}
+.wm__lbl{
+  display:block;margin:0 0 .35rem;
+  font-size:.62rem;font-weight:500;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--wm-muted);
+}
+.wm__input{
+  width:100%;
+  font-family:'DM Sans',sans-serif;font-weight:400;font-size:1rem;
+  padding:.75rem .85rem;
+  border-radius:var(--r-md);
+  border:1px solid var(--wm-field-border);
+  background:var(--wm-field);color:var(--wm-ink);
+  outline:none;
+  transition:border-color var(--dur-micro) var(--ease-out), box-shadow var(--dur-micro) var(--ease-out);
+}
+.wm__input::placeholder{color:var(--wm-muted);opacity:.7;}
+.wm__input:focus{
+  border-color:var(--gold);
+  box-shadow:0 0 0 2px var(--gold);   /* selkeä 2px kultarengas */
+}
+.wm__row{margin-top:1rem;}
+.wm__chips{display:flex;flex-wrap:wrap;gap:.4rem;}
+.wm__chip{
+  font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:500;
+  padding:.35rem .75rem;border-radius:var(--r-md);cursor:pointer;
+  border:1px solid var(--wm-field-border);
+  background:var(--wm-chip);color:var(--wm-ink);
+  transition:background var(--dur-micro) var(--ease-out);
+}
+.wm__chip:hover{background:var(--accent-dim);}
+.wm__chip.sel{
+  background:var(--gold);color:#fff;border-color:var(--gold);
+  box-shadow:var(--chip-shadow-dn);
+}
+/* 2x2 mini-matriisi */
+.wm__grid2{display:flex;gap:1.5rem;flex-wrap:wrap;}
+.wm__grid2 > div{flex:1 1 180px;}
+.wm__quad{
+  display:grid;grid-template-columns:1fr 1fr;gap:5px;
+}
+.wm__quad button{
+  font-family:'DM Sans',sans-serif;font-size:.68rem;font-weight:500;
+  padding:.55rem .4rem;border-radius:6px;cursor:pointer;
+  border:1px solid transparent;color:rgba(255,255,255,.92);
+  text-shadow:0 1px 1px rgba(0,0,0,.4);
+  transition:filter var(--dur-micro) var(--ease-out);
+}
+.wm__quad button:hover{filter:brightness(1.12);}
+.wm__quad .qq1{background:var(--q1);}
+.wm__quad .qq2{background:var(--q2);}
+.wm__quad .qq3{background:var(--q3);}
+.wm__quad .qq4{background:var(--q4);}
+.wm__quad button.sel{
+  border-color:var(--gold);
+  box-shadow:0 0 0 1px var(--gold), var(--chip-shadow-dn);
+}
+/* Arviopippit */
+.wm__pips{display:flex;gap:.4rem;flex-wrap:wrap;}
+.wm__pip{
+  display:inline-flex;align-items:center;gap:.35rem;
+  font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;
+  padding:.4rem .65rem;border-radius:var(--r-md);cursor:pointer;
+  border:1px solid var(--wm-field-border);
+  background:var(--wm-chip);color:var(--wm-ink);
+}
+.wm__pip i{
+  width:11px;height:11px;border-radius:50%;flex:none;
+  background:radial-gradient(circle at 35% 30%, var(--pomo-hi), var(--pomo) 72%);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.5), 0 1px 2px rgba(0,0,0,.45);
+}
+.wm__pip i.half{background:linear-gradient(90deg, var(--pomo-hi) 50%, transparent 50%);box-shadow:inset 0 0 0 1px var(--pomo);}
+.wm__pip.sel{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold);}
+
+/* Toimintorivi */
+.wm__actions{
+  display:flex;align-items:center;gap:.6rem;
+  margin-top:1.4rem;padding-top:1.1rem;
+  border-top:1px solid var(--engrave-dim);
+}
+.wm-btn{
+  font-family:'DM Sans',sans-serif;font-weight:600;font-size:.9rem;
+  border-radius:8px;cursor:pointer;line-height:1.2;
+  padding:.6rem 1.2rem;border:1.5px solid transparent;
+  transition:background var(--dur-micro) var(--ease-out), box-shadow var(--dur-micro) var(--ease-out), transform var(--dur-micro) var(--ease-out);
+}
+.wm-btn--primary{
+  background:var(--accent);color:#fff;border-color:var(--accent);
+  box-shadow:var(--chip-shadow);
+}
+.wm-btn--primary:hover{background:#b8882a;border-color:#b8882a;}
+html[data-theme="havu"] .wm-btn--primary:hover{background:#449463;border-color:#449463;}
+html[data-theme="aurinko"] .wm-btn--primary:hover{background:#b05a15;border-color:#b05a15;}
+.wm-btn--primary:active{transform:translateY(1px);box-shadow:var(--chip-shadow-dn);}
+/* AJASTA — ghost-gold: sama korkeus kuin primary, ääriviivattu sisar */
+.wm-btn--schedule{
+  background:transparent;color:var(--accent);
+  border:1.5px solid var(--accent);
+  font-weight:500;
+}
+.wm-btn--schedule:hover{background:var(--accent-dim);box-shadow:var(--chip-shadow-dn);}
+.wm-btn--schedule:active{transform:translateY(1px);}
+.wm-btn--cancel{
+  background:transparent;color:var(--wm-muted);border:none;
+  font-weight:400;margin-left:auto;
+}
+.wm-btn--cancel:hover{color:var(--wm-ink);}
+
+/* ── SEKTIO 3: AJASTA ennen/jälkeen ─────────────────────── */
+.ba-pair{
+  display:flex;flex-wrap:wrap;justify-content:center;gap:1.25rem;
+}
+.ba-card{
+  flex:1 1 260px;max-width:420px;
+  display:flex;flex-direction:column;align-items:center;gap:1rem;
+  padding:1.4rem 1rem 1.1rem;
+  border-radius:var(--r-lg);
+  background:var(--well-bg);
+  box-shadow:var(--well-shadow), inset 0 0 0 1px var(--engrave-dim);
+}
+.ba-card .v-stage{display:flex;align-items:center;gap:.6rem;min-height:56px;}
+/* ENNEN: sulautuva nappi */
+.btn-schedule-old{
+  font-family:'DM Sans',sans-serif;font-weight:400;font-size:.8rem;
+  padding:.45rem .9rem;border-radius:var(--r-md);cursor:pointer;
+  border:1px solid var(--border);
+  background:var(--surface);color:var(--muted);
+}
+/* Viereen sama primary mittatikuksi */
+.mini-primary{
+  font-family:'DM Sans',sans-serif;font-weight:600;font-size:.9rem;
+  padding:.6rem 1.2rem;border-radius:8px;cursor:pointer;
+  background:var(--accent);color:#fff;border:1.5px solid var(--accent);
+  box-shadow:var(--chip-shadow);
+}
+/* JÄLKEEN: ghost-gold */
+.btn-schedule-new{
+  font-family:'DM Sans',sans-serif;font-weight:500;font-size:.9rem;
+  padding:.6rem 1.2rem;border-radius:8px;cursor:pointer;
+  border:1.5px solid var(--accent);
+  background:transparent;color:var(--accent);
+  transition:background var(--dur-micro) var(--ease-out), box-shadow var(--dur-micro) var(--ease-out), transform var(--dur-micro) var(--ease-out);
+}
+.btn-schedule-new:hover{background:var(--accent-dim);box-shadow:var(--chip-shadow-dn);}
+.btn-schedule-new:active{transform:translateY(1px);}
+.ba-card .v-tag{
+  font-family:'DM Serif Display',Georgia,serif;font-style:italic;
+  font-size:.95rem;color:var(--ink);
+}
+.ba-card .v-desc{
+  font-size:var(--text-xs);line-height:1.5;text-align:center;
+  color:var(--etch-ink);text-shadow:var(--etch-shadow);
+}
+.ba-card--old{opacity:.62;}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation:none !important;transition:none !important;}
+}
+</style>
+</head>
+<body>
+
+<!-- Ohjaimet -->
+<div class="controls">
+  <div id="themes">
+    <button data-t="usva" class="on">Usva</button>
+    <button data-t="havu">Havu</button>
+    <button data-t="aurinko">Aurinko</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <header class="hdr">
+    <div class="hdr__logo">Fokus A Priori</div>
+    <div class="hdr__sub">Redesign-mockup &middot; Lisää tehtävä</div>
+  </header>
+
+  <!-- ═══ SEKTIO 1: LISÄÄ TEHTÄVÄ -NAPPI ═══ -->
+  <section class="section">
+    <div class="section-label"><span>1 &middot; Lisää tehtävä -nappi</span></div>
+    <p class="section-note">Palaute: nykyinen ei kutsu painamaan — liian pieni ja söpö. Kolme vaihtoehtoa, joissa nappi on pöydän arvoinen pelimerkki.</p>
+
+    <div class="variants">
+      <!-- Nykyinen -->
+      <div class="variant variant--current">
+        <div class="v-stage">
+          <button class="btn-add-old">+ Lisää tehtävä</button>
+        </div>
+        <div class="v-tag"><b>Nyt</b>Pilleri</div>
+        <div class="v-desc">.78rem, pilleri, ohut. Häviää pöydälle — ei tunnu napilta jota painetaan usein.</div>
+      </div>
+
+      <!-- A -->
+      <div class="variant">
+        <div class="v-stage">
+          <button class="btn-add-a"><span class="plus">+</span> Lisää tehtävä</button>
+        </div>
+        <div class="v-tag"><b>A</b>Pelimerkki</div>
+        <div class="v-desc">Isompi kultachip: .9rem/600, 8px kulmat, koholla pöydästä. Painallus painaa merkin pintaan.</div>
+      </div>
+
+      <!-- B -->
+      <div class="variant">
+        <div class="v-stage">
+          <button class="btn-add-b">+ Uusi kortti</button>
+        </div>
+        <div class="v-tag"><b>B</b>Nosta kortti</div>
+        <div class="v-desc">Pakasta kurkistava korttiselkä: kultareunus, pieni kallistus. Hover nostaa korttia pakasta.</div>
+      </div>
+
+      <!-- C -->
+      <div class="variant">
+        <div class="v-stage">
+          <button class="btn-add-c"><span class="plus">+</span> Lisää tehtävä</button>
+        </div>
+        <div class="v-tag"><b>C</b>Kutsuva hehku</div>
+        <div class="v-desc">Sama chip kuin A + pehmeä kultahehku, joka hengittää 3 s syklissä. Sammuu reduced-motionilla.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SEKTIO 2: UUSI WIZ-MODAL ═══ -->
+  <section class="section">
+    <div class="section-label"><span>2 &middot; Uusi lisäysmodaali</span></div>
+    <p class="section-note">Palaute: liian läpinäkyvä ja liian pieni. Uusi: täysin opaakki levymateriaali, min(560px, 96vw), ei backdrop-filter-riippuvuutta.</p>
+
+    <div class="modal-stage">
+      <div class="wm" role="dialog" aria-modal="true" aria-label="Lisää tehtävä">
+        <div class="wm__title">Lisää tehtävä</div>
+
+        <label class="wm__lbl" for="wm-task">Tehtävä</label>
+        <input class="wm__input" id="wm-task" type="text" placeholder="Mitä pitää tehdä?" value="Soita asiakkaalle ajanvarauksesta">
+
+        <div class="wm__row">
+          <span class="wm__lbl">Verbi</span>
+          <div class="wm__chips">
+            <button class="wm__chip sel">Soita</button>
+            <button class="wm__chip">Sovi</button>
+            <button class="wm__chip">Kirjaa</button>
+            <button class="wm__chip">Tee</button>
+            <button class="wm__chip">Selvitä</button>
+            <button class="wm__chip">Vie</button>
+          </div>
+        </div>
+
+        <div class="wm__row wm__grid2">
+          <div>
+            <span class="wm__lbl">Lokero</span>
+            <div class="wm__quad">
+              <button class="qq1 sel">Tee heti</button>
+              <button class="qq2">Suunnittele</button>
+              <button class="qq3">Delegoi</button>
+              <button class="qq4">Karsi</button>
+            </div>
+          </div>
+          <div>
+            <span class="wm__lbl">Arvio</span>
+            <div class="wm__pips">
+              <button class="wm__pip"><i class="half"></i>&times;0,5</button>
+              <button class="wm__pip sel"><i></i>&times;1</button>
+              <button class="wm__pip"><i></i><i></i>&times;2</button>
+              <button class="wm__pip"><i></i><i></i><i></i>&times;3</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="wm__actions">
+          <button class="wm-btn wm-btn--primary">+ Lisää tehtävä</button>
+          <button class="wm-btn wm-btn--schedule">&#128336; Ajasta</button>
+          <button class="wm-btn wm-btn--cancel">Peruuta</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SEKTIO 3: AJASTA ENNEN/JÄLKEEN ═══ -->
+  <section class="section">
+    <div class="section-label"><span>3 &middot; Ajasta-nappi &middot; ennen ja jälkeen</span></div>
+    <p class="section-note">Palaute: Ajasta sulautuu taustaan. Uusi: ghost-gold — sama korkeus kuin primary, selkeä hierarkia: täytetty vs. ääriviivattu.</p>
+
+    <div class="ba-pair">
+      <div class="ba-card ba-card--old">
+        <div class="v-stage">
+          <button class="mini-primary">+ Lisää tehtävä</button>
+          <button class="btn-schedule-old">&#128336; Ajasta</button>
+        </div>
+        <div class="v-tag">Ennen</div>
+        <div class="v-desc">border/muted/surface — nappi katoaa levyn pintaan. Matalampi kuin primary, näyttää sivuhuomautukselta.</div>
+      </div>
+
+      <div class="ba-card">
+        <div class="v-stage">
+          <button class="mini-primary">+ Lisää tehtävä</button>
+          <button class="btn-schedule-new">&#128336; Ajasta</button>
+        </div>
+        <div class="v-tag">Jälkeen</div>
+        <div class="v-desc">Ghost-gold: 1,5px kultareunus, kulta-teksti, sama korkeus. Hover täyttää accent-dimillä ja painaa chipiksi.</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+var ts=document.getElementById("themes");
+ts.addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b) return;
+  document.documentElement.setAttribute("data-theme",b.getAttribute("data-t"));
+  var all=ts.querySelectorAll("button");
+  for(var i=0;i<all.length;i++) all[i].classList.remove("on");
+  b.classList.add("on");
+});
+</script>
+</body>
+</html>
