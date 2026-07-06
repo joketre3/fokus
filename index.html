@@ -474,7 +474,6 @@ button{color:rgba(255,255,255,.85)}
 .bulk-toggle:hover{color:white !important}
 
 /* Schedule button */
-#schedule-btn{background:var(--surface-md) !important;border-color:var(--border) !important}
 #schedule-btn svg circle{fill:rgba(196,154,58,.25) !important}
 
 /* Header buttons */
@@ -6150,7 +6149,7 @@ function doneCheckPop(cardEl){
   var path=document.createElementNS(SVGNS,'path');
   path.setAttribute('d','M4 12.5l5 5L20 6');
   path.setAttribute('fill','none');
-  path.setAttribute('stroke','var(--accent)');
+  path.style.stroke='var(--accent)';  // var() ei resolvoidu SVG-presentaatioattribuutissa
   path.setAttribute('stroke-width','3');
   path.setAttribute('stroke-linecap','round');
   path.setAttribute('stroke-linejoin','round');
@@ -6195,6 +6194,7 @@ function markDone(id){
     soundBell();
     // 12D: ilmoita ruudunlukijalle
     a11yAnnounce('Valmis: '+(t.verbi?t.verbi+' ':'')+t.text);
+    save();  // persistoi heti — animaatio ei saa olla tallennuksen ehto
   }
   // Vaihe 10: animoi kortti ulos ennen render()
   var cardEl=document.querySelector('[data-task-id="'+id+'"]');
@@ -6204,9 +6204,12 @@ function markDone(id){
     var lite=document.documentElement.getAttribute('data-perf')==='lite';
     var rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
     doneCheckPop(cardEl);  // kaikki rariteetit
+    var _rendered=false;
+    var _renderOnce=function(){ if(!_rendered){_rendered=true;render();} };
     var doExit=function(){
       cardEl.classList.add('card-exiting');
-      cardEl.addEventListener('animationend',function(){save();render();},{once:true});
+      cardEl.addEventListener('animationend',_renderOnce,{once:true});
+      setTimeout(_renderOnce,600);  // fallback: irronnut node ei laukaise animationendia
     };
     if((rar==='rare'||rar==='mythic') && !lite && !rm){
       // radial-välähdys + scale-pop 1.06 ennen exitiä
@@ -7169,11 +7172,13 @@ function renderArenaCard(t, container, anyFrog, mode){
   }
 
   // Land-pulssi (vain areena) — vain kun areenakortti TODELLA vaihtuu, ei joka renderissä
-  if(t.id!==_lastArenaTaskId){
-    card.classList.add('just-landed');
-    setTimeout(function(){card.classList.remove('just-landed');},650);
+  if(mode!=='hand'){
+    if(t.id!==_lastArenaTaskId){
+      card.classList.add('just-landed');
+      setTimeout(function(){card.classList.remove('just-landed');},650);
+    }
+    _lastArenaTaskId=t.id;
   }
-  _lastArenaTaskId=t.id;
 
   // Fade-in uudelle kortille
   if(_newTaskId!==null&&t.id===_newTaskId){
@@ -7723,7 +7728,7 @@ function renderTurnPanel(inbox){
   turnTasks.forEach(function(t){_newIds[t.id]=1;});
   var _lr=listEl.getBoundingClientRect();
   Array.from(listEl.children).forEach(function(rw){
-    var rid=rw.dataset.id;if(!rid)return;
+    var rid=rw.dataset.id;if(!rid||rw.dataset.ghost)return;
     var rr=rw.getBoundingClientRect();
     var pos={top:rr.top-_lr.top,left:rr.left-_lr.left,w:rr.width};
     _flipFirst[rid]=pos;
@@ -7878,6 +7883,7 @@ function renderTurnPanel(inbox){
     g.style.top=L.pos.top+'px';g.style.left=L.pos.left+'px';
     g.style.width=L.pos.w+'px';g.style.margin='0';
     g.style.pointerEvents='none';g.style.zIndex='1';
+    g.dataset.ghost='1';  // seuraava render ei mittaa haamua rivinä
     g.classList.remove('card-arriving');
     listEl.appendChild(g);
     requestAnimationFrame(function(){
@@ -7977,17 +7983,19 @@ document.addEventListener('DOMContentLoaded', function(){
    Delegoitu documentiin → selviää render()-uudelleenpiirrosta. */
 function initSolidius(){
   /* inline !important → painallus säilyy myös lite-tilassa (kevyt transform, ei backdrop-filter) */
-  var pressed = null;
+  var pressed = null, pressedId = null;
   function release(){
     if(!pressed) return;
-    var el = pressed; pressed = null;
+    var el = pressed; pressed = null; pressedId = null;
     el.style.setProperty('transition','transform var(--dur-micro) var(--ease-out-back)','important');
     el.style.transform = '';  /* '' palauttaa CSS-pohjan (esim. viuhka-rotaatio) animoiden */
   }
   document.addEventListener('pointerdown', function(e){
+    if(matchMedia('(prefers-reduced-motion:reduce)').matches) return;  /* rm: ei squashia */
     var card = e.target.closest && e.target.closest('.tcg-card, .turn-card');
     if(!card) return;
-    pressed = card;
+    if(pressed) release();  /* multitouch: vapauta edellinen ennen uutta */
+    pressed = card; pressedId = e.pointerId;
     /* säilytä viuhka-rotaatio yms.: lue pohja, lisää squash */
     var base = getComputedStyle(card).transform;
     card._solidiusBase = (base && base !== 'none') ? base : '';
@@ -7997,7 +8005,10 @@ function initSolidius(){
   }, true);
   document.addEventListener('pointerup', release, true);
   document.addEventListener('pointercancel', release, true);
-  document.addEventListener('pointerleave', release, true);
+  /* pointerleave ei kupli mutta capture näkee lapsien leavet — vapauta vain kun poistutaan itse kortista */
+  document.addEventListener('pointerleave', function(e){
+    if(pressed && e.target===pressed && e.pointerId===pressedId) release();
+  }, true);
   /* HTML5-raahaus ei laukaise pointerup → vapauta squash heti dragstartissa, ettei rivi jää scale(.97):aan */
   document.addEventListener('dragstart', release, true);
 }
