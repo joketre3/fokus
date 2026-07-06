@@ -752,13 +752,16 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
 .tcg-card__done-check{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:30;pointer-events:none;animation:done-check-pop var(--dur-macro) var(--ease-out-back) both;}
 .tcg-card__done-flash{position:absolute;inset:-10%;z-index:1;pointer-events:none;border-radius:50%;background:radial-gradient(circle,var(--accent) 0%,transparent 70%);animation:done-flash .35s var(--ease-out) both;}
 .tcg-card__particle{position:absolute;width:7px;height:7px;border-radius:50%;background:var(--accent);z-index:40;pointer-events:none;animation:frog-particle .5s var(--ease-out) both;}
-/* Lisää tehtävä — kutsuva hehku (C-variantti) */
-#btn-add-task{box-shadow:var(--chip-shadow),0 0 16px rgba(196,154,58,.35);transition:transform .15s,box-shadow .15s}
-#btn-add-task:active{transform:translateY(1px);box-shadow:var(--chip-shadow-dn);animation:none}
-@keyframes add-glow{0%,100%{box-shadow:var(--chip-shadow),0 0 12px rgba(196,154,58,.25)}50%{box-shadow:var(--chip-shadow),0 0 22px rgba(196,154,58,.45)}}
-@media (prefers-reduced-motion:no-preference){#btn-add-task{animation:add-glow 3s ease-in-out infinite}}
-html[data-perf="lite"] #btn-add-task{animation:none!important;box-shadow:var(--chip-shadow)!important}
-html[data-theme="aurinko"] #btn-add-task{box-shadow:var(--chip-shadow),0 0 14px rgba(196,104,30,.3);animation:none}
+/* Lisää tehtävä — kutsuva hehku (C-variantti).
+   Hehku ::afterissa ja animoidaan vain opacityä (komposoitava, ei repaint-loopia);
+   väri seuraa teeman accentia (usva kulta, havu vihreä, aurinko terracotta). */
+#btn-add-task{position:relative;box-shadow:var(--chip-shadow);transition:transform .15s,box-shadow .15s}
+#btn-add-task::after{content:'';position:absolute;inset:-3px;border-radius:inherit;pointer-events:none;z-index:-1;box-shadow:0 0 18px color-mix(in srgb, var(--accent) 45%, transparent);opacity:.55}
+@keyframes add-glow-o{0%,100%{opacity:.3}50%{opacity:.95}}
+@media (prefers-reduced-motion:no-preference){#btn-add-task::after{animation:add-glow-o 3s ease-in-out infinite}}
+#btn-add-task:active{transform:translateY(1px);box-shadow:var(--chip-shadow-dn)}
+html[data-perf="lite"] #btn-add-task::after{display:none!important}
+html[data-theme="aurinko"] #btn-add-task::after{animation:none;opacity:.4}
 
 /* Modaalit — avaus (eise-modal jo määritetty, tämä on yleinen helper) */
 
@@ -826,9 +829,11 @@ html[data-perf="lite"] body::before{
 html[data-theme="aurinko"][data-perf="lite"] body{
   background-color:#ede4d4;
 }
-/* Nopea tila: pöytäpinta ilman kohinatekstuuria — tasainen huopa + vinjetti */
-html[data-perf="lite"] .wrap{
-  background: radial-gradient(ellipse 130% 130% at 50% 50%, transparent 52%, var(--vignette) 100%), var(--table-felt) !important;
+/* Nopea tila: pöytäpinta ilman kohinatekstuuria — tasainen huopa + vinjetti (vain desktop-pöytä) */
+@media (min-width:900px){
+  html[data-perf="lite"] .wrap{
+    background: radial-gradient(ellipse 130% 130% at 50% 50%, transparent 52%, var(--vignette) 100%), var(--table-felt) !important;
+  }
 }
 
 </style>
@@ -7724,16 +7729,25 @@ function renderTurnPanel(inbox){
   var turnTasks=turnIds.map(function(id){return inbox.find(function(t){return t.id===id&&!t.done});}).filter(Boolean);
 
   // FLIP First: tallenna nykyiset rivipaikat + tunnista lähtevät rivit ennen tyhjennystä
+  // Portti: litessa/rm:ssa animaatio olisi nakymaton (.01ms) — ala maksa layout-lukuja;
+  // sama jos jonon jarjestys ei muuttunut (ei liikkuvia riveja).
+  var _ids=turnTasks.map(function(t){return t.id;});
+  var _orderSame=_ids.length===_prevTurnIds.length&&_ids.every(function(id,i){return id===_prevTurnIds[i];});
+  var _doFlip=!_orderSame
+    && document.documentElement.getAttribute('data-perf')!=='lite'
+    && !matchMedia('(prefers-reduced-motion:reduce)').matches;
   var _flipFirst={},_leaving=[],_newIds={};
   turnTasks.forEach(function(t){_newIds[t.id]=1;});
-  var _lr=listEl.getBoundingClientRect();
-  Array.from(listEl.children).forEach(function(rw){
-    var rid=rw.dataset.id;if(!rid||rw.dataset.ghost)return;
-    var rr=rw.getBoundingClientRect();
-    var pos={top:rr.top-_lr.top,left:rr.left-_lr.left,w:rr.width};
-    _flipFirst[rid]=pos;
-    if(!_newIds[rid]) _leaving.push({row:rw,pos:pos});
-  });
+  if(_doFlip){
+    var _lr=listEl.getBoundingClientRect();
+    Array.from(listEl.children).forEach(function(rw){
+      var rid=rw.dataset.id;if(!rid||rw.dataset.ghost)return;
+      var rr=rw.getBoundingClientRect();
+      var pos={top:rr.top-_lr.top,left:rr.left-_lr.left,w:rr.width};
+      _flipFirst[rid]=pos;
+      if(!_newIds[rid]) _leaving.push({row:rw,pos:pos});
+    });
+  }
 
   listEl.innerHTML='';
 
@@ -7859,9 +7873,10 @@ function renderTurnPanel(inbox){
     listEl.appendChild(row);
   });
 
-  _prevTurnIds = turnTasks.map(function(t){return t.id;});
+  _prevTurnIds = _ids;
 
   // FLIP Last/Invert/Play: jäljelle jäävät liukuvat vanhasta paikasta uuteen
+  if(!_doFlip) return;
   var _lr2=listEl.getBoundingClientRect();
   Array.from(listEl.children).forEach(function(rw){
     var rid=rw.dataset.id;if(!rid||!_flipFirst[rid])return;
@@ -7948,7 +7963,7 @@ function renderHandBar(inbox){
   handTasks.forEach(function(t){
     var card = renderArenaCard(t, null, anyFrog, 'hand');
     if(_prevHandIds.indexOf(t.id)<0) card.classList.add('card-arriving'); // uusi käteen → fade-in
-    card.title = 'Nosta areenalle';
+    card.title = active===null ? 'Nosta areenalle' : 'Siirrä jonon perään';
     card.onclick = (function(tid){ return function(e){
       if(e.target.closest('button')) return;
       promoteToHand(tid);
