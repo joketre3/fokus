@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — FUT-huone-arena (3D + tilt)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&family=Cinzel:wght@600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:rgba(255,255,255,.95); --muted:rgba(255,255,255,.72);
+  --q1:#a84c28; --q1-lite:#e8825a;
+  --gold:#c49a3a; --gold-hi:#e8c66a; --gold-deep:#6b4f1c;
+  --frog-deep:#3d7a52;
+  --pomo:#a84c28; --pomo-hi:#e8623a;
+  --table-felt:#1d3527; --table-felt-deep:#10211a;
+  --room-wall:#152820; --room-wall-deep:#0b1712;
+}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:radial-gradient(ellipse at 50% 30%, var(--table-felt) 0%, var(--table-felt-deep) 75%);
+  color:var(--ink); min-height:100vh; padding:2rem 1rem 3rem;
+  display:flex; flex-direction:column; align-items:center;
+}
+h1{font-family:'DM Serif Display',serif; font-style:italic; font-weight:400; font-size:1.6rem; margin-bottom:.3rem}
+.sub{color:var(--muted); font-size:.85rem; margin-bottom:1.8rem; text-align:center; max-width:640px}
+
+/* ═══════════ HUONE ═══════════ */
+.room{
+  width:min(760px, 96vw); height:540px;
+  position:relative; border-radius:20px; overflow:hidden; isolation:isolate;
+  perspective:1000px; perspective-origin:50% 38%;
+  background:linear-gradient(180deg, var(--room-wall) 0%, var(--room-wall-deep) 100%);
+  border:1px solid rgba(196,154,58,.22);
+  box-shadow:0 24px 60px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.03);
+}
+/* ── Takaseinä ── */
+.room__wall{
+  position:absolute; inset:-6% -6% 32%; z-index:0;
+  transform:translateZ(-260px) scale(1.35); transform-style:preserve-3d;
+  background:
+    radial-gradient(ellipse at 50% 62%, rgba(196,154,58,.10) 0%, transparent 55%),
+    linear-gradient(180deg, #0d1a13 0%, var(--room-wall) 55%, #1a3226 100%);
+}
+/* seinän taide: verbi-visuaali huomaamattomana + kaarikuvio */
+.room__wall .wall-art{
+  position:absolute; width:52%; aspect-ratio:1; left:24%; top:8%;
+  opacity:.05; mix-blend-mode:soft-light;
+}
+.room__wall::before{ /* kaari kortin takana — kuin FUT-lavasteen portaali */
+  content:""; position:absolute; left:50%; bottom:0; transform:translateX(-50%);
+  width:46%; aspect-ratio:1/1.4; border-radius:50% 50% 0 0/36% 36% 0 0;
+  background:radial-gradient(ellipse at 50% 80%, rgba(196,154,58,.14) 0%, transparent 68%);
+  box-shadow:inset 0 0 0 1.5px rgba(196,154,58,.18), inset 0 0 40px rgba(196,154,58,.08);
+}
+.room__wall::after{ /* horisonttiviiva */
+  content:""; position:absolute; left:0; right:0; bottom:-1px; height:2px;
+  background:linear-gradient(90deg, transparent, rgba(196,154,58,.35) 30%, rgba(196,154,58,.35) 70%, transparent);
+}
+/* ── Lattia — aito perspektiivitaso ── */
+.room__floor{
+  position:absolute; left:-25%; right:-25%; bottom:-58%; height:88%; z-index:1;
+  transform:rotateX(76deg); transform-origin:50% 0;
+  background:
+    radial-gradient(ellipse at 50% 18%, rgba(196,154,58,.30) 0%, rgba(196,154,58,.10) 34%, transparent 60%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.028) 0 1px, transparent 1px 72px),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.028) 0 1px, transparent 1px 72px),
+    linear-gradient(180deg, #22402f 0%, var(--table-felt-deep) 78%);
+}
+/* ── Sivuseinien vihjeet ── */
+.room::before,.room::after{
+  content:""; position:absolute; top:0; bottom:0; width:16%; z-index:2; pointer-events:none;
+}
+.room::before{left:0; background:linear-gradient(90deg, rgba(5,10,7,.55), transparent)}
+.room::after{right:0; background:linear-gradient(-90deg, rgba(5,10,7,.55), transparent)}
+/* ── Spotlight ylhäältä ── */
+.room__spot{
+  position:absolute; top:-6%; left:50%; transform:translateX(-50%);
+  width:70%; height:74%; z-index:2; pointer-events:none;
+  background:radial-gradient(ellipse at 50% 0%, rgba(232,198,106,.15) 0%, rgba(232,198,106,.05) 45%, transparent 70%);
+}
+/* ── Vinjetti päällimmäisenä ── */
+.room__vignette{
+  position:absolute; inset:0; z-index:6; pointer-events:none; border-radius:inherit;
+  background:radial-gradient(ellipse at 50% 44%, transparent 48%, rgba(0,0,0,.52) 100%);
+}
+/* ── Leijuvat valohiukkaset ── */
+.room__dust{position:absolute; inset:0; z-index:2; pointer-events:none; overflow:hidden}
+.room__dust i{
+  position:absolute; width:3px; height:3px; border-radius:50%;
+  background:rgba(232,198,106,.5); filter:blur(.5px);
+  animation:dustFloat 9s linear infinite;
+}
+.room__dust i:nth-child(1){left:20%; animation-delay:0s}
+.room__dust i:nth-child(2){left:34%; animation-delay:-3s; width:2px; height:2px}
+.room__dust i:nth-child(3){left:56%; animation-delay:-6s}
+.room__dust i:nth-child(4){left:70%; animation-delay:-1.5s; width:2px; height:2px}
+.room__dust i:nth-child(5){left:82%; animation-delay:-4.5s}
+@keyframes dustFloat{
+  0%{transform:translateY(560px); opacity:0}
+  12%{opacity:.7} 80%{opacity:.4}
+  100%{transform:translateY(-30px); opacity:0}
+}
+
+/* ═══════════ KORTTI HUONEESSA ═══════════ */
+.room__scene{
+  position:absolute; inset:0; z-index:3;
+  display:flex; align-items:center; justify-content:center;
+  transform-style:preserve-3d;
+}
+.fut{
+  width:240px; aspect-ratio:5/7; border-radius:14px;
+  position:relative; isolation:isolate;
+  display:flex; flex-direction:column;
+  transform-style:preserve-3d; will-change:transform;
+  transform:translateY(-8px) rotateX(var(--rx,4deg)) rotateY(var(--ry,0deg));
+  transition:transform .18s ease-out;
+  box-shadow:
+    0 0 0 1px rgba(196,154,58,.35),
+    0 0 46px 10px rgba(196,154,58,.26),
+    0 30px 50px rgba(0,0,0,.6);
+}
+/* metallireunus */
+.fut::before{
+  content:""; position:absolute; inset:0; border-radius:14px; padding:2px; z-index:4; pointer-events:none;
+  background:linear-gradient(165deg, var(--gold-hi) 0%, var(--gold) 28%, var(--gold-deep) 55%, var(--gold) 80%, var(--gold-hi) 100%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor; mask-composite:exclude;
+}
+.fut::after{
+  content:""; position:absolute; inset:2px; border-radius:12px; z-index:3; pointer-events:none;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.45), inset 0 1px 2px rgba(255,255,255,.08);
+}
+.fut__art{position:absolute; inset:0; z-index:0; border-radius:inherit; overflow:hidden; pointer-events:none}
+.fut__art svg.qart{position:absolute; inset:0; width:100%; height:100%;
+  transform:translate(calc(var(--px,0px) * .5), calc(var(--py,0px) * .5)) scale(1.06)}
+.fut__art::before{
+  content:""; position:absolute; inset:0; z-index:2;
+  background:
+    linear-gradient(180deg, rgba(8,14,10,.42) 0%, transparent 22%),
+    linear-gradient(180deg, transparent 40%, rgba(8,14,10,.55) 62%, rgba(8,14,10,.86) 100%);
+}
+/* holo (mythic) */
+.fut__art::after{
+  content:""; position:absolute; inset:0; z-index:2;
+  background:conic-gradient(from 0deg at 50% 50%,
+    rgba(255,80,80,.20), rgba(255,220,80,.18), rgba(80,255,160,.20),
+    rgba(80,180,255,.18), rgba(200,80,255,.20), rgba(255,80,80,.20));
+  mix-blend-mode:color-dodge; opacity:.45; animation:holoSweep 6s linear infinite;
+}
+@keyframes holoSweep{from{filter:hue-rotate(0)}to{filter:hue-rotate(360deg)}}
+.fut__pips{position:absolute; top:10px; right:11px; z-index:5; display:flex; gap:3px}
+.fut__pip{
+  width:15px; height:15px; border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, var(--pomo-hi), var(--pomo) 72%);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.5), 0 1px 2px rgba(0,0,0,.55);
+}
+.fut__seal{
+  position:absolute; top:9px; left:10px; z-index:5;
+  width:27px; height:27px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:radial-gradient(circle at 35% 30%, var(--frog-deep), #1d3a28);
+  box-shadow:0 0 0 2px var(--gold), 0 0 10px rgba(196,154,58,.55), inset 0 1px 2px rgba(255,255,255,.3);
+}
+.fut__seal svg{width:16px; height:16px}
+.fut__bust{
+  position:relative; z-index:1; flex:0 0 52%;
+  display:flex; align-items:flex-end; justify-content:center;
+}
+.fut__bust::before{
+  content:""; position:absolute; left:50%; bottom:-6%; transform:translateX(-50%);
+  width:86%; aspect-ratio:1; border-radius:50%;
+  background:radial-gradient(circle, rgba(6,12,8,.52) 0%, rgba(6,12,8,.28) 45%, transparent 70%);
+}
+.fut__bust svg{
+  position:relative; width:56%; height:auto; aspect-ratio:1;
+  transform:translate(calc(var(--px,0px) * -.55), calc(var(--py,0px) * -.55));
+  filter:drop-shadow(0 10px 16px rgba(0,0,0,.65)) drop-shadow(0 2px 4px rgba(0,0,0,.5));
+}
+.fut__name{
+  position:relative; z-index:2; text-align:center; padding:0 .85rem;
+  font-family:'Cinzel',serif; font-weight:700; font-size:.85rem; letter-spacing:.05em;
+  text-transform:uppercase; color:var(--ink); text-shadow:0 2px 5px rgba(0,0,0,.75);
+}
+.fut__name::before,.fut__name::after{
+  content:""; display:block; height:1px; margin:.42rem 1.3rem;
+  background:linear-gradient(90deg,transparent,var(--q1-lite) 30%,var(--q1-lite) 70%,transparent);
+  opacity:.6;
+}
+.fut__stats{
+  position:relative; z-index:2; display:grid; grid-template-columns:1fr 1px 1fr;
+  padding:.1rem .95rem .4rem; gap:0 .65rem; align-items:start;
+}
+.fut__stats .div{background:linear-gradient(180deg,transparent,var(--q1-lite),transparent); opacity:.45; height:100%}
+.fut__col{display:flex; flex-direction:column; gap:.26rem}
+.fut__stat{display:flex; align-items:baseline; gap:.35rem; font-size:.68rem}
+.fut__stat b{font-family:'Cinzel',serif; font-weight:700; font-size:.78rem; color:var(--q1-lite); min-width:1.7em; text-align:right; text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.fut__stat span{color:var(--muted); letter-spacing:.06em; text-transform:uppercase; font-size:.58rem}
+.fut__verbline{
+  position:relative; z-index:2; text-align:center; padding-bottom:.65rem;
+  font-family:'Cinzel',serif; font-weight:600; font-size:.66rem; letter-spacing:.24em;
+  text-transform:uppercase; color:var(--q1-lite); text-shadow:0 1px 3px rgba(0,0,0,.6);
+}
+.fut__verbline .qword{opacity:.75; letter-spacing:.14em; font-size:.56rem; display:block; margin-top:.18rem}
+/* kiilto seuraa osoitinta */
+.fut .sheen{
+  position:absolute; inset:0; z-index:3; pointer-events:none; border-radius:inherit;
+  background:radial-gradient(circle at var(--sx,50%) var(--sy,30%), rgba(255,255,255,.13) 0%, transparent 45%);
+  mix-blend-mode:screen;
+}
+/* ── Heijastus lattiassa ── */
+.fut__reflection{
+  position:absolute; top:calc(100% + 4px); left:0; width:100%; height:55%;
+  transform:scaleY(-1); transform-origin:top;
+  border-radius:14px; overflow:hidden; pointer-events:none;
+  background:linear-gradient(155deg, #58221290 0%, #7e241890 42%, #4c150e90 74%, #2a0c0890 100%);
+  -webkit-mask:linear-gradient(180deg, rgba(0,0,0,.30), transparent 72%);
+  mask:linear-gradient(180deg, rgba(0,0,0,.30), transparent 72%);
+}
+@media (prefers-reduced-motion:reduce){
+  .fut__art::after{animation:none}
+  .room__dust i{animation:none; display:none}
+  .fut{transform:translateY(-8px) rotateX(4deg) !important}
+}
+.note{margin-top:1.2rem; font-size:.75rem; color:var(--muted); text-align:center}
+</style>
+</head>
+<body>
+
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+<defs>
+  <symbol id="verb-i-soita" viewBox="0 0 24 24">
+    <path fill="#f4f0e0" d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.5 0 1 .4 1 1V20c0 .5-.5 1-1 1C10.6 21 3 13.4 3 4c0-.5.5-1 1-1H7.5c.6 0 1 .5 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1z"/>
+    <path fill="#a8a290" d="M18.5 17.7l1.5 1.5c-.2.5-.7.8-1.5.8-2.9 0-5.7-.6-8.2-1.7l-.5-1.7 1.5-1c2 1.1 4.6 2 7.2 2.1z"/>
+    <circle cx="5.8" cy="5.5" r="1.6" fill="#c49a3a"/>
+    <circle cx="5.8" cy="5.5" r="0.7" fill="#2a1f10"/>
+  </symbol>
+  <symbol id="qart-q1" viewBox="0 0 200 280" preserveAspectRatio="xMidYMid slice">
+    <rect width="200" height="280" fill="#3a120c"/>
+    <polygon points="0,0 90,0 65,95" fill="#6a1e14"/>
+    <polygon points="90,0 200,0 140,80 65,95" fill="#822418"/>
+    <polygon points="200,0 200,120 140,80" fill="#5a1810"/>
+    <polygon points="0,0 65,95 0,150" fill="#4c150e"/>
+    <polygon points="0,150 65,95 55,220 0,280" fill="#6e2016"/>
+    <polygon points="65,95 140,80 150,190 55,220" fill="#8e2a1a"/>
+    <polygon points="200,120 200,280 150,190 140,80" fill="#661c12"/>
+    <polygon points="55,220 150,190 200,280 0,280" fill="#521610"/>
+    <g fill="none" stroke="#c05028" stroke-width="2" opacity=".8">
+      <path d="M78 108 L-10 40"/><path d="M78 108 L30 -12"/><path d="M78 108 L150 -18"/>
+      <path d="M78 108 L215 60"/><path d="M78 108 L220 190"/><path d="M78 108 L150 292"/>
+      <path d="M78 108 L30 300"/><path d="M78 108 L-18 180"/>
+    </g>
+    <g fill="none" stroke="#e8724a" stroke-width="1" opacity=".6">
+      <path d="M78 108 L-20 90"/><path d="M78 108 L90 -20"/><path d="M78 108 L205 130"/>
+      <path d="M78 108 L110 295"/><path d="M78 108 L-5 250"/>
+    </g>
+    <polygon points="78,108 120,20 132,26" fill="#c85a32" opacity=".9"/>
+    <polygon points="78,108 180,86 178,98" fill="#b04c28" opacity=".85"/>
+    <polygon points="78,108 30,210 20,200" fill="#a84424" opacity=".8"/>
+    <polygon points="78,108 148,220 138,226" fill="#983c20" opacity=".8"/>
+    <polygon points="78,108 12,60 20,52" fill="#c05028" opacity=".85"/>
+    <polygon points="78,108 92,94 100,108 88,122 66,116 70,98" fill="#e8724a"/>
+    <polygon points="78,108 86,100 90,108 82,115 70,111 73,101" fill="#f4a070"/>
+  </symbol>
+  <symbol id="frog-glyph" viewBox="0 0 24 24">
+    <ellipse cx="12" cy="15" rx="8" ry="6" fill="#a2c85a"/>
+    <circle cx="8" cy="9" r="3.4" fill="#a2c85a"/>
+    <circle cx="16" cy="9" r="3.4" fill="#a2c85a"/>
+    <circle cx="8" cy="8.6" r="1.5" fill="#1d3a28"/>
+    <circle cx="16" cy="8.6" r="1.5" fill="#1d3a28"/>
+    <circle cx="8.5" cy="8.2" r="0.5" fill="#f4f0e0"/>
+    <circle cx="16.5" cy="8.2" r="0.5" fill="#f4f0e0"/>
+    <path d="M8 16.5 Q12 19.5 16 16.5" stroke="#1d3a28" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+  </symbol>
+</defs>
+</svg>
+
+<h1>Huone-arena</h1>
+<p class="sub">FUT-tyylinen 3D-näyttämö: takaseinä + portaalikaari, perspektiivilattia, sivuseinät, spotlight, valohiukkaset. Taustavisuaalit huomaamattomina. Liikuta osoitinta huoneen päällä — kortti kallistuu ja kerrokset parallaksoi.</p>
+
+<div class="room" id="room">
+  <div class="room__wall">
+    <svg class="wall-art"><use href="#qart-q1"/></svg>
+  </div>
+  <div class="room__floor"></div>
+  <div class="room__spot"></div>
+  <div class="room__dust"><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="room__scene">
+    <div class="fut" id="card">
+      <div class="fut__art"><svg class="qart"><use href="#qart-q1"/></svg></div>
+      <div class="fut__pips"><span class="fut__pip"></span><span class="fut__pip"></span><span class="fut__pip"></span></div>
+      <div class="fut__seal"><svg><use href="#frog-glyph"/></svg></div>
+      <div class="fut__bust"><svg><use href="#verb-i-soita"/></svg></div>
+      <div class="fut__name">Soita hammaslääkärille</div>
+      <div class="fut__stats">
+        <div class="fut__col">
+          <div class="fut__stat"><b>25</b><span>min</span></div>
+          <div class="fut__stat"><b>3</b><span>pom</span></div>
+        </div>
+        <div class="div"></div>
+        <div class="fut__col">
+          <div class="fut__stat"><b>TI</b><span>päivä</span></div>
+          <div class="fut__stat"><b>TYÖ</b><span>proj</span></div>
+        </div>
+      </div>
+      <div class="fut__verbline">Soita<span class="qword">TEE HETI</span></div>
+      <div class="sheen"></div>
+      <div class="fut__reflection"></div>
+    </div>
+  </div>
+  <div class="room__vignette"></div>
+</div>
+
+<p class="note">Kortti: sammakko-mythic Q1-taiteella (variantti B). Sama huone toimii kaikilla Q-taiteilla — seinätaide vaihtuu kortin mukana.</p>
+
+<script>
+const reduced = matchMedia('(prefers-reduced-motion:reduce)').matches;
+if(!reduced){
+  const room = document.getElementById('room');
+  const card = document.getElementById('card');
+  const MAX = 8;
+  room.addEventListener('pointermove', e=>{
+    const r = room.getBoundingClientRect();
+    const nx = (e.clientX - r.left)/r.width  - .5;
+    const ny = (e.clientY - r.top)/r.height - .5;
+    card.style.setProperty('--ry', ( nx*MAX*2).toFixed(2)+'deg');
+    card.style.setProperty('--rx', (4 - ny*MAX*2).toFixed(2)+'deg');
+    card.style.setProperty('--px', (nx*16).toFixed(1)+'px');
+    card.style.setProperty('--py', (ny*16).toFixed(1)+'px');
+    card.style.setProperty('--sx', ((nx+.5)*100).toFixed(1)+'%');
+    card.style.setProperty('--sy', ((ny+.5)*100).toFixed(1)+'%');
+  });
+  room.addEventListener('pointerleave', ()=>{
+    ['--ry','--rx','--px','--py','--sx','--sy'].forEach(p=>card.style.removeProperty(p));
+  });
+}
+</script>
+</body>
+</html>
