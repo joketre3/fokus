@@ -1487,6 +1487,16 @@ html[data-theme="aurinko"][data-perf="lite"] body{
           </div>
           <div class="eise-peek-grid" id="eise-peek-grid"></div>
         </div>
+        <!-- FUT-huone: pysyvät lavastekerrokset kortin taakse (render() säästää tämän) -->
+        <div id="arena-room" aria-hidden="true" data-quad="q1">
+          <div class="arena-room__wall"><svg class="arena-room__art"><use href="#qart-q1"/></svg></div>
+          <div class="arena-room__floor"></div>
+          <div class="arena-room__side arena-room__side--l"></div>
+          <div class="arena-room__side arena-room__side--r"></div>
+          <div class="arena-room__spot"></div>
+          <div class="arena-room__dust"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="arena-room__vignette"></div>
+        </div>
       </div>
       <!-- Oikea: Tehtäväjono -->
       <div id="turn-panel" class="turn-panel side-panel side-panel--right tcg-right" role="region" aria-label="Tehtäväjono — seuraavat tehtävät">
@@ -3140,29 +3150,99 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
   transform:rotate(180deg);
 }
 
-/* Kaksi lisäkulmaa card-wrapperiin */
+/* ── FUT-huone: 3D-lavaste areenakortin ympärille (mockup-arena-syvyys) ── */
+/* Perspektiivi #arenassa → kortin tilt saa syvyyden; huonekerroksilla oma
+   perspektiivi #arena-roomissa. Kulmaornamentit korvattu huoneella. */
 #arena{
   position:relative;
+  perspective:1000px;
+  perspective-origin:50% 38%;
 }
-#arena::before,
-#arena::after{
-  content:'';
-  position:absolute;
-  width:28px;
-  height:28px;
-  pointer-events:none;
-  z-index:10;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M4 24 L4 4 L24 4' fill='none' stroke='%23c49a3a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' opacity='.55'/%3E%3Ccircle cx='4' cy='4' r='2.5' fill='%23c49a3a' opacity='.55'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;
-  background-size:28px 28px;
+#arena-room{
+  position:absolute; inset:48px 0 0; /* eise-kahvan (48px) alta */
+  pointer-events:none; overflow:hidden;
+  perspective:1000px; perspective-origin:50% 38%;
 }
-#arena::before{
-  top:-4px; right:-4px;
-  transform:rotate(90deg);
+/* Takaseinä */
+.arena-room__wall{
+  position:absolute; inset:-6% -6% 32%; z-index:0;
+  transform:translateZ(-260px) scale(1.35);
+  background:
+    radial-gradient(ellipse at 50% 62%, color-mix(in srgb, var(--gold) 10%, transparent) 0%, transparent 55%),
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--table-felt-deep) 72%, black) 0%,
+      color-mix(in srgb, var(--table-felt) 55%, var(--table-felt-deep)) 55%,
+      color-mix(in srgb, var(--table-felt) 88%, white) 100%);
 }
-#arena::after{
-  bottom:-4px; left:-4px;
-  transform:rotate(270deg);
+/* Seinätaide: aktiivisen kortin q-taide huomaamattomana */
+.arena-room__art{
+  position:absolute; display:block; width:52%; aspect-ratio:1; left:24%; top:8%;
+  opacity:.05; mix-blend-mode:soft-light;
+}
+.arena-room__wall::before{ /* portaalikaari kortin takana */
+  content:""; position:absolute; left:50%; bottom:0; transform:translateX(-50%);
+  width:46%; aspect-ratio:1/1.4; border-radius:50% 50% 0 0/36% 36% 0 0;
+  background:radial-gradient(ellipse at 50% 80%, color-mix(in srgb, var(--gold) 14%, transparent) 0%, transparent 68%);
+  box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--gold) 18%, transparent),
+             inset 0 0 40px color-mix(in srgb, var(--gold) 8%, transparent);
+}
+.arena-room__wall::after{ /* horisonttiviiva */
+  content:""; position:absolute; left:0; right:0; bottom:-1px; height:2px;
+  background:linear-gradient(90deg, transparent,
+    color-mix(in srgb, var(--gold) 35%, transparent) 30%,
+    color-mix(in srgb, var(--gold) 35%, transparent) 70%, transparent);
+}
+/* Perspektiivilattia + valoläikkä kortin alla */
+.arena-room__floor{
+  position:absolute; left:-25%; right:-25%; bottom:-58%; height:88%; z-index:1;
+  transform:rotateX(76deg); transform-origin:50% 0;
+  background:
+    radial-gradient(ellipse at 50% 18%, color-mix(in srgb, var(--gold) 30%, transparent) 0%, color-mix(in srgb, var(--gold) 10%, transparent) 34%, transparent 60%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.028) 0 1px, transparent 1px 72px),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.028) 0 1px, transparent 1px 72px),
+    linear-gradient(180deg, color-mix(in srgb, var(--table-felt) 88%, white) 0%, var(--table-felt-deep) 78%);
+}
+/* Sivuseinien tummennus — teemaseuraava (--vignette) */
+.arena-room__side{position:absolute; top:0; bottom:0; width:16%; z-index:2;}
+.arena-room__side--l{left:0; background:linear-gradient(90deg, var(--vignette), transparent);}
+.arena-room__side--r{right:0; background:linear-gradient(-90deg, var(--vignette), transparent);}
+/* Spotlight ylhäältä */
+.arena-room__spot{
+  position:absolute; top:-6%; left:50%; transform:translateX(-50%);
+  width:70%; height:74%; z-index:2;
+  background:radial-gradient(ellipse at 50% 0%,
+    color-mix(in srgb, var(--gold-hi) 15%, transparent) 0%,
+    color-mix(in srgb, var(--gold-hi) 5%, transparent) 45%, transparent 70%);
+}
+/* Leijuvat valohiukkaset */
+.arena-room__dust{position:absolute; inset:0; z-index:2; overflow:hidden;}
+.arena-room__dust i{
+  position:absolute; bottom:-2%; width:3px; height:3px; border-radius:50%;
+  background:color-mix(in srgb, var(--gold-hi) 50%, transparent); filter:blur(.5px);
+  animation:arenaDust 9s linear infinite;
+}
+.arena-room__dust i:nth-child(1){left:20%; animation-delay:0s}
+.arena-room__dust i:nth-child(2){left:34%; animation-delay:-3s; width:2px; height:2px}
+.arena-room__dust i:nth-child(3){left:56%; animation-delay:-6s}
+.arena-room__dust i:nth-child(4){left:70%; animation-delay:-1.5s; width:2px; height:2px}
+.arena-room__dust i:nth-child(5){left:82%; animation-delay:-4.5s}
+@keyframes arenaDust{
+  0%{transform:translateY(0); opacity:0}
+  12%{opacity:.7} 80%{opacity:.4}
+  100%{transform:translateY(-72vh); opacity:0}
+}
+/* Vinjetti kortin päälle (kortti z:3, vinjetti z:4, eise-kahva z:10) */
+.arena-room__vignette{
+  position:absolute; inset:0; z-index:4;
+  background:radial-gradient(ellipse at 50% 44%, transparent 48%, var(--vignette) 100%);
+}
+/* Areenan sisältö huonekerrosten päälle */
+#arena-label,#arena-empty{position:relative; z-index:3;}
+/* Perf-lite: ei hiukkasia, ei blend-seinätaidetta */
+html[data-perf="lite"] .arena-room__dust,
+html[data-perf="lite"] .arena-room__art{display:none!important;}
+@media(prefers-reduced-motion:reduce){
+  .arena-room__dust i{animation:none; display:none;}
 }
 
 /* Areena-alueen taustakorostus */
@@ -3518,10 +3598,14 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
 .tcg-card--hand .tcg-card__set{font-size:.62rem;}
 /* Käsikortti 130px: kvadranttiteksti pois — väri-identiteetti näkyy kehyksessä */
 .tcg-card--hand .tcg-card__typeline .tl-quad{display:none;}
-/* Areena-kortti isompi + kultainen hehku */
+/* Areena-kortti isompi + kultainen hehku + huone-tilt (mockup: ±8°) */
 .tcg-card.tcg-card--arena-size{
   width:100%;max-width:300px;
-  transform:translateY(-4px);
+  z-index:3; /* huonekerrosten (lattia z:1, spot z:2) päälle, vinjetin (z:4) alle */
+  transform-style:preserve-3d;
+  will-change:transform;
+  transform:translateY(-4px) rotateX(var(--rx,4deg)) rotateY(var(--ry,0deg));
+  transition:transform .18s ease-out;
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,.10),
     inset 0 0 0 3px rgba(0,0,0,.35),
@@ -3529,6 +3613,20 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
     0 14px 32px rgba(0,0,0,.5),
     0 0 36px color-mix(in srgb,var(--accent) 40%,transparent);
 }
+/* Parallaksi: q-taide ja bust liikkuvat eri nopeuksilla (vain areena) */
+.tcg-card--arena-size .tcg-card__qart svg{
+  transform:translate(calc(var(--px,0px) * .5), calc(var(--py,0px) * .5)) scale(1.06);
+}
+.tcg-card--arena-size .tcg-card__art svg{
+  transform:translate(calc(var(--px,0px) * -.55), calc(var(--py,0px) * -.55));
+}
+/* Kiilto seuraa osoitinta */
+.tcg-card--arena-size .tcg-card__plate::after{
+  content:"";position:absolute;inset:0;z-index:4;pointer-events:none;
+  background:radial-gradient(circle at var(--sx,50%) var(--sy,30%), rgba(255,255,255,.13) 0%, transparent 45%);
+  mix-blend-mode:screen;
+}
+html[data-perf="lite"] .tcg-card--arena-size .tcg-card__plate::after{display:none!important;}
 .tcg-card.tcg-card--arena-size.tcg-card--frog{
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,.25),
@@ -3829,32 +3927,9 @@ svg[aria-hidden="true"]{pointer-events:none;}
     margin-bottom: 0;
     text-align: center;
   }
-  /* Kulmaornamentit pois desktopilla — koko areena-alue ei ole "kortti" enää */
-  #arena::before {
-    display: none;
-  }
-  /* Kaiverrettu korttisyvennys (well) areenan taakse */
+  /* Vanha korttisyvennys (well) ja kulmaornamentit korvattu FUT-huoneella */
   #arena {
     isolation: isolate;
-  }
-  #arena::after {
-    content: '';
-    display: block;
-    position: absolute;
-    z-index: -1;
-    inset: auto;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%,-46%);
-    width: 312px;
-    height: auto;
-    aspect-ratio: 5/7;
-    border-radius: 18px;
-    background: var(--well-bg);
-    box-shadow: var(--well-shadow);
-    border: 14px solid transparent;
-    border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 84 84'%3E%3Cg fill='none' stroke='%23c49a3a' stroke-opacity='.35' stroke-width='2'%3E%3Crect x='4' y='4' width='76' height='76' rx='10'/%3E%3Cpath d='M22 8Q10 10 8 22M62 8Q74 10 76 22M8 62Q10 74 22 76M76 62Q74 74 62 76'/%3E%3C/g%3E%3Cg fill='%23c49a3a' fill-opacity='.35'%3E%3Ccircle cx='14' cy='14' r='2'/%3E%3Ccircle cx='70' cy='14' r='2'/%3E%3Ccircle cx='14' cy='70' r='2'/%3E%3Ccircle cx='70' cy='70' r='2'/%3E%3C/g%3E%3C/svg%3E") 28 / 14px stretch;
-    pointer-events: none;
   }
   /* Tyhjä tila: kaiverrettu teksti syvennyksen sisällä */
   #arena-empty {
@@ -8193,13 +8268,23 @@ function render(){
   // ── Vaihe 6a: Areena — renderöi queue[0] isona kortina ──
   var arenaEl=document.getElementById('arena');
   if(arenaEl){
-    Array.from(arenaEl.children).forEach(function(ch){if(ch.id!=='eise-peek'&&ch.id!=='eise-handle')ch.remove();});
+    Array.from(arenaEl.children).forEach(function(ch){if(ch.id!=='eise-peek'&&ch.id!=='eise-handle'&&ch.id!=='arena-room')ch.remove();});
     if(window._useCardUI){
       var label=document.createElement('div');
       label.id='arena-label';
       label.textContent='Areena';
       arenaEl.appendChild(label);
       var activeTask=active!==null?inbox.find(function(t){return t.id===active}):null;
+      // FUT-huone: seinätaide seuraa aktiivisen kortin quadia
+      var roomEl=document.getElementById('arena-room');
+      if(roomEl){
+        var roomQuad=(activeTask&&activeTask.quad)||roomEl.dataset.quad||'q1';
+        if(roomEl.dataset.quad!==roomQuad){
+          roomEl.dataset.quad=roomQuad;
+          var roomUse=roomEl.querySelector('.arena-room__art use');
+          if(roomUse)roomUse.setAttribute('href','#qart-'+roomQuad);
+        }
+      }
       if(activeTask){
         renderCardNew(activeTask,arenaEl,anyFrog);
       } else {
@@ -8822,6 +8907,37 @@ function togglePerfMode(){
 }
 (function initPerfMode(){
   if(localStorage.getItem('fap_perf')==='1') document.documentElement.setAttribute('data-perf','lite');
+})();
+
+// ── FUT-huone: pointer-tilt-parallaksi areenakortille (mockup-arena-syvyys) ──
+// Event delegation #arenaan — kestää kortin uudelleenrenderöinnin.
+// Kunnioittaa data-perf="lite" ja prefers-reduced-motion (staattinen 4° kallistus jää).
+(function(){
+  var arena=document.getElementById('arena');
+  if(!arena)return;
+  var MAX=8;
+  var rmq=matchMedia('(prefers-reduced-motion:reduce)');
+  var PROPS=['--ry','--rx','--px','--py','--sx','--sy'];
+  function arenaCard(){return arena.querySelector('.tcg-card--arena-size');}
+  arena.addEventListener('pointermove',function(e){
+    if(rmq.matches)return;
+    if(document.documentElement.getAttribute('data-perf')==='lite')return;
+    var card=arenaCard();
+    if(!card)return;
+    var r=arena.getBoundingClientRect();
+    var nx=(e.clientX-r.left)/r.width-.5;
+    var ny=(e.clientY-r.top)/r.height-.5;
+    card.style.setProperty('--ry',(nx*MAX*2).toFixed(2)+'deg');
+    card.style.setProperty('--rx',(4-ny*MAX*2).toFixed(2)+'deg');
+    card.style.setProperty('--px',(nx*16).toFixed(1)+'px');
+    card.style.setProperty('--py',(ny*16).toFixed(1)+'px');
+    card.style.setProperty('--sx',((nx+.5)*100).toFixed(1)+'%');
+    card.style.setProperty('--sy',((ny+.5)*100).toFixed(1)+'%');
+  });
+  arena.addEventListener('pointerleave',function(){
+    var card=arenaCard();
+    if(card)PROPS.forEach(function(p){card.style.removeProperty(p);});
+  });
 })();
 
 // ── ICS KALENTERI ──────────────────────────────────────
