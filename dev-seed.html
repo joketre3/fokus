@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<!-- Kehitystyökalu: kylvää localStorageen demodataa headless-screenshotteja varten.
+     Käyttö: avaa sama origin (localhost:8901) samalla chrome-profiililla ennen index.html:ää. -->
+<html lang="fi">
+<head><meta charset="UTF-8"><title>seed</title></head>
+<body>
+<script>
+var today = new Date().toISOString().slice(0,10);
+var state = {
+  nid: 6,
+  active: 1,
+  turn: [1,2,3,4,5],
+  pomoDone: 0, totalPomos: 0,
+  date: today,
+  pnid: 2,
+  projects: [{id:1, name:'Työ', color:'#c49a3a'}],
+  tasks: [
+    {id:1, text:'Soita hammaslääkärille', verbi:'Soita', quad:'q1', done:false, pomos:0, est:3, important:true,  urgent:true,  tags:[], projectId:1, frog:true,  needsReview:false, chainId:null, chainPosition:null, chainTotal:null, isChained:false},
+    {id:2, text:'Tee veroilmoitus',        verbi:'Tee',   quad:'q1', done:false, pomos:0, est:4, important:true,  urgent:true,  tags:[], projectId:null, frog:false, needsReview:false, chainId:null, chainPosition:null, chainTotal:null, isChained:false},
+    {id:3, text:'Sovi kehityskeskustelu',  verbi:'Sovi',  quad:'q2', done:false, pomos:0, est:2, important:true,  urgent:false, tags:[], projectId:1, frog:false, needsReview:false, chainId:null, chainPosition:null, chainTotal:null, isChained:false},
+    {id:4, text:'Tarkista sähköpostit',    verbi:'Tarkista', quad:'q3', done:false, pomos:0, est:1, important:false, urgent:true,  tags:[], projectId:null, frog:false, needsReview:false, chainId:null, chainPosition:null, chainTotal:null, isChained:false},
+    {id:5, text:'Kirjaa kuitit',           verbi:'Kirjaa', quad:'q4', done:false, pomos:0, est:1, important:false, urgent:false, tags:[], projectId:null, frog:false, needsReview:false, chainId:null, chainPosition:null, chainTotal:null, isChained:false}
+  ]
+};
+localStorage.setItem('fap_onboarded','1');
+localStorage.setItem('fap_active_ws','work');
+localStorage.setItem('eis_v5_work', JSON.stringify(state));
+document.body.textContent = 'seeded: ' + today;
+</script>
+</body>
+</html>
