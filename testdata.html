@@ -1,0 +1,13 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body><script>
+var data={tasks:[
+  {id:1,text:'Soita Virtaselle takaisin asiasta',verbi:'Soita',quad:'q1',important:true,urgent:true,est:1,frog:true,done:false,lisatiedot:'Ennen klo 15.',tags:[]},
+  {id:2,text:'Kirjaa asiakaskäynnin muistiinpanot',verbi:'Kirjaa',quad:'q1',important:true,urgent:true,est:2,frog:false,done:false,tags:[]},
+  {id:3,text:'Sovi palaveri tiimin kanssa',verbi:'Sovi',quad:'q2',important:true,urgent:false,est:0.5,frog:false,done:false,tags:[]},
+  {id:4,text:'Selvitä kuntoutustuen hakuprosessi',verbi:'Selvitä',quad:'q2',important:true,urgent:false,est:3,frog:false,done:false,tags:[]},
+  {id:5,text:'Vie raportti esihenkilölle',verbi:'Vie',quad:'q2',important:true,urgent:false,est:0.5,frog:false,done:false,tags:[]}
+],active:1,turn:[]};
+localStorage.setItem('eis_v5_work',JSON.stringify(data));
+localStorage.setItem('fap_active_ws','work');
+localStorage.setItem('fap_theme','usva');
+window.location='http://localhost:8081/index.html';
+</script></body></html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: #1a2e22; color: rgba(255,255,255,.85); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+/* Header */
+.hdr { display: flex; align-items: center; justify-content: space-between; padding: .5rem 1rem; border-bottom: 1px solid rgba(255,255,255,.15); flex-shrink: 0; background: rgba(20,38,28,.7); }
+.hdr-tab { font-size: .75rem; font-weight: 500; color: rgba(255,255,255,.85); border-bottom: 2px solid #c49a3a; padding: .4rem .6rem; }
+.hdr-right { display: flex; align-items: center; gap: .75rem; font-size: .72rem; color: rgba(255,255,255,.5); }
+.hdr-timer { background: rgba(30,50,40,.8); border: 1px solid rgba(255,255,255,.2); border-radius: 20px; padding: .3rem .8rem; font-size: .75rem; }
+
+/* Main 3-col */
+.main { flex: 1; display: grid; grid-template-columns: 220px 1fr 220px; gap: 0; overflow: hidden; position: relative; }
+
+/* Side panels */
+.panel { padding: .75rem .6rem; border-right: 1px solid rgba(255,255,255,.1); display: flex; flex-direction: column; gap: .4rem; overflow: hidden; }
+.panel--right { border-right: none; border-left: 1px solid rgba(255,255,255,.1); }
+.panel-title { font-size: .65rem; font-weight: 600; letter-spacing: .15em; color: rgba(255,255,255,.4); text-transform: uppercase; margin-bottom: .2rem; }
+.panel-card { background: rgba(30,55,40,.6); border: 1px solid rgba(255,255,255,.15); border-radius: 6px; padding: .45rem .6rem; font-size: .75rem; font-weight: 300; color: rgba(255,255,255,.7); }
+.panel-card .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: .4rem; vertical-align: middle; }
+.panel-card.q3 .dot { background: #7a6a50; }
+
+/* Arena */
+.arena { display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.arena-card { background: rgba(30,55,40,.7); border: 1.5px solid #c49a3a; border-radius: 10px; padding: 1.25rem; width: 100%; max-width: 380px; }
+.arena-card .quad { font-size: .65rem; font-weight: 600; color: #c49a3a; letter-spacing: .1em; text-transform: uppercase; margin-bottom: .5rem; }
+.arena-card .task { font-size: 1rem; font-weight: 400; margin-bottom: .75rem; }
+.arena-card .timer { font-size: 1.8rem; font-family: 'DM Serif Display', serif; color: #c49a3a; text-align: center; }
+
+/* Bottom fixed elements */
+.ham-btn { position: absolute; bottom: 1rem; left: 1rem; width: 40px; height: 40px; border-radius: 8px; background: rgba(30,55,40,.8); border: 1.5px solid rgba(255,255,255,.25); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: pointer; }
+.inv-btn { position: absolute; bottom: 1rem; left: 3.5rem; width: 40px; height: 40px; border-radius: 8px; background: rgba(30,55,40,.8); border: 1.5px solid rgba(255,255,255,.25); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: pointer; }
+
+/* OPTION OVERLAYS */
+.option-label { position: absolute; background: rgba(196,154,58,.9); color: #1a2e22; font-size: .7rem; font-weight: 700; padding: .2rem .5rem; border-radius: 4px; pointer-events: none; z-index: 100; }
+
+/* Option A — nappi alhaalla vasemmalla #3 */
+.eise-btn-a { position: absolute; bottom: 1rem; left: 6rem; width: 40px; height: 40px; border-radius: 8px; background: rgba(168,76,40,.25); border: 2px dashed #a84c28; display: flex; align-items: center; justify-content: center; font-size: .75rem; color: #a84c28; font-weight: 700; }
+
+/* Option B — pieni nappi oikeassa reunassa, siitä avautuu oikealta */
+.eise-btn-b { position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 28px; height: 60px; background: rgba(168,76,40,.2); border: 2px dashed #a84c28; border-right: none; border-radius: 8px 0 0 8px; display: flex; align-items: center; justify-content: center; font-size: .6rem; color: #a84c28; font-weight: 700; writing-mode: vertical-rl; }
+
+/* Option C — peek header alla */
+.eise-peek-c { position: absolute; top: 0; left: 0; right: 0; height: 36px; background: rgba(168,76,40,.15); border-bottom: 2px dashed #a84c28; display: flex; align-items: center; justify-content: center; font-size: .72rem; color: rgba(168,76,40,.9); font-weight: 600; }
+
+/* Option D — alhaalta break-peekki, eri korkeus kuin hand-bar */
+.eise-peek-d { position: absolute; bottom: 0; left: 220px; right: 220px; height: 32px; background: rgba(168,76,40,.15); border-top: 2px dashed #a84c28; border-radius: 8px 8px 0 0; display: flex; align-items: center; justify-content: center; font-size: .72rem; color: rgba(168,76,40,.9); font-weight: 600; gap: .5rem; }
+
+/* Tabs */
+.tabs { display: flex; gap: .5rem; margin-top: 2rem; justify-content: center; flex-shrink: 0; }
+.tab-btn { padding: .4rem 1.2rem; border: 1.5px solid rgba(255,255,255,.2); border-radius: 20px; background: none; color: rgba(255,255,255,.5); font-size: .8rem; cursor: pointer; }
+.tab-btn.active { border-color: #c49a3a; color: #c49a3a; background: rgba(196,154,58,.1); }
+
+.view { display: none; }
+.view.on { display: contents; }
+
+.note { position: absolute; top: .5rem; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.6); padding: .3rem .8rem; border-radius: 20px; font-size: .72rem; color: rgba(255,255,255,.7); white-space: nowrap; }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Serif+Display:ital@1&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="hdr">
+  <span class="hdr-tab">TEHTÄVÄLISTA</span>
+  <div class="hdr-right">
+    <span class="hdr-timer">⏱ 24:32 · Työ</span>
+    <span>Kirjaudu</span>
+  </div>
+</div>
+
+<div style="display:flex;gap:.5rem;padding:.5rem 1rem;background:rgba(0,0,0,.2);flex-shrink:0">
+  <button class="tab-btn active" onclick="show('a')">A — nappi alhaalla</button>
+  <button class="tab-btn" onclick="show('b')">B — sivusta oikealta</button>
+  <button class="tab-btn" onclick="show('c')">C — ylhäältä tauolla</button>
+  <button class="tab-btn" onclick="show('d')">D — alhaalta areenalta</button>
+</div>
+
+<div class="main" id="main-area">
+  <!-- Left panel -->
+  <div class="panel">
+    <div class="panel-title">Odottavat</div>
+    <div class="panel-card"><span class="dot q3"></span>Vastaa sähköpostiin</div>
+  </div>
+
+  <!-- Arena -->
+  <div class="arena">
+    <div class="arena-card">
+      <div class="quad">TEE HETI</div>
+      <div class="task">🐸 Kirjaa asiakaskäynti</div>
+      <div class="timer">24:32</div>
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div class="panel panel--right">
+    <div class="panel-title">Tehtäväjono</div>
+    <div class="panel-card">Sovi palaveri tiimin kanssa</div>
+    <div class="panel-card">Tarkista viikkoraportti</div>
+  </div>
+
+  <!-- Kiinteät napit -->
+  <div class="ham-btn">☰</div>
+  <div class="inv-btn">📦</div>
+
+  <!-- OPTION A: Kolmas nappi alhaalle vasemmalle -->
+  <div class="view on" id="v-a">
+    <div class="eise-btn-a">⊞</div>
+    <div class="option-label" style="bottom:3.5rem;left:5.8rem">A: nappi #3</div>
+    <div class="note">Klikatessa tai hover → matriisi liukuu esiin. Tauolla nappi hehkuu.</div>
+  </div>
+
+  <!-- OPTION B: Vetopalkki oikean reunan takaa -->
+  <div class="view" id="v-b">
+    <div class="eise-btn-b">E I S</div>
+    <div class="option-label" style="top:50%;right:1.5rem;transform:translateY(-50%)">B: oikeasta reunasta</div>
+    <div class="note">Pieni vetokorva oikeassa reunassa → drag/klik → matriisi liukuu vasemmalta</div>
+  </div>
+
+  <!-- OPTION C: Header-alue, auto-peek tauolla -->
+  <div class="view" id="v-c">
+    <div class="eise-peek-c">⊞ Matriisi — hyvä hetki tarkistaa prioriteetit ↕</div>
+    <div class="option-label" style="top:2.5rem;left:50%;transform:translateX(-50%)">C: headerin alle, tauolla</div>
+    <div class="note">Tauon alkaessa ilmestyy headerin alle, klikkaus avaa täyden matriisin</div>
+  </div>
+
+  <!-- OPTION D: Alhaalta areenalta, kuten hand-bar mutta keskeisesti -->
+  <div class="view" id="v-d">
+    <div class="eise-peek-d">⊞ Matriisi ↑</div>
+    <div class="option-label" style="bottom:2.5rem;left:50%;transform:translateX(-50%)">D: areenan alta</div>
+    <div class="note">Tauolla pilkistää areenan alapuolelta. Hand-bar on käytössä vain ajastimen käynnistyessä.</div>
+  </div>
+</div>
+
+<script>
+function show(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('on'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('v-' + id).classList.add('on');
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    if (b.textContent.startsWith(id.toUpperCase())) b.classList.add('active');
+  });
+}
+</script>
+</body>
+</html>
