@@ -48,6 +48,7 @@ Ei testejä, ei lintteriä, ei CI:tä.
 | `mockup-kortti.html` | TCG-kortti-ilmeen mockup (referenssi) |
 | `mockup-rarity.html` | Rarity-järjestelmän mockup (4 tieriä + holo-vertailu) |
 | `mockup-poyta.html` | Korttipöytä-ilmeen mockup (teema+lite-kytkimet) |
+| `mockup-lisaa.html` | Lisää tehtävä -napin ja -modalin suunnitteluvaihtoehdot (A/B/C) |
 
 Pääsovellus avaa `swipe.html` ja `aamu.html` popup-ikkunoina (`window.open`). Timer aukeaa JS:llä generoituna popuppina. Kaikki ikkunat jakavat datan `localStorage`n kautta.
 
@@ -260,6 +261,12 @@ Opit:
 - `#arena::after` desktopilla vaatii `inset:auto` ennen left/top-arvoja — mobiilisääntö asettaa `bottom:-4px` joka muuten venyttää laatikon
 - Slotti pseudo-elementtinä koska `render()` tyhjentää `#arena`n lapset (keep-lista vain eise-peek/handle)
 - Chip-napit: paino vain box-shadow+translateY — teemojen `!important` omistaa `.pbtn`-backgroundin
+- SVG presentation attrs: `path.setAttribute('stroke','var(--accent)')` ei resolvoidu — käytä `path.style.stroke='var(--accent)'`
+- FLIP-lohkon sijoitusriski: Python replace samannäköisellä kontekstilla osuu väärään funktioon — tarkista `grep -n 'targetFn' index.html` ennen/jälkeen
+- `prefers-reduced-motion` poistaa CSS-transitiot mutta EI keyframe-animaatioita — JS-guard node-luonnille: `if(matchMedia('(prefers-reduced-motion:reduce)').matches) return`
+- `document.addEventListener('pointerleave', fn, true)` laukeaa jokaisella lapsirajan ylityksellä — guard: `e.target===pressed && e.pointerId===pressedId`
+- Keyframe `box-shadow`-animaatio = main-thread repaint; siirrä hehku `::after`-pseudo-elementtiin + animoi `opacity` (compositable)
+- FLIP leaving-overlayrivit: merkitse `dataset.ghost='1'` → First-pass ohittaa ne (muuten mitataan 240ms abs-rivi real-riveinä)
 
 ### Jäljellä (manuaalinen)
 
