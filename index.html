@@ -6410,7 +6410,7 @@ function markDone(id){
     else{turn=turn.filter(function(i){return i!==id});}
     soundBell();
     // 12D: ilmoita ruudunlukijalle
-    a11yAnnounce('Valmis: '+(t.verbi?t.verbi+' ':'')+t.text);
+    a11yAnnounce('Valmis: '+t.text);
     save();  // persistoi heti — animaatio ei saa olla tallennuksen ehto
   }
   // Vaihe 10: animoi kortti ulos ennen render()
@@ -6535,7 +6535,7 @@ function tqToggle(id){
   // 12D: ilmoita ruudunlukijalle jos tehtävä nousee areenalle
   if(!wasInQueue&&active===id){
     var t=tasks.find(function(t){return t.id===id});
-    if(t) a11yAnnounce('Uusi aktiivinen tehtävä: '+(t.verbi?t.verbi+' ':'')+t.text);
+    if(t) a11yAnnounce('Uusi aktiivinen tehtävä: '+t.text);
     // 9.5A: käynnistä ajastin automaattisesti jos IDLE (ei tauolla, ei jo käynnissä)
     if(phase==='idle'&&!tmr) toggleTimer();
   }
@@ -6613,7 +6613,7 @@ function doNext(){
   // 12D: ilmoita seuraava tehtävä
   var next=getActive();
   if(next) setTimeout(function(){
-    a11yAnnounce('Uusi aktiivinen tehtävä: '+(next.verbi?next.verbi+' ':'')+next.text);
+    a11yAnnounce('Uusi aktiivinen tehtävä: '+next.text);
   }, 500);
   save();render();
 }
@@ -7199,7 +7199,7 @@ function renderArenaCard(t, container, anyFrog, mode){
   card.className='tcg-card '+modeClass+' tcg-card--'+rar+' tcg-card--'+(t.quad||'q4')+(t.frog?' tcg-card--frog':'')+(t.frog?' tcg-card--holo':'')+(t.handForced?' tcg-card--star':'');
   card.setAttribute('tabindex','0');
   card.style.setProperty('--qc',qc);
-  var _albl=(t.frog?'Sammakko. ':'')+(t.verbi||'')+' '+t.text+(q?', '+q:'')+(t.est?' — '+fe(t.est)+' pomodoro':'');
+  var _albl=(t.frog?'Sammakko. ':'')+t.text+(q?', '+q:'')+(t.est?' — '+fe(t.est)+' pomodoro':'');
   card.setAttribute('aria-label',_albl);
   card.dataset.taskId=t.id;
 
@@ -7428,7 +7428,7 @@ function renderCardNew(t,container,anyFrog){
   card.className='card-new '+(isArena?'card-new--arena':'card-new--deck');
   card.setAttribute('tabindex','0');
   var _qlbl=t.quad?{q1:'Tee heti',q2:'Aikatauluta',q3:'Delegoi',q4:'Poista'}[t.quad]:'';
-  var _albl=(t.frog?'Sammakko. ':'')+(t.verbi||'')+' '+t.text+(_qlbl?', '+_qlbl:'')+(t.est?' — '+fe(t.est)+' pomodoro':'');
+  var _albl=(t.frog?'Sammakko. ':'')+t.text+(_qlbl?', '+_qlbl:'')+(t.est?' — '+fe(t.est)+' pomodoro':'');
   card.setAttribute('aria-label',_albl);
   card.dataset.taskId=t.id;
 
@@ -8009,7 +8009,7 @@ function renderTurnPanel(inbox){
 
     var nm=document.createElement('span');
     nm.className='turn-card__name';
-    nm.textContent=(_chainDepth>0?'↳ ':'')+((t.verbi?t.verbi+' ':'')+t.text);
+    nm.textContent=(_chainDepth>0?'↳ ':'')+t.text;
     row.appendChild(nm);
 
     if(t.est&&t.est>0){
