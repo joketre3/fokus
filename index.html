@@ -757,16 +757,12 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
 .tcg-card__done-flash{position:absolute;inset:-20%;z-index:1;pointer-events:none;border-radius:50%;background:radial-gradient(circle,var(--accent) 0%,transparent 65%);animation:done-flash .5s var(--ease-out) both;}
 .tcg-card__done-ring{position:absolute;inset:0;z-index:29;pointer-events:none;border-radius:16px;border:3px solid var(--gold-hi);box-shadow:0 0 26px 5px color-mix(in srgb,var(--gold-hi) 65%,transparent);animation:done-ring .8s var(--ease-out) both;}
 .tcg-card__particle{position:absolute;width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff6d8,var(--gold-hi) 60%,var(--accent) 100%);box-shadow:0 0 8px 2px color-mix(in srgb,var(--gold-hi) 70%,transparent);z-index:40;pointer-events:none;animation:frog-particle .7s var(--ease-out) both;}
-/* Lisää tehtävä — kutsuva hehku (C-variantti).
-   Hehku ::afterissa ja animoidaan vain opacityä (komposoitava, ei repaint-loopia);
-   väri seuraa teeman accentia (usva kulta, havu vihreä, aurinko terracotta). */
-#btn-add-task{position:relative;box-shadow:var(--chip-shadow);transition:transform .15s,box-shadow .15s}
-#btn-add-task::after{content:'';position:absolute;inset:-3px;border-radius:inherit;pointer-events:none;z-index:-1;box-shadow:0 0 18px color-mix(in srgb, var(--accent) 45%, transparent);opacity:.55}
-@keyframes add-glow-o{0%,100%{opacity:.3}50%{opacity:.95}}
-@media (prefers-reduced-motion:no-preference){#btn-add-task::after{animation:add-glow-o 3s ease-in-out infinite}}
-#btn-add-task:active{transform:translateY(1px);box-shadow:var(--chip-shadow-dn)}
-html[data-perf="lite"] #btn-add-task::after{display:none!important}
-html[data-theme="aurinko"] #btn-add-task::after{animation:none;opacity:.4}
+/* Lisää tehtävä — "Nosta kortti" (B-variantti): korttiselkä-ilme,
+   kultareunus, pieni kallistus. Opaakki levymateriaali, isompi teksti.
+   Teksti pysyy "Lisää tehtävä" (ei pakka-metaforaa). */
+#btn-add-task{position:relative;box-shadow:inset 0 0 0 2px rgba(0,0,0,.42), 0 3px 10px rgba(0,0,0,.4);transition:transform .15s,box-shadow .15s}
+#btn-add-task:hover{transform:rotate(-1.5deg) translateY(-2px);box-shadow:inset 0 0 0 2px rgba(0,0,0,.42), 0 6px 15px rgba(0,0,0,.5)}
+#btn-add-task:active{transform:rotate(-1.5deg) translateY(0);box-shadow:inset 0 0 0 2px rgba(0,0,0,.5), 0 2px 6px rgba(0,0,0,.45)}
 
 /* Modaalit — avaus (eise-modal jo määritetty, tämä on yleinen helper) */
 
@@ -1359,7 +1355,7 @@ html[data-theme="aurinko"][data-perf="lite"] body{
         <polygon points="37.5,7 54,19 30,19" fill="rgba(255,255,255,.92)" filter="url(#crownBlur2)"/>
         <polygon points="37.5,15 56,30 28,30" fill="rgba(255,255,255,.72)" filter="url(#crownBlur2)"/>
       </svg>
-      <button onclick="wizIsOpen()?wizReset():wizStart()" title="Lisää uusi tehtävä" id="btn-add-task" style="margin-top:.5rem;font-family:DM Sans,sans-serif;font-size:.9rem;font-weight:600;padding:.6rem 1.2rem;border-radius:var(--r-md);border:1.5px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer">+ Lisää tehtävä</button>
+      <button onclick="wizIsOpen()?wizReset():wizStart()" title="Lisää uusi tehtävä" id="btn-add-task" style="margin-top:.5rem;font-family:DM Sans,sans-serif;font-size:1rem;font-weight:700;letter-spacing:.01em;padding:.72rem 1.35rem;border-radius:10px 10px 4px 4px;border:1.5px solid var(--gold);background:repeating-linear-gradient(45deg, var(--plate-bot) 0 8px, var(--plate-top) 8px 16px), linear-gradient(160deg, var(--plate-top), var(--plate-bot));color:var(--gold-hi);cursor:pointer;transform:rotate(-1.5deg);text-shadow:0 1px 2px rgba(0,0,0,.55)">+ Lisää tehtävä</button>
 
     </div>
     <div id="hdr-right" style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
