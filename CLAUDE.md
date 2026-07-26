@@ -278,13 +278,14 @@ Opit:
 | Verbi-tuplaus-fix | index.html renderTurnPanel + 5 a11y-kohtaa | `text` sisältää jo verbin (`addTask: text=verbi+' '+kuvaus`) → poistettu `verbi+' '+text` tuplaus. Malli rivillä ~8953 (`verbi+kuvaus`) |
 | Kuollut koodi pois | index.html:~7422 | `renderCardNew` delegoi vain `renderArenaCard`:iin (kutsutaan vain aktiivisella) → 359-rivinen vanha runko + orvot `mkPipsNew`, `getVerbIconFromVerbi` poistettu (yht. 407 riviä). `.card-new*` CSS SÄILYY: `card-new__btn`/`__action-btn` yhä elävien toimintanappien käytössä |
 | Taustaecho | `.arena-room__echo` + `--qc` arena-roomiin | Aktiivisen kortin q-taide isona/sumeana + quad-värinen bloom seinälle (FUT-liekit). Päivittyy quad-vaihdossa (renderissä ~7929) |
-| Heittovarjo | `.arena-room__castshadow` + kortti translateY -12px | Kontaktivarjo + podium-valo kortin tyveen (kortti seisoo 3D:nä). Seuraa tiltiä (`--px`/`--shs`, tilt-handler ~8573) |
+| Heittovarjo | `.arena-room__castshadow` (bottom:5%) + kortti translateY -12px | Kontaktivarjo + podium-valo kortin ALAREUNAN alle (kortti seisoo 3D:nä). Seuraa tiltiä (`--px`/`--shs`, tilt-handler ~8573) |
 | Isot reaktiot | done-* keyframet + markDone | check-pop 1.06→1.25+rotate, flash 1.5→2.6, uusi hehkurengas (`doneRing`, rare/mythic), frogBurst 11→16 kipinää, scale-pop 1.14. `card-enter` → näyttävä deal-in |
 | Lisää tehtävä -nappi B | index.html:~755 + ~1357 | C-variantti (glow) → B (korttiselkä): kultareunus, opaakki plate+diagonaaliraita, yläkulmat, -1.5° kallistus, isompi teksti. Teksti pysyy "Lisää tehtävä" |
 | Jatkokortti-nappi siirretty | renderArenaCard (poistettu) → edit-modal (~9917) | Areenan alta → oma nappi muokkausmodaaliin (Linkki-kentän jälkeen). Sulkee editin ennen jatko-modaalin avausta. Vapautti lattiatilan → varjo lukeutuu |
 
 Opit:
-- Heittovarjo lukeutuu vain lit-lattialla → tumma varjo + vaalea `::before`-podium-pooli tyveen. Jatkokortti-nappi siirretty pois areenan alta → lattiatila vapaa, kortti seisoo selvästi varjon päällä (kortti nostettu translateY -12px)
+- **Heittovarjon z-stacking-ansa:** `#arena-room` luo oman stacking-kontekstin (`perspective`) ja on koko `#arena`ssa z:auto → areenakortti (z:3) peittää KOKO arena-roomin. Siksi varjo kortin pystykeskellä (`bottom:15%`) jää täysin kortin taakse näkymättömiin. Varjo TÄYTYY olla kortin alareunan alapuolella (`bottom:5%`) näkyvällä lattialla. Mittaa `getBoundingClientRect`illa: varjon top-reunan pitää olla > kortin bottom
+- Heittovarjo lukeutuu vain lit-lattialla → tumma varjo + vaalea `::before`-podium-pooli. Jatkokortti-nappi siirretty pois areenan alta → lattiatila vapaa
 - `--qc` (quad-väri) asetetaan kortille (`~7153`) JA arena-roomille (bloom-tint); ei `--qc-lite` — käytä `color-mix(... var(--qc) X%, white/transparent)`
 - Reduced-motion: globaali sääntö (rivi ~784, kaikki animaatiot .01ms) tyynnyttää deal-inin + echon automaattisesti; markDone tarkistaa `rm` erikseen (skippaa flash/ring/burst)
 - Guardit: perf-lite piilottaa echon+varjon (blur-raskaat); testattu usva/havu/aurinko + lite
