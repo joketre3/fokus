@@ -760,7 +760,7 @@ html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color
 /* Lisää tehtävä — "Nosta kortti" (B-variantti): korttiselkä-ilme,
    kultareunus, pieni kallistus. Opaakki levymateriaali, isompi teksti.
    Teksti pysyy "Lisää tehtävä" (ei pakka-metaforaa). */
-#btn-add-task{position:relative;box-shadow:inset 0 0 0 2px rgba(0,0,0,.42), 0 3px 10px rgba(0,0,0,.4);transition:transform .15s,box-shadow .15s}
+#btn-add-task{position:relative;transform:rotate(-1.5deg);box-shadow:inset 0 0 0 2px rgba(0,0,0,.42), 0 3px 10px rgba(0,0,0,.4);transition:transform .15s,box-shadow .15s}
 #btn-add-task:hover{transform:rotate(-1.5deg) translateY(-2px);box-shadow:inset 0 0 0 2px rgba(0,0,0,.42), 0 6px 15px rgba(0,0,0,.5)}
 #btn-add-task:active{transform:rotate(-1.5deg) translateY(0);box-shadow:inset 0 0 0 2px rgba(0,0,0,.5), 0 2px 6px rgba(0,0,0,.45)}
 
@@ -1355,7 +1355,7 @@ html[data-theme="aurinko"][data-perf="lite"] body{
         <polygon points="37.5,7 54,19 30,19" fill="rgba(255,255,255,.92)" filter="url(#crownBlur2)"/>
         <polygon points="37.5,15 56,30 28,30" fill="rgba(255,255,255,.72)" filter="url(#crownBlur2)"/>
       </svg>
-      <button onclick="wizIsOpen()?wizReset():wizStart()" title="Lisää uusi tehtävä" id="btn-add-task" style="margin-top:.5rem;font-family:DM Sans,sans-serif;font-size:1rem;font-weight:700;letter-spacing:.01em;padding:.72rem 1.35rem;border-radius:10px 10px 4px 4px;border:1.5px solid var(--gold);background:repeating-linear-gradient(45deg, var(--plate-bot) 0 8px, var(--plate-top) 8px 16px), linear-gradient(160deg, var(--plate-top), var(--plate-bot));color:var(--gold-hi);cursor:pointer;transform:rotate(-1.5deg);text-shadow:0 1px 2px rgba(0,0,0,.55)">+ Lisää tehtävä</button>
+      <button onclick="wizIsOpen()?wizReset():wizStart()" title="Lisää uusi tehtävä" id="btn-add-task" style="margin-top:.5rem;font-family:DM Sans,sans-serif;font-size:1rem;font-weight:700;letter-spacing:.01em;padding:.72rem 1.35rem;border-radius:10px 10px 4px 4px;border:1.5px solid var(--gold);background:repeating-linear-gradient(45deg, var(--plate-bot) 0 8px, var(--plate-top) 8px 16px), linear-gradient(160deg, var(--plate-top), var(--plate-bot));color:var(--gold-hi);cursor:pointer;text-shadow:0 1px 2px rgba(0,0,0,.55)">+ Lisää tehtävä</button>
 
     </div>
     <div id="hdr-right" style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
@@ -7926,8 +7926,8 @@ function render(){
           if(roomUse)roomUse.setAttribute('href','#qart-'+roomQuad);
           var echoUse=roomEl.querySelector('.arena-room__echo-art use');
           if(echoUse)echoUse.setAttribute('href','#qart-'+roomQuad);
-          roomEl.style.setProperty('--qc','var(--'+roomQuad+')'); // bloom-tint quad-värillä
         }
+        roomEl.style.setProperty('--qc','var(--'+roomQuad+')'); // bloom-tint quad-värillä — guardin ulkopuolella, muuten alkuperäinen q1 jäisi ilman
       }
       if(activeTask){
         renderCardNew(activeTask,arenaEl,anyFrog);

@@ -289,6 +289,8 @@ Opit:
 - `--qc` (quad-väri) asetetaan kortille (`~7153`) JA arena-roomille (bloom-tint); ei `--qc-lite` — käytä `color-mix(... var(--qc) X%, white/transparent)`
 - Reduced-motion: globaali sääntö (rivi ~784, kaikki animaatiot .01ms) tyynnyttää deal-inin + echon automaattisesti; markDone tarkistaa `rm` erikseen (skippaa flash/ring/burst)
 - Guardit: perf-lite piilottaa echon+varjon (blur-raskaat); testattu usva/havu/aurinko + lite
+- Inline `style="transform:..."` voittaa `:hover`/`:active`-säännöt (inline > pseudoluokka ilman `!important`) → staattinen transform kuuluu CSS-sääntöön, ei style-attribuuttiin
+- `dataset.quad`-vertailun sisään ei saa laittaa `--qc`-asetusta: HTML alustaa `data-quad="q1"` → ensirenderissä ehto on false ja bloom putoaa `var(--gold)`-fallbackiin. Aseta custom property guardin ulkopuolella
 
 ### Jäljellä (manuaalinen)
 
