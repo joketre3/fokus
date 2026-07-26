@@ -49,6 +49,7 @@ Ei testejä, ei lintteriä, ei CI:tä.
 | `mockup-rarity.html` | Rarity-järjestelmän mockup (4 tieriä + holo-vertailu) |
 | `mockup-poyta.html` | Korttipöytä-ilmeen mockup (teema+lite-kytkimet) |
 | `mockup-lisaa.html` | Lisää tehtävä -napin ja -modalin suunnitteluvaihtoehdot (A/B/C) |
+| `mockup-arena-3d-plus.html` | Areenan 3D-syvyys: heittovarjo, taustaecho, isot reaktiot (referenssi) |
 
 Pääsovellus avaa `swipe.html` ja `aamu.html` popup-ikkunoina (`window.open`). Timer aukeaa JS:llä generoituna popuppina. Kaikki ikkunat jakavat datan `localStorage`n kautta.
 
@@ -267,6 +268,25 @@ Opit:
 - `document.addEventListener('pointerleave', fn, true)` laukeaa jokaisella lapsirajan ylityksellä — guard: `e.target===pressed && e.pointerId===pressedId`
 - Keyframe `box-shadow`-animaatio = main-thread repaint; siirrä hehku `::after`-pseudo-elementtiin + animoi `opacity` (compositable)
 - FLIP leaving-overlayrivit: merkitse `dataset.ghost='1'` → First-pass ohittaa ne (muuten mitataan 240ms abs-rivi real-riveinä)
+
+### FUT-ilme + areenan 3D-syvyys (2026-07-26) — valmis
+
+**FUT-suunta on VALITTU ja live** (`_useCardUI=true`): areenakortti FUT-tyylinen (Q-taide taustana, verbi rintakuvana, metallireunus rarityn mukaan), arena-room 3D-lavaste. Vanha `.card-new`-MTG-kortti korvattu.
+
+| Muutos | Tiedosto | Mitä |
+|--------|----------|------|
+| Verbi-tuplaus-fix | index.html renderTurnPanel + 5 a11y-kohtaa | `text` sisältää jo verbin (`addTask: text=verbi+' '+kuvaus`) → poistettu `verbi+' '+text` tuplaus. Malli rivillä ~8953 (`verbi+kuvaus`) |
+| Kuollut koodi pois | index.html:~7422 | `renderCardNew` delegoi vain `renderArenaCard`:iin (kutsutaan vain aktiivisella) → 359-rivinen vanha runko + orvot `mkPipsNew`, `getVerbIconFromVerbi` poistettu (yht. 407 riviä). `.card-new*` CSS SÄILYY: `card-new__btn`/`__action-btn` yhä elävien toimintanappien käytössä |
+| Taustaecho | `.arena-room__echo` + `--qc` arena-roomiin | Aktiivisen kortin q-taide isona/sumeana + quad-värinen bloom seinälle (FUT-liekit). Päivittyy quad-vaihdossa (renderissä ~7929) |
+| Heittovarjo | `.arena-room__castshadow` + kortti translateY -12px | Kontaktivarjo + podium-valo kortin tyveen (kortti seisoo 3D:nä). Seuraa tiltiä (`--px`/`--shs`, tilt-handler ~8573) |
+| Isot reaktiot | done-* keyframet + markDone | check-pop 1.06→1.25+rotate, flash 1.5→2.6, uusi hehkurengas (`doneRing`, rare/mythic), frogBurst 11→16 kipinää, scale-pop 1.14. `card-enter` → näyttävä deal-in |
+| Lisää tehtävä -nappi B | index.html:~755 + ~1357 | C-variantti (glow) → B (korttiselkä): kultareunus, opaakki plate+diagonaaliraita, yläkulmat, -1.5° kallistus, isompi teksti. Teksti pysyy "Lisää tehtävä" |
+
+Opit:
+- Heittovarjo lukeutuu vain lit-lattialla → tumma varjo + vaalea `::before`-podium-pooli tyveen. Areenakortti täyttää tilan (jatkokortti-slotti alla) → kortti nostettu paljastamaan lattia; täysi mockup-draama vaatisi jatkokortti-slotin uudelleenjärjestelyn
+- `--qc` (quad-väri) asetetaan kortille (`~7153`) JA arena-roomille (bloom-tint); ei `--qc-lite` — käytä `color-mix(... var(--qc) X%, white/transparent)`
+- Reduced-motion: globaali sääntö (rivi ~784, kaikki animaatiot .01ms) tyynnyttää deal-inin + echon automaattisesti; markDone tarkistaa `rm` erikseen (skippaa flash/ring/burst)
+- Guardit: perf-lite piilottaa echon+varjon (blur-raskaat); testattu usva/havu/aurinko + lite
 
 ### Jäljellä (manuaalinen)
 
