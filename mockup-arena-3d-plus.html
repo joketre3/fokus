@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Areena 3D+ (varjo, taustaecho, reaktiot)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=Cinzel:wght@600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:rgba(255,255,255,.95); --muted:rgba(255,255,255,.72);
+  --q1:#a84c28; --q1-lite:#e8825a;
+  --gold:#c49a3a; --gold-hi:#e8c66a; --gold-deep:#6b4f1c;
+  --frog-deep:#3d7a52;
+  --pomo:#a84c28; --pomo-hi:#e8623a;
+  --table-felt:#1d3527; --table-felt-deep:#10211a;
+  --room-wall:#152820; --room-wall-deep:#0b1712;
+  --qc:#a84c28; --qc-lite:#e8825a;   /* aktiivisen kortin quad-väri; JS vaihtaa */
+}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:radial-gradient(ellipse at 50% 30%, var(--table-felt) 0%, var(--table-felt-deep) 75%);
+  color:var(--ink); min-height:100vh; padding:2rem 1rem 3rem;
+  display:flex; flex-direction:column; align-items:center;
+}
+h1{font-family:'DM Serif Display',serif; font-style:italic; font-weight:400; font-size:1.6rem; margin-bottom:.3rem}
+.sub{color:var(--muted); font-size:.85rem; margin-bottom:1.4rem; text-align:center; max-width:660px}
+
+/* ═══════════ HUONE ═══════════ */
+.room{
+  width:min(760px, 96vw); height:560px;
+  position:relative; border-radius:20px; overflow:hidden; isolation:isolate;
+  perspective:1100px; perspective-origin:50% 40%;
+  background:linear-gradient(180deg, var(--room-wall) 0%, var(--room-wall-deep) 100%);
+  border:1px solid rgba(196,154,58,.22);
+  box-shadow:0 24px 60px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.03);
+}
+/* ── Takaseinä ── */
+.room__wall{
+  position:absolute; inset:-6% -6% 32%; z-index:0;
+  transform:translateZ(-260px) scale(1.35); transform-style:preserve-3d;
+  background:
+    radial-gradient(ellipse at 50% 62%, rgba(196,154,58,.10) 0%, transparent 55%),
+    linear-gradient(180deg, #0d1a13 0%, var(--room-wall) 55%, #1a3226 100%);
+}
+/* ── 1c: TAUSTAECHO — aktiivisen kortin taide isona, sumeana, quad-tintattuna (kuten FUT-liekit) ── */
+.room__echo{
+  position:absolute; inset:-6% -6% 30%; z-index:0; pointer-events:none;
+  transform:translateZ(-200px) scale(1.5);
+  display:flex; align-items:center; justify-content:center;
+  opacity:.9;
+}
+.room__echo .echo-art{
+  position:absolute; width:60%; aspect-ratio:5/7; left:20%; top:12%;
+  border-radius:24px; overflow:hidden;
+  filter:blur(22px) saturate(1.25) brightness(1.15);
+  opacity:.5; mix-blend-mode:screen;
+  animation:echoBreath 7s ease-in-out infinite;
+}
+.room__echo .echo-art svg{width:100%; height:100%}
+.room__echo::after{ /* bloom-hehku kortin takana quad-värillä */
+  content:""; position:absolute; left:50%; top:44%; transform:translate(-50%,-50%);
+  width:52%; aspect-ratio:1; border-radius:50%;
+  background:radial-gradient(circle, color-mix(in srgb, var(--qc-lite) 55%, transparent) 0%, transparent 62%);
+  filter:blur(28px); opacity:.65; mix-blend-mode:screen;
+  animation:echoBreath 7s ease-in-out infinite;
+}
+@keyframes echoBreath{0%,100%{opacity:.42} 50%{opacity:.72}}
+.room__wall::before{ /* kaari kortin takana — kuin FUT-lavasteen portaali */
+  content:""; position:absolute; left:50%; bottom:0; transform:translateX(-50%);
+  width:46%; aspect-ratio:1/1.4; border-radius:50% 50% 0 0/36% 36% 0 0;
+  background:radial-gradient(ellipse at 50% 80%, rgba(196,154,58,.14) 0%, transparent 68%);
+  box-shadow:inset 0 0 0 1.5px rgba(196,154,58,.18), inset 0 0 40px rgba(196,154,58,.08);
+}
+.room__wall::after{ /* horisonttiviiva */
+  content:""; position:absolute; left:0; right:0; bottom:-1px; height:2px;
+  background:linear-gradient(90deg, transparent, rgba(196,154,58,.35) 30%, rgba(196,154,58,.35) 70%, transparent);
+}
+/* ── Lattia — aito perspektiivitaso ── */
+.room__floor{
+  position:absolute; left:-25%; right:-25%; bottom:-58%; height:88%; z-index:1;
+  transform:rotateX(76deg); transform-origin:50% 0;
+  background:
+    radial-gradient(ellipse at 50% 18%, rgba(196,154,58,.30) 0%, rgba(196,154,58,.10) 34%, transparent 60%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.028) 0 1px, transparent 1px 72px),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.028) 0 1px, transparent 1px 72px),
+    linear-gradient(180deg, #22402f 0%, var(--table-felt-deep) 78%);
+}
+/* ── 1a: LATTIAVARJO — kortin kontaktivarjo lattialla (kortti seisoo) ── */
+.room__castshadow{
+  position:absolute; left:50%; bottom:19.5%; z-index:2; pointer-events:none;
+  width:236px; height:46px;
+  transform:translateX(-50%) translate(calc(var(--px,0px) * -1.15), 0) scaleX(var(--shs,1));
+  transform-origin:50% 50%;
+  background:radial-gradient(ellipse at 50% 50%, rgba(0,0,0,.7) 0%, rgba(0,0,0,.42) 38%, transparent 72%);
+  filter:blur(12px);
+  transition:transform .18s ease-out, opacity .2s;
+}
+.room__castshadow::after{ /* tiivis kontaktipiste tyveen */
+  content:""; position:absolute; left:50%; top:8%; transform:translateX(-50%);
+  width:58%; height:52%; border-radius:50%;
+  background:radial-gradient(ellipse at 50% 50%, rgba(0,0,0,.6) 0%, transparent 70%);
+  filter:blur(4px);
+}
+/* ── Sivuseinien vihjeet ── */
+.room::before,.room::after{
+  content:""; position:absolute; top:0; bottom:0; width:16%; z-index:3; pointer-events:none;
+}
+.room::before{left:0; background:linear-gradient(90deg, rgba(5,10,7,.55), transparent)}
+.room::after{right:0; background:linear-gradient(-90deg, rgba(5,10,7,.55), transparent)}
+/* ── Spotlight ylhäältä ── */
+.room__spot{
+  position:absolute; top:-6%; left:50%; transform:translateX(-50%);
+  width:70%; height:74%; z-index:2; pointer-events:none;
+  background:radial-gradient(ellipse at 50% 0%, rgba(232,198,106,.15) 0%, rgba(232,198,106,.05) 45%, transparent 70%);
+}
+/* ── Vinjetti ── */
+.room__vignette{
+  position:absolute; inset:0; z-index:6; pointer-events:none; border-radius:inherit;
+  background:radial-gradient(ellipse at 50% 44%, transparent 48%, rgba(0,0,0,.52) 100%);
+}
+/* ── Leijuvat valohiukkaset ── */
+.room__dust{position:absolute; inset:0; z-index:2; pointer-events:none; overflow:hidden}
+.room__dust i{
+  position:absolute; width:3px; height:3px; border-radius:50%;
+  background:rgba(232,198,106,.5); filter:blur(.5px);
+  animation:dustFloat 9s linear infinite;
+}
+.room__dust i:nth-child(1){left:20%; animation-delay:0s}
+.room__dust i:nth-child(2){left:34%; animation-delay:-3s; width:2px; height:2px}
+.room__dust i:nth-child(3){left:56%; animation-delay:-6s}
+.room__dust i:nth-child(4){left:70%; animation-delay:-1.5s; width:2px; height:2px}
+.room__dust i:nth-child(5){left:82%; animation-delay:-4.5s}
+@keyframes dustFloat{
+  0%{transform:translateY(560px); opacity:0}
+  12%{opacity:.7} 80%{opacity:.4}
+  100%{transform:translateY(-30px); opacity:0}
+}
+
+/* ═══════════ KORTTI HUONEESSA ═══════════ */
+.room__scene{
+  position:absolute; inset:0; z-index:4;
+  display:flex; align-items:center; justify-content:center;
+  transform-style:preserve-3d;
+}
+.fut{
+  width:240px; aspect-ratio:5/7; border-radius:14px;
+  position:relative; isolation:isolate;
+  display:flex; flex-direction:column;
+  transform-style:preserve-3d; will-change:transform;
+  transform:translateY(-8px) rotateX(var(--rx,4deg)) rotateY(var(--ry,0deg));
+  transition:transform .18s ease-out;
+  box-shadow:
+    0 0 0 1px rgba(196,154,58,.35),
+    0 0 46px 10px rgba(196,154,58,.26),
+    0 30px 50px rgba(0,0,0,.6);
+}
+/* reaktiotilat */
+.fut.is-celebrate{animation:cardCelebrate 1s cubic-bezier(.34,1.56,.64,1) both}
+.fut.is-deal{animation:cardDeal .8s cubic-bezier(.22,1.2,.36,1) both}
+@keyframes cardCelebrate{
+  0%{transform:translateY(-8px) rotateX(4deg) rotateY(0) scale(1)}
+  22%{transform:translateY(-30px) rotateX(2deg) rotateY(-6deg) scale(1.14)}
+  46%{transform:translateY(-22px) rotateX(6deg) rotateY(200deg) scale(1.1)}
+  70%{transform:translateY(-14px) rotateX(3deg) rotateY(356deg) scale(1.05)}
+  100%{transform:translateY(-8px) rotateX(4deg) rotateY(360deg) scale(1)}
+}
+@keyframes cardDeal{
+  0%{transform:translateY(260px) rotateX(58deg) rotateY(-16deg) scale(.62); opacity:0}
+  60%{opacity:1}
+  75%{transform:translateY(-22px) rotateX(2deg) rotateY(4deg) scale(1.06)}
+  100%{transform:translateY(-8px) rotateX(4deg) rotateY(0) scale(1); opacity:1}
+}
+/* metallireunus */
+.fut::before{
+  content:""; position:absolute; inset:0; border-radius:14px; padding:2px; z-index:4; pointer-events:none;
+  background:linear-gradient(165deg, var(--gold-hi) 0%, var(--gold) 28%, var(--gold-deep) 55%, var(--gold) 80%, var(--gold-hi) 100%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor; mask-composite:exclude;
+}
+.fut::after{
+  content:""; position:absolute; inset:2px; border-radius:12px; z-index:3; pointer-events:none;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.45), inset 0 1px 2px rgba(255,255,255,.08);
+}
+.fut__art{position:absolute; inset:0; z-index:0; border-radius:inherit; overflow:hidden; pointer-events:none}
+.fut__art svg.qart{position:absolute; inset:0; width:100%; height:100%;
+  transform:translate(calc(var(--px,0px) * .5), calc(var(--py,0px) * .5)) scale(1.06)}
+.fut__art::before{
+  content:""; position:absolute; inset:0; z-index:2;
+  background:
+    linear-gradient(180deg, rgba(8,14,10,.42) 0%, transparent 22%),
+    linear-gradient(180deg, transparent 40%, rgba(8,14,10,.55) 62%, rgba(8,14,10,.86) 100%);
+}
+.fut__art::after{
+  content:""; position:absolute; inset:0; z-index:2;
+  background:conic-gradient(from 0deg at 50% 50%,
+    rgba(255,80,80,.20), rgba(255,220,80,.18), rgba(80,255,160,.20),
+    rgba(80,180,255,.18), rgba(200,80,255,.20), rgba(255,80,80,.20));
+  mix-blend-mode:color-dodge; opacity:.45; animation:holoSweep 6s linear infinite;
+}
+@keyframes holoSweep{from{filter:hue-rotate(0)}to{filter:hue-rotate(360deg)}}
+.fut__pips{position:absolute; top:10px; right:11px; z-index:5; display:flex; gap:3px}
+.fut__pip{
+  width:15px; height:15px; border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, var(--pomo-hi), var(--pomo) 72%);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.5), 0 1px 2px rgba(0,0,0,.55);
+}
+.fut__seal{
+  position:absolute; top:9px; left:10px; z-index:5;
+  width:27px; height:27px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:radial-gradient(circle at 35% 30%, var(--frog-deep), #1d3a28);
+  box-shadow:0 0 0 2px var(--gold), 0 0 10px rgba(196,154,58,.55), inset 0 1px 2px rgba(255,255,255,.3);
+}
+.fut__seal svg{width:16px; height:16px}
+.fut__bust{
+  position:relative; z-index:1; flex:0 0 52%;
+  display:flex; align-items:flex-end; justify-content:center;
+}
+.fut__bust::before{
+  content:""; position:absolute; left:50%; bottom:-6%; transform:translateX(-50%);
+  width:86%; aspect-ratio:1; border-radius:50%;
+  background:radial-gradient(circle, rgba(6,12,8,.52) 0%, rgba(6,12,8,.28) 45%, transparent 70%);
+}
+.fut__bust svg{
+  position:relative; width:56%; height:auto; aspect-ratio:1;
+  transform:translate(calc(var(--px,0px) * -.55), calc(var(--py,0px) * -.55));
+  filter:drop-shadow(0 10px 16px rgba(0,0,0,.65)) drop-shadow(0 2px 4px rgba(0,0,0,.5));
+}
+.fut__name{
+  position:relative; z-index:2; text-align:center; padding:0 .85rem;
+  font-family:'Cinzel',serif; font-weight:700; font-size:.85rem; letter-spacing:.05em;
+  text-transform:uppercase; color:var(--ink); text-shadow:0 2px 5px rgba(0,0,0,.75);
+}
+.fut__name::before,.fut__name::after{
+  content:""; display:block; height:1px; margin:.42rem 1.3rem;
+  background:linear-gradient(90deg,transparent,var(--qc-lite) 30%,var(--qc-lite) 70%,transparent);
+  opacity:.6;
+}
+.fut__stats{
+  position:relative; z-index:2; display:grid; grid-template-columns:1fr 1px 1fr;
+  padding:.1rem .95rem .4rem; gap:0 .65rem; align-items:start;
+}
+.fut__stats .div{background:linear-gradient(180deg,transparent,var(--qc-lite),transparent); opacity:.45; height:100%}
+.fut__col{display:flex; flex-direction:column; gap:.26rem}
+.fut__stat{display:flex; align-items:baseline; gap:.35rem; font-size:.68rem}
+.fut__stat b{font-family:'Cinzel',serif; font-weight:700; font-size:.78rem; color:var(--qc-lite); min-width:1.7em; text-align:right; text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.fut__stat span{color:var(--muted); letter-spacing:.06em; text-transform:uppercase; font-size:.58rem}
+.fut__verbline{
+  position:relative; z-index:2; text-align:center; padding-bottom:.65rem;
+  font-family:'Cinzel',serif; font-weight:600; font-size:.66rem; letter-spacing:.24em;
+  text-transform:uppercase; color:var(--qc-lite); text-shadow:0 1px 3px rgba(0,0,0,.6);
+}
+.fut__verbline .qword{opacity:.75; letter-spacing:.14em; font-size:.56rem; display:block; margin-top:.18rem}
+/* kiilto seuraa osoitinta */
+.fut .sheen{
+  position:absolute; inset:0; z-index:3; pointer-events:none; border-radius:inherit;
+  background:radial-gradient(circle at var(--sx,50%) var(--sy,30%), rgba(255,255,255,.13) 0%, transparent 45%);
+  mix-blend-mode:screen;
+}
+/* ── 1d: REAKTIO-KERROKSET ── */
+.fut__burst{ /* hehkurengas joka laajenee valmistuessa */
+  position:absolute; inset:0; z-index:6; border-radius:50%; pointer-events:none;
+  border:3px solid var(--gold-hi);
+  box-shadow:0 0 30px 6px color-mix(in srgb, var(--gold-hi) 70%, transparent);
+  opacity:0;
+}
+.fut__burst.go{animation:burstRing .85s cubic-bezier(.2,.7,.3,1) both}
+@keyframes burstRing{0%{opacity:.95; transform:scale(.35)} 100%{opacity:0; transform:scale(2.5)}}
+.fut__flash{ /* kultainen välähdys kortin yli */
+  position:absolute; inset:0; z-index:5; border-radius:inherit; pointer-events:none;
+  background:radial-gradient(circle at 50% 45%, rgba(255,240,190,.85), transparent 60%);
+  opacity:0;
+}
+.fut__flash.go{animation:successFlash .7s ease-out both}
+@keyframes successFlash{0%{opacity:0} 18%{opacity:.9} 100%{opacity:0}}
+/* kipinät */
+.sparks{position:absolute; inset:0; z-index:7; pointer-events:none; overflow:visible}
+.spark{
+  position:absolute; left:50%; top:44%; width:7px; height:7px; border-radius:50%;
+  background:radial-gradient(circle at 40% 35%, #fff6d8, var(--gold-hi) 60%, var(--pomo) 100%);
+  box-shadow:0 0 8px 2px rgba(232,198,106,.8);
+  opacity:0;
+}
+.spark.go{animation:sparkFly .9s cubic-bezier(.15,.7,.3,1) both}
+@keyframes sparkFly{
+  0%{opacity:1; transform:translate(-50%,-50%) rotate(var(--a)) translateY(0) scale(1)}
+  70%{opacity:1}
+  100%{opacity:0; transform:translate(-50%,-50%) rotate(var(--a)) translateY(calc(-1 * var(--d))) scale(.3)}
+}
+/* ── Heijastus lattiassa ── */
+.fut__reflection{
+  position:absolute; top:calc(100% + 4px); left:0; width:100%; height:55%;
+  transform:scaleY(-1); transform-origin:top;
+  border-radius:14px; overflow:hidden; pointer-events:none;
+  background:linear-gradient(155deg, color-mix(in srgb,var(--qc) 42%,transparent) 0%, color-mix(in srgb,var(--qc-lite) 42%,transparent) 42%, color-mix(in srgb,var(--qc) 42%,transparent) 74%, transparent 100%);
+  -webkit-mask:linear-gradient(180deg, rgba(0,0,0,.18), transparent 60%);
+  mask:linear-gradient(180deg, rgba(0,0,0,.18), transparent 60%);
+}
+@media (prefers-reduced-motion:reduce){
+  .fut__art::after,.room__dust i,.room__echo .echo-art,.room__echo::after{animation:none}
+  .room__dust i{display:none}
+  .fut{transform:translateY(-8px) rotateX(4deg) !important}
+  .fut.is-celebrate,.fut.is-deal{animation:none}
+}
+
+/* ═══════════ KONTROLLIT ═══════════ */
+.controls{display:flex; gap:.6rem; flex-wrap:wrap; justify-content:center; margin-top:1.3rem}
+.ctl{
+  font-family:'DM Sans',sans-serif; font-weight:600; font-size:.82rem;
+  padding:.6rem 1.1rem; border-radius:10px; cursor:pointer;
+  color:var(--gold-hi); background:linear-gradient(160deg,#1a2e26,#12211b);
+  border:1.5px solid var(--gold); box-shadow:inset 0 0 0 1px rgba(0,0,0,.4), 0 3px 8px rgba(0,0,0,.4);
+}
+.ctl:hover{background:linear-gradient(160deg,#20362c,#16281f)}
+.ctl:active{transform:translateY(1px)}
+.quads{display:flex; gap:.4rem; margin-top:.7rem}
+.qbtn{width:26px; height:26px; border-radius:6px; border:1.5px solid rgba(255,255,255,.25); cursor:pointer}
+.qbtn.q1{background:#a84c28} .qbtn.q2{background:#2d8a52} .qbtn.q3{background:#5a7a9a} .qbtn.q4{background:#6a5a7a}
+.note{margin-top:1.1rem; font-size:.75rem; color:var(--muted); text-align:center; max-width:620px}
+</style>
+</head>
+<body>
+
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+<defs>
+  <symbol id="verb-i-soita" viewBox="0 0 24 24">
+    <path fill="#f4f0e0" d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.5 0 1 .4 1 1V20c0 .5-.5 1-1 1C10.6 21 3 13.4 3 4c0-.5.5-1 1-1H7.5c.6 0 1 .5 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1z"/>
+    <path fill="#a8a290" d="M18.5 17.7l1.5 1.5c-.2.5-.7.8-1.5.8-2.9 0-5.7-.6-8.2-1.7l-.5-1.7 1.5-1c2 1.1 4.6 2 7.2 2.1z"/>
+    <circle cx="5.8" cy="5.5" r="1.6" fill="#c49a3a"/>
+    <circle cx="5.8" cy="5.5" r="0.7" fill="#2a1f10"/>
+  </symbol>
+  <symbol id="qart-q1" viewBox="0 0 200 280" preserveAspectRatio="xMidYMid slice">
+    <rect width="200" height="280" fill="#3a120c"/>
+    <polygon points="0,0 90,0 65,95" fill="#6a1e14"/>
+    <polygon points="90,0 200,0 140,80 65,95" fill="#822418"/>
+    <polygon points="200,0 200,120 140,80" fill="#5a1810"/>
+    <polygon points="0,0 65,95 0,150" fill="#4c150e"/>
+    <polygon points="0,150 65,95 55,220 0,280" fill="#6e2016"/>
+    <polygon points="65,95 140,80 150,190 55,220" fill="#8e2a1a"/>
+    <polygon points="200,120 200,280 150,190 140,80" fill="#661c12"/>
+    <polygon points="55,220 150,190 200,280 0,280" fill="#521610"/>
+    <g fill="none" stroke="#c05028" stroke-width="2" opacity=".8">
+      <path d="M78 108 L-10 40"/><path d="M78 108 L30 -12"/><path d="M78 108 L150 -18"/>
+      <path d="M78 108 L215 60"/><path d="M78 108 L220 190"/><path d="M78 108 L150 292"/>
+      <path d="M78 108 L30 300"/><path d="M78 108 L-18 180"/>
+    </g>
+    <polygon points="78,108 92,94 100,108 88,122 66,116 70,98" fill="#e8724a"/>
+    <polygon points="78,108 86,100 90,108 82,115 70,111 73,101" fill="#f4a070"/>
+  </symbol>
+  <symbol id="qart-q2" viewBox="0 0 200 280" preserveAspectRatio="xMidYMid slice">
+    <rect width="200" height="280" fill="#0f2a1a"/>
+    <path d="M100 280 C60 200 40 140 100 40 C160 140 140 200 100 280Z" fill="#1d5236"/>
+    <path d="M100 250 C80 190 78 140 100 90 C122 140 120 190 100 250Z" fill="#2d7a4e"/>
+    <g stroke="#3d9a62" stroke-width="2" fill="none" opacity=".7">
+      <path d="M100 220 L60 180"/><path d="M100 190 L140 150"/><path d="M100 160 L66 128"/><path d="M100 130 L134 100"/>
+    </g>
+  </symbol>
+  <symbol id="qart-q3" viewBox="0 0 200 280" preserveAspectRatio="xMidYMid slice">
+    <rect width="200" height="280" fill="#182430"/>
+    <ellipse cx="70" cy="90" rx="70" ry="40" fill="#25384a" opacity=".8"/>
+    <ellipse cx="140" cy="140" rx="80" ry="46" fill="#2d445a" opacity=".7"/>
+    <ellipse cx="90" cy="200" rx="90" ry="50" fill="#22333f" opacity=".8"/>
+  </symbol>
+  <symbol id="qart-q4" viewBox="0 0 200 280" preserveAspectRatio="xMidYMid slice">
+    <rect width="200" height="280" fill="#22202a"/>
+    <g fill="#332f3e"><rect y="30" width="200" height="26"/><rect y="90" width="200" height="26"/><rect y="150" width="200" height="26"/><rect y="210" width="200" height="26"/></g>
+  </symbol>
+  <symbol id="frog-glyph" viewBox="0 0 24 24">
+    <ellipse cx="12" cy="15" rx="8" ry="6" fill="#a2c85a"/>
+    <circle cx="8" cy="9" r="3.4" fill="#a2c85a"/>
+    <circle cx="16" cy="9" r="3.4" fill="#a2c85a"/>
+    <circle cx="8" cy="8.6" r="1.5" fill="#1d3a28"/>
+    <circle cx="16" cy="8.6" r="1.5" fill="#1d3a28"/>
+    <path d="M8 16.5 Q12 19.5 16 16.5" stroke="#1d3a28" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+  </symbol>
+</defs>
+</svg>
+
+<h1>Areena 3D+ — varjo · taustaecho · reaktiot</h1>
+<p class="sub">Kortti seisoo lattialla heittovarjon kanssa. Taustaseinällä aktiivisen kortin taide isona, sumeana ja hehkuvana (kuten FUT-liekit). Kokeile nappeja: valmis-flourish ja kortin jako ovat isoja ja näyttäviä. Liikuta osoitinta huoneen päällä.</p>
+
+<div class="room" id="room">
+  <div class="room__wall"></div>
+  <div class="room__echo"><div class="echo-art"><svg><use href="#qart-q1"/></svg></div></div>
+  <div class="room__floor"></div>
+  <div class="room__castshadow" id="castshadow"></div>
+  <div class="room__spot"></div>
+  <div class="room__dust"><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="room__scene">
+    <div class="fut" id="card">
+      <div class="fut__art"><svg class="qart"><use href="#qart-q1"/></svg></div>
+      <div class="fut__pips"><span class="fut__pip"></span><span class="fut__pip"></span><span class="fut__pip"></span></div>
+      <div class="fut__seal"><svg><use href="#frog-glyph"/></svg></div>
+      <div class="fut__bust"><svg><use href="#verb-i-soita"/></svg></div>
+      <div class="fut__name">Soita hammaslääkärille</div>
+      <div class="fut__stats">
+        <div class="fut__col">
+          <div class="fut__stat"><b>25</b><span>min</span></div>
+          <div class="fut__stat"><b>3</b><span>pom</span></div>
+        </div>
+        <div class="div"></div>
+        <div class="fut__col">
+          <div class="fut__stat"><b>TI</b><span>päivä</span></div>
+          <div class="fut__stat"><b>TYÖ</b><span>proj</span></div>
+        </div>
+      </div>
+      <div class="fut__verbline">Soita<span class="qword">TEE HETI</span></div>
+      <div class="sheen"></div>
+      <div class="fut__flash" id="flash"></div>
+      <div class="fut__burst" id="burst"></div>
+      <div class="sparks" id="sparks"></div>
+      <div class="fut__reflection"></div>
+    </div>
+  </div>
+  <div class="room__vignette"></div>
+</div>
+
+<div class="controls">
+  <button class="ctl" id="btnDone">✓ Tee valmiiksi</button>
+  <button class="ctl" id="btnDeal">+ Uusi kortti</button>
+</div>
+<div class="quads">
+  <button class="qbtn q1" data-q="q1" title="Kiire"></button>
+  <button class="qbtn q2" data-q="q2" title="Kasvu"></button>
+  <button class="qbtn q3" data-q="q3" title="Delegoi"></button>
+  <button class="qbtn q4" data-q="q4" title="Pysähtynyt"></button>
+</div>
+
+<p class="note">Quad-napit vaihtavat aktiivisen kortin taiteen — huomaa miten taustaecho + hehku + heijastus seuraavat väriä. Reaktiot kunnioittavat reduced-motionia (kortti ei pyöri, mutta välähdys/rengas voidaan pitää kevyenä).</p>
+
+<script>
+const reduced = matchMedia('(prefers-reduced-motion:reduce)').matches;
+const room = document.getElementById('room');
+const card = document.getElementById('card');
+const castshadow = document.getElementById('castshadow');
+const flash = document.getElementById('flash');
+const burst = document.getElementById('burst');
+const sparksBox = document.getElementById('sparks');
+
+// tilt + parallax + varjo seuraa
+if(!reduced){
+  const MAX = 8;
+  room.addEventListener('pointermove', e=>{
+    const r = room.getBoundingClientRect();
+    const nx = (e.clientX - r.left)/r.width  - .5;
+    const ny = (e.clientY - r.top)/r.height - .5;
+    card.style.setProperty('--ry', ( nx*MAX*2).toFixed(2)+'deg');
+    card.style.setProperty('--rx', (4 - ny*MAX*2).toFixed(2)+'deg');
+    card.style.setProperty('--px', (nx*16).toFixed(1)+'px');
+    card.style.setProperty('--py', (ny*16).toFixed(1)+'px');
+    card.style.setProperty('--sx', ((nx+.5)*100).toFixed(1)+'%');
+    card.style.setProperty('--sy', ((ny+.5)*100).toFixed(1)+'%');
+    castshadow.style.setProperty('--px', (nx*16).toFixed(1)+'px');
+    castshadow.style.setProperty('--shs', (1 - Math.abs(ny)*.18).toFixed(3));
+  });
+  room.addEventListener('pointerleave', ()=>{
+    ['--ry','--rx','--px','--py','--sx','--sy'].forEach(p=>card.style.removeProperty(p));
+    castshadow.style.removeProperty('--px'); castshadow.style.removeProperty('--shs');
+  });
+}
+
+// quad-vaihto
+const QC = {q1:['#a84c28','#e8825a'], q2:['#2d8a52','#5ec489'], q3:['#5a7a9a','#8fb4d6'], q4:['#6a5a7a','#a892c4']};
+document.querySelectorAll('.qbtn').forEach(b=>b.addEventListener('click',()=>{
+  const q=b.dataset.q, [c,cl]=QC[q];
+  document.documentElement.style.setProperty('--qc',c);
+  document.documentElement.style.setProperty('--qc-lite',cl);
+  card.querySelector('.fut__art use').setAttribute('href','#qart-'+q);
+  document.querySelector('.room__echo use').setAttribute('href','#qart-'+q);
+}));
+
+// iso valmis-reaktio
+function spark(){
+  sparksBox.innerHTML='';
+  const N=14;
+  for(let i=0;i<N;i++){
+    const s=document.createElement('span');
+    s.className='spark';
+    s.style.setProperty('--a', (i*(360/N))+'deg');
+    s.style.setProperty('--d', (70+((i*37)%60))+'px');
+    sparksBox.appendChild(s);
+    requestAnimationFrame(()=>s.classList.add('go'));
+  }
+}
+function retrig(el,cls){el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);}
+document.getElementById('btnDone').addEventListener('click',()=>{
+  if(!reduced) retrig(card,'is-celebrate');
+  retrig(flash,'go'); retrig(burst,'go');
+  if(!reduced) spark();
+  card.addEventListener('animationend',function h(){card.classList.remove('is-celebrate');card.removeEventListener('animationend',h)});
+});
+document.getElementById('btnDeal').addEventListener('click',()=>{
+  retrig(card,'is-deal');
+  card.addEventListener('animationend',function h(){card.classList.remove('is-deal');card.removeEventListener('animationend',h)});
+});
+</script>
+</body>
+</html>

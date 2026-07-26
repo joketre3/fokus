@@ -732,26 +732,31 @@ html[data-theme="aurinko"] textarea{color:#2d2417!important;background:rgba(255,
 html[data-theme="aurinko"] .profile-chip.on{border-color:#c4681e!important;color:#c4681e!important;background:rgba(196,104,30,.06)!important}
 
 /* ── Vaihe 10: Animaatiot ─────────────────────────────────────── */
+/* card-enter — näyttävä jako lattiasta ylös (deal-in) */
 @keyframes card-enter{
-  from{opacity:0;transform:translateY(-6px) scale(.97)}
-  to{opacity:1;transform:translateY(0) scale(1)}
+  0%{opacity:0;transform:translateY(48px) rotateX(28deg) scale(.82)}
+  62%{opacity:1}
+  80%{transform:translateY(-8px) rotateX(1deg) scale(1.04)}
+  100%{opacity:1;transform:translateY(0) rotateX(0) scale(1)}
 }
 @keyframes card-exit{
   from{opacity:1;transform:translateY(0) scale(1)}
   to{opacity:0;transform:translateY(20px) scale(.96)}
 }
-.card-entering{animation:card-enter .2s ease-out both}
+.card-entering{animation:card-enter .42s cubic-bezier(.22,1.2,.36,1) both}
 .card-exiting{animation:card-exit .4s ease-in both;pointer-events:none}
 /* Saapuva kortti (käsi/jono) — opacity-only, ei sotke viuhka-rotaatiota/rivilayoutia */
 @keyframes card-fade-in{from{opacity:0}to{opacity:1}}
 .card-arriving{animation:card-fade-in var(--dur-meso) var(--ease-out) both}
-/* M1c — Valmis-hetken rariteettiporras */
-@keyframes done-check-pop{ 0%{opacity:0;transform:scale(.4)} 55%{opacity:1;transform:scale(1.06)} 100%{opacity:1;transform:scale(1)} }
-@keyframes done-flash{ 0%{opacity:.55;transform:scale(.85)} 100%{opacity:0;transform:scale(1.5)} }
-@keyframes frog-particle{ 0%{opacity:1;transform:translate(0,0) scale(1)} 100%{opacity:0;transform:translate(var(--px),var(--py)) scale(.4)} }
+/* M1c — Valmis-hetken rariteettiporras (isot reaktiot) */
+@keyframes done-check-pop{ 0%{opacity:0;transform:scale(.3) rotate(-12deg)} 50%{opacity:1;transform:scale(1.25) rotate(4deg)} 100%{opacity:1;transform:scale(1) rotate(0)} }
+@keyframes done-flash{ 0%{opacity:.85;transform:scale(.8)} 100%{opacity:0;transform:scale(2.6)} }
+@keyframes done-ring{ 0%{opacity:.95;transform:scale(.4)} 100%{opacity:0;transform:scale(2.4)} }
+@keyframes frog-particle{ 0%{opacity:1;transform:translate(0,0) scale(1)} 70%{opacity:1} 100%{opacity:0;transform:translate(var(--px),var(--py)) scale(.3)} }
 .tcg-card__done-check{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:30;pointer-events:none;animation:done-check-pop var(--dur-macro) var(--ease-out-back) both;}
-.tcg-card__done-flash{position:absolute;inset:-10%;z-index:1;pointer-events:none;border-radius:50%;background:radial-gradient(circle,var(--accent) 0%,transparent 70%);animation:done-flash .35s var(--ease-out) both;}
-.tcg-card__particle{position:absolute;width:7px;height:7px;border-radius:50%;background:var(--accent);z-index:40;pointer-events:none;animation:frog-particle .5s var(--ease-out) both;}
+.tcg-card__done-flash{position:absolute;inset:-20%;z-index:1;pointer-events:none;border-radius:50%;background:radial-gradient(circle,var(--accent) 0%,transparent 65%);animation:done-flash .5s var(--ease-out) both;}
+.tcg-card__done-ring{position:absolute;inset:0;z-index:29;pointer-events:none;border-radius:16px;border:3px solid var(--gold-hi);box-shadow:0 0 26px 5px color-mix(in srgb,var(--gold-hi) 65%,transparent);animation:done-ring .8s var(--ease-out) both;}
+.tcg-card__particle{position:absolute;width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff6d8,var(--gold-hi) 60%,var(--accent) 100%);box-shadow:0 0 8px 2px color-mix(in srgb,var(--gold-hi) 70%,transparent);z-index:40;pointer-events:none;animation:frog-particle .7s var(--ease-out) both;}
 /* Lisää tehtävä — kutsuva hehku (C-variantti).
    Hehku ::afterissa ja animoidaan vain opacityä (komposoitava, ei repaint-loopia);
    väri seuraa teeman accentia (usva kulta, havu vihreä, aurinko terracotta). */
@@ -1490,7 +1495,9 @@ html[data-theme="aurinko"][data-perf="lite"] body{
         <!-- FUT-huone: pysyvät lavastekerrokset kortin taakse (render() säästää tämän) -->
         <div id="arena-room" aria-hidden="true" data-quad="q1">
           <div class="arena-room__wall"><svg class="arena-room__art"><use href="#qart-q1"/></svg></div>
+          <div class="arena-room__echo"><svg class="arena-room__echo-art"><use href="#qart-q1"/></svg></div>
           <div class="arena-room__floor"></div>
+          <div class="arena-room__castshadow"></div>
           <div class="arena-room__side arena-room__side--l"></div>
           <div class="arena-room__side arena-room__side--r"></div>
           <div class="arena-room__spot"></div>
@@ -3236,13 +3243,58 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
   position:absolute; inset:0; z-index:4;
   background:radial-gradient(ellipse at 50% 44%, transparent 48%, var(--vignette) 100%);
 }
+/* Taustaecho: aktiivisen kortin taide isona, sumeana, quad-tintattuna (FUT-liekit) */
+.arena-room__echo{
+  position:absolute; inset:-6% -6% 30%; z-index:0; pointer-events:none;
+  display:flex; align-items:center; justify-content:center;
+  transform:translateZ(-200px) scale(1.5);
+}
+.arena-room__echo-art{
+  position:absolute; width:60%; aspect-ratio:5/7; left:20%; top:12%;
+  border-radius:24px; overflow:hidden;
+  filter:blur(22px) saturate(1.2) brightness(1.12);
+  opacity:.5; mix-blend-mode:screen;
+  animation:arenaEcho 7s ease-in-out infinite;
+}
+.arena-room__echo-art svg{width:100%; height:100%; display:block;}
+.arena-room__echo::after{ /* quad-värinen bloom kortin takana */
+  content:""; position:absolute; left:50%; top:42%; transform:translate(-50%,-50%);
+  width:52%; aspect-ratio:1; border-radius:50%;
+  background:radial-gradient(circle, color-mix(in srgb, var(--qc,var(--gold)) 55%, transparent) 0%, transparent 62%);
+  filter:blur(28px); opacity:.6; mix-blend-mode:screen;
+  animation:arenaEcho 7s ease-in-out infinite;
+}
+@keyframes arenaEcho{0%,100%{opacity:.4} 50%{opacity:.72}}
+/* Kontaktivarjo lattialla — kortti seisoo 3D:nä */
+.arena-room__castshadow{
+  position:absolute; left:50%; bottom:15.5%; z-index:2; pointer-events:none;
+  width:58%; max-width:300px; height:50px;
+  transform:translateX(-50%) translate(calc(var(--px,0px) * -1.15), 0) scaleX(var(--shs,1));
+  background:radial-gradient(ellipse at 50% 50%, rgba(0,0,0,.85) 0%, rgba(0,0,0,.52) 40%, transparent 74%);
+  filter:blur(13px);
+  transition:transform .18s ease-out;
+}
+.arena-room__castshadow::before{ /* valopodium: vaalea pooli jonka päällä varjo erottuu */
+  content:""; position:absolute; left:50%; top:-70%; transform:translateX(-50%);
+  width:150%; height:240%; border-radius:50%; z-index:-1;
+  background:radial-gradient(ellipse at 50% 50%, color-mix(in srgb, var(--gold-hi) 26%, transparent) 0%, transparent 60%);
+  filter:blur(16px);
+}
+.arena-room__castshadow::after{ /* tiivis kontaktipiste tyveen */
+  content:""; position:absolute; left:50%; top:6%; transform:translateX(-50%);
+  width:56%; height:56%; border-radius:50%;
+  background:radial-gradient(ellipse at 50% 50%, rgba(0,0,0,.66) 0%, transparent 70%);
+  filter:blur(4px);
+}
 /* Areenan sisältö huonekerrosten päälle */
 #arena-label,#arena-empty{position:relative; z-index:3;}
-/* Perf-lite: ei hiukkasia, ei blend-seinätaidetta */
+/* Perf-lite: ei hiukkasia, ei blend-seinätaidetta, ei raskasta echoa */
 html[data-perf="lite"] .arena-room__dust,
+html[data-perf="lite"] .arena-room__echo,
 html[data-perf="lite"] .arena-room__art{display:none!important;}
 @media(prefers-reduced-motion:reduce){
   .arena-room__dust i{animation:none; display:none;}
+  .arena-room__echo-art,.arena-room__echo::after{animation:none;}
 }
 
 /* Areena-alueen taustakorostus */
@@ -3604,13 +3656,13 @@ html[data-perf="lite"] .arena-room__art{display:none!important;}
   z-index:3; /* huonekerrosten (lattia z:1, spot z:2) päälle, vinjetin (z:4) alle */
   transform-style:preserve-3d;
   will-change:transform;
-  transform:translateY(-4px) rotateX(var(--rx,4deg)) rotateY(var(--ry,0deg));
+  transform:translateY(-12px) rotateX(var(--rx,4deg)) rotateY(var(--ry,0deg));
   transition:transform .18s ease-out;
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,.10),
     inset 0 0 0 3px rgba(0,0,0,.35),
     0 2px 0 rgba(0,0,0,.4),
-    0 14px 32px rgba(0,0,0,.5),
+    0 20px 38px rgba(0,0,0,.55),
     0 0 36px color-mix(in srgb,var(--accent) 40%,transparent);
 }
 /* Parallaksi: q-taide ja bust liikkuvat eri nopeuksilla (vain areena) */
@@ -3649,6 +3701,7 @@ html[data-perf="lite"] .tcg-card__plate::before{display:none!important;}
 html[data-perf="lite"] .tcg-card__art svg{filter:none!important;}
 /* M1c — lite: ei välähdystä eikä partikkeleita (check-pop sallitaan, se on kevyt) */
 html[data-perf="lite"] .tcg-card__done-flash,
+html[data-perf="lite"] .tcg-card__done-ring,
 html[data-perf="lite"] .tcg-card__particle{display:none!important;}
 html[data-perf="lite"] .just-landed{animation:none!important;}
 
@@ -6380,17 +6433,24 @@ function doneFlash(cardEl){
   var f=document.createElement('div');
   f.className='tcg-card__done-flash';
   cardEl.insertBefore(f, cardEl.firstChild);
-  setTimeout(function(){ if(f.parentNode) f.parentNode.removeChild(f); }, 400);
+  setTimeout(function(){ if(f.parentNode) f.parentNode.removeChild(f); }, 550);
+}
+// Laajeneva hehkurengas (rare/mythic) — iso "wow"
+function doneRing(cardEl){
+  var r=document.createElement('div');
+  r.className='tcg-card__done-ring';
+  cardEl.appendChild(r);
+  setTimeout(function(){ if(r.parentNode) r.parentNode.removeChild(r); }, 850);
 }
 // Kultahiukkaspurkaus (mythic: sammakko) — ainoa paikka sovelluksessa jossa partikkelit sallitaan
 function frogBurst(cardEl){
-  var n=11; // 8–12
+  var n=16; // isompi purske
   for(var i=0;i<n;i++){
     var p=document.createElement('div');
     p.className='tcg-card__particle';
     var ang=(Math.PI*2*i)/n;
-    var dist=58+(i%3)*14;
-    p.style.left='50%'; p.style.top='50%';
+    var dist=82+(i%4)*18;
+    p.style.left='50%'; p.style.top='44%';
     p.style.setProperty('--px',Math.round(Math.cos(ang)*dist)+'px');
     p.style.setProperty('--py',Math.round(Math.sin(ang)*dist)+'px');
     cardEl.appendChild(p);
@@ -6398,7 +6458,7 @@ function frogBurst(cardEl){
   setTimeout(function(){
     var ps=cardEl.querySelectorAll('.tcg-card__particle');
     for(var j=0;j<ps.length;j++){ if(ps[j].parentNode) ps[j].parentNode.removeChild(ps[j]); }
-  }, 550);
+  }, 750);
 }
 
 function markDone(id){
@@ -6429,12 +6489,13 @@ function markDone(id){
       setTimeout(_renderOnce,600);  // fallback: irronnut node ei laukaise animationendia
     };
     if((rar==='rare'||rar==='mythic') && !lite && !rm){
-      // radial-välähdys + scale-pop 1.06 ennen exitiä
+      // radial-välähdys + hehkurengas + scale-pop ennen exitiä
       doneFlash(cardEl);
+      doneRing(cardEl);
       if(rar==='mythic') frogBurst(cardEl);  // ansaittu wow — vain sammakko
-      cardEl.style.transition='transform 140ms var(--ease-out-back)';
-      cardEl.style.transform='scale(1.06)';
-      setTimeout(doExit,140);
+      cardEl.style.transition='transform 200ms var(--ease-out-back)';
+      cardEl.style.transform='scale(1.14)';
+      setTimeout(doExit,200);
     } else {
       doExit();
     }
@@ -7876,6 +7937,9 @@ function render(){
           roomEl.dataset.quad=roomQuad;
           var roomUse=roomEl.querySelector('.arena-room__art use');
           if(roomUse)roomUse.setAttribute('href','#qart-'+roomQuad);
+          var echoUse=roomEl.querySelector('.arena-room__echo-art use');
+          if(echoUse)echoUse.setAttribute('href','#qart-'+roomQuad);
+          roomEl.style.setProperty('--qc','var(--'+roomQuad+')'); // bloom-tint quad-värillä
         }
       }
       if(activeTask){
@@ -8512,6 +8576,7 @@ function togglePerfMode(){
   var rmq=matchMedia('(prefers-reduced-motion:reduce)');
   var PROPS=['--ry','--rx','--px','--py','--sx','--sy'];
   function arenaCard(){return arena.querySelector('.tcg-card--arena-size');}
+  function castShadow(){return arena.querySelector('.arena-room__castshadow');}
   arena.addEventListener('pointermove',function(e){
     if(rmq.matches)return;
     if(document.documentElement.getAttribute('data-perf')==='lite')return;
@@ -8526,10 +8591,14 @@ function togglePerfMode(){
     card.style.setProperty('--py',(ny*16).toFixed(1)+'px');
     card.style.setProperty('--sx',((nx+.5)*100).toFixed(1)+'%');
     card.style.setProperty('--sy',((ny+.5)*100).toFixed(1)+'%');
+    var sh=castShadow(); // varjo liukuu tiltin mukaan (kortti seisoo)
+    if(sh){sh.style.setProperty('--px',(nx*16).toFixed(1)+'px');sh.style.setProperty('--shs',(1-Math.abs(ny)*.18).toFixed(3));}
   });
   arena.addEventListener('pointerleave',function(){
     var card=arenaCard();
     if(card)PROPS.forEach(function(p){card.style.removeProperty(p);});
+    var sh=castShadow();
+    if(sh){sh.style.removeProperty('--px');sh.style.removeProperty('--shs');}
   });
 })();
 
