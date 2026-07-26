@@ -50,6 +50,7 @@ Ei testejä, ei lintteriä, ei CI:tä.
 | `mockup-poyta.html` | Korttipöytä-ilmeen mockup (teema+lite-kytkimet) |
 | `mockup-lisaa.html` | Lisää tehtävä -napin ja -modalin suunnitteluvaihtoehdot (A/B/C) |
 | `mockup-arena-3d-plus.html` | Areenan 3D-syvyys: heittovarjo, taustaecho, isot reaktiot (referenssi) |
+| `mockup-yhtenainen.html` | Yhtenäinen näkymä: full-bleed areena + hover-peek-paneelit + pöydän kehys (vaihe 1, hyväksytty) |
 
 Pääsovellus avaa `swipe.html` ja `aamu.html` popup-ikkunoina (`window.open`). Timer aukeaa JS:llä generoituna popuppina. Kaikki ikkunat jakavat datan `localStorage`n kautta.
 
@@ -291,6 +292,45 @@ Opit:
 - Guardit: perf-lite piilottaa echon+varjon (blur-raskaat); testattu usva/havu/aurinko + lite
 - Inline `style="transform:..."` voittaa `:hover`/`:active`-säännöt (inline > pseudoluokka ilman `!important`) → staattinen transform kuuluu CSS-sääntöön, ei style-attribuuttiin
 - `dataset.quad`-vertailun sisään ei saa laittaa `--qc`-asetusta: HTML alustaa `data-quad="q1"` → ensirenderissä ehto on false ja bloom putoaa `var(--gold)`-fallbackiin. Aseta custom property guardin ulkopuolella
+
+### Yhtenäinen näkymä (2026-07-26) — vaihe 1 valmis, vaiheet 2–6 kesken
+
+**Tavoite:** desktop-näkymä tuntuu irralliselta (areena, ODOTTAVAT, TEHTÄVÄJONO, käsi ovat erillisiä grid-soluja). Areena/3D-huone täyttää koko `.wrap`in taustana; jono, odottavat ja käsi kelluvat sen päällä.
+
+**Jaakkon lukitut design-päätökset:**
+- Paneeli-ilme: **tumma well-look** — opaakki (`--well-bg`, `--well-shadow`, `inset 0 0 0 1px var(--engrave-dim)`). EI frosted glassia. (Tarkastaja ehdotti läpikuultavuutta — hylätty, opaakki on käyttäjän valinta.)
+- Käytös: **hover-peek reunoilta** — lepotilassa 44px kisko, hover/`:focus-within` avaa 340px paneelin.
+- **Pöydän kehys:** käsiviuhka tulee kehyksen alta, ei ruudun reunan alta.
+
+Suunnitelmat: `~/.claude/plans/yhten-inen-n-kym-areena-taustana-sparkling-taco.md` (vaiheet) + `...-agent-affa01188614be7e3.md` (yksityiskohtainen rakennusspec, 257 riviä).
+
+| Vaihe | Mitä | Status |
+|---|---|---|
+| 1 | `mockup-yhtenainen.html` (1037 riviä) — hyväksyntäportti | ✅ **hyväksytty** |
+| 2 | index.html: grid-romautus + käsirivin poisto | ⬜ seuraavaksi |
+| 3 | Paneeli-DOM: railit + body-kääreet + count-peilit | ⬜ |
+| 4 | Peek-käytös + focus-mode + a11y | ⬜ |
+| 5 | Arena-room full-bleed-viritys (mockupin arvot overrideina) | ⬜ |
+| 6 | DESIGN.md z:40-kaista + regressio | ⬜ |
+
+**Vaiheen 1 ratkaisut (siirrettävä index.html:ään vaiheissa 2–5):**
+- `.wrap` grid `auto 1fr` / `"topbar" "stage"`; `#arena` JA molemmat paneelit `grid-area:stage` (päällekkäiset grid-solut). Paneelit `justify-self:start/end`, `width:340px`, `z-index:40`. Paneelit pysyvät `#arena`n sisaruksina → sisarus z:40 maalautuu isoloidun areenan päälle.
+- Kisko on `<button class="side-panel__tab">` paneelin sisällä (vasen: viimeinen lapsi, oikea: ensimmäinen). Lepotila `translateX(∓(340−44)px)`, avaus `:hover,:focus-within → translateX(0)`. Sulkuviive `transition-delay:250ms` VAIN lepotilasäännössä. `--dur-panel:300ms`.
+- `.table-ledge`: 38px pöydän kehys huovan alalaidassa, `z:65` (käden 60 päällä), `pointer-events:none`. Sivupaneeleille `margin-bottom:var(--ledge-h)`.
+- `#hand-bar` = viuhkan rajausikkuna (`left/right:.75rem; top:0; bottom:.75rem; overflow:hidden`), `#hand-bar-cards` sen sisällä `position:absolute`.
+- 3D-viritys full-bleedille: perspective 1000→1300px, perspective-origin 50% 38%→40%, `__side` 16%→10%, `__spot` `min(70%,900px)`, `__echo-art` `min(60%,560px)` keskitettynä, `__echo::after` `min(52%,620px)`, `#arena-room` inset `48px 0 0`→`0`. Wall/floor/castshadow-arvot säilyvät.
+- Eise-kahva: keskitetty `max-width:min(720px, calc(100% - 2*var(--panel-w) - 2rem))`.
+
+**Opit (vaihe 1):**
+- **Heittovarjo full-bleedissä:** `bottom:5%` irtoaa kortista — kuilu kasvaa ikkunan korkeuden mukaan (120px @1600). Ankkuroi kortin tyveen: `top:calc(50% + 188px); bottom:auto` (kortti pystykeskitetty, puolikorkeus 196px − translateY 12px).
+- **Käsiviuhka + kehys:** auki-tilassa viuhka on nostettava kehyksen yläpuolelle (`translateY(-(ledge-h + 12px))`) — muuten korttien alaosa (verbi + nimi) jää kehyksen taakse. +12px kattaa viuhkan alimman kortin `translateY(11px)`-poikkeaman.
+- `#hand-bar-cards` koko viewportin levyisenä + `pointer-events:auto` on ansa: tukkii sivupaneelien alaosan ja avaa viuhkan mistä tahansa alareunan hoveristä → `pointer-events:none` kontainerille, `auto` korteille. `:hover` propagoituu silti kontaineriin lapsen kautta.
+- **`*` ei osu pseudo-elementteihin** — `html[data-perf="lite"] *{animation:none}` jättää `::after`-keyframet pyörimään. Käytä `*,*::before,*::after` sekä litessä että reduced-motionissa. (index.html tekee tämän jo oikein riveillä 785, 799–801.)
+- `writing-mode:vertical-rl` lukee JO ylhäältä alas — `rotate(180deg)` oikealle kiskolle kääntäisi tekstin alhaalta ylös JA badgen numeron ylösalaisin. Älä kierrä.
+- `visibility:hidden` fokustilaan: pelkkä `transform` + `pointer-events:none` jättää railit ja käsikortit tab-järjestykseen ruudun ulkopuolelle (WCAG 2.4.3/2.4.7). Liuku säilyy `transition: ..., visibility 0s linear var(--dur-panel)`.
+- Aurinko-teema tarvitsee omat ylikirjoitukset: `.turn-card`/`.waiting-item` (tumma plate-komposiitti → mutainen harmaa laatta), `html[data-theme="aurinko"][data-perf="lite"]` surface-tokenit (lite-lohko kaappaa ne muuten tummiksi), lattiaruudukko tokenina `--room-grid` (kovakoodattu valkoinen katoaa vaaleassa).
+- `--subtle` ja `--etch-ink` ovat koriste-/taustatokeneita (kontrasti 1.05–3.6:1) — informaatiota kantava teksti tarvitsee `--muted`in tai oman `--rail-ink`-tokenin.
+- **Headless-mittaus:** `getBoundingClientRect` on luotettava, mutta CSS-siirtymän kello ei etene virtual-time-tilassa → luokan lisäys + mittaus näyttää vanhan arvon. Eristä kaskadi lataamalla sivu tila valmiiksi päällä (`<body class="focus-mode">`), älä lisää luokkaa ajonaikana.
 
 ### Jäljellä (manuaalinen)
 
