@@ -52,10 +52,15 @@
   /* TCG kortin sisälevy (usva-oletus) */
   --plate-top:#1a2e26;
   --plate-bot:#13211b;
+  /* Yhtenäinen näkymä — sivupaneelit */
+  --panel-w:340px;
+  --rail-w:44px;
   /* Viuhka-käsi */
   --hand-card-w:130px;
   --hand-card-h:182px;
   --hand-peek-h:36px;
+  /* Pöydän kehys (desktop) */
+  --ledge-h:38px;
   --frog:#6b8a30;
   --frog-deep:#3d7a52;
   /* TCG-metallit ja levyteksti — neutraaleja, eivät seuraa --accentia */
@@ -79,6 +84,7 @@
   --dur-micro: 140ms;   /* joka klik, painallus, vuoronvaihto */
   --dur-meso:  220ms;   /* kortti areenalle, pomodoro loppuu */
   --dur-macro: 320ms;   /* Valmis */
+  --dur-panel: 300ms;   /* sivupaneelin peek-liuku */
 
   /* ── Korttipöytä — pöytämateriaali ── */
   --table-felt:#1d3527; --table-felt-deep:#10211a;
@@ -88,6 +94,10 @@
   --well-shadow:inset 0 2px 8px rgba(0,0,0,.45), inset 0 1px 2px rgba(0,0,0,.55), inset 0 -1px 0 rgba(255,255,255,.05);
   --engrave:rgba(196,154,58,.34); --engrave-dim:rgba(196,154,58,.15);
   --etch-ink:rgba(255,255,255,.38); --etch-shadow:0 1px 0 rgba(0,0,0,.6);
+  /* Kiskon teksti: --etch-ink (3.1–3.6:1) ei riitä paneelin ainoaksi tunnisteeksi */
+  --rail-ink:rgba(255,255,255,.72);
+  /* Huoneen lattiaruudukko — tokenina, muuten valkoinen katoaa vaaleassa teemassa */
+  --room-grid:rgba(255,255,255,.028);
   --chip-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 2px 0 rgba(0,0,0,.35), 0 3px 8px rgba(0,0,0,.25);
   --chip-shadow-dn:inset 0 1px 0 rgba(255,255,255,.04), 0 1px 0 rgba(0,0,0,.35);
 }
@@ -636,6 +646,8 @@ html[data-theme="aurinko"] {
   --well-shadow:inset 0 2px 6px rgba(120,80,30,.18), inset 0 1px 2px rgba(120,80,30,.14), inset 0 -1px 0 rgba(255,255,255,.7);
   --engrave:rgba(150,100,35,.4); --engrave-dim:rgba(150,100,35,.18);
   --etch-ink:rgba(45,36,23,.55); --etch-shadow:0 1px 0 rgba(255,255,255,.65);
+  --rail-ink:rgba(45,36,23,.82);
+  --room-grid:rgba(90,60,20,.07);
   --chip-shadow:inset 0 1px 0 rgba(255,255,255,.8), 0 2px 0 rgba(120,80,30,.2), 0 3px 8px rgba(120,80,30,.12);
   --chip-shadow-dn:inset 0 1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(120,80,30,.2);
 }
@@ -1462,12 +1474,19 @@ html[data-theme="aurinko"][data-perf="lite"] body{
 
       <!-- Vasen: Odottavat -->
       <div id="waiting-panel" class="waiting-panel side-panel side-panel--left tcg-left" role="region" aria-label="Odottavat tehtävät">
-        <div class="side-panel__header">
-          <span class="side-panel__title">ODOTTAVAT</span>
-          <span class="side-panel__count" id="waiting-count">0</span>
+        <div class="side-panel__body" id="waiting-body" tabindex="0">
+          <div class="side-panel__header">
+            <span class="side-panel__title">ODOTTAVAT</span>
+            <span class="side-panel__count" id="waiting-count">0</span>
+          </div>
+          <div id="waiting-list" class="waiting-list"></div>
+          <div id="waiting-empty" class="side-panel__empty">Ei odottavia.<br>Hyvin menee!</div>
         </div>
-        <div id="waiting-list" class="waiting-list"></div>
-        <div id="waiting-empty" class="side-panel__empty">Ei odottavia.<br>Hyvin menee!</div>
+        <!-- Kisko viimeisenä: oikea reuna. Avaus on CSS-only (:hover/:focus-within),
+             aria-expanded synkataan JS:llä vaiheessa 4 -->
+        <button class="side-panel__tab" type="button" aria-expanded="false" aria-controls="waiting-body">
+          Odottavat <span class="tab-badge" id="waiting-tab-count">0</span>
+        </button>
       </div>
       <!-- Keskellä: Areena -->
       <div id="arena" class="tcg-arena" role="region" aria-label="Areena — aktiivinen tehtävä">
@@ -1503,13 +1522,19 @@ html[data-theme="aurinko"][data-perf="lite"] body{
       </div>
       <!-- Oikea: Tehtäväjono -->
       <div id="turn-panel" class="turn-panel side-panel side-panel--right tcg-right" role="region" aria-label="Tehtäväjono — seuraavat tehtävät">
-        <div class="side-panel__header">
-          <span class="side-panel__title">TEHTÄVÄJONO</span>
-          <span class="pile-ico" aria-hidden="true"></span>
-          <span class="side-panel__count" id="turn-count">0</span>
+        <!-- Kisko ensimmäisenä: vasen reuna -->
+        <button class="side-panel__tab" type="button" aria-expanded="false" aria-controls="turn-body">
+          Tehtäväjono <span class="tab-badge" id="turn-tab-count">0</span>
+        </button>
+        <div class="side-panel__body" id="turn-body" tabindex="0">
+          <div class="side-panel__header">
+            <span class="side-panel__title">TEHTÄVÄJONO</span>
+            <span class="pile-ico" aria-hidden="true"></span>
+            <span class="side-panel__count" id="turn-count">0</span>
+          </div>
+          <div id="turn-list" class="turn-list"></div>
+          <div id="turn-empty" class="side-panel__empty" style="display:none">Jono tyhjä.<br>Lisää tehtäviä ↑-napilla.</div>
         </div>
-        <div id="turn-list" class="turn-list"></div>
-        <div id="turn-empty" class="side-panel__empty" style="display:none">Jono tyhjä.<br>Lisää tehtäviä ↑-napilla.</div>
       </div>
 
     <!-- ── Vaihe 5A TCG: Tehtäväkäsi-baari (desktop) ── -->
@@ -1521,6 +1546,8 @@ html[data-theme="aurinko"][data-perf="lite"] body{
       <span id="hand-toggle-label">Käsi</span>
     </button>
     <!-- ── /Vaihe 5A TCG ── -->
+    <!-- Pöydän kehys: käsiviuhka liukuu tämän alta, ei ruudun reunan alta (desktop) -->
+    <div class="table-ledge" aria-hidden="true"></div>
   </div>
 
   <!-- MATRIX -->
@@ -2118,6 +2145,18 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   scrollbar-width:none;
 }
 .side-panel::-webkit-scrollbar{display:none}
+/* Body-kääre + kisko: mobiilissa kääre on läpinäkyvä pinoaja, kisko piilossa.
+   Desktop (≥900px) muuttaa paneelin riviksi ja siirtää well-skinin kääreeseen. */
+.side-panel__body{
+  display:flex;
+  flex-direction:column;
+  gap:.3rem;
+  flex:1 1 auto;
+  min-width:0;
+}
+.side-panel__tab{display:none}
+/* Pöydän kehys vain desktopilla */
+.table-ledge{display:none}
 
 .side-panel__header{
   display:flex;
@@ -3201,8 +3240,8 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
   transform:rotateX(76deg); transform-origin:50% 0;
   background:
     radial-gradient(ellipse at 50% 18%, color-mix(in srgb, var(--gold) 30%, transparent) 0%, color-mix(in srgb, var(--gold) 10%, transparent) 34%, transparent 60%),
-    repeating-linear-gradient(90deg, rgba(255,255,255,.028) 0 1px, transparent 1px 72px),
-    repeating-linear-gradient(0deg, rgba(255,255,255,.028) 0 1px, transparent 1px 72px),
+    repeating-linear-gradient(90deg, var(--room-grid) 0 1px, transparent 1px 72px),
+    repeating-linear-gradient(0deg, var(--room-grid) 0 1px, transparent 1px 72px),
     linear-gradient(180deg, color-mix(in srgb, var(--table-felt) 88%, white) 0%, var(--table-felt-deep) 78%);
 }
 /* Sivuseinien tummennus — teemaseuraava (--vignette) */
@@ -3476,8 +3515,10 @@ html[data-perf="lite"] .arena-room__art{display:none!important;}
   position:relative;
   width:280px;aspect-ratio:5/7;
   border-radius:14px;padding:3px;
-  /* common: himmeä valkoreunus (rare/mythic/uncommon yliajavat) */
-  background:linear-gradient(165deg,rgba(255,255,255,.30),rgba(255,255,255,.10) 50%,rgba(255,255,255,.22));
+  /* common: himmeä valkoreunus (rare/mythic/uncommon yliajavat).
+     Opaakki pohjaväri viimeisenä kerroksena — muuten reunus on läpikuultava
+     ja alla oleva areenakortti paistaa käsikortin läpi. */
+  background:linear-gradient(165deg,rgba(255,255,255,.30),rgba(255,255,255,.10) 50%,rgba(255,255,255,.22)),var(--plate-bot);
   box-shadow:
     0 2px 0 rgba(0,0,0,.4),
     0 10px 24px rgba(0,0,0,.45);
@@ -3841,12 +3882,11 @@ svg[aria-hidden="true"]{pointer-events:none;}
     padding: 0;
     height: calc(100vh - 1.5rem);
     display: grid;
-    grid-template-rows: auto 1fr auto;
-    grid-template-columns: 22% 56% 22%;
+    grid-template-rows: auto 1fr;
+    grid-template-columns: 1fr;
     grid-template-areas:
-      "topbar topbar topbar"
-      "left   arena  right"
-      "bottom bottom bottom";
+      "topbar"
+      "stage";
     border: none;
     border-radius: var(--r-lg);
     background:
@@ -3900,14 +3940,64 @@ svg[aria-hidden="true"]{pointer-events:none;}
     flex-wrap: nowrap;
     flex-shrink: 0;
   }
-  /* hand-bar: gridin pohjarivi pysyy aina 182px → arena ei liiku */
+  /* body-padding ei tarvita: .wrap on kiinteä 100vh-ruutu */
+  body { padding-bottom: 0; }
+  /* Pöydän kehys: käsiviuhka tulee kehyksen alta, ei ruudun reunan alta.
+     z:65 > käsi 60. pointer-events:none — muuten kehys veisi hoverin korteilta. */
+  .table-ledge {
+    display: block;
+    position: fixed;
+    /* Kiinni ikkunan alareunaan: kehys ON työkalun alareuna, sen alta ei saa
+       pilkottaa huovan alamarginaalia eikä paneelien alareunoja */
+    left: .75rem; right: .75rem; bottom: 0;
+    height: calc(var(--ledge-h) + .75rem);
+    z-index: 65;
+    pointer-events: none;
+    border-radius: 0;
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--table-felt-deep) 72%, black) 0%,
+      color-mix(in srgb, var(--table-felt) 46%, black) 58%,
+      color-mix(in srgb, var(--table-felt-deep) 86%, black) 100%);
+    box-shadow:
+      inset 0 1px 0 var(--engrave),
+      inset 0 2px 7px rgba(0,0,0,.5),
+      inset 0 -1px 0 rgba(255,255,255,.05),
+      0 -10px 20px rgba(0,0,0,.34);
+  }
+  /* Korttiaukon vihje kehyksen keskellä */
+  .table-ledge::after {
+    content: ""; position: absolute; left: 50%; top: 0; transform: translateX(-50%);
+    width: min(46%, 620px); height: 3px; border-radius: 0 0 3px 3px;
+    background: linear-gradient(90deg, transparent,
+      color-mix(in srgb, var(--gold) 42%, transparent) 22%,
+      color-mix(in srgb, var(--gold) 42%, transparent) 78%, transparent);
+    opacity: .75;
+  }
+  html[data-theme="aurinko"] .table-ledge {
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--table-felt-deep) 86%, #8a6a3a) 0%,
+      color-mix(in srgb, var(--table-felt) 70%, #a8845a) 58%,
+      color-mix(in srgb, var(--table-felt-deep) 78%, #7a5a2e) 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.55),
+      inset 0 2px 6px rgba(120,80,30,.28),
+      inset 0 -1px 0 rgba(120,80,30,.2),
+      0 -10px 20px rgba(120,80,30,.18);
+  }
+  /* Sivupaneelit päättyvät kehyksen yläreunaan */
+  .tcg-left, .tcg-right { margin-bottom: var(--ledge-h); }
+  /* hand-bar: pois gridistä — viuhkan rajausikkuna, päättyy huovan alareunaan
+     (kortit eivät vuoda pöydän ulkopuolelle sivun taustalle) */
   #hand-bar {
-    grid-area: bottom;
-    position: relative;
-    bottom: auto; left: auto; right: auto;
-    z-index: 1;
-    height: var(--hand-card-h, 182px);
-    overflow: visible;
+    grid-area: auto;
+    position: fixed;
+    top: 0; bottom: .75rem; left: .75rem; right: .75rem;
+    z-index: 60;
+    height: auto;
+    /* Peek mitataan huovan pohjasta: kehys peittää alimmat --ledge-h pikseliä */
+    --hand-peek-h: calc(36px + var(--ledge-h));
+    overflow: hidden;
+    border-radius: 0 0 var(--r-lg) var(--r-lg);
     background: transparent;
     border: none;
     pointer-events: none;
@@ -3919,7 +4009,7 @@ svg[aria-hidden="true"]{pointer-events:none;}
   }
   /* Kortit: position:fixed overlay, peek oletuksena */
   #hand-bar-cards {
-    position: fixed;
+    position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
@@ -3930,9 +4020,14 @@ svg[aria-hidden="true"]{pointer-events:none;}
     overflow: visible;
     transform: translateY(calc(100% - var(--hand-peek-h, 36px)));
     transition: transform 300ms cubic-bezier(.22,.61,.36,1);
-    pointer-events: auto;
+    /* pointer-events korteille, ei kontainerille: laatikko on koko huovan
+       levyinen ja tukkisi paneelien alaosan. :hover propagoituu lapsen kautta. */
+    pointer-events: none;
   }
-  /* Hover tai auki: kortit täysin näkyvissä */
+  #hand-bar-cards > * { pointer-events: auto; }
+  /* Auki: kortit nousevat huovan pohjaan asti — alin --ledge-h jää kehyksen
+     taakse (vain "N pom" -rivi), joten viuhka tulee kehyksen ALTA eikä kellu
+     sen yläpuolella. Nosto ei myöskään peitä areenakorttia turhan korkealta. */
   #hand-bar.hand-bar--open #hand-bar-cards {
     transform: translateY(0);
   }
@@ -3941,29 +4036,114 @@ svg[aria-hidden="true"]{pointer-events:none;}
     transform: translateY(100%);
     pointer-events: none;
   }
-  /* Kolmisarake: left / arena / right */
-  .tcg-left {
-    grid-area: left;
+  /* Yhtenäinen näkymä: areena + molemmat paneelit samassa stage-solussa.
+     Paneeli = läpinäkyvä rivi (body + kisko); well-skin on bodyssä ja kiskossa. */
+  .tcg-left,
+  .tcg-right {
+    grid-area: stage;
+    align-self: stretch;
+    width: var(--panel-w);
+    z-index: 40;
     max-height: none;
     min-height: 0;
+    display: flex;
+    flex-direction: row;
+    gap: 0;
+    overflow: visible;
+    padding: 0;
+    margin: .75rem 0;
+    background: none;
+    box-shadow: none;
+    /* Sulkuviive VAIN lepotilassa: 250ms armonaika hoverista poistuttaessa */
+    transition: transform var(--dur-panel) var(--ease-out), visibility 0s linear 0s;
+    transition-delay: 250ms;
+  }
+  /* Lepotila: vain kisko näkyvissä reunassa */
+  .tcg-left {
+    justify-self: start;
+    transform: translateX(calc(-1 * (var(--panel-w) - var(--rail-w))));
+  }
+  .tcg-right {
+    justify-self: end;
+    transform: translateX(calc(var(--panel-w) - var(--rail-w)));
+  }
+  /* Avaus: hover, näppäimistöfokus tai kiskon klikkaus (touch) */
+  .tcg-left:hover, .tcg-left:focus-within, .tcg-left.is-open,
+  .tcg-right:hover, .tcg-right:focus-within, .tcg-right.is-open {
+    transform: translateX(0);
+    transition-delay: 0ms;
+  }
+  /* Vieritys siirtyy paneelilta bodylle */
+  .side-panel__body {
     overflow-y: auto;
     scrollbar-width: none;
     padding: .6rem;
-    margin: .75rem .6rem;
     border-radius: var(--r-lg);
-    background: var(--well-bg);
+    /* Opaakki well: well-bg opaakin huovan päällä (ei backdrop-filteriä) */
+    background: linear-gradient(0deg, var(--well-bg), var(--well-bg)), var(--table-felt-deep);
     box-shadow: var(--well-shadow), inset 0 0 0 1px var(--engrave-dim);
   }
-  .tcg-left::-webkit-scrollbar { display: none; }
+  .side-panel__body::-webkit-scrollbar { display: none; }
+  .side-panel__body:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+  /* Kisko: pystyteksti + count-badge */
+  .side-panel__tab {
+    flex: 0 0 var(--rail-w);
+    width: var(--rail-w);
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    font: 600 var(--text-xs)/1 'DM Sans', sans-serif;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--rail-ink);
+    text-shadow: var(--etch-shadow);
+    background: linear-gradient(0deg, var(--well-bg), var(--well-bg)), var(--table-felt-deep);
+    box-shadow: var(--well-shadow), inset 0 0 0 1px var(--engrave-dim);
+    border: none;
+    cursor: pointer;
+  }
+  /* Ei rotate(180deg): writing-mode:vertical-rl lukee jo ylhäältä alas */
+  .tcg-left .side-panel__tab { border-radius: 0 var(--r-lg) var(--r-lg) 0; }
+  .tcg-right .side-panel__tab { border-radius: var(--r-lg) 0 0 var(--r-lg); }
+  .side-panel__tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+  .tab-badge {
+    background: var(--surface-md);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: .35rem .05rem;
+    writing-mode: horizontal-tb;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  /* ── Fokustila (ajastin käynnissä) ──
+     visibility:hidden poistaa myös tab-järjestyksestä — pelkkä transform jättäisi
+     kiskot ja käsikortit fokusoitaviksi ruudun ulkopuolelle (WCAG 2.4.3/2.4.7).
+     transition-delay:0ms — 250ms armonaika kuuluu vain hoverista poistumiseen. */
+  body.focus-mode .tcg-left,
+  body.focus-mode .tcg-right,
+  body.focus-mode #hand-bar-cards {
+    visibility: hidden;
+    pointer-events: none;
+    transition: transform var(--dur-panel) var(--ease-out), visibility 0s linear var(--dur-panel);
+    transition-delay: 0ms;
+  }
+  body.focus-mode .tcg-left  { transform: translateX(-100%); }
+  body.focus-mode .tcg-right { transform: translateX(100%); }
+  body.focus-mode #hand-bar-cards { transform: translateY(100%); }
   .tcg-arena {
-    grid-area: arena;
+    grid-area: stage;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: .5rem;
-    padding: 1rem 1rem 1rem;
-    padding-top: calc(48px + .75rem);
+    /* Alapaddingilla kortti nousee ~56px keskikohdan yläpuolelle → käsiviuhka
+       ei peitä korttia auetessaan. Kortin tyvi jää yhä lattiahorisontin alle,
+       joten 3D-vaikutelma säilyy. */
+    padding: 1rem 1rem 7rem;
     min-height: 0;
   }
   /* Sankarikortti: kiinteä leveys, ei venyvä */
@@ -3981,6 +4161,34 @@ svg[aria-hidden="true"]{pointer-events:none;}
   #arena {
     isolation: isolate;
   }
+  /* ── FUT-huone full-bleedinä: mockup-yhtenainen.html:n arvot ──
+     Vain desktop-overrideina — globaalit säännöt (~3190) pitävät mobiilin ennallaan. */
+  #arena {
+    perspective: 1300px;
+    perspective-origin: 50% 40%;
+  }
+  #arena-room {
+    inset: 0;              /* eise-kahva ei enää vie huoneen yläreunaa */
+    perspective: 1300px;
+    perspective-origin: 50% 40%;
+  }
+  /* Sivuvarjot kapeammiksi — 16 % leveällä stagella söisi paneelivyöhykkeet */
+  .arena-room__side { width: 10%; }
+  /* Katot: valo ja echo eivät venyy koko leveydelle (blur-ala = perf) */
+  .arena-room__spot { width: min(70%, 900px); }
+  .arena-room__echo-art {
+    width: min(60%, 560px);
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .arena-room__echo::after { width: min(52%, 620px); }
+  /* Heittovarjo ankkuroidaan kortin tyveen: full-bleedillä bottom:5% irtoaisi
+     kortista (kuilu kasvaa ikkunan korkeuden mukaan). --card-base = kortin
+     alareunan etäisyys areenan pystykeskeltä, asetetaan _syncCastShadow():ssa. */
+  .arena-room__castshadow {
+    top: calc(50% + var(--card-base, 188px));
+    bottom: auto;
+  }
   /* Tyhjä tila: kaiverrettu teksti syvennyksen sisällä */
   #arena-empty {
     background: transparent;
@@ -3990,22 +4198,12 @@ svg[aria-hidden="true"]{pointer-events:none;}
     text-shadow: var(--etch-shadow);
     font-style: italic;
   }
-  .tcg-right {
-    grid-area: right;
-    max-height: none;
-    min-height: 0;
-    overflow-y: auto;
-    scrollbar-width: none;
-    padding: .6rem;
-    margin: .75rem .6rem;
-    border-radius: var(--r-lg);
-    background: var(--well-bg);
-    box-shadow: var(--well-shadow), inset 0 0 0 1px var(--engrave-dim);
-  }
-  .tcg-right::-webkit-scrollbar { display: none; }
-  /* Sticky-otsikko: huopa-liuku peittää scrollatun sisällön syvennyksessä */
+  /* Sticky-otsikko: well-bg-pohjakerros, muuten otsikko on paneelia vaaleampi
+     laikku ja alin 25 % läpinäkyvä (rivit paistavat läpi vieritettäessä) */
   .side-panel__header {
-    background: linear-gradient(180deg, var(--table-felt-deep) 75%, transparent);
+    background: linear-gradient(180deg, var(--table-felt-deep) 75%, transparent),
+                linear-gradient(0deg, var(--well-bg), var(--well-bg)),
+                var(--table-felt-deep);
   }
   /* main-content-area ei ole enää grid-alue desktopilla */
   #main-content-area {
@@ -4015,15 +4213,15 @@ svg[aria-hidden="true"]{pointer-events:none;}
   #v-inbox {
     display: contents;
   }
-  /* Ham-nappi kehyksen sisälle */
+  /* Ham-nappi kehyksen sisälle, vasemman kiskon oikealle puolelle */
   #ham-btn {
     bottom: 1.5rem;
-    left: 1.5rem;
+    left: calc(var(--rail-w) + 1.5rem);
   }
   /* Pakka-nappi ham-napin viereen (ei päällekkäin) */
   #inv-btn {
     bottom: 1.5rem;
-    left: 4.25rem;
+    left: calc(var(--rail-w) + 4.25rem);
   }
 }
 /* ── EISENHOWER PEEK — globaali (toimii myös mobiililla) ── */
@@ -4031,12 +4229,30 @@ svg[aria-hidden="true"]{pointer-events:none;}
 #eise-handle{position:absolute;top:0;left:0;right:0;z-index:10;height:48px;padding:0 1rem;background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.18)),var(--surface-strong,var(--surface));border-bottom:1px solid var(--border);box-shadow:inset 0 1px 0 rgba(255,255,255,.07), 0 1px 0 var(--engrave-dim);cursor:pointer;display:flex;align-items:center;gap:.75rem;transition:background .15s;pointer-events:auto;text-align:left}
 #eise-handle:hover{background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.18)),var(--surface-xs,var(--surface));box-shadow:inset 0 1px 0 rgba(255,255,255,.07), 0 1px 0 var(--engrave)}
 #eise-handle.eise-handle--hidden{display:none!important}
+/* Yhtenäinen näkymä: kahva keskitetyksi. Kahva on #arenan stacking-kontekstissa
+   (z:10) eikä voi nousta paneelien (z:40) päälle → pidetään paneelivyöhykkeiden
+   välissä. Oma media-lohko, koska globaali sääntö on desktop-blokin JÄLKEEN. */
+@media (min-width: 900px){
+  #eise-handle{
+    left:50%; right:auto; transform:translateX(-50%);
+    /* Väistetään KISKOT, ei koko paneelileveyttä: paneeli on auki vain hoverissa ja
+       peittää kahvan reunan silloin z:40 > z:10 -sääntönä. --panel-w:llä laskettuna
+       kahva kutistui 132px:iin @900 ja kvadranttiluvut valuivat ulos. */
+    width:100%; max-width:min(720px, calc(100% - 2 * var(--rail-w) - 2rem));
+    border-radius:0 0 var(--r-lg) var(--r-lg);
+    overflow:hidden;
+  }
+  /* Ilmoitus nousee pöydän kehyksen yläpuolelle — muuten se lepää tummalla
+     kehyksellä (kehys z:65, notif z:100 → näkyy, mutta kontrasti romahtaa). */
+  .notif{ bottom: calc(var(--ledge-h) + 3rem); }
+}
 .eise-hgrid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;width:30px;height:24px;gap:2px;flex-shrink:0}
 .eise-hcell{border-radius:2px;opacity:.75}
 .eise-hcell.hc1{background:var(--q1)}.eise-hcell.hc2{background:var(--q2)}.eise-hcell.hc3{background:var(--q3)}.eise-hcell.hc4{background:var(--q4)}
 .eise-hlabel{font-size:var(--text-xs);font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;flex-shrink:0}
 .eise-hcounts{display:flex;gap:.55rem;flex:1;flex-wrap:wrap}
-.eise-hcount{display:flex;align-items:center;gap:.22rem;font-size:var(--text-xs);color:var(--subtle);font-weight:300}
+/* --muted, ei --subtle: luvut kantavat informaatiota (aurinko-teemassa --subtle katoaa) */
+.eise-hcount{display:flex;align-items:center;gap:.22rem;font-size:var(--text-xs);color:var(--muted);font-weight:300}
 .eise-hdot{width:6px;height:6px;border-radius:1px;flex-shrink:0}
 .eise-hchev{color:var(--subtle);font-size:.65rem;flex-shrink:0;margin-left:auto}
 #eise-peek{position:absolute;top:0;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--border);transform:translateY(-100%);transition:transform 300ms cubic-bezier(.22,.61,.36,1);overflow-y:auto;display:flex;flex-direction:column;pointer-events:auto}
@@ -6695,6 +6911,8 @@ function toggleTimer(){
   }
   // Piilota eise-handle kun ajastin käynnistyy
   var _eh=document.getElementById('eise-handle');if(_eh)_eh.classList.add('eise-handle--hidden');
+  // Fokustila: sivupaneelit + käsi piiloon ajastimen ajaksi
+  document.body.classList.add('focus-mode');
   if(_eisePeekOpen)closeEisePeek();
   startTmr();
   render();
@@ -6911,6 +7129,8 @@ function stopAll(){
   }
   // Näytä eise-handle kun ajastin pysähtyy
   var _seh=document.getElementById('eise-handle');if(_seh)_seh.classList.remove('eise-handle--hidden');
+  // Fokustila pois: sivupaneelit + käsi takaisin
+  document.body.classList.remove('focus-mode');
   document.getElementById('btnNx').style.display='none';
   document.getElementById('btnDn').style.display='none';
   var wt=document.getElementById('btnWt');if(wt)wt.style.display='none';
@@ -7486,6 +7706,36 @@ function _attachHandHoverDesktop(){
     }, 5000);
   });
 }
+
+// ── Yhtenäinen näkymä: sivupaneelien peek-kiskot (desktop) ──
+// Avaus on CSS-only (:hover/:focus-within). JS hoitaa aria-expandedin,
+// touch-klikkauksen (.is-open) ja Esc-sulun.
+function _attachSidePanelRails(){
+  var panels = document.querySelectorAll('.side-panel');
+  for(var i=0;i<panels.length;i++){
+    (function(panel){
+      var tab = panel.querySelector('.side-panel__tab');
+      if(!tab) return;
+      function setExp(v){ tab.setAttribute('aria-expanded', v ? 'true' : 'false'); }
+      panel.addEventListener('mouseenter', function(){ setExp(true); });
+      panel.addEventListener('mouseleave', function(){ panel.classList.remove('is-open'); setExp(false); });
+      panel.addEventListener('focusin',  function(){ setExp(true); });
+      panel.addEventListener('focusout', function(){ if(!panel.classList.contains('is-open')) setExp(false); });
+      // Touch: kisko toggleaa (hoveria ei ole)
+      tab.addEventListener('click', function(){
+        var open = panel.classList.toggle('is-open');
+        setExp(open);
+      });
+      panel.addEventListener('keydown', function(e){
+        if(e.key !== 'Escape') return;
+        panel.classList.remove('is-open');
+        setExp(false);
+        tab.blur();
+        if(document.activeElement && panel.contains(document.activeElement)) document.activeElement.blur();
+      });
+    })(panels[i]);
+  }
+}
 // ── /Vaihe 5A TCG ──────────────────────────────────────────────────
 
 // ── Vaihe 7: Käsi-vyöhyke ────────────────────────────────────────
@@ -7616,6 +7866,8 @@ function renderTurnPanel(inbox){
   listEl.innerHTML='';
 
   if(countEl)countEl.textContent=turnTasks.length;
+  var tabCountEl=document.getElementById('turn-tab-count');
+  if(tabCountEl)tabCountEl.textContent=turnTasks.length;
   if(emptyEl)emptyEl.style.display=turnTasks.length?'none':'block';
 
   var QUAD_COLORS={q1:'#c49a3a',q2:'#2d8a52',q3:'var(--muted)',q4:'var(--muted)'};
@@ -7782,6 +8034,8 @@ function renderWaitingPanel(inbox){
   listEl.innerHTML='';
   var waiting=inbox.filter(function(t){return t.waiting&&!t.done;});
   if(countEl)countEl.textContent=waiting.length>0?waiting.length:'0';
+  var tabCountEl=document.getElementById('waiting-tab-count');
+  if(tabCountEl)tabCountEl.textContent=waiting.length;
   if(emptyEl)emptyEl.style.display=waiting.length?'none':'block';
   var quadColors={q1:'#c49a3a',q2:'#2d8a52',q3:'var(--muted)',q4:'var(--muted)'};
   waiting.forEach(function(t){
@@ -7855,6 +8109,7 @@ document.addEventListener('DOMContentLoaded', function(){
   setTimeout(_updatePbPlaceholder, 100);
   initHandBarState();
   _attachHandHoverDesktop();
+  _attachSidePanelRails();
   initSolidius();
 });
 
@@ -8035,7 +8290,22 @@ function render(){
   renderSummary();
   renderProjects();
   checkOnboarding();
+  _syncCastShadow();
 }
+
+// Heittovarjo kortin tyveen: full-bleed-stagella kiinteä offset irtoaisi kortista,
+// ja kortin korkeus vaihtelee (toimintanapit). Mitataan todellinen alareuna.
+function _syncCastShadow(){
+  if(window.innerWidth < 900) return;
+  var arena=document.getElementById('arena'), room=document.getElementById('arena-room');
+  if(!arena||!room) return;
+  var card=arena.querySelector('.tcg-card--arena-size, .card-new--arena');
+  if(!card){ room.style.removeProperty('--card-base'); return; }
+  var a=arena.getBoundingClientRect(), c=card.getBoundingClientRect();
+  if(!a.height||!c.height) return;
+  room.style.setProperty('--card-base', Math.round(c.bottom-(a.top+a.height/2)+4)+'px');
+}
+window.addEventListener('resize', _syncCastShadow);
 
 // ── SCHEDULE ──
 var newSchedule=null; // {type:'once'|'repeat', date?, time, days?[]}

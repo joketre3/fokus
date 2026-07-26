@@ -88,7 +88,7 @@ Jokainen tiedosto on itsenäinen: kaikki CSS ja JS sisäänrakennettu HTML-tiedo
 - `startTmr()` ei kutsu `render()` — kutsu manuaalisesti heti perään jos UI pitää päivittää (esim. nappi-teksti)
 - Mobiilikaappaus headlessilla: `google-chrome --headless=new --no-sandbox --disable-gpu --window-size=390,844 --screenshot=/tmp/out.png "http://localhost:8765/file.html"`
 - Impeccable-detektori: `node /home/jaakko/.agents/skills/impeccable/scripts/detect.mjs --json index.html`
-- Impeccable-baseline: 3 tunnettua riketta jotka EIVÄT ole bugeja — bounce-easing (M1:n tarkoituksellinen overshoot), em-dash-overuse (suomen välimerkki), dark-glow r.~661 (aurinko-chip-token, väärä positiivi) — älä "korjaa", vertaa vain deltaa
+- Impeccable-baseline: **4 osumaa / 3 kategoriaa** jotka EIVÄT ole bugeja — bounce-easing ×2 (M1:n tarkoituksellinen overshoot), em-dash-overuse (suomen välimerkki), dark-glow (aurinko-chip-token, väärä positiivi) — älä "korjaa", vertaa vain deltaa. Rivinumerot liikkuvat, vertaa `git show HEAD:index.html` -kopioon.
 - Headless Chrome ei aja `initTheme`a (Firebase/CSP offline) — teemojen testaus headlessissa: temp-kopio kovakoodatulla `data-theme`-attribuutilla, ei localStorage
 - Rinnakkaishaarojen mergen/rebasen jälkeen tarkista funktioduplikaatit: `grep -c "function nimi" index.html` — auto-merge voi tuoda saman funktion kahdesti (esim. rarityOf PR #4 + M1)
 - Projektiväri-indikaattori: `box-shadow: inset 0 3px 0 <väri>` — ei `border-left` eikä `border-top` (detektori ampuu kaikista `border-top:Npx solid` -säännöistä)
@@ -293,7 +293,7 @@ Opit:
 - Inline `style="transform:..."` voittaa `:hover`/`:active`-säännöt (inline > pseudoluokka ilman `!important`) → staattinen transform kuuluu CSS-sääntöön, ei style-attribuuttiin
 - `dataset.quad`-vertailun sisään ei saa laittaa `--qc`-asetusta: HTML alustaa `data-quad="q1"` → ensirenderissä ehto on false ja bloom putoaa `var(--gold)`-fallbackiin. Aseta custom property guardin ulkopuolella
 
-### Yhtenäinen näkymä (2026-07-26) — vaihe 1 valmis, vaiheet 2–6 kesken
+### Yhtenäinen näkymä (2026-07-26) — valmis
 
 **Tavoite:** desktop-näkymä tuntuu irralliselta (areena, ODOTTAVAT, TEHTÄVÄJONO, käsi ovat erillisiä grid-soluja). Areena/3D-huone täyttää koko `.wrap`in taustana; jono, odottavat ja käsi kelluvat sen päällä.
 
@@ -307,11 +307,20 @@ Suunnitelmat: `~/.claude/plans/yhten-inen-n-kym-areena-taustana-sparkling-taco.m
 | Vaihe | Mitä | Status |
 |---|---|---|
 | 1 | `mockup-yhtenainen.html` (1037 riviä) — hyväksyntäportti | ✅ **hyväksytty** |
-| 2 | index.html: grid-romautus + käsirivin poisto | ⬜ seuraavaksi |
-| 3 | Paneeli-DOM: railit + body-kääreet + count-peilit | ⬜ |
-| 4 | Peek-käytös + focus-mode + a11y | ⬜ |
-| 5 | Arena-room full-bleed-viritys (mockupin arvot overrideina) | ⬜ |
-| 6 | DESIGN.md z:40-kaista + regressio | ⬜ |
+| 2 | index.html: grid-romautus + käsirivin poisto | ✅ |
+| 3 | Paneeli-DOM: railit + body-kääreet + count-peilit | ✅ |
+| 4 | Peek-käytös + focus-mode + a11y | ✅ |
+| 5 | Arena-room full-bleed-viritys + pöydän kehys | ✅ |
+| 6 | DESIGN.md z:40-kaista + täysregressio | ✅ |
+
+**Toteutus index.html:ssä (vaiheet 2–5):**
+- Tokenit `:root`iin: `--panel-w:340px`, `--rail-w:44px`, `--ledge-h:38px`, `--dur-panel:300ms`, `--rail-ink` (3 teemaa), `--room-grid` (3 teemaa)
+- `.wrap` desktop-grid: `auto 1fr` / `1fr`, areat `"topbar" "stage"`. `.tcg-arena` + `.tcg-left` + `.tcg-right` kaikki `grid-area:stage`; paneelit `justify-self:start/end`, `align-self:stretch`, `width:var(--panel-w)`, `z:40`, `margin:.75rem 0` + `margin-bottom:var(--ledge-h)`
+- Paneeli = läpinäkyvä flex-rivi; well-skin (`linear-gradient(0deg,var(--well-bg),var(--well-bg)), var(--table-felt-deep)`) siirtyi `.side-panel__body`yn ja `.side-panel__tab`iin. Vieritys bodylle. Base-CSS: `.side-panel__body` pelkkä flex-pinoaja, `.side-panel__tab{display:none}`, `.table-ledge{display:none}` → mobiili + 600–899px ennallaan
+- `_attachSidePanelRails()` (kutsu `_attachHandHoverDesktop()`:n perässä): `aria-expanded`-synkka, kiskon klik-toggle `.is-open` (touch), Esc + blur
+- `body.focus-mode` päälle `toggleTimer`issa (eise-kahvan piilotuksen vieressä), pois `stopAll()`:ssa
+- `_syncCastShadow()` render()-lopussa + resize: mittaa areenakortin alareunan → `--card-base` `#arena-room`iin
+- `.tcg-arena` alapadding `7rem` → kortti ~56px keskikohdan yläpuolella (käsi ei peitä sitä)
 
 **Vaiheen 1 ratkaisut (siirrettävä index.html:ään vaiheissa 2–5):**
 - `.wrap` grid `auto 1fr` / `"topbar" "stage"`; `#arena` JA molemmat paneelit `grid-area:stage` (päällekkäiset grid-solut). Paneelit `justify-self:start/end`, `width:340px`, `z-index:40`. Paneelit pysyvät `#arena`n sisaruksina → sisarus z:40 maalautuu isoloidun areenan päälle.
@@ -330,7 +339,30 @@ Suunnitelmat: `~/.claude/plans/yhten-inen-n-kym-areena-taustana-sparkling-taco.m
 - `visibility:hidden` fokustilaan: pelkkä `transform` + `pointer-events:none` jättää railit ja käsikortit tab-järjestykseen ruudun ulkopuolelle (WCAG 2.4.3/2.4.7). Liuku säilyy `transition: ..., visibility 0s linear var(--dur-panel)`.
 - Aurinko-teema tarvitsee omat ylikirjoitukset: `.turn-card`/`.waiting-item` (tumma plate-komposiitti → mutainen harmaa laatta), `html[data-theme="aurinko"][data-perf="lite"]` surface-tokenit (lite-lohko kaappaa ne muuten tummiksi), lattiaruudukko tokenina `--room-grid` (kovakoodattu valkoinen katoaa vaaleassa).
 - `--subtle` ja `--etch-ink` ovat koriste-/taustatokeneita (kontrasti 1.05–3.6:1) — informaatiota kantava teksti tarvitsee `--muted`in tai oman `--rail-ink`-tokenin.
-- **Headless-mittaus:** `getBoundingClientRect` on luotettava, mutta CSS-siirtymän kello ei etene virtual-time-tilassa → luokan lisäys + mittaus näyttää vanhan arvon. Eristä kaskadi lataamalla sivu tila valmiiksi päällä (`<body class="focus-mode">`), älä lisää luokkaa ajonaikana.
+- **Headless-mittaus:** `getBoundingClientRect` on luotettava. Tilaluokkien testaus on silti turvallisinta lataamalla sivu tila valmiiksi päällä (`<body class="focus-mode">`) — ajonaikainen luokan lisäys + heti mittaus osuu kesken siirtymän. (Korjattu vaiheessa 6: virtual-time AJAA `setTimeout`in, joten viivästetty mittaus toimii — ks. vaiheen 6 opit.)
+
+**Opit (vaiheet 2–5, korjaavat osan vaiheen 1 oletuksista):**
+- **Heittovarjon kiinteä offset ei riitä:** mockupin `top:calc(50% + 188px)` olettaa 392px kortin, mutta index-areenakortissa on lisäksi toimintanapit (~490px) → varjo jäi kortin taakse. Ratkaisu: JS mittaa kortin alareunan (`.tcg-card--arena-size`, EI `.card-new--arena`) ja asettaa `--card-base`.
+- **Käden auki-tila ei saa nousta kehyksen yläpuolelle** (vastoin vaiheen 1 opetusta): `translateY(-(ledge-h+12px))` nostaa kortin kokonaan kehyksen yli → viuhka kelluu eikä "tule pöydän alta". Oikein `translateY(0)`: alin `--ledge-h` (vain "N pom" -rivi) jää kehyksen taakse.
+- **Kehys kiinni ikkunan alareunaan:** `bottom:.75rem` jättää 12px raon, josta näkyy huovan alamarginaali ja paneelien alareunat. Oikein `bottom:0; height:calc(var(--ledge-h) + .75rem); border-radius:0`.
+- **`.tcg-card`-perusreunus oli läpikuultava** (`rgba(255,255,255,.30)`-liuku) → areenakortti paistoi käsikortin läpi. Lisää opaakki `var(--plate-bot)` viimeiseksi taustakerrokseksi. Rare/mythic/uncommon olivat jo opaakkeja.
+- **Globaali eise-peek-CSS on desktop-media-lohkon JÄLKEEN** (rivi ~4227) → `#eise-handle`-override desktop-blokissa häviää lähdejärjestyksessä. Tarvitsee oman `@media (min-width:900px)` -lohkon globaalin säännön perään.
+- `#main-content-area` + `#v-inbox` `display:contents` tekee KAIKISTA lapsista grid-itemeitä — `#onboarding` (näkyvissä 1. käynnistyksellä) luo implisiittisen rivin ja litistää stagen. Näkyy vain uudella käyttäjällä / headless-testissä.
+- **Headless + localStorage:** tila siemenetään `<body>`-alkuun injektoidulla `localStorage.setItem`-skriptillä (`fap_onboarded`, `eis_v5_work`, `fap_theme`, `fap_perf`). (Väite "virtual-time ei aja `setTimeout`ia" oli väärä — ks. vaiheen 6 opit: JS-mittaussondit toimivat, kunhan viive on riittävä.)
+- Käsi täyttyy `buildHandQueue`sta: vain q1/q2-tehtävät jotka EIVÄT ole aktiivina eivätkä jonossa (`turn`) — testiseedissä jätä vapaita q1/q2-tehtäviä tai käsi on tyhjä.
+
+**Vaihe 6 — DESIGN.md + täysregressio:**
+- DESIGN.md: §5 Navigation -rivi kiskoista, §6 z-taulukko (0–9 / 10–39 / **40–69 lavastekerros** / 90–99), §8 tokenit (6 riviä) + 3 Named Rulea: **The Stage Rule**, **The Rail Rule**, **The Ledge Rule**
+- Korjattu 2 vikaa: eise-kahvan `max-width` laski `--panel-w`illä → 132px @900 ja kvadranttiluvut ulos laatikosta; oikein `--rail-w` (kahva väistää vain kiskot, auki oleva paneeli peittää sen z:40 > z:10 -sääntönä). `.notif` `bottom:2rem` lepäsi pöydän kehyksellä → desktop-override `calc(var(--ledge-h) + 3rem)`.
+- Impeccable-delta HEAD-baselineen: 0 (samat 4 osumaa, vain rivinumerot siirtyivät)
+
+**Opit (vaihe 6) — headless-regressiotyökalut:**
+- **Virtual-time AJAA `setTimeout`in.** JS-mittaussondi toimii: injektoi `<script>` joka mittaa `getBoundingClientRect`illa ja kirjoittaa tuloksen `document.documentElement.setAttribute('data-probe', 'PROBE'+JSON+'ENDPROBE')`, lue `--dump-dom`in tulosteesta regexillä + `html.unescape` (attribuutin `"`-merkit escapataan). Sondi `<title>`en EI toimi — sovellus ylikirjoittaa sen.
+- **Sondi VIIMEISEN `</body>`:n eteen** — ensimmäinen `</body>` on ajastin-popupin HTML-templaatissa merkkijonona. `html.rfind('</body>')`, ei `.replace(..., 1)`.
+- **Vain YKSI viivästetty snapshot** (`setTimeout(snap, 2500)`). Jos sondi ottaa myös välittömän ja `load`-snapshotin, viimeinen kirjoitus ei ole deterministisesti se myöhäisin → mittaus osuu kesken 300 ms:n paneelisiirtymän ja antaa satunnaisia välituloksia (paneeli näytti auki 1920:ssä, kiinni 900:ssa). `--virtual-time-budget` sondin viivettä isommaksi (9000).
+- **Pikselivertailun ansa:** eri `--window-size`-korkeus tuottaa eri kokoiset PNG:t, ja `ImageChops.difference` vertaa hiljaa vain leikkausta → "2,84 % regressio" oli 700×800 vs 700×844. Tarkista `Image.size` ennen diffiä. Kohinataso samasta tiedostosta kahdella ajolla: ~20 px.
+- **Osumatestaus:** `document.elementFromPoint` ei kelpaa maalausjärjestyksen todentamiseen, jos elementillä on `pointer-events:none` (esim. `.notif`, `.table-ledge`) — se ohitetaan aina. Päättele z-järjestys stacking-konteksteista.
+- Regressiovertailun baseline: `git show HEAD:index.html` → sama seed-generaattori molemmille → pikselidiffi. 700 px 0,02 % ja 390 px 0,03 % = kohinataso.
 
 ### Jäljellä (manuaalinen)
 

@@ -221,6 +221,7 @@ Järjestelmä on **litteä lepotilassa, nostettu vuorovaikutuksessa**. Pintojen 
 - **Yläpalkki (hdr):** `position: sticky top: 0`, `background: var(--surface-md)`, `backdrop-filter: blur(14px)`. Logo vasemmalla (DM Serif Display italic SVG), ajastin-widget oikealla.
 - **Hampurilaisvalikko:** Ensisijainen navigaatio sivunäkymien välillä. Aktiivinen näkymä näkyy nappi-tekstissä. Asetukset tässä, ei profiilipaneelissa.
 - **Eisenhower-paneeli (.eise-peek):** Piiloutuu/ilmaantuu draggaamalla tai klikkauksella yläreunassa. Ei perinteinen navigaatio — tilanäyttö.
+- **Sivupaneelien kiskot (.side-panel__tab, ≥900px):** ODOTTAVAT (vasen) ja TEHTÄVÄJONO (oikea) lepäävät pystykiskoina areenan reunoilla; hover/`:focus-within` tai kiskon klikkaus avaa paneelin. Kiskon badge näyttää tehtävämäärän. Esc sulkee. Ks. The Rail Rule (§8).
 - **Inventory (.inv-cat-item):** Vasemman sivupaneelin kategorianavigointi. Aktiivinen tila: `background: var(--surface-strong)`, `font-weight: 500` — ei side-tab-reunaa.
 
 ### Signature Component: TCG-areennakortti
@@ -235,8 +236,10 @@ Kaksi tilaa: **täysi** (130×130px SVG-ring, iso kellonaika DM Serif Display 2.
 
 | Taso | Käyttö |
 |---|---|
-| 0–9 | Komponentin sisäiset kerrostumat |
-| 10–99 | Kiinteä chrome (handle, sticky-palkit) |
+| 0–9 | Komponentin sisäiset kerrostumat (arena-room seinät/pöly 2, areenakortti + areenalabelit 3) |
+| 10–39 | Areenan sisäinen chrome (eise-handle 10, eise-peek 20, done-check 30) |
+| **40–69** | **Lavastekerros** — full-bleed-areenan päällä kelluvat: sivupaneelit 40, pomo-mini/sticky 50, käsiviuhka 60, pöydän kehys 65 |
+| 90–99 | Kiinteä chrome (hdr-timer 90) |
 | 100–199 | Notifikaatiot (`.notif`, `#nt`) |
 | 200–399 | Paneelit ja perusmodaalit (overlay 200, modaali 201, eise-move-menu 210, verb-pop 300) |
 | 400–499 | Pinotut modaalit (jatko 401, wiz 401) |
@@ -263,6 +266,8 @@ Set-symboli = työtilan alkukirjain (Cinzel) typelinen oikeassa reunassa. Holo v
 
 Sovellus on pelipöytä: `.wrap` on huopapinta (valolampi + vinjetti + feTurbulence-kuitu + felt-gradientti), areena on kaiverrettu korttisyvennys (`#arena::after`, border-image-SVG-kulmaornamentit), sivupaneelit ovat upotettuja vyöhykkeitä (well), jono on fyysinen korttipino ja napit ovat pelimerkkejä (chip). Kortit eivät leiju tyhjässä — ne ovat pöydällä.
 
+Desktopilla (≥900px) pöytä on **yhtenäinen**: 3D-areena täyttää koko stagen taustana, ja odottavat, jono ja käsi kelluvat sen päällä kiskoina ja viuhkana. Alaosassa pöydän kehys (`.table-ledge`) rajaa työkalun fyysisen alareunan.
+
 ### Pöytätokenit
 
 | Token | Usva | Aurinko | Käyttö |
@@ -274,6 +279,11 @@ Sovellus on pelipöytä: `.wrap` on huopapinta (valolampi + vinjetti + feTurbule
 | `--engrave` / `-dim` | kulta .34 / .15 | ruskea .4 / .18 | kaiverrusviivat |
 | `--etch-ink` / `--etch-shadow` | valk. .38 / tumma alle | tumma .55 / vaalea alle | letterpress-labelit |
 | `--chip-shadow` / `-dn` | koho / painettu | lämmin koho / painettu | nappimateriaali |
+| `--panel-w` / `--rail-w` | 340px / 44px | sama | sivupaneelin auki-/lepoleveys |
+| `--ledge-h` | 38px | sama | pöydän kehyksen korkeus |
+| `--dur-panel` | 300ms | sama | paneeliliu'un kesto |
+| `--rail-ink` | valk. .72 | ruskea .82 | kiskotekstin väri (ei `--subtle`) |
+| `--room-grid` | valk. .028 | ruskea .07 | lattiaruudukon viivat |
 
 ### Named Rules
 
@@ -286,6 +296,12 @@ Sovellus on pelipöytä: `.wrap` on huopapinta (valolampi + vinjetti + feTurbule
 **The Chip Rule.** Nappien paino = `box-shadow: var(--chip-shadow)` + `:active { transform:translateY(1px) }`. Ei background-muutoksia — teemojen `!important`-säännöt omistavat background-kerroksen.
 
 **The Slot Rule.** Areenaslotti on `#arena::after`-pseudo (`z-index:-1`, `isolation:isolate`) — `render()` tyhjentää areenan DOM-lapset, pseudot selviävät.
+
+**The Stage Rule.** Desktopilla (≥900px) `.wrap` on kaksirivinen grid `"topbar" "stage"`. Areena JA molemmat sivupaneelit ovat samassa `grid-area:stage` -solussa päällekkäin; paneelit sijoitetaan `justify-self:start/end` + `align-self:stretch`, ei absoluuttisella positiolla. Paneelit pysyvät areenan **sisaruksina** — areena luo `perspective`illä oman stacking-kontekstin, joten sen sisäiset z-arvot (2–30) eivät koskaan kilpaile lavastekerroksen (40–65) kanssa. Alle 900px grid palautuu entiselleen: railit ja kehys ovat `display:none` base-CSS:ssä, desktop-lohko herättää ne.
+
+**The Rail Rule.** Sivupaneeli lepää 44px kiskona (`--rail-w`) ja avautuu 340px:ksi (`--panel-w`) `:hover`/`:focus-within`-tilassa — liuku on `transform:translateX`, ei leveysanimaatio. Kisko on `<button>` paneelin sisällä (vasen: viimeinen lapsi, oikea: ensimmäinen), ja `writing-mode:vertical-rl` lukee jo ylhäältä alas — **ei `rotate(180deg)`**. Sulkuviive (`transition-delay:250ms`) kuuluu vain lepotilasääntöön, ei avaukseen. Fokustilassa piilotus on `visibility:hidden` + `transform`, ei pelkkä siirto — muuten kiskot ja käsikortit jäävät tab-järjestykseen ruudun ulkopuolelle (WCAG 2.4.3/2.4.7).
+
+**The Ledge Rule.** Pöydän kehys (`.table-ledge`) on työkalun fyysinen alareuna: kiinni ikkunan pohjaan (`bottom:0`, `height:calc(var(--ledge-h) + .75rem)`), `z-index:65` käden 60 päällä, `pointer-events:none` — muuten kehys veisi hoverin korteilta. Käsiviuhka tulee kehyksen **alta**: auki-tilan `translateY(0)` jättää alimman `--ledge-h`:n kehyksen taakse. Viuhkaa ei nosteta kehyksen yli — silloin se kelluisi eikä nousisi pöydän alta. Sivupaneeleille `margin-bottom:var(--ledge-h)`.
 
 ## 9. Do's and Don'ts
 
