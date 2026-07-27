@@ -365,6 +365,24 @@ Suunnitelmat: `~/.claude/plans/yhten-inen-n-kym-areena-taustana-sparkling-taco.m
 - **Osumatestaus:** `document.elementFromPoint` ei kelpaa maalausjärjestyksen todentamiseen, jos elementillä on `pointer-events:none` (esim. `.notif`, `.table-ledge`) — se ohitetaan aina. Päättele z-järjestys stacking-konteksteista.
 - Regressiovertailun baseline: `git show HEAD:index.html` → sama seed-generaattori molemmille → pikselidiffi. 700 px 0,02 % ja 390 px 0,03 % = kohinataso.
 
+### PAKKA-palkki (2026-07-27) — valmis
+
+Alakehyksestä tuli kiskojen kaltainen vaakapalkki, josta tehtäväpakka nousee. Ei muutoksia pakan sisältöön tai toimintoihin — vain kuori ja avaustapa.
+
+| Osa | Mitä |
+|---|---|
+| 1 | `.table-ledge` → `<button id="deck-rail">`: kiskojen well-skin, "PAKKA" + 4 kvadranttiväristä lukua, hover + `:focus-visible`, `aria-expanded`/`aria-controls`. `_syncDeckRail()` render()-lopussa |
+| 2 | `#inv-modal`-siirtymä → `var(--dur-panel) var(--ease-out)` (sama liuku kuin kiskoissa); `aria-expanded`-synkka |
+| 3 | `_syncHdrBottom()` → `--hdr-b`; desktop `#inv-modal{top:var(--hdr-b,0px)}` → pakka ei peitä yläpalkkia |
+| 4 | `_deckHdrClick` capture-kuuntelija `.hdr`iin avattaessa → klikkaus yläpalkkiin sulkee. Palkki `fixed` → `absolute` `.wrap`in sisään: linjaan yläpalkin kanssa, alakulmat pyöristyvät `.wrap`in radiuksesta |
+| 5 | `#inv-btn{display:none}` vain desktopilla — mobiilissa nappi säilyy (siellä ei ole palkkia) |
+
+Opit:
+- **`position:absolute` `.wrap`in sisällä on oikea työkalu reunoihin linjaamiseen:** `.wrap`illa on jo `position:relative`, `border-radius` ja `overflow:hidden`, joten `left:0;right:0;bottom:0` antaa ilmaiseksi sekä linjauksen että kulmien pyöristyksen. `fixed` + `left:.75rem` meni kehyksen yli, koska bodyn padding (1rem) ei ole samassa koordinaatistossa kuin `.wrap`in margin (.75rem) → todellinen sisennys on 28px, ei 12px.
+- **Kvadranttiväri badgen taustana vaatii tummennuksen:** puhtaalla `--q4`:llä (`#9a9a8e`) valkoinen teksti on ~2,6:1. `color-mix(in srgb, var(--qN) 78%, black)` säilyttää sävyn ja nostaa kontrastin ≥4,7:1 kaikissa kolmessa teemassa.
+- **`--dump-dom`- ja `--screenshot`-ajot eivät ole sama viewport:** dump-dom raportoi `innerHeight` 813 kun `--window-size` on 900, screenshot maalaa 900px korkean kuvan. Lite- ja normaalitilan kuvat näyttivät eroavan pystysuunnassa ~87px, vaikka DOM-mittaus antoi molemmille identtisen geometrian → kyse oli kaappausartefaktista, ei bugista. Luota mittaukseen, älä kuvaan pystysijainneissa.
+- Mobiilidiffin kohinalähde on `.notif`-toast: se on näkyvissä vaihtelevalla opasiteetilla eri ajoissa (~2000–3000 px ero rivien 770–820 alueella). Tunnista rivialueesta ennen kuin epäilet regressiota.
+
 ### Jäljellä (manuaalinen)
 
 - **`renderCardNew()`-jako** — `renderArenaCard()` tehty ✅; `renderDeckCard()` jätetty pois tarkoituksella (ks. Parannuskierros 2026-06-12)

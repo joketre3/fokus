@@ -221,6 +221,7 @@ Järjestelmä on **litteä lepotilassa, nostettu vuorovaikutuksessa**. Pintojen 
 - **Yläpalkki (hdr):** `position: sticky top: 0`, `background: var(--surface-md)`, `backdrop-filter: blur(14px)`. Logo vasemmalla (DM Serif Display italic SVG), ajastin-widget oikealla.
 - **Hampurilaisvalikko:** Ensisijainen navigaatio sivunäkymien välillä. Aktiivinen näkymä näkyy nappi-tekstissä. Asetukset tässä, ei profiilipaneelissa.
 - **Eisenhower-paneeli (.eise-peek):** Piiloutuu/ilmaantuu draggaamalla tai klikkauksella yläreunassa. Ei perinteinen navigaatio — tilanäyttö. Desktopilla se aukeaa kahvansa levyisenä (720px, keskitetty), ei koko areenan levyisenä — kiskot jäävät vapaiksi.
+- **PAKKA-palkki (.table-ledge, ≥900px):** Alareunan vaakakisko. "PAKKA" + neljä kvadranttiväristä lukua (tekemättömät tehtävät kvadranteittain). Klikkaus nostaa tehtäväpakan; sulku ×:stä, Escistä tai yläpalkkia klikkaamalla. Korvaa 📦-napin desktopilla — mobiilissa nappi säilyy. Ks. The Ledge Rule ja The Deck Rule (§8).
 - **Sivupaneelien kiskot (.side-panel__tab, ≥900px):** ODOTTAVAT (vasen) ja TEHTÄVÄJONO (oikea) lepäävät pystykiskoina areenan reunoilla; hover/`:focus-within` tai kiskon klikkaus avaa paneelin. Kiskon badge näyttää tehtävämäärän. Esc sulkee. Ks. The Rail Rule (§8).
 - **Inventory (.inv-cat-item):** Vasemman sivupaneelin kategorianavigointi. Aktiivinen tila: `background: var(--surface-strong)`, `font-weight: 500` — ei side-tab-reunaa.
 
@@ -301,7 +302,9 @@ Desktopilla (≥900px) pöytä on **yhtenäinen**: 3D-areena täyttää koko sta
 
 **The Rail Rule.** Sivupaneeli lepää 44px kiskona (`--rail-w`) ja avautuu 340px:ksi (`--panel-w`) `:hover`/`:focus-within`-tilassa — liuku on `transform:translateX`, ei leveysanimaatio. Kisko on `<button>` paneelin sisällä (vasen: viimeinen lapsi, oikea: ensimmäinen), ja `writing-mode:vertical-rl` lukee jo ylhäältä alas — **ei `rotate(180deg)`**. Sulkuviive (`transition-delay:250ms`) kuuluu vain lepotilasääntöön, ei avaukseen. Fokustilassa piilotus on `visibility:hidden` + `transform`, ei pelkkä siirto — muuten kiskot ja käsikortit jäävät tab-järjestykseen ruudun ulkopuolelle (WCAG 2.4.3/2.4.7).
 
-**The Ledge Rule.** Pöydän kehys (`.table-ledge`) on työkalun fyysinen alareuna: kiinni ikkunan pohjaan (`bottom:0`, `height:calc(var(--ledge-h) + .75rem)`), `z-index:65` käden 60 päällä, `pointer-events:none` — muuten kehys veisi hoverin korteilta. Käsiviuhka tulee kehyksen **alta**: auki-tilan `translateY(0)` jättää alimman `--ledge-h`:n kehyksen taakse. Viuhkaa ei nosteta kehyksen yli — silloin se kelluisi eikä nousisi pöydän alta. Sivupaneeleille `margin-bottom:var(--ledge-h)`.
+**The Ledge Rule.** Pöydän kehys (`.table-ledge`) on työkalun fyysinen alareuna **ja PAKKA-palkki** — kiskojen vaakasuuntainen sisarus. `position:absolute` `.wrap`in sisällä (`left:0;right:0;bottom:0`), jolloin se linjautuu yläpalkin kanssa ja `.wrap`in `border-radius` + `overflow:hidden` pyöristää alakulmat. `z-index:65` käden 60 päällä. Käsiviuhka tulee palkin **alta**: auki-tilan `translateY(0)` jättää alimman `--ledge-h`:n palkin taakse. Viuhkaa ei nosteta palkin yli — silloin se kelluisi eikä nousisi pöydän alta. Sivupaneeleille `margin-bottom:var(--ledge-h)`.
+
+**The Deck Rule.** Pakka (`#inv-modal`) nousee PAKKA-palkista samalla liu'ulla kuin kiskot (`var(--dur-panel) var(--ease-out)`) ja peittää palkin. Se pysähtyy **yläpalkin alle**: `top:var(--hdr-b)`, jonka `_syncHdrBottom()` mittaa `.hdr`in alareunasta — yläpalkki jää aina näkyviin ja sen klikkaus sulkee pakan. Palkin kvadranttiluvut käyttävät taustana `color-mix(var(--qN) 78%, black)`: sävy säilyy, mutta valkoinen teksti yltää ≥4,7:1 kaikissa teemoissa (puhdas `--q4` jäisi ~2,6:1).
 
 ## 9. Do's and Don'ts
 

@@ -1546,8 +1546,13 @@ html[data-theme="aurinko"][data-perf="lite"] body{
       <span id="hand-toggle-label">Käsi</span>
     </button>
     <!-- ── /Vaihe 5A TCG ── -->
-    <!-- Pöydän kehys: käsiviuhka liukuu tämän alta, ei ruudun reunan alta (desktop) -->
-    <div class="table-ledge" aria-hidden="true"></div>
+    <!-- Pöydän kehys = PAKKA-palkki: käsiviuhka liukuu tämän alta, ja palkista
+         nousee tehtäväpakka (desktop). Kiskojen sisarus alareunassa. -->
+    <button class="table-ledge" id="deck-rail" type="button" onclick="openInventory()"
+            aria-expanded="false" aria-controls="inv-modal" aria-label="Avaa tehtäväpakka">
+      <span class="deck-rail__label">Pakka</span>
+      <span class="deck-rail__counts" id="deck-rail-counts" aria-hidden="true"></span>
+    </button>
   </div>
 
   <!-- MATRIX -->
@@ -1831,7 +1836,8 @@ html[data-theme="aurinko"][data-perf="lite"] body{
   z-index:350;
   display:flex;flex-direction:column;
   transform:translateY(100%);
-  transition:transform .3s cubic-bezier(.4,0,.2,1);
+  /* Sama liuku kuin sivupaneelien kiskoissa: pakka nousee PAKKA-palkista */
+  transition:transform var(--dur-panel) var(--ease-out);
 }
 #inv-modal.inv-open{transform:translateY(0)}
 html[data-theme="havu"] #inv-modal{background:rgba(6,18,12,.98)}
@@ -3942,29 +3948,68 @@ svg[aria-hidden="true"]{pointer-events:none;}
   }
   /* body-padding ei tarvita: .wrap on kiinteä 100vh-ruutu */
   body { padding-bottom: 0; }
-  /* Pöydän kehys: käsiviuhka tulee kehyksen alta, ei ruudun reunan alta.
-     z:65 > käsi 60. pointer-events:none — muuten kehys veisi hoverin korteilta. */
+  /* Pöydän kehys = PAKKA-palkki. Sama well-skin kuin sivupaneelien kiskoissa,
+     vaakasuuntaisena. z:65 > käsi 60 → viuhka tulee palkin alta.
+     pointer-events:auto (ennen none): palkki on nyt nappi. Käsikorttien hover
+     ei kärsi — viuhkan näkyvä peek on palkin YLÄpuolella, palkki peittää vain
+     sen osan korteista joka oli jo piilossa. */
   .table-ledge {
-    display: block;
-    position: fixed;
-    /* Kiinni ikkunan alareunaan: kehys ON työkalun alareuna, sen alta ei saa
-       pilkottaa huovan alamarginaalia eikä paneelien alareunoja */
-    left: .75rem; right: .75rem; bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .75rem;
+    /* absolute .wrapin sisällä (ei fixed): palkki linjautuu huovan reunoihin
+       kuten yläpalkki, ja .wrapin border-radius + overflow:hidden pyöristää
+       alakulmat automaattisesti. Ikkunan reunaan ulottuva fixed-palkki meni
+       kehyksen yli. */
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
     height: calc(var(--ledge-h) + .75rem);
     z-index: 65;
-    pointer-events: none;
+    pointer-events: auto;
+    border: none;
     border-radius: 0;
-    background: linear-gradient(180deg,
-      color-mix(in srgb, var(--table-felt-deep) 72%, black) 0%,
-      color-mix(in srgb, var(--table-felt) 46%, black) 58%,
-      color-mix(in srgb, var(--table-felt-deep) 86%, black) 100%);
-    box-shadow:
-      inset 0 1px 0 var(--engrave),
-      inset 0 2px 7px rgba(0,0,0,.5),
-      inset 0 -1px 0 rgba(255,255,255,.05),
-      0 -10px 20px rgba(0,0,0,.34);
+    cursor: pointer;
+    font: inherit;
+    background: linear-gradient(0deg, var(--well-bg), var(--well-bg)), var(--table-felt-deep);
+    box-shadow: var(--well-shadow), inset 0 0 0 1px var(--engrave-dim);
+    transition: background var(--dur-panel) var(--ease-out);
   }
-  /* Korttiaukon vihje kehyksen keskellä */
+  .table-ledge:hover {
+    background: linear-gradient(0deg, var(--well-bg), var(--well-bg)),
+                color-mix(in srgb, var(--table-felt-deep) 82%, var(--gold));
+  }
+  .table-ledge:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+  /* Pakka nousee yläpalkin alle, ei sen päälle. --hdr-b asetetaan _syncHdrBottom():ssa.
+     Lepotilan translateY(100%) siirtää yhä koko korkeuden verran → pysyy piilossa. */
+  #inv-modal {
+    top: var(--hdr-b, 0px);
+    border-top: 1px solid var(--engrave-dim);
+  }
+  .deck-rail__label {
+    font: 600 var(--text-xs)/1 'DM Sans', sans-serif;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--rail-ink);
+    text-shadow: var(--etch-shadow);
+  }
+  .deck-rail__counts { display: flex; align-items: center; gap: .3rem; }
+  /* Luvun tausta = kvadrantin väri. 78 % + mustaa: sävy säilyy, mutta valkoinen
+     teksti yltää >=4,7:1 kaikissa teemoissa (puhdas --q4 jäisi ~2,6:1). */
+  .deck-q {
+    min-width: 1.35rem;
+    padding: .12rem .3rem;
+    border-radius: 20px;
+    font: 600 var(--text-xs)/1.25 'DM Sans', sans-serif;
+    text-align: center;
+    color: #fff;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.14);
+  }
+  .deck-q--q1 { background: color-mix(in srgb, var(--q1) 78%, black); }
+  .deck-q--q2 { background: color-mix(in srgb, var(--q2) 78%, black); }
+  .deck-q--q3 { background: color-mix(in srgb, var(--q3) 78%, black); }
+  .deck-q--q4 { background: color-mix(in srgb, var(--q4) 78%, black); }
+  /* Korttiaukon vihje palkin keskellä */
   .table-ledge::after {
     content: ""; position: absolute; left: 50%; top: 0; transform: translateX(-50%);
     width: min(46%, 620px); height: 3px; border-radius: 0 0 3px 3px;
@@ -3972,17 +4017,6 @@ svg[aria-hidden="true"]{pointer-events:none;}
       color-mix(in srgb, var(--gold) 42%, transparent) 22%,
       color-mix(in srgb, var(--gold) 42%, transparent) 78%, transparent);
     opacity: .75;
-  }
-  html[data-theme="aurinko"] .table-ledge {
-    background: linear-gradient(180deg,
-      color-mix(in srgb, var(--table-felt-deep) 86%, #8a6a3a) 0%,
-      color-mix(in srgb, var(--table-felt) 70%, #a8845a) 58%,
-      color-mix(in srgb, var(--table-felt-deep) 78%, #7a5a2e) 100%);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,.55),
-      inset 0 2px 6px rgba(120,80,30,.28),
-      inset 0 -1px 0 rgba(120,80,30,.2),
-      0 -10px 20px rgba(120,80,30,.18);
   }
   /* Sivupaneelit päättyvät kehyksen yläreunaan */
   .tcg-left, .tcg-right { margin-bottom: var(--ledge-h); }
@@ -4218,11 +4252,9 @@ svg[aria-hidden="true"]{pointer-events:none;}
     bottom: 1.5rem;
     left: calc(var(--rail-w) + 1.5rem);
   }
-  /* Pakka-nappi ham-napin viereen (ei päällekkäin) */
-  #inv-btn {
-    bottom: 1.5rem;
-    left: calc(var(--rail-w) + 4.25rem);
-  }
+  /* Pakka-nappi pois desktopilta: PAKKA-palkki avaa pakan. Mobiilissa nappi
+     säilyy — siellä ei ole palkkia (.table-ledge{display:none} alle 900px). */
+  #inv-btn { display: none; }
 }
 /* ── EISENHOWER PEEK — globaali (toimii myös mobiililla) ── */
 #arena{position:relative;overflow:hidden}
@@ -8332,6 +8364,28 @@ function render(){
   renderProjects();
   checkOnboarding();
   _syncCastShadow();
+  _syncDeckRail();
+  _syncHdrBottom();
+}
+
+// PAKKA-palkin kvadranttiluvut: tekemättömät tehtävät kvadranteittain.
+// Luvut ovat aria-hidden (koristeellinen rivi) → koko luettelo napin aria-labeliin.
+function _syncDeckRail(){
+  var el=document.getElementById('deck-rail-counts');
+  if(!el)return;
+  var open=(typeof tasks!=='undefined'?tasks:[]).filter(function(t){return !t.done;});
+  var labels={q1:'tee heti',q2:'aikatauluta',q3:'delegoi',q4:'poista'},parts=[];
+  el.textContent='';
+  ['q1','q2','q3','q4'].forEach(function(q){
+    var n=open.filter(function(t){return t.quad===q;}).length;
+    var b=document.createElement('span');
+    b.className='deck-q deck-q--'+q;
+    b.textContent=n;
+    el.appendChild(b);
+    parts.push(n+' '+labels[q]);
+  });
+  var rail=document.getElementById('deck-rail');
+  if(rail)rail.setAttribute('aria-label','Avaa tehtäväpakka — '+parts.join(', '));
 }
 
 // Heittovarjo kortin tyveen: full-bleed-stagella kiinteä offset irtoaisi kortista,
@@ -8347,6 +8401,18 @@ function _syncCastShadow(){
   room.style.setProperty('--card-base', Math.round(c.bottom-(a.top+a.height/2)+4)+'px');
 }
 window.addEventListener('resize', _syncCastShadow);
+
+// Pakka ei peitä yläpalkkia: mitataan yläpalkin alareuna viewport-koordinaatteina
+// (#inv-modal on position:fixed) ja tarjotaan se CSS:lle. Alle 900px ominaisuus
+// poistetaan → mobiilin inset:0 säilyy.
+function _syncHdrBottom(){
+  var root=document.documentElement, hdr=document.querySelector('.hdr');
+  if(window.innerWidth<900||!hdr){ root.style.removeProperty('--hdr-b'); return; }
+  var r=hdr.getBoundingClientRect();
+  if(!r.height) return;
+  root.style.setProperty('--hdr-b', Math.round(r.bottom)+'px');
+}
+window.addEventListener('resize', _syncHdrBottom);
 
 // ── SCHEDULE ──
 var newSchedule=null; // {type:'once'|'repeat', date?, time, days?[]}
@@ -10950,7 +11016,9 @@ function openInventory(){
 
   var modal = document.getElementById('inv-modal');
   if(!modal) return;
+  _syncHdrBottom(); // yläpalkin korkeus voi muuttua edellisen renderin jälkeen
   modal.classList.add('inv-open');
+  _setDeckRailExpanded(true);
 
   // Aseta UI-tila
   var sortEl = document.getElementById('inv-sort');
@@ -10964,6 +11032,8 @@ function openInventory(){
   renderInventory();
   _trapOn('inv-modal');
   document.addEventListener('keydown', invEscHandler);
+  var hdr = document.querySelector('.hdr');
+  if(hdr) hdr.addEventListener('click', _deckHdrClick, true);
   if(searchEl) setTimeout(function(){ searchEl.focus(); }, 300);
 }
 
@@ -10971,7 +11041,23 @@ function closeInventory(){
   _trapOff('inv-modal');
   var modal = document.getElementById('inv-modal');
   if(modal) modal.classList.remove('inv-open');
+  _setDeckRailExpanded(false);
   document.removeEventListener('keydown', invEscHandler);
+  var hdr = document.querySelector('.hdr');
+  if(hdr) hdr.removeEventListener('click', _deckHdrClick, true);
+}
+
+// Yläpalkki jää pakan yläpuolelle näkyviin → klikkaus siihen sulkee pakan.
+// Capture-vaiheessa, sama idiomi kuin eise-peekin ulkoklikkauksessa.
+// Ei koske #hdr-timeriä: se on oma fixed-elementti ja pysyy toimivana kontrollina.
+function _deckHdrClick(){
+  var modal = document.getElementById('inv-modal');
+  if(modal && modal.classList.contains('inv-open')) closeInventory();
+}
+
+function _setDeckRailExpanded(on){
+  var rail = document.getElementById('deck-rail');
+  if(rail) rail.setAttribute('aria-expanded', on ? 'true' : 'false');
 }
 
 function invEscHandler(e){
