@@ -220,7 +220,7 @@ Järjestelmä on **litteä lepotilassa, nostettu vuorovaikutuksessa**. Pintojen 
 
 - **Yläpalkki (hdr):** `position: sticky top: 0`, `background: var(--surface-md)`, `backdrop-filter: blur(14px)`. Logo vasemmalla (DM Serif Display italic SVG), ajastin-widget oikealla.
 - **Hampurilaisvalikko:** Ensisijainen navigaatio sivunäkymien välillä. Aktiivinen näkymä näkyy nappi-tekstissä. Asetukset tässä, ei profiilipaneelissa.
-- **Eisenhower-paneeli (.eise-peek):** Piiloutuu/ilmaantuu draggaamalla tai klikkauksella yläreunassa. Ei perinteinen navigaatio — tilanäyttö.
+- **Eisenhower-paneeli (.eise-peek):** Piiloutuu/ilmaantuu draggaamalla tai klikkauksella yläreunassa. Ei perinteinen navigaatio — tilanäyttö. Desktopilla se aukeaa kahvansa levyisenä (720px, keskitetty), ei koko areenan levyisenä — kiskot jäävät vapaiksi.
 - **Sivupaneelien kiskot (.side-panel__tab, ≥900px):** ODOTTAVAT (vasen) ja TEHTÄVÄJONO (oikea) lepäävät pystykiskoina areenan reunoilla; hover/`:focus-within` tai kiskon klikkaus avaa paneelin. Kiskon badge näyttää tehtävämäärän. Esc sulkee. Ks. The Rail Rule (§8).
 - **Inventory (.inv-cat-item):** Vasemman sivupaneelin kategorianavigointi. Aktiivinen tila: `background: var(--surface-strong)`, `font-weight: 500` — ei side-tab-reunaa.
 
