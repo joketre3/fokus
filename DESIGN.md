@@ -285,8 +285,11 @@ Desktopilla (≥900px) pöytä on **yhtenäinen**: 3D-areena täyttää koko sta
 | `--dur-panel` | 300ms | sama | paneeliliu'un kesto |
 | `--rail-ink` | valk. .72 | ruskea .82 | kiskotekstin väri (ei `--subtle`) |
 | `--room-grid` | valk. .028 | ruskea .07 | lattiaruudukon viivat |
+| `--room-bg` | `#071009` (havu `#010402`) | `#d8c6a4` | huone huovan ympärillä |
 
 ### Named Rules
+
+**The Room Rule.** Huovan ympärillä on tasainen `--room-bg`, ei valokuvaa. Sen pitää olla selvästi tummempi (vaaleassa teemassa tummempi/lämpimämpi) kuin huovan reuna, jotta huopa lukeutuu koholla olevana laattana — tummissa teemoissa pelkkä 1px kaiverrusviiva ei riitä erottamaan pintoja.
 
 **The Engrave Rule.** Kaiverrus on kultaa matalalla alfalla ja lasketaan One Accent Rule -budjettiin — siksi vain ohuita viivoja (1px inset, border-image-viivat), ei täyttöjä.
 

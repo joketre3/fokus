@@ -383,6 +383,19 @@ Opit:
 - **`--dump-dom`- ja `--screenshot`-ajot eivät ole sama viewport:** dump-dom raportoi `innerHeight` 813 kun `--window-size` on 900, screenshot maalaa 900px korkean kuvan. Lite- ja normaalitilan kuvat näyttivät eroavan pystysuunnassa ~87px, vaikka DOM-mittaus antoi molemmille identtisen geometrian → kyse oli kaappausartefaktista, ei bugista. Luota mittaukseen, älä kuvaan pystysijainneissa.
 - Mobiilidiffin kohinalähde on `.notif`-toast: se on näkyvissä vaihtelevalla opasiteetilla eri ajoissa (~2000–3000 px ero rivien 770–820 alueella). Tunnista rivialueesta ennen kuin epäilet regressiota.
 
+### Taustavalokuvat poistettu (2026-07-27)
+
+`index.html` 984 kt → 542 kt (**-46 %**). Kaksi upotettua JPEGiä pois: usva/havu-metsä (338 kt) ja aurinko-vuoristo (111 kt). Desktopilla niistä näkyi vain ~28px kehys huovan ympärillä; mobiilissa ne olivat koko tausta.
+
+- Tilalle `--room-bg` per teema: usva `#071009`, havu `#010402`, aurinko `#d8c6a4`
+- `body::before`-sävytykset (perus + havu + aurinko + lite) poistettu — ne olivat olemassa vain kuvan tummentamiseen
+- Nopean tilan `background-image:none`-ylikirjoitukset poistettu turhina. Sivuvaikutus: aurinko-lite ei enää näytä mudanvärisenä (se pakotti ensin tumman vihreän ja korjasi sen perässä)
+- Kuollut `@media(max-width:768px){body{background-attachment:scroll}}` pois
+
+Opit:
+- **Huoneen värin pitää olla selvästi tummempi kuin huovan reuna.** Ensimmäinen yritys (`#0c1a13`) osui 1 RGB-yksikön päähän huovan reunasta (11,24,17 vs 12,25,20) → huopa katosi taustaan, vain `inset 0 0 0 1px var(--engrave-dim)` -kultaviiva erotti ne. Mittaa pikselit `getpixel`illä molemmin puolin rajaa (x=10 huone / x=28 viiva / x=40 huopa), älä luota silmään pienessä kuvassa.
+- Suuret base64-lohkot: muokkaa Python-skriptillä `re.subn(..., count=1)` + osumamäärän tarkistus, älä `sed`illä. `grep -v base64` ei riitä kun lohko on yhdellä rivillä muun CSS:n seassa.
+
 ### Jäljellä (manuaalinen)
 
 - **`renderCardNew()`-jako** — `renderArenaCard()` tehty ✅; `renderDeckCard()` jätetty pois tarkoituksella (ks. Parannuskierros 2026-06-12)
@@ -430,7 +443,7 @@ Kutsuu Anthropic API:a suoraan selaimesta (`https://api.anthropic.com/v1/message
 - Stack: Single-file HTML, Firebase SDK v10+ (modulaarinen, CDN), Firestore, anonyymi auth, valinnainen Google Sign-In
 - Fontit: DM Sans, DM Serif Display, Cinzel (TCG-kortit)
 - Deployment: GitHub Pages https://joketre3.github.io/fokus/ (repo: "fokus")
-- Bash-työkalut: `grep -n` pipe-erotetuilla kuvioilla; `sed -n 'start,endp'` alueiden lukemiseen; `wc -l` tiedostokoon tarkistukseen ensin — HUOM: `sed -n` tulostaa base64-kuvadatan sellaisenaan, käytä `python3 -c "..."` tai `grep -v base64` jos tiedostossa on upotettuja kuvia
+- Bash-työkalut: `grep -n` pipe-erotetuilla kuvioilla; `sed -n 'start,endp'` alueiden lukemiseen; `wc -l` tiedostokoon tarkistukseen ensin. `index.html`:ssä ei ole enää upotettuja valokuvia (poistettu 2026-07-27), vain 4 pientä inline-SVG:tä — `sed -n` on taas turvallinen
 
 ## Kaupallistaminen (lisätty 2026-05-28)
 
