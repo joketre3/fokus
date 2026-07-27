@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<!--
+  Mockup: käsiviuhkan kolme vaihtoehtoa (desktop ≥900px).
+  Ei osa sovellusta — vertailupohja päätöksentekoon.
+
+  ONGELMA (mitattu index.html:stä 1440×813):
+    · auki-tila peitti areenakortin napit (viuhka 619, kortin tyvi 648)
+    · levossa näkyi 49px kortin yläreunaa: ei verbiä, ei nimeä
+    · transform-origin:bottom center → jokainen kortti kiertyi omasta
+      tyvestään, pohjat eivät konvergoineet mihinkään
+    · lattiaa horisontin (y607) ja PAKKA-palkin (y775) välissä vain 168px
+
+  MITTASÄÄNTÖ: kortin näkyvä osa palkin yläpuolella = 156px − translateY.
+  Riippumaton ikkunan korkeudesta: leikkuupohja on vp−12, palkin yläreuna
+  vp−38, käsikortti 182px. Areenakortin sijainti sen sijaan RIIPPUU
+  korkeudesta (justify-content:center), joten törmäystesti on ajettava
+  useassa koossa.
+
+  VAIHTOEHDOT
+    A  Korttiteline — PAKKA-palkkiin kaiverretaan aukko, kortit seisovat siinä
+    B  Pidetty viuhka — yksi pivot ruudun alapuolella, pohjat konvergoivat
+    C  Pöytäkäsi — korttitaso makaa huovalla huoneen perspektiivissä
+
+  Kytkimet yläreunassa: vaihtoehto, lepo/auki, teema, nopea tila.
+  Käsi aukeaa myös hoverilla kuten tuotteessa.
+
+  Törmäystesti (napin alareuna vs. käden yläreuna), 900×900 ja 1440×900:
+    A lepo +70  auki +42   |  B lepo +79  auki +44  |  C lepo +26  auki +29
+-->
+<html lang="fi" data-theme="usva" data-variant="b" data-hand="rest">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — käsiviuhka A/B/C</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&family=Cinzel:wght@600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  /* ── Usvametsä — 3 core colors ─────────────────── */
+  /* 60% PINTA  — tumma metsänvihreä lasi             */
+  --ink:rgba(255,255,255,.95);
+  --surface-xs:rgba(30,50,40,.35);
+  --surface:rgba(30,55,40,.42);
+  --surface-md:rgba(30,55,40,.5);
+  --surface-strong:rgba(30,55,40,.65);
+  --border:rgba(255,255,255,.25);
+  --muted:rgba(255,255,255,.72);
+  --subtle:rgba(255,255,255,.2);
+  
+
+  /* 10% TOIMINTO — lämmin kulta (auringonvalo)        */
+  --accent:#c49a3a;
+  --accent-dim:rgba(196,154,58,.15);
+
+  /* ── Semanttiset tilavärit ─────────────────────── */
+  --wait:#3a6b8a;
+  --pomo:#a84c28;
+  --brk:#3a6b8a;
+  --lbrk:#6a4a8a;
+
+  /* ── Kvadranttivärit (semanttinen laajennus) ───── */
+  --q1:#a84c28;        /* urgent+important  → terracotta   */
+  --q2:#2d5a3d;        /* important         → forest green */
+  --q3:#7a6a50;        /* urgent not import → muted warm   */
+  --q4:#9a9a8e;        /* neither           → stone grey   */
+
+  /* Type scale */
+  --text-xs:.72rem;
+  --text-sm:.75rem;
+  --text-base:.875rem;
+  --text-md:1rem;
+  --text-lg:1.4rem;
+  --text-xl:1.8rem;
+  /* Radius scale */
+  --r-sm:4px;
+  --r-md:8px;
+  --r-lg:12px;
+  --r-full:50%;
+  /* TCG kortin sisälevy (usva-oletus) */
+  --plate-top:#1a2e26;
+  --plate-bot:#13211b;
+  /* Yhtenäinen näkymä — sivupaneelit */
+  --panel-w:340px;
+  --rail-w:44px;
+  /* Viuhka-käsi */
+  --hand-card-w:130px;
+  --hand-card-h:182px;
+  --hand-peek-h:36px;
+  /* Pöydän kehys (desktop) */
+  --ledge-h:38px;
+  --frog:#6b8a30;
+  --frog-deep:#3d7a52;
+  /* TCG-metallit ja levyteksti — neutraaleja, eivät seuraa --accentia */
+  --gold:#c49a3a;
+  --gold-hi:#e8c66a;
+  --gold-deep:#6b4f1c;
+  --metal-silver:#b8bcc0;
+  --metal-silver-hi:#e2e6ea;
+  --tcg-plate-ink:#f4f0e4;
+  --tcg-plate-ink-dim:#e8dcc0;
+  --tcg-gold-ink:#f0d9a8;
+  --tcg-stop:#7a2020;
+  --ink-on-art:#fff;
+  --pomo-hi:#e8623a;
+  --q2-bright:#4a8a4a;
+
+  /* M1 — game feel */
+  --ease-out:      cubic-bezier(.22,.61,.36,1);   /* saapuminen */
+  --ease-out-back: cubic-bezier(.34,1.40,.64,1);  /* maltillinen overshoot, ei pomppiva */
+  --ease-in:       cubic-bezier(.40,0,1,1);        /* poistuminen */
+  --dur-micro: 140ms;   /* joka klik, painallus, vuoronvaihto */
+  --dur-meso:  220ms;   /* kortti areenalle, pomodoro loppuu */
+  --dur-macro: 320ms;   /* Valmis */
+  --dur-panel: 300ms;   /* sivupaneelin peek-liuku */
+
+  /* ── Korttipöytä — pöytämateriaali ── */
+  --table-felt:#1d3527; --table-felt-deep:#10211a;
+  --room-bg:#071009;    /* huone huovan ympärillä (usva) */
+  --table-light:rgba(196,154,58,.07);
+  --vignette:rgba(0,0,0,.48);
+  --well-bg:rgba(0,0,0,.24);
+  --well-shadow:inset 0 2px 8px rgba(0,0,0,.45), inset 0 1px 2px rgba(0,0,0,.55), inset 0 -1px 0 rgba(255,255,255,.05);
+  --engrave:rgba(196,154,58,.34); --engrave-dim:rgba(196,154,58,.15);
+  --etch-ink:rgba(255,255,255,.38); --etch-shadow:0 1px 0 rgba(0,0,0,.6);
+  /* Kiskon teksti: --etch-ink (3.1–3.6:1) ei riitä paneelin ainoaksi tunnisteeksi */
+  --rail-ink:rgba(255,255,255,.72);
+  /* Huoneen lattiaruudukko — tokenina, muuten valkoinen katoaa vaaleassa teemassa */
+  --room-grid:rgba(255,255,255,.028);
+  --chip-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 2px 0 rgba(0,0,0,.35), 0 3px 8px rgba(0,0,0,.25);
+  --chip-shadow-dn:inset 0 1px 0 rgba(255,255,255,.04), 0 1px 0 rgba(0,0,0,.35);
+}
+html[data-theme="havu"] {
+  --ink:rgba(255,255,255,.97);
+  --surface-xs:rgba(12,30,20,.88);
+  --plate-top:#13241b;
+  --plate-bot:#0c1812;
+  
+  --muted:rgba(255,255,255,.72);
+  --subtle:rgba(255,255,255,.08);
+  --accent:#4fa870;
+  --wait:#3a6b8a;
+  --pomo:#c0432b;
+  --q2:#265535;
+  --frog:#4a8a40;
+
+  /* Korttipöytä — pöytämateriaali */
+  --table-felt:#0c1c12; --table-felt-deep:#050e08;
+  --room-bg:#010402;    /* huone huovan ympärillä (havu) */
+  --vignette:rgba(0,0,0,.6);
+  --well-bg:rgba(0,0,0,.3);
+}
+html[data-theme="aurinko"] {
+  --ink:#2d2417;
+  --plate-top:#1c2e26;
+  --plate-bot:#14241c;
+  --surface-xs:rgba(255,255,255,.92);
+  --surface:rgba(250,250,250,.82);
+  --surface-md:rgba(245,245,245,.88);
+  --surface-strong:rgba(238,238,238,.95);
+  --border:rgba(180,130,70,.22);
+  
+  --muted:#7a6a4a;
+  --subtle:rgba(220,190,140,.22);
+  --accent:#c4681e;
+  --wait:#4a7a9a;
+  --pomo:#c4681e;
+  --brk:#3a7a9a;
+  --lbrk:#7a4a9a;
+  --q1:#c4681e;
+  --q2:#3d6b30;
+  --q3:#8a7a5a;
+  --q4:#a0988a;
+  --r-md:10px;
+  --r-lg:16px;
+  --frog:#5a8a30;
+
+  /* Korttipöytä — VAALEA koivu/pellava-pöytä, EI tummu */
+  --table-felt:#efe5d0; --table-felt-deep:#e2d3b8;
+  --room-bg:#d8c6a4;    /* huone huovan ympärillä (aurinko) */
+  --table-light:rgba(255,250,235,.5);
+  --vignette:rgba(120,80,30,.18);
+  --well-bg:rgba(120,80,30,.07);
+  --well-shadow:inset 0 2px 6px rgba(120,80,30,.18), inset 0 1px 2px rgba(120,80,30,.14), inset 0 -1px 0 rgba(255,255,255,.7);
+  --engrave:rgba(150,100,35,.4); --engrave-dim:rgba(150,100,35,.18);
+  --etch-ink:rgba(45,36,23,.55); --etch-shadow:0 1px 0 rgba(255,255,255,.65);
+  --rail-ink:rgba(45,36,23,.82);
+  --room-grid:rgba(90,60,20,.07);
+  --chip-shadow:inset 0 1px 0 rgba(255,255,255,.8), 0 2px 0 rgba(120,80,30,.2), 0 3px 8px rgba(120,80,30,.12);
+  --chip-shadow-dn:inset 0 1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(120,80,30,.2);
+}
+
+/* ── Mockupin omat käsitokenit ───────────────────────────────
+   --hand-rest-t / --hand-open-t = #hand-bar-cards -kääreen translateY.
+   Kortin yläreunan näkyvä osa PAKKA-palkin yläpuolella = 156px - t
+   (riippumaton ikkunan korkeudesta: leikkuupohja on vp-12, palkin
+   yläreuna vp-38, kortti 182px). Ks. suunnitelman mittataulukko. */
+:root{
+  --hand-rest-t:60px;   /* näkyvä osa = 156px - t → 96px: taide + verbisiru */
+  --hand-open-t:24px;   /* → 132px; areenakortin napit jäävät vapaiksi */
+  --fan-r:836px;        /* pivot kortin yläreunasta alaspäin (keskiö 745px) */
+  --fan-step:5.5deg;    /* 745px * 5.5deg = 72px vaakajako korttia kohden */
+  --fan-step-open:9deg; /* auki 117px jako, uloin kortti ±18deg */
+  --rack-step:124px;    /* A: vaakajako */
+  --rack-rot:4deg;
+  /* A: aukon syvyysväri. Musta muuttuu vaaleassa teemassa harmaaksi
+     laataksi — sävytetään samoin kuin --well-bg. */
+  --slot-ink:rgba(0,0,0,.5);
+  --slot-ink-deep:rgba(0,0,0,.55);
+}
+html[data-theme="aurinko"]{
+  --slot-ink:rgba(120,80,30,.26);
+  --slot-ink-deep:rgba(120,80,30,.34);
+  --tilt:58deg;         /* C: korttitason kallistus (lattia on 76deg) */
+  --tilt-open:44deg;
+}
+
+body{
+  color:var(--ink);
+  font-family:'DM Sans',sans-serif;
+  min-height:100vh;
+  padding:1.5rem 1rem 0;
+  background:var(--room-bg);
+}
+/* ── .wrap: pöytä (index.html:3845–3870) ─────────────────── */
+html,body{height:100vh;overflow:hidden}
+.wrap{
+  position:relative; z-index:1;
+  margin:.75rem; padding:0;
+  height:calc(100vh - 1.5rem);
+  display:grid;
+  grid-template-rows:auto 1fr;
+  grid-template-columns:1fr;
+  grid-template-areas:"topbar" "stage";
+  border:none; border-radius:var(--r-lg);
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 42%, var(--table-light), transparent 70%),
+    radial-gradient(ellipse 130% 130% at 50% 50%, transparent 52%, var(--vignette) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='64' height='64' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, var(--table-felt), var(--table-felt-deep));
+  background-repeat:no-repeat,no-repeat,repeat,no-repeat;
+  overflow:hidden;
+  box-shadow:0 8px 40px rgba(0,0,0,.35), inset 0 0 0 1px var(--engrave-dim);
+}
+.hdr{
+  grid-area:topbar; position:relative; z-index:1;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:.7rem 1rem; gap:1rem;
+  background:var(--surface-md);
+  border-bottom:1px solid var(--engrave-dim);
+  font:600 .8rem/1 'DM Sans',sans-serif; color:var(--muted);
+  letter-spacing:.12em; text-transform:uppercase;
+}
+
+/* ── Sivupaneelit + kiskot (index.html:4035–4105) ────────── */
+.side-panel{
+  grid-area:stage; align-self:stretch;
+  width:var(--panel-w); z-index:40;
+  display:flex; flex-direction:row; gap:0;
+  overflow:visible; padding:0; margin:.75rem 0;
+  transition:transform var(--dur-panel) var(--ease-out);
+  transition-delay:250ms;
+}
+.tcg-left{justify-self:start; transform:translateX(calc(-1 * (var(--panel-w) - var(--rail-w))))}
+.tcg-right{justify-self:end;  transform:translateX(calc(var(--panel-w) - var(--rail-w)))}
+.tcg-left:hover,.tcg-left:focus-within,.tcg-right:hover,.tcg-right:focus-within{
+  transform:translateX(0); transition-delay:0ms;
+}
+.side-panel__body{
+  flex:1 1 auto; min-width:0;
+  display:flex; flex-direction:column; gap:.3rem;
+  overflow-y:auto; scrollbar-width:none; padding:.6rem;
+  border-radius:var(--r-lg);
+  background:linear-gradient(0deg, var(--well-bg), var(--well-bg)), var(--table-felt-deep);
+  box-shadow:var(--well-shadow), inset 0 0 0 1px var(--engrave-dim);
+  font-size:var(--text-sm); color:var(--muted);
+}
+.side-panel__tab{
+  flex:0 0 var(--rail-w); width:var(--rail-w);
+  writing-mode:vertical-rl; text-orientation:mixed;
+  display:flex; align-items:center; justify-content:center; gap:.5rem;
+  font:600 var(--text-xs)/1 'DM Sans',sans-serif;
+  letter-spacing:.18em; text-transform:uppercase;
+  color:var(--rail-ink); text-shadow:var(--etch-shadow);
+  background:linear-gradient(0deg, var(--well-bg), var(--well-bg)), var(--table-felt-deep);
+  box-shadow:var(--well-shadow), inset 0 0 0 1px var(--engrave-dim);
+  border:none; cursor:pointer;
+}
+.tcg-left .side-panel__tab{border-radius:0 var(--r-lg) var(--r-lg) 0}
+.tcg-right .side-panel__tab{border-radius:var(--r-lg) 0 0 var(--r-lg)}
+
+/* ── Areena (index.html:4130–4190) ───────────────────────── */
+.tcg-arena{
+  grid-area:stage;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:.5rem;
+  padding:1rem 1rem var(--arena-pb, 7rem);
+  min-height:0;
+  isolation:isolate;
+}
+#arena{position:relative; overflow:hidden; perspective:1300px; perspective-origin:50% 40%;}
+#arena-room{inset:0; perspective:1300px; perspective-origin:50% 40%;}
+.arena-room__side{width:10%}
+.arena-room__spot{width:min(70%,900px)}
+.arena-room__echo-art{width:min(60%,560px); left:50%; transform:translateX(-50%)}
+.arena-room__echo::after{width:min(52%,620px)}
+.arena-room__castshadow{top:calc(50% + var(--card-base,188px)); bottom:auto}
+#arena-label{
+  position:relative; z-index:3;
+  font:600 var(--text-xs)/1 'DM Sans',sans-serif;
+  letter-spacing:.22em; text-transform:uppercase;
+  color:var(--etch-ink); text-shadow:var(--etch-shadow);
+}
+
+/* ── PAKKA-palkki (index.html:3916–3980) ─────────────────── */
+.table-ledge{
+  display:flex; align-items:center; justify-content:center; gap:.75rem;
+  position:absolute; left:0; right:0; bottom:0;
+  height:calc(var(--ledge-h) + .75rem);
+  z-index:65; pointer-events:auto;
+  border:none; border-radius:0; cursor:pointer; font:inherit;
+  background:linear-gradient(0deg, var(--well-bg), var(--well-bg)), var(--table-felt-deep);
+  box-shadow:var(--well-shadow), inset 0 0 0 1px var(--engrave-dim);
+  transition:background var(--dur-panel) var(--ease-out);
+}
+.deck-rail__label{
+  font:600 var(--text-xs)/1 'DM Sans',sans-serif;
+  letter-spacing:.22em; text-transform:uppercase;
+  color:var(--rail-ink); text-shadow:var(--etch-shadow);
+}
+.deck-rail__counts{display:flex; gap:.35rem}
+.deck-rail__counts i{
+  display:grid; place-items:center; width:22px; height:22px; border-radius:50%;
+  font:600 .68rem/1 'DM Sans',sans-serif; font-style:normal; color:#fff;
+}
+.deck-rail__counts i:nth-child(1){background:color-mix(in srgb, var(--q1) 78%, black)}
+.deck-rail__counts i:nth-child(2){background:color-mix(in srgb, var(--q2) 78%, black)}
+.deck-rail__counts i:nth-child(3){background:color-mix(in srgb, var(--q3) 78%, black)}
+.deck-rail__counts i:nth-child(4){background:color-mix(in srgb, var(--q4) 78%, black)}
+.table-ledge::after{
+  content:""; position:absolute; left:50%; top:0; transform:translateX(-50%);
+  width:min(46%,620px); height:3px; border-radius:0 0 3px 3px;
+  background:linear-gradient(90deg, transparent,
+    color-mix(in srgb, var(--gold) 42%, transparent) 22%,
+    color-mix(in srgb, var(--gold) 42%, transparent) 78%, transparent);
+  opacity:.75;
+}
+#arena{
+  position:relative;
+  perspective:1000px;
+  perspective-origin:50% 38%;
+}
+#arena-room{
+  position:absolute; inset:48px 0 0; /* eise-kahvan (48px) alta */
+  pointer-events:none; overflow:hidden;
+  perspective:1000px; perspective-origin:50% 38%;
+}
+/* Takaseinä */
+.arena-room__wall{
+  position:absolute; inset:-6% -6% 32%; z-index:0;
+  transform:translateZ(-260px) scale(1.35);
+  background:
+    radial-gradient(ellipse at 50% 62%, color-mix(in srgb, var(--gold) 10%, transparent) 0%, transparent 55%),
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--table-felt-deep) 72%, black) 0%,
+      color-mix(in srgb, var(--table-felt) 55%, var(--table-felt-deep)) 55%,
+      color-mix(in srgb, var(--table-felt) 88%, white) 100%);
+}
+/* Seinätaide: aktiivisen kortin q-taide huomaamattomana */
+.arena-room__art{
+  position:absolute; display:block; width:52%; aspect-ratio:1; left:24%; top:8%;
+  opacity:.05; mix-blend-mode:soft-light;
+}
+.arena-room__wall::before{ /* portaalikaari kortin takana */
+  content:""; position:absolute; left:50%; bottom:0; transform:translateX(-50%);
+  width:46%; aspect-ratio:1/1.4; border-radius:50% 50% 0 0/36% 36% 0 0;
+  background:radial-gradient(ellipse at 50% 80%, color-mix(in srgb, var(--gold) 14%, transparent) 0%, transparent 68%);
+  box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--gold) 18%, transparent),
+             inset 0 0 40px color-mix(in srgb, var(--gold) 8%, transparent);
+}
+.arena-room__wall::after{ /* horisonttiviiva */
+  content:""; position:absolute; left:0; right:0; bottom:-1px; height:2px;
+  background:linear-gradient(90deg, transparent,
+    color-mix(in srgb, var(--gold) 35%, transparent) 30%,
+    color-mix(in srgb, var(--gold) 35%, transparent) 70%, transparent);
+}
+/* Perspektiivilattia + valoläikkä kortin alla */
+.arena-room__floor{
+  position:absolute; left:-25%; right:-25%; bottom:-58%; height:88%; z-index:1;
+  transform:rotateX(76deg); transform-origin:50% 0;
+  background:
+    radial-gradient(ellipse at 50% 18%, color-mix(in srgb, var(--gold) 30%, transparent) 0%, color-mix(in srgb, var(--gold) 10%, transparent) 34%, transparent 60%),
+    repeating-linear-gradient(90deg, var(--room-grid) 0 1px, transparent 1px 72px),
+    repeating-linear-gradient(0deg, var(--room-grid) 0 1px, transparent 1px 72px),
+    linear-gradient(180deg, color-mix(in srgb, var(--table-felt) 88%, white) 0%, var(--table-felt-deep) 78%);
+}
+/* Sivuseinien tummennus — teemaseuraava (--vignette) */
+.arena-room__side{position:absolute; top:0; bottom:0; width:16%; z-index:2;}
+.arena-room__side--l{left:0; background:linear-gradient(90deg, var(--vignette), transparent);}
+.arena-room__side--r{right:0; background:linear-gradient(-90deg, var(--vignette), transparent);}
+/* Spotlight ylhäältä */
+.arena-room__spot{
+  position:absolute; top:-6%; left:50%; transform:translateX(-50%);
+  width:70%; height:74%; z-index:2;
+  background:radial-gradient(ellipse at 50% 0%,
+    color-mix(in srgb, var(--gold-hi) 15%, transparent) 0%,
+    color-mix(in srgb, var(--gold-hi) 5%, transparent) 45%, transparent 70%);
+}
+/* Leijuvat valohiukkaset */
+.arena-room__dust{position:absolute; inset:0; z-index:2; overflow:hidden;}
+.arena-room__dust i{
+  position:absolute; bottom:-2%; width:3px; height:3px; border-radius:50%;
+  background:color-mix(in srgb, var(--gold-hi) 50%, transparent); filter:blur(.5px);
+  animation:arenaDust 9s linear infinite;
+}
+.arena-room__dust i:nth-child(1){left:20%; animation-delay:0s}
+.arena-room__dust i:nth-child(2){left:34%; animation-delay:-3s; width:2px; height:2px}
+.arena-room__dust i:nth-child(3){left:56%; animation-delay:-6s}
+.arena-room__dust i:nth-child(4){left:70%; animation-delay:-1.5s; width:2px; height:2px}
+.arena-room__dust i:nth-child(5){left:82%; animation-delay:-4.5s}
+@keyframes arenaDust{
+  0%{transform:translateY(0); opacity:0}
+  12%{opacity:.7} 80%{opacity:.4}
+  100%{transform:translateY(-72vh); opacity:0}
+}
+/* Vinjetti kortin päälle (kortti z:3, vinjetti z:4, eise-kahva z:10) */
+.arena-room__vignette{
+  position:absolute; inset:0; z-index:4;
+  background:radial-gradient(ellipse at 50% 44%, transparent 48%, var(--vignette) 100%);
+}
+/* Taustaecho: aktiivisen kortin taide isona, sumeana, quad-tintattuna (FUT-liekit) */
+.arena-room__echo{
+  position:absolute; inset:-6% -6% 30%; z-index:0; pointer-events:none;
+  display:flex; align-items:center; justify-content:center;
+  transform:translateZ(-200px) scale(1.5);
+}
+.arena-room__echo-art{
+  position:absolute; width:60%; aspect-ratio:5/7; left:20%; top:12%;
+  border-radius:24px; overflow:hidden;
+  filter:blur(22px) saturate(1.2) brightness(1.12);
+  opacity:.5; mix-blend-mode:screen;
+  animation:arenaEcho 7s ease-in-out infinite;
+}
+.arena-room__echo-art svg{width:100%; height:100%; display:block;}
+.arena-room__echo::after{ /* quad-värinen bloom kortin takana */
+  content:""; position:absolute; left:50%; top:42%; transform:translate(-50%,-50%);
+  width:52%; aspect-ratio:1; border-radius:50%;
+  background:radial-gradient(circle, color-mix(in srgb, var(--qc,var(--gold)) 55%, transparent) 0%, transparent 62%);
+  filter:blur(28px); opacity:.6; mix-blend-mode:screen;
+  animation:arenaEcho 7s ease-in-out infinite;
+}
+@keyframes arenaEcho{0%,100%{opacity:.4} 50%{opacity:.72}}
+/* Kontaktivarjo lattialla — kortti seisoo 3D:nä */
+.arena-room__castshadow{
+  position:absolute; left:50%; bottom:5%; z-index:2; pointer-events:none;
+  width:58%; max-width:300px; height:48px;
+  transform:translateX(-50%) translate(calc(var(--px,0px) * -1.15), 0) scaleX(var(--shs,1));
+  background:radial-gradient(ellipse at 50% 50%, rgba(0,0,0,.92) 0%, rgba(0,0,0,.6) 42%, transparent 74%);
+  filter:blur(11px);
+  transition:transform .18s ease-out;
+}
+.arena-room__castshadow::before{ /* valopodium: vaalea pooli jonka päällä varjo erottuu */
+  content:""; position:absolute; left:50%; top:-90%; transform:translateX(-50%);
+  width:150%; height:260%; border-radius:50%; z-index:-1;
+  background:radial-gradient(ellipse at 50% 60%, color-mix(in srgb, var(--gold-hi) 22%, transparent) 0%, transparent 60%);
+  filter:blur(16px);
+}
+.arena-room__castshadow::after{ /* tiivis kontaktipiste tyveen */
+  content:""; position:absolute; left:50%; top:2%; transform:translateX(-50%);
+  width:60%; height:60%; border-radius:50%;
+  background:radial-gradient(ellipse at 50% 50%, rgba(0,0,0,.78) 0%, transparent 70%);
+  filter:blur(4px);
+}
+/* Areenan sisältö huonekerrosten päälle */
+#arena-label,#arena-empty{position:relative; z-index:3;}
+/* Perf-lite: ei hiukkasia, ei blend-seinätaidetta, ei raskasta echoa */
+html[data-perf="lite"] .arena-room__dust,
+html[data-perf="lite"] .arena-room__echo,
+html[data-perf="lite"] .arena-room__castshadow,
+html[data-perf="lite"] .arena-room__art{display:none!important;}
+@media(prefers-reduced-motion:reduce){
+  .arena-room__dust i{animation:none; display:none;}
+  .arena-room__echo-art,.arena-room__echo::after{animation:none;}
+}
+.tcg-card{
+  --qc:#a84c28;
+  position:relative;
+  width:280px;aspect-ratio:5/7;
+  border-radius:14px;padding:3px;
+  /* common: himmeä valkoreunus (rare/mythic/uncommon yliajavat).
+     Opaakki pohjaväri viimeisenä kerroksena — muuten reunus on läpikuultava
+     ja alla oleva areenakortti paistaa käsikortin läpi. */
+  background:linear-gradient(165deg,rgba(255,255,255,.30),rgba(255,255,255,.10) 50%,rgba(255,255,255,.22)),var(--plate-bot);
+  box-shadow:
+    0 2px 0 rgba(0,0,0,.4),
+    0 10px 24px rgba(0,0,0,.45);
+  isolation:isolate;
+}
+/* Metallireunus rarityn mukaan: kulta = mythic/rare, hopea = uncommon */
+.tcg-card--mythic,.tcg-card--rare{
+  background:linear-gradient(165deg,var(--gold-hi) 0%,var(--gold) 28%,var(--gold-deep) 55%,var(--gold) 80%,var(--gold-hi) 100%);
+}
+.tcg-card--uncommon{
+  background:linear-gradient(165deg,var(--metal-silver-hi) 0%,var(--metal-silver) 30%,#6a7076 55%,var(--metal-silver) 80%,var(--metal-silver-hi) 100%);
+}
+.tcg-card--frog{
+  box-shadow:
+    0 2px 0 rgba(0,0,0,.4),
+    0 12px 28px rgba(0,0,0,.5);
+}
+.tcg-card__plate{
+  position:relative;height:100%;
+  border-radius:11px;overflow:hidden;
+  background:#0e1a14;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.45),inset 0 1px 2px rgba(255,255,255,.08);
+  display:flex;flex-direction:column;
+}
+/* Q-taide full-bleed platen taustana */
+.tcg-card__qart{position:absolute;inset:0;z-index:0;pointer-events:none;}
+.tcg-card__qart svg{position:absolute;inset:0;width:100%;height:100%;display:block;}
+/* scrim: kevyt ylävinjetti + voimakas tumma alaosa tekstien alle */
+.tcg-card__qart::after{
+  content:"";position:absolute;inset:0;
+  background:
+    linear-gradient(180deg,rgba(8,14,10,.42) 0%,transparent 22%),
+    linear-gradient(180deg,transparent 38%,rgba(8,14,10,.6) 60%,rgba(8,14,10,.9) 100%);
+}
+/* Q3-vaalea taide tarvitsee vahvemman scrimmin */
+.tcg-card--q3 .tcg-card__qart::after{
+  background:
+    linear-gradient(180deg,rgba(30,28,20,.5) 0%,rgba(30,28,20,.12) 24%,transparent 40%),
+    linear-gradient(180deg,transparent 36%,rgba(24,22,16,.7) 58%,rgba(18,16,12,.94) 100%);
+}
+/* Platen sisältö qartin päälle */
+.tcg-card__typeline,.tcg-card__body,.tcg-card__stats,.tcg-card__actions-tcg{position:relative;z-index:1;}
+.tcg-card__cost{
+  position:absolute;top:9px;right:9px;z-index:4;
+  display:flex;gap:3px;align-items:center;
+}
+.tcg-card__pip{
+  width:17px;height:17px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--pomo-hi),var(--pomo) 72%);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.5),0 1px 2px rgba(0,0,0,.55);
+}
+.tcg-card__pip--half{
+  background:linear-gradient(90deg,var(--pomo-hi) 50%,color-mix(in srgb,var(--pomo) 25%,transparent) 50%);
+}
+.tcg-card__pip-x{
+  font-family:'Cinzel',serif;font-weight:700;font-size:.7rem;
+  color:var(--tcg-gold-ink);text-shadow:0 1px 2px rgba(0,0,0,.7);
+}
+.tcg-card__frog-seal{
+  position:absolute;top:9px;left:9px;z-index:4;
+  width:25px;height:25px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--q2),var(--plate-bot));
+  box-shadow:0 0 0 2px var(--gold),inset 0 1px 2px rgba(255,255,255,.3);
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+}
+/* Verbi-rintakuva: läpinäkyvä bust-alue suoraan q-taiteen päällä */
+.tcg-card__art{
+  position:relative;z-index:1;flex:0 0 40%;
+  display:flex;align-items:flex-end;justify-content:center;
+}
+.tcg-card__art::before{ /* tumma halo taiteen ja bustin väliin */
+  content:"";position:absolute;left:50%;bottom:-8%;transform:translateX(-50%);
+  width:86%;aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle,rgba(6,12,8,.52) 0%,rgba(6,12,8,.28) 45%,transparent 70%);
+}
+.tcg-card__art svg{
+  width:56%;height:auto;aspect-ratio:1;position:relative;z-index:1;
+  filter:drop-shadow(0 10px 16px rgba(0,0,0,.65)) drop-shadow(0 2px 4px rgba(0,0,0,.5));
+}
+.tcg-card__typeline{
+  display:flex;align-items:center;gap:.4rem;
+  margin:6px 6px 0;padding:.28rem .55rem;
+  font-family:'Cinzel',serif;font-weight:600;
+  font-size:.6rem;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--tcg-plate-ink-dim);border-radius:4px;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--gold) 15%,transparent),color-mix(in srgb,var(--gold) 4%,transparent));
+  border-top:1px solid color-mix(in srgb,var(--gold) 30%,transparent);
+  border-bottom:1px solid rgba(0,0,0,.45);
+  text-shadow:0 1px 1px rgba(0,0,0,.6);
+}
+.tcg-card__typeline svg{width:1.15em;height:1.15em;opacity:.9;flex:none;}
+.tcg-card__typeline .tl-quad{margin-left:auto;opacity:.85;letter-spacing:.1em;}
+.tcg-card__body{
+  flex:1;display:flex;flex-direction:column;
+  padding:.55rem .7rem;gap:.4rem;min-height:0;
+}
+.tcg-card__title{
+  font-family:'Cinzel',serif;font-weight:700;font-size:.85rem;letter-spacing:.04em;
+  text-transform:uppercase;text-align:center;
+  line-height:1.3;color:var(--tcg-plate-ink);text-shadow:0 2px 5px rgba(0,0,0,.75);
+}
+.tcg-card__notes-tcg{
+  font-size:.7rem;color:rgba(255,255,255,.5);line-height:1.4;
+  font-style:italic;padding-left:.75rem;
+  box-shadow:inset 0 1px 0 color-mix(in srgb,var(--gold) 18%,transparent);
+  padding-top:.35rem;margin-top:.1rem;
+}
+.tcg-card__meta-tcg{
+  margin-top:auto;display:flex;align-items:center;gap:.5rem;
+  font-size:.68rem;color:rgba(255,255,255,.6);letter-spacing:.02em;
+}
+.tcg-card__meta-tcg .dot{opacity:.4;}
+.tcg-card__actions-tcg{display:flex;gap:.3rem;padding:.4rem .55rem .55rem;}
+.tcg-card__actions-tcg button{
+  font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:600;
+  border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);border-radius:6px;cursor:pointer;
+  padding:.4rem .5rem;background:rgba(0,0,0,.25);color:var(--tcg-plate-ink-dim);
+  transition:background .15s,transform .1s;
+}
+.tcg-card__actions-tcg button:hover{background:color-mix(in srgb,var(--gold) 25%,transparent);}
+.tcg-card__actions-tcg button:active{transform:translateY(1px);}
+.tcg-card__actions-tcg .act-start{
+  flex:1;background:var(--accent);color:var(--ink-on-art);border-color:var(--accent);
+}
+.tcg-card__actions-tcg .act-start--running{
+  background:var(--tcg-stop);border-color:var(--tcg-stop);
+}
+.tcg-card__actions-tcg .act-start:hover{filter:brightness(1.1);}
+/* Stats-rivi (tärkeä/kiireinen/muokkaa-napit) */
+.tcg-card__stats{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.35rem .55rem;gap:.3rem;flex-shrink:0;
+  border-bottom:1px solid rgba(196,154,58,.1);
+}
+.tcg-card__stats-left,.tcg-card__stats-right{
+  display:flex;align-items:center;gap:.3rem;
+}
+/* Holo-efekti: vain frog + important */
+.tcg-card--holo .tcg-card__plate::before{
+  content:"";position:absolute;inset:0;z-index:3;pointer-events:none;
+  border-radius:8px;
+  background:conic-gradient(from 0deg at 50% 50%,
+    rgba(255,80,80,.22),rgba(255,220,80,.20),rgba(80,255,160,.22),
+    rgba(80,180,255,.20),rgba(200,80,255,.22),rgba(255,80,80,.22));
+  mix-blend-mode:color-dodge;opacity:0;transition:opacity .35s;
+  -webkit-mask-image:linear-gradient(115deg,transparent 30%,#000 50%,transparent 70%);
+  mask-image:linear-gradient(115deg,transparent 30%,#000 50%,transparent 70%);
+  -webkit-mask-size:250% 250%;mask-size:250% 250%;
+  animation:holoSweep 5s linear infinite;
+}
+.tcg-card--holo:hover .tcg-card__plate::before{opacity:.5;}
+.tcg-card--arena.tcg-card--holo .tcg-card__plate::before{opacity:.45;}
+@keyframes holoSweep{
+  0%{-webkit-mask-position:0% 0%;mask-position:0% 0%;}
+  100%{-webkit-mask-position:100% 100%;mask-position:100% 100%;}
+}
+/* ── Rarity = tärkeys: mythic (frog) · rare (q1/q2) · uncommon (q3) · common (q4)
+   Metalli näkyy kortin kehysgradientissa ja set-symbolin värissä */
+.tcg-card__set{
+  flex:none;margin-left:auto;font-family:'Cinzel',serif;font-weight:700;font-size:.72rem;line-height:1;letter-spacing:0;
+}
+.tcg-card__typeline .tl-quad+.tcg-card__set{margin-left:0;}
+.tcg-card__set--mythic{color:var(--gold-hi);text-shadow:0 0 5px color-mix(in srgb,var(--gold) 70%,transparent);}
+.tcg-card__set--rare{color:var(--gold);}
+.tcg-card__set--uncommon{color:var(--metal-silver-hi);}
+.tcg-card__set--common{color:var(--tcg-plate-ink-dim);opacity:.5;}
+.tcg-card--hand .tcg-card__set{font-size:.62rem;}
+/* Käsikortti 130px: kvadranttiteksti pois — väri-identiteetti näkyy kehyksessä */
+.tcg-card--hand .tcg-card__typeline .tl-quad{display:none;}
+/* Areena-kortti isompi + kultainen hehku + huone-tilt (mockup: ±8°) */
+.tcg-card.tcg-card--arena-size{
+  width:100%;max-width:300px;
+  z-index:3; /* huonekerrosten (lattia z:1, spot z:2) päälle, vinjetin (z:4) alle */
+  transform-style:preserve-3d;
+  will-change:transform;
+  transform:translateY(-12px) rotateX(var(--rx,4deg)) rotateY(var(--ry,0deg));
+  transition:transform .18s ease-out;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.10),
+    inset 0 0 0 3px rgba(0,0,0,.35),
+    0 2px 0 rgba(0,0,0,.4),
+    0 20px 38px rgba(0,0,0,.55),
+    0 0 36px color-mix(in srgb,var(--accent) 40%,transparent);
+}
+/* Parallaksi: q-taide ja bust liikkuvat eri nopeuksilla (vain areena) */
+.tcg-card--arena-size .tcg-card__qart svg{
+  transform:translate(calc(var(--px,0px) * .5), calc(var(--py,0px) * .5)) scale(1.06);
+}
+.tcg-card--arena-size .tcg-card__art svg{
+  transform:translate(calc(var(--px,0px) * -.55), calc(var(--py,0px) * -.55));
+}
+/* Kiilto seuraa osoitinta */
+.tcg-card--arena-size .tcg-card__plate::after{
+  content:"";position:absolute;inset:0;z-index:4;pointer-events:none;
+  background:radial-gradient(circle at var(--sx,50%) var(--sy,30%), rgba(255,255,255,.13) 0%, transparent 45%);
+  mix-blend-mode:screen;
+}
+html[data-perf="lite"] .tcg-card--arena-size .tcg-card__plate::after{display:none!important;}
+.tcg-card.tcg-card--arena-size.tcg-card--frog{
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.25),
+    inset 0 0 0 3px rgba(70,50,12,.6),
+    0 14px 32px rgba(0,0,0,.55),
+    0 0 44px rgba(196,154,58,.45);
+}
+@keyframes arenaLand{
+  0%{box-shadow:0 0 0 0 rgba(196,154,58,.6),0 8px 20px rgba(0,0,0,.4);}
+  100%{box-shadow:0 0 0 16px rgba(196,154,58,0),0 14px 32px rgba(0,0,0,.55);}
+}
+/* M1b — kevyt sisääntulo: kortti settlaa 1.02→1, varjo syvenee samalla */
+@keyframes arenaLandIn{
+  0%{transform:scale(1.02);}
+  100%{transform:scale(1);}
+}
+
+/* ══════════════════════════════════════════════════════════
+   KÄSI — yhteinen runko
+   ══════════════════════════════════════════════════════════ */
+#hand-bar{
+  position:fixed;
+  top:0; bottom:.75rem; left:.75rem; right:.75rem;
+  z-index:60; height:auto;
+  overflow:hidden;
+  border-radius:0 0 var(--r-lg) var(--r-lg);
+  pointer-events:none;
+}
+#hand-bar-cards{
+  position:absolute; bottom:0; left:0; right:0;
+  height:var(--hand-card-h);
+  transform:translateY(var(--hand-rest-t));
+  transition:transform var(--dur-panel) var(--ease-out);
+  pointer-events:none;
+}
+#hand-bar-cards > *{pointer-events:auto}
+html[data-hand="open"] #hand-bar-cards{transform:translateY(var(--hand-open-t))}
+
+/* Kortit ladotaan keskelle päällekkäin — leviäminen tulee
+   kokonaan transformista, ei flex-virrasta. Näin viuhkan
+   geometria on yksi kaava eikä viittä käsin viritettyä arvoa. */
+.tcg-card.tcg-card--hand{
+  position:absolute; left:50%; bottom:0;
+  margin-left:calc(var(--hand-card-w) / -2);
+  width:var(--hand-card-w);
+  transform-origin:bottom center;
+  transition:transform var(--dur-meso) var(--ease-out),
+             box-shadow var(--dur-meso) var(--ease-out),
+             filter var(--dur-meso) var(--ease-out);
+  cursor:pointer;
+  box-shadow:0 6px 18px rgba(0,0,0,.35);
+}
+/* Osumasilta: pitää :hoverin elossa kun kortti nousee */
+.tcg-card--hand::after{
+  content:''; position:absolute; bottom:-64px; left:-8px; right:-8px; height:64px;
+}
+.tcg-card--hand:hover{z-index:20}
+.tcg-card--hand .tcg-card__title{font-size:.62rem; line-height:1.25;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
+.tcg-card--hand .tcg-card__typeline{font-size:.65rem}
+.tcg-card--hand .tcg-card__art{flex-basis:36%}
+.tcg-card--hand .tcg-card__art svg{width:50%}
+.tcg-card--hand .tcg-card__meta-tcg{font-size:.65rem}
+.tcg-card--hand .tcg-card__pip{width:12px;height:12px}
+.tcg-card--hand .tcg-card__set{font-size:.62rem}
+.tcg-card--hand .tcg-card__typeline .tl-quad{display:none}
+
+/* ══════════════════════════════════════════════════════════
+   A — KORTTITELINE
+   Palkkiin kaiverretaan aukko; kortit seisovat siinä.
+   ══════════════════════════════════════════════════════════ */
+html[data-variant="a"]{
+  --ledge-h:52px;
+  --hand-rest-t:46px;
+  --hand-open-t:20px;
+  --arena-pb:9.5rem;
+}
+/* Aukko: olemassa oleva kultainen vihjeviiva ylennetään syvennykseksi */
+html[data-variant="a"] .table-ledge::after{
+  width:min(58%,720px); height:100%; top:0; border-radius:0;
+  background:
+    linear-gradient(90deg, transparent 0%, var(--slot-ink) 5%, var(--slot-ink) 95%, transparent 100%),
+    linear-gradient(180deg, var(--slot-ink-deep) 0%, transparent 55%);
+  box-shadow:
+    inset 0 3px 6px color-mix(in srgb, var(--slot-ink-deep) 90%, black),
+    inset 0 -1px 0 rgba(255,255,255,.06),
+    inset 1px 0 0 var(--engrave-dim),
+    inset -1px 0 0 var(--engrave-dim);
+  opacity:1;
+}
+/* Aukon huulivalo — kapea kultajuova aukon yläreunassa */
+/* Aukko omii keskikohdan → PAKKA-tunnus siirtyy oikeaan laitaan */
+html[data-variant="a"] .table-ledge{
+  justify-content:flex-end; padding-right:1.4rem;
+}
+html[data-variant="a"] .table-ledge::before{
+  content:""; position:absolute; left:50%; top:0; transform:translateX(-50%);
+  width:min(58%,720px); height:2px;
+  background:linear-gradient(90deg, transparent,
+    color-mix(in srgb, var(--gold) 62%, transparent) 12%,
+    color-mix(in srgb, var(--gold) 62%, transparent) 88%, transparent);
+  box-shadow:0 1px 3px rgba(0,0,0,.7);
+  z-index:2;
+}
+/* Teline ei ole käsi: paljon vaakajakoa, vähän kiertoa */
+html[data-variant="a"] .tcg-card--hand{
+  transform:
+    translateX(calc(var(--i) * var(--rack-step)))
+    translateY(calc(var(--ia) * 3px))
+    rotate(calc(var(--i) * var(--rack-rot)));
+  box-shadow:0 4px 10px rgba(0,0,0,.6), 0 10px 22px rgba(0,0,0,.35);
+}
+html[data-hand="open"][data-variant="a"]{--rack-rot:6deg; --rack-step:132px}
+/* Tyven tummennus: kortti pimenee mennessään aukkoon */
+html[data-variant="a"] .tcg-card--hand .tcg-card__plate::before{
+  content:""; position:absolute; left:0; right:0; bottom:0; height:44px; z-index:3;
+  background:linear-gradient(to top, rgba(0,0,0,.55), transparent);
+  pointer-events:none; border-radius:0 0 11px 11px;
+}
+html[data-variant="a"] .tcg-card--hand:hover{
+  transform:
+    translateX(calc(var(--i) * var(--rack-step)))
+    translateY(-46px)
+    rotate(0deg) scale(1.06);
+  box-shadow:0 16px 36px rgba(0,0,0,.5),
+             0 0 24px color-mix(in srgb,var(--accent) 30%,transparent);
+}
+
+/* ══════════════════════════════════════════════════════════
+   B — PIDETTY VIUHKA
+   Yksi pivot ruudun alapuolella; pohjat konvergoivat.
+   ══════════════════════════════════════════════════════════ */
+html[data-variant="b"]{--arena-pb:9rem}
+html[data-variant="b"] #hand-bar-cards{
+  transform-origin:50% 100%;
+  transform:translateY(var(--hand-rest-t)) rotate(-1.2deg);
+}
+html[data-hand="open"][data-variant="b"] #hand-bar-cards{
+  transform:translateY(var(--hand-open-t)) rotate(-1.2deg);
+}
+html[data-hand="open"][data-variant="b"]{--fan-step:var(--fan-step-open)}
+html[data-variant="b"] .tcg-card--hand{
+  transform-origin:50% var(--fan-r);
+  transform:rotate(calc(var(--i) * var(--fan-step)));
+  /* Syvyys: keskikortti kirkkain ja suurin */
+  filter:brightness(calc(1 - var(--ia) * .05));
+}
+/* Ote: tumma pooli palkin yläreunassa, siinä mistä kortit nousevat.
+   Ankkuroitu palkkiin (bottom:26px = palkin yläreuna), ei kääreeseen —
+   kääreen pohja on levossa 90px palkin takana eikä näkyisi lainkaan. */
+#hand-grip{
+  position:absolute; left:50%; bottom:20px;
+  width:540px; height:46px; margin-left:-270px;
+  border-radius:50%; pointer-events:none; opacity:0;
+  background:
+    radial-gradient(ellipse at 50% 86%, color-mix(in srgb, var(--gold) 12%, transparent) 0%, transparent 58%),
+    radial-gradient(ellipse at 50% 100%, rgba(0,0,0,.8) 0%, transparent 74%);
+  filter:blur(12px);
+  transition:opacity var(--dur-panel) var(--ease-out),
+             width var(--dur-panel) var(--ease-out),
+             margin-left var(--dur-panel) var(--ease-out);
+}
+html[data-variant="b"] #hand-grip{opacity:1}
+html[data-hand="open"][data-variant="b"] #hand-grip{width:700px; margin-left:-350px}
+html[data-variant="b"] .tcg-card--hand:hover{
+  transform-origin:bottom center;
+  transform:translateY(-48px) rotate(0deg) scale(1.1);
+  filter:brightness(1.06);
+  box-shadow:0 16px 36px rgba(0,0,0,.45),
+             0 0 24px color-mix(in srgb,var(--accent) 30%,transparent);
+}
+
+/* ══════════════════════════════════════════════════════════
+   C — PÖYTÄKÄSI
+   Korttitaso makaa huovalla huoneen perspektiivissä.
+   ══════════════════════════════════════════════════════════ */
+html[data-variant="c"]{
+  --hand-card-w:155px;
+  --hand-card-h:217px;
+  --hand-rest-t:-14px;  /* hinge 787: lähireuna tukeutuu palkin taakse */
+  --hand-open-t:14px;
+  --fan-step:8deg;
+  --fan-r:900px;
+  --tilt:66deg;
+  --tilt-open:56deg;
+  --arena-pb:12rem;
+}
+html[data-variant="c"] #hand-bar{perspective:900px; perspective-origin:50% 20%}
+/* Koko käsi on yksi taso joka kallistuu — kortit eivät kallistu erikseen */
+html[data-variant="c"] #hand-bar-cards{
+  transform-origin:50% 100%;
+  transform:translateY(var(--hand-rest-t)) rotateX(var(--tilt));
+  transform-style:preserve-3d;
+}
+html[data-hand="open"][data-variant="c"]{--tilt:var(--tilt-open); --fan-step:8deg}
+html[data-hand="open"][data-variant="c"] #hand-bar-cards{
+  transform:translateY(var(--hand-open-t)) rotateX(var(--tilt));
+}
+html[data-variant="c"] .tcg-card--hand{
+  transform-origin:50% var(--fan-r);
+  transform:rotate(calc(var(--i) * var(--fan-step)));
+  /* Kaksi varjoa: tiivis kontakti tyveen + pehmeä levitys huovalle.
+     Ilman kontaktivarjoa kallistus lukee litteänä eikä pinnalla makaavana. */
+  filter:drop-shadow(0 3px 2px rgba(0,0,0,.7)) drop-shadow(0 16px 18px rgba(0,0,0,.5));
+  box-shadow:none;
+}
+/* Hover: kortti nousee pöydältä kameraa kohti (vastakallistus tason läpi) */
+html[data-variant="c"] .tcg-card--hand:hover{
+  transform-origin:bottom center;
+  transform:rotateX(calc(-1 * var(--tilt))) translateY(-30px) translateZ(70px) scale(1.05);
+  filter:drop-shadow(0 22px 26px rgba(0,0,0,.6));
+}
+/* Lite: 3D pois → putoaa B:n litteään viuhkaan */
+html[data-perf="lite"][data-variant="c"] #hand-bar-cards{transform:translateY(24px)}
+html[data-perf="lite"][data-variant="c"] .tcg-card--hand{
+  filter:none; box-shadow:0 6px 18px rgba(0,0,0,.35);
+}
+html[data-perf="lite"][data-variant="c"] .tcg-card--hand:hover{
+  transform:translateY(-48px) rotate(0deg) scale(1.08);
+}
+
+/* Lite: raskaat sumennukset pois kaikista varianteista */
+html[data-perf="lite"] #hand-grip{display:none!important}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms!important; animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+  }
+}
+/* NOPEA TILA — poistaa backdrop-filter ja transitiot heikolla laitteistolla */
+html[data-perf="lite"] *,
+html[data-perf="lite"] *::before,
+html[data-perf="lite"] *::after{
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  animation-duration:.01ms!important;
+  animation-iteration-count:1!important;
+  transition-duration:.01ms!important;
+}
+/* Nopea tila: opaakki pinnat (usva/havu — --paper ja --surface ovat oletuksena läpinäkyviä) */
+html[data-perf="lite"]{
+  --surface-xs:rgba(18,40,28,.97);
+  --surface:rgba(22,46,32,.97);
+  --surface-md:rgba(25,50,36,.97);
+  --surface-strong:rgba(28,54,40,.97);
+}
+
+/* ── Mockupin ohjauspalkki (ei osa tuotetta) ─────────────── */
+#ctl{
+  position:fixed; top:0; left:0; right:0; z-index:900;
+  display:flex; flex-wrap:wrap; align-items:center; gap:.5rem 1.1rem;
+  padding:.5rem .9rem;
+  background:rgba(8,14,10,.94);
+  border-bottom:1px solid rgba(196,154,58,.28);
+  font:500 .74rem/1 'DM Sans',sans-serif; color:rgba(255,255,255,.9);
+}
+#ctl b{font-weight:600;letter-spacing:.1em;text-transform:uppercase;opacity:.55;font-size:.66rem}
+#ctl button{
+  font:600 .74rem/1 'DM Sans',sans-serif; cursor:pointer;
+  padding:.42rem .7rem; border-radius:6px;
+  border:1px solid rgba(196,154,58,.4);
+  background:rgba(196,154,58,.10); color:rgba(255,255,255,.92);
+}
+#ctl button[aria-pressed="true"]{background:#c49a3a;color:#1a1208;border-color:#c49a3a}
+#ctl .sep{width:1px;align-self:stretch;background:rgba(255,255,255,.14)}
+#ctl code{font:500 .7rem/1 ui-monospace,monospace;opacity:.6}
+/* Ohjauspalkki on puhdas overlay: .wrapin ja #hand-barin geometria
+   pidetään identtisenä tuotannon kanssa, jotta mitat siirtyvät. */
+.hdr{padding-top:2.9rem!important}
+</style>
+</head>
+<body>
+
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+<defs>
+  <symbol id="verb-i-soita" viewBox="0 0 24 24">
+    <path fill="#f4f0e0" d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.5 0 1 .4 1 1V20c0 .5-.5 1-1 1C10.6 21 3 13.4 3 4c0-.5.5-1 1-1H7.5c.6 0 1 .5 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1z"/>
+    <path fill="#a8a290" d="M18.5 17.7l1.5 1.5c-.2.5-.7.8-1.5.8-2.9 0-5.7-.6-8.2-1.7l-.5-1.7 1.5-1c2 1.1 4.6 2 7.2 2.1z"/>
+    <circle cx="5.8" cy="5.5" r="1.6" fill="#c49a3a"/>
+    <circle cx="5.8" cy="5.5" r="0.7" fill="#2a1f10"/>
+  </symbol>
+  <symbol id="verb-i-sovi" viewBox="0 0 24 24">
+    <rect x="3" y="6" width="18" height="15" rx="2" fill="#f4f0e0"/>
+    <rect x="3" y="6" width="18" height="4.5" fill="#c49a3a"/>
+    <rect x="3" y="9.8" width="18" height="0.7" fill="#8a6620"/>
+    <rect x="6.5" y="2.5" width="2.5" height="6" rx="1.25" fill="#8a6620"/>
+    <rect x="15" y="2.5" width="2.5" height="6" rx="1.25" fill="#8a6620"/>
+    <rect x="6" y="13" width="2" height="2" rx="0.4" fill="#a8a290"/>
+    <rect x="10.5" y="13" width="2" height="2" rx="0.4" fill="#a8a290"/>
+    <rect x="15" y="13" width="2" height="2" rx="0.4" fill="#c49a3a"/>
+    <rect x="6" y="16.5" width="2" height="2" rx="0.4" fill="#a8a290"/>
+    <rect x="10.5" y="16.5" width="2" height="2" rx="0.4" fill="#a8a290"/>
+    <rect x="15" y="16.5" width="2" height="2" rx="0.4" fill="#a8a290"/>
+  </symbol>
+  <symbol id="verb-i-kirjaa" viewBox="0 0 24 24">
+    <path fill="#f4f0e0" d="M20.5 3.5c-.8-.4-1.6-.2-2.2.4l-11.4 11.4-1.6 5 5-1.6 11.4-11.4c.6-.6.8-1.4.4-2.2-.3-.7-.9-1.3-1.6-1.6z"/>
+    <path fill="#c49a3a" d="M17.5 4.5l-9 9 1.5 1.5 9-9-1.5-1.5z"/>
+    <path fill="#2a1f10" d="M20 4l-.5-.5c-.3-.3-.7-.3-1 0L17 5l1.5 1.5L20 5c.3-.3.3-.7 0-1z"/>
+    <path fill="#a8a290" d="M5.3 20.3l1.6-5 .5.5-1.3 4z"/>
+    <circle cx="5" cy="20" r="1.4" fill="#c49a3a"/>
+    <circle cx="5" cy="20" r="0.6" fill="#2a1f10"/>
+  </symbol>
+  <symbol id="verb-i-tee" viewBox="0 0 24 24">
+    <rect x="10.5" y="11" width="4" height="11" rx="1" fill="#8a6620"/>
+    <rect x="10.5" y="11" width="4" height="11" rx="1" fill="#c49a3a" opacity="0.25"/>
+    <rect x="10.5" y="13" width="4" height="0.5" fill="#2a1f10" opacity="0.5"/>
+    <rect x="10.5" y="17" width="4" height="0.5" fill="#2a1f10" opacity="0.5"/>
+    <rect x="10.5" y="20" width="4" height="0.5" fill="#2a1f10" opacity="0.5"/>
+    <path fill="#f4f0e0" d="M4 6.5C4 5.7 4.7 5 5.5 5h14c.8 0 1.5.7 1.5 1.5v4c0 .8-.7 1.5-1.5 1.5h-14C4.7 12 4 11.3 4 10.5v-4z"/>
+    <path fill="#a8a290" d="M4 9.5h17v1c0 .8-.7 1.5-1.5 1.5h-14C4.7 12 4 11.3 4 10.5v-1z"/>
+    <rect x="18" y="5" width="3" height="7" rx="0.5" fill="#c49a3a"/>
+    <rect x="20" y="5.5" width="0.6" height="6" fill="#fff" opacity="0.6"/>
+    <rect x="4.5" y="6.5" width="0.4" height="5" fill="#fff" opacity="0.4"/>
+  </symbol>
+  <symbol id="verb-i-selvita" viewBox="0 0 24 24">
+    <circle cx="10" cy="10" r="7.5" fill="#f4f0e0"/>
+    <circle cx="10" cy="10" r="5.5" fill="#1e3a3a"/>
+    <ellipse cx="8" cy="8" rx="2" ry="1.2" fill="#fff" opacity="0.55" transform="rotate(-30 8 8)"/>
+    <rect x="13.5" y="14.5" width="3.2" height="8.5" rx="1.6" transform="rotate(-45 15.1 17)" fill="#c49a3a"/>
+    <rect x="14.3" y="15" width="1.5" height="7" rx="0.75" transform="rotate(-45 15.1 17)" fill="#8a6620"/>
+    <circle cx="19" cy="19" r="1.6" fill="#c49a3a"/>
+    <circle cx="19" cy="19" r="0.9" fill="#8a6620"/>
+  </symbol>
+  <symbol id="verb-i-vie" viewBox="0 0 24 24">
+    <polygon points="2,21 23,12 2,3 2,10 17,12 2,14" fill="#f4f0e0"/>
+    <polygon points="2,14 17,12 2,21" fill="#a8a290"/>
+    <polygon points="2,3 17,12 14,12 2,5" fill="#fff" opacity="0.3"/>
+    <path d="M2 3 L17 12" stroke="#2a1f10" stroke-width="0.4" fill="none" opacity="0.5"/>
+    <path d="M2 21 L17 12" stroke="#2a1f10" stroke-width="0.4" fill="none" opacity="0.5"/>
+    <path d="M2 14 L17 12" stroke="#2a1f10" stroke-width="0.3" fill="none" opacity="0.4"/>
+    <circle cx="14" cy="12" r="0.6" fill="#c49a3a"/>
+  </symbol>
+  <symbol id="verb-i-tarkista" viewBox="0 0 24 24">
+    <path fill="#f4f0e0" d="M12 2L4 5.5V11c0 5.2 3.4 9.9 8 11.5 4.6-1.6 8-6.3 8-11.5V5.5L12 2z"/>
+    <path fill="#a8a290" d="M12 22.5C16.6 21 20 16.2 20 11V5.5L12 2v20.5z"/>
+    <rect x="11.4" y="2.5" width="1.2" height="19.5" fill="#c49a3a"/>
+    <rect x="6" y="10.5" width="12" height="1.2" fill="#c49a3a"/>
+    <circle cx="12" cy="11" r="1.8" fill="#8a6620"/>
+    <circle cx="12" cy="11" r="1" fill="#c49a3a"/>
+    <circle cx="12" cy="11" r="0.4" fill="#fff" opacity="0.6"/>
+  </symbol>
+  <symbol id="verb-i-varaa" viewBox="0 0 24 24">
+    <rect x="3" y="2" width="18" height="2" rx="0.5" fill="#8a6620"/>
+    <rect x="3" y="20" width="18" height="2" rx="0.5" fill="#8a6620"/>
+    <rect x="3" y="2" width="18" height="0.5" fill="#c49a3a"/>
+    <rect x="3" y="21.5" width="18" height="0.5" fill="#c49a3a"/>
+    <polygon points="4.5,4 19.5,4 14.5,9.5 14.5,14.5 19.5,20 4.5,20 9.5,14.5 9.5,9.5" fill="#f4f0e0"/>
+    <polygon points="6,5 18,5 13.5,10 10.5,10" fill="#c49a3a"/>
+    <polygon points="10.5,15 13.5,15 18,19 6,19" fill="#c49a3a"/>
+    <polygon points="10.5,15 13.5,15 14,15.5 10,15.5" fill="#8a6620"/>
+    <rect x="11.7" y="10" width="0.6" height="5" fill="#c49a3a"/>
+    <polygon points="6,5 18,5 17,6 7,6" fill="#fff" opacity="0.5"/>
+    <polygon points="5,19 19,19 18,19.5 6,19.5" fill="#fff" opacity="0.2"/>
+  </symbol>
+
+  <!-- ═══ Q-TAUSTATAIDE (200×280, kortin kuvasuhde) — FUT-kortin tausta ═══ -->
+
+  <!-- Q1: räjähtävä kiire — terävät sirpaleet + starburst -->
+  <symbol id="qart-q1" viewBox="0 0 200 280" preserveAspectRatio="xMidYMid slice">
+    <rect width="200" height="280" fill="#3a120c"/>
+    <polygon points="0,0 90,0 65,95" fill="#6a1e14"/>
+    <polygon points="90,0 200,0 140,80 65,95" fill="#822418"/>
+    <polygon points="200,0 200,120 140,80" fill="#5a1810"/>
+    <polygon points="0,0 65,95 0,150" fill="#4c150e"/>
+    <polygon points="0,150 65,95 55,220 0,280" fill="#6e2016"/>
+    <polygon points="65,95 140,80 150,190 55,220" fill="#8e2a1a"/>
+    <polygon points="200,120 200,280 150,190 140,80" fill="#661c12"/>
+    <polygon points="55,220 150,190 200,280 0,280" fill="#521610"/>
+    <g fill="none" stroke="#c05028" stroke-width="2" opacity=".8">
+      <path d="M78 108 L-10 40"/><path d="M78 108 L30 -12"/><path d="M78 108 L150 -18"/>
+      <path d="M78 108 L215 60"/><path d="M78 108 L220 190"/><path d="M78 108 L150 292"/>
+      <path d="M78 108 L30 300"/><path d="M78 108 L-18 180"/>
+    </g>
+    <g fill="none" stroke="#e8724a" stroke-width="1" opacity=".6">
+      <path d="M78 108 L-20 90"/><path d="M78 108 L90 -20"/><path d="M78 108 L205 130"/>
+      <path d="M78 108 L110 295"/><path d="M78 108 L-5 250"/>
+    </g>
+    <polygon points="78,108 120,20 132,26" fill="#c85a32" opacity=".9"/>
+    <polygon points="78,108 180,86 178,98" fill="#b04c28" opacity=".85"/>
+    <polygon points="78,108 30,210 20,200" fill="#a84424" opacity=".8"/>
+    <polygon points="78,108 148,220 138,226" fill="#983c20" opacity=".8"/>
+    <polygon points="78,108 12,60 20,52" fill="#c05028" opacity=".85"/>
+    <polygon points="78,108 92,94 100,108 88,122 66,116 70,98" fill="#e8724a"/>
+    <polygon points="78,108 86,100 90,108 82,115 70,111 73,101" fill="#f4a070"/>
+  </symbol>
+
+  <!-- Q2: kasvu — punoutunut lehvästö -->
+  <symbol id="qart-q2" viewBox="0 0 200 280" preserveAspectRatio="xMidYMid slice">
+    <rect width="200" height="280" fill="#16301f"/>
+    <g id="leafset">
+      <path d="M20 40 Q50 0 90 18 Q70 60 30 55 Q22 48 20 40Z" fill="#224a2e"/>
+      <path d="M20 40 Q55 28 90 18" fill="none" stroke="#3d7a52" stroke-width="1.2" opacity=".7"/>
+      <path d="M120 10 Q170 -5 195 35 Q160 62 125 40 Q118 22 120 10Z" fill="#2d5a3d"/>
+      <path d="M120 10 Q158 18 195 35" fill="none" stroke="#4a8a4a" stroke-width="1.2" opacity=".7"/>
+      <path d="M-10 110 Q30 80 70 100 Q45 140 5 132 Q-8 120 -10 110Z" fill="#28543a"/>
+      <path d="M-10 110 Q30 100 70 100" fill="none" stroke="#4a8a4a" stroke-width="1" opacity=".6"/>
+      <path d="M90 80 Q140 60 175 95 Q140 130 100 112 Q90 95 90 80Z" fill="#1e4229"/>
+      <path d="M90 80 Q132 82 175 95" fill="none" stroke="#3d7a52" stroke-width="1.2" opacity=".7"/>
+      <path d="M150 130 Q200 120 210 170 Q170 190 145 162 Q145 143 150 130Z" fill="#2a5236"/>
+      <path d="M150 130 Q178 142 210 170" fill="none" stroke="#4fa870" stroke-width="1" opacity=".6"/>
+      <path d="M10 180 Q60 160 95 190 Q60 225 20 210 Q8 194 10 180Z" fill="#234c30"/>
+      <path d="M10 180 Q52 178 95 190" fill="none" stroke="#4a8a4a" stroke-width="1.2" opacity=".7"/>
+      <path d="M100 210 Q150 195 185 225 Q150 262 110 245 Q98 226 100 210Z" fill="#2d5a3d"/>
+      <path d="M100 210 Q142 212 185 225" fill="none" stroke="#4fa870" stroke-width="1.2" opacity=".7"/>
+      <path d="M-15 250 Q35 235 65 265 Q30 292 -5 282 Q-15 264 -15 250Z" fill="#1e4229"/>
+      <path d="M40 130 Q80 118 105 145 Q75 175 45 158 Q38 142 40 130Z" fill="#336044"/>
+      <path d="M40 130 Q72 132 105 145" fill="none" stroke="#5aa86a" stroke-width="1" opacity=".65"/>
+      <path d="M130 55 Q120 90 85 95 Q88 62 115 50 Q125 50 130 55Z" fill="#376648" opacity=".9"/>
+      <path d="M60 250 Q110 240 140 270 Q105 295 70 282 Q58 264 60 250Z" fill="#28543a"/>
+    </g>
+    <rect width="200" height="280" fill="url(#q2veil)" opacity=".35"/>
+    <radialGradient id="q2veil" cx="50%" cy="35%" r="80%">
+      <stop offset="0%" stop-color="#4a8a4a" stop-opacity=".25"/>
+      <stop offset="100%" stop-color="#0c1f13"/>
+    </radialGradient>
+  </symbol>
+
+  <!-- Q3: pinnallinen kohina — amorfiset pilvet + kivet -->
+  <symbol id="qart-q3" viewBox="0 0 200 280" preserveAspectRatio="xMidYMid slice">
+    <rect width="200" height="280" fill="#c9c2b0"/>
+    <g fill="#dcd6c6">
+      <ellipse cx="40" cy="30" rx="55" ry="30"/><ellipse cx="160" cy="55" rx="60" ry="34"/>
+      <ellipse cx="90" cy="120" rx="70" ry="38"/><ellipse cx="20" cy="190" rx="52" ry="30"/>
+      <ellipse cx="170" cy="180" rx="58" ry="40"/><ellipse cx="80" cy="255" rx="66" ry="36"/>
+    </g>
+    <g fill="#eae4d4">
+      <ellipse cx="120" cy="25" rx="34" ry="18" transform="rotate(-12 120 25)"/>
+      <ellipse cx="30" cy="90" rx="38" ry="20" transform="rotate(8 30 90)"/>
+      <ellipse cx="165" cy="120" rx="30" ry="17" transform="rotate(-6 165 120)"/>
+      <ellipse cx="70" cy="175" rx="40" ry="20" transform="rotate(10 70 175)"/>
+      <ellipse cx="150" cy="235" rx="36" ry="19" transform="rotate(-9 150 235)"/>
+      <ellipse cx="15" cy="255" rx="28" ry="16"/>
+    </g>
+    <g fill="#f6f2e6">
+      <ellipse cx="60" cy="55" rx="16" ry="9"/><ellipse cx="150" cy="85" rx="13" ry="8"/>
+      <ellipse cx="105" cy="145" rx="18" ry="10"/><ellipse cx="35" cy="150" rx="11" ry="7"/>
+      <ellipse cx="185" cy="150" rx="12" ry="7"/><ellipse cx="120" cy="200" rx="15" ry="9"/>
+      <ellipse cx="55" cy="222" rx="12" ry="7"/><ellipse cx="170" cy="262" rx="14" ry="8"/>
+      <ellipse cx="90" cy="85" rx="10" ry="6"/><ellipse cx="20" cy="120" rx="9" ry="6"/>
+    </g>
+    <g fill="#b4ac98" opacity=".55">
+      <ellipse cx="140" cy="150" rx="8" ry="5"/><ellipse cx="70" cy="105" rx="7" ry="4"/>
+      <ellipse cx="180" cy="90" rx="6" ry="4"/><ellipse cx="45" cy="240" rx="8" ry="5"/>
+      <ellipse cx="110" cy="235" rx="6" ry="4"/><ellipse cx="95" cy="30" rx="7" ry="4"/>
+    </g>
+  </symbol>
+
+  <!-- Q4: pysähtyneisyys — vaakapalkit harmaasta hiileen -->
+  <symbol id="qart-q4" viewBox="0 0 200 280" preserveAspectRatio="xMidYMid slice">
+    <rect width="200" height="280" fill="#23231f"/>
+    <rect y="0"   width="200" height="34" fill="#8e8e82"/>
+    <rect y="36"  width="200" height="33" fill="#7e7e73"/>
+    <rect y="71"  width="200" height="33" fill="#6e6e64"/>
+    <rect y="106" width="200" height="33" fill="#5e5e55"/>
+    <rect y="141" width="200" height="33" fill="#4f4f47"/>
+    <rect y="176" width="200" height="33" fill="#41413a"/>
+    <rect y="211" width="200" height="33" fill="#34342e"/>
+    <rect y="246" width="200" height="34" fill="#282823"/>
+    <g fill="#000" opacity=".14">
+      <rect y="33" width="200" height="3"/><rect y="68" width="200" height="3"/>
+      <rect y="103" width="200" height="3"/><rect y="138" width="200" height="3"/>
+      <rect y="173" width="200" height="3"/><rect y="208" width="200" height="3"/>
+      <rect y="243" width="200" height="3"/>
+    </g>
+  </symbol>
+
+  <!-- Frog-sinetin sammakko (ei emojia) -->
+  <symbol id="frog-glyph" viewBox="0 0 24 24">
+    <ellipse cx="12" cy="15" rx="8" ry="6" fill="#a2c85a"/>
+    <circle cx="8" cy="9" r="3.4" fill="#a2c85a"/>
+    <circle cx="16" cy="9" r="3.4" fill="#a2c85a"/>
+    <circle cx="8" cy="8.6" r="1.5" fill="#1d3a28"/>
+    <circle cx="16" cy="8.6" r="1.5" fill="#1d3a28"/>
+    <circle cx="8.5" cy="8.2" r="0.5" fill="#f4f0e0"/>
+    <circle cx="16.5" cy="8.2" r="0.5" fill="#f4f0e0"/>
+    <path d="M8 16.5 Q12 19.5 16 16.5" stroke="#1d3a28" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+  </symbol>
+</defs>
+
+<div id="ctl">
+  <b>Vaihtoehto</b>
+  <button data-set="variant" data-val="a">A teline</button>
+  <button data-set="variant" data-val="b">B viuhka</button>
+  <button data-set="variant" data-val="c">C pöytä</button>
+  <span class="sep"></span>
+  <b>Käsi</b>
+  <button data-set="hand" data-val="rest">lepo</button>
+  <button data-set="hand" data-val="open">auki</button>
+  <span class="sep"></span>
+  <b>Teema</b>
+  <button data-set="theme" data-val="usva">usva</button>
+  <button data-set="theme" data-val="havu">havu</button>
+  <button data-set="theme" data-val="aurinko">aurinko</button>
+  <span class="sep"></span>
+  <button data-set="perf" data-val="lite">nopea tila</button>
+  <span class="sep"></span>
+  <code id="ctl-read">—</code>
+</div>
+
+<div class="wrap">
+  <div class="hdr"><span>Fokus A Priori</span><span>25:00</span></div>
+
+  <div class="side-panel tcg-left">
+    <div class="side-panel__body">Odottavat tehtävät…</div>
+    <button class="side-panel__tab">Odottavat</button>
+  </div>
+
+  <div id="arena" class="tcg-arena">
+    <div id="arena-room" aria-hidden="true" data-quad="q1">
+      <div class="arena-room__wall"><svg class="arena-room__art"><use href="#qart-q1"/></svg></div>
+      <div class="arena-room__echo"><svg class="arena-room__echo-art"><use href="#qart-q1"/></svg></div>
+      <div class="arena-room__floor"></div>
+      <div class="arena-room__castshadow"></div>
+      <div class="arena-room__side arena-room__side--l"></div>
+      <div class="arena-room__side arena-room__side--r"></div>
+      <div class="arena-room__spot"></div>
+      <div class="arena-room__vignette"></div>
+    </div>
+    <div id="arena-label">★ Areena</div>
+    <div id="arena-card-slot"></div>
+  </div>
+
+  <div class="side-panel tcg-right">
+    <button class="side-panel__tab">Tehtäväjono</button>
+    <div class="side-panel__body">Jonossa…</div>
+  </div>
+
+  <div id="hand-bar" aria-label="Tehtäväkäsi">
+    <div id="hand-grip" aria-hidden="true"></div>
+    <div id="hand-bar-cards"></div>
+  </div>
+
+  <button class="table-ledge" id="deck-rail" type="button" aria-label="Avaa tehtäväpakka">
+    <span class="deck-rail__label">Pakka</span>
+    <span class="deck-rail__counts"><i>5</i><i>4</i><i>1</i><i>1</i></span>
+  </button>
+</div>
+
+<script>
+/* ── Mockup-data ─────────────────────────────────────────── */
+var HAND = [
+  {text:'Selvitä asiakkaan tilanne', verbi:'Selvitä', quad:'q1', est:2, rar:'rare'},
+  {text:'Kirjaa palaverimuistio',    verbi:'Kirjaa',  quad:'q1', est:2, rar:'rare'},
+  {text:'Varaa neuvottelutila',      verbi:'Varaa',   quad:'q2', est:1, rar:'rare'},
+  {text:'Vie raportti eteenpäin',    verbi:'Vie',     quad:'q2', est:3, rar:'rare'},
+  {text:'Sovi tapaaminen tiimin kanssa', verbi:'Sovi', quad:'q2', est:2, rar:'rare'}
+];
+var ARENA = {text:'Soita hammaslääkärille', verbi:'Soita', quad:'q1', est:3, rar:'mythic', frog:true};
+var QLBL = {q1:'Tee heti', q2:'Aikatauluta', q3:'Delegoi', q4:'Poista'};
+var ICON = {'Soita':'soita','Sovi':'sovi','Kirjaa':'kirjaa','Tee':'tee',
+            'Selvitä':'selvita','Vie':'vie','Tarkista':'tarkista','Varaa':'varaa'};
+
+function svgIcon(id, w){
+  var s = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  s.setAttribute('aria-hidden','true');
+  if(w) s.style.width = w;
+  var u = document.createElementNS('http://www.w3.org/2000/svg','use');
+  u.setAttribute('href', '#' + id);
+  s.appendChild(u);
+  return s;
+}
+function el(cls, tag){ var e = document.createElement(tag || 'div'); if(cls) e.className = cls; return e; }
+
+function costPips(est){
+  var w = el('tcg-card__cost');
+  var full = Math.floor(est);
+  for(var i = 0; i < full; i++) w.appendChild(el('tcg-card__pip'));
+  if((est % 1) >= .5) w.appendChild(el('tcg-card__pip tcg-card__pip--half'));
+  return w;
+}
+
+/* Sama rakenne kuin index.html:n renderArenaCard (7453–7551) */
+function mkCard(t, mode){
+  var iconId = 'verb-i-' + (ICON[t.verbi] || 'tee');
+  var card = el('tcg-card tcg-card--' + (mode === 'hand' ? 'hand' : 'arena-size') +
+                ' tcg-card--' + t.rar + ' tcg-card--' + t.quad + (t.frog ? ' tcg-card--frog' : ''));
+  card.style.setProperty('--qc', 'var(--' + t.quad + ')');
+  card.setAttribute('tabindex', '0');
+  if(t.est) card.appendChild(costPips(t.est));
+  if(t.frog){
+    var seal = el('tcg-card__frog-seal');
+    seal.appendChild(svgIcon('frog-glyph'));
+    card.appendChild(seal);
+  }
+  var plate = el('tcg-card__plate');
+  var qart = el('tcg-card__qart');
+  qart.appendChild(svgIcon('qart-' + t.quad));
+  plate.appendChild(qart);
+  var art = el('tcg-card__art');
+  art.appendChild(svgIcon(iconId, '56%'));
+  plate.appendChild(art);
+  var tl = el('tcg-card__typeline');
+  tl.appendChild(svgIcon(iconId));
+  var vs = el('', 'span'); vs.textContent = t.verbi; tl.appendChild(vs);
+  var qs = el('tl-quad', 'span'); qs.textContent = QLBL[t.quad]; tl.appendChild(qs);
+  var set = el('tcg-card__set tcg-card__set--' + t.rar, 'span'); set.textContent = 'T'; tl.appendChild(set);
+  plate.appendChild(tl);
+  var body = el('tcg-card__body');
+  var title = el('tcg-card__title'); title.textContent = t.text; body.appendChild(title);
+  var meta = el('tcg-card__meta-tcg');
+  var pom = el('', 'span'); pom.textContent = t.est + ' pom'; meta.appendChild(pom);
+  body.appendChild(meta);
+  plate.appendChild(body);
+  card.appendChild(plate);
+  if(mode === 'hand') return card;
+
+  var actions = el('tcg-card__actions-tcg');
+  var b1 = el('act-start', 'button'); b1.textContent = '\u25b6 Aloita';
+  var b2 = el('', 'button'); b2.textContent = '\u2713 Tehty';
+  var b3 = el('', 'button'); b3.textContent = '\u2715';
+  actions.appendChild(b1); actions.appendChild(b2); actions.appendChild(b3);
+  plate.appendChild(actions);
+  return card;
+}
+
+/* Viuhkan indeksit: --i on etumerkillinen (−2…2), --ia itseisarvo.
+   CSS:n abs() ei ole vielä luotettava, siksi molemmat JS:stä. */
+function renderHand(){
+  var box = document.getElementById('hand-bar-cards');
+  box.innerHTML = '';
+  var n = HAND.length;
+  HAND.forEach(function(t, idx){
+    var card = mkCard(t, 'hand');
+    var i = idx - (n - 1) / 2;
+    card.style.setProperty('--i', i);
+    card.style.setProperty('--ia', Math.abs(i));
+    box.appendChild(card);
+  });
+}
+function renderArena(){
+  var slot = document.getElementById('arena-card-slot');
+  slot.innerHTML = '';
+  slot.appendChild(mkCard(ARENA, 'arena'));
+}
+
+/* ── Kytkimet ────────────────────────────────────────────── */
+var root = document.documentElement;
+function sync(){
+  [].forEach.call(document.querySelectorAll('#ctl button'), function(b){
+    var k = b.dataset.set, v = b.dataset.val;
+    var on = k === 'perf' ? root.getAttribute('data-perf') === v
+                          : root.getAttribute('data-' + k) === v;
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  document.getElementById('ctl-read').textContent =
+    root.getAttribute('data-variant').toUpperCase() + ' · ' +
+    root.getAttribute('data-hand') + ' · ' +
+    root.getAttribute('data-theme') +
+    (root.getAttribute('data-perf') === 'lite' ? ' · lite' : '');
+  syncCastShadow();
+}
+document.getElementById('ctl').addEventListener('click', function(e){
+  var b = e.target.closest('button[data-set]'); if(!b) return;
+  var k = b.dataset.set, v = b.dataset.val;
+  if(k === 'perf'){
+    root.getAttribute('data-perf') === 'lite' ? root.removeAttribute('data-perf')
+                                              : root.setAttribute('data-perf', 'lite');
+  } else {
+    root.setAttribute('data-' + k, v);
+  }
+  sync();
+});
+/* Hover avaa käden, kuten tuotteessa (index.html:7722–7741) */
+document.getElementById('hand-bar-cards').addEventListener('mouseenter', function(){
+  root.setAttribute('data-hand', 'open'); sync();
+});
+
+/* index.html:8351–8362 — varjo areenakortin tyveen */
+function syncCastShadow(){
+  var arena = document.getElementById('arena'), room = document.getElementById('arena-room');
+  var card = arena.querySelector('.tcg-card--arena-size');
+  if(!card) return;
+  var a = arena.getBoundingClientRect(), c = card.getBoundingClientRect();
+  if(!a.height || !c.height) return;
+  room.style.setProperty('--card-base', Math.round(c.bottom - (a.top + a.height / 2) + 4) + 'px');
+}
+window.addEventListener('resize', syncCastShadow);
+
+renderArena(); renderHand(); sync();
+</script>
+</body>
+</html>
