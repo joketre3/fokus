@@ -23,6 +23,7 @@ PRODUCT.md luotu 2026-06-10. P0 valmis.
 - Tauon alkaessa (sbrk/lbrk): peek aukeaa automaattisesti tarjolle
 - Ham-btn näkymätunnus: näyttää "Matriisi" / "Tehty" / "Projektit" kun ei olla Tehtävälistalla
 - Toimii sekä desktopilla että mobiililla (CSS siirretty globaaliksi)
+- **Desktop-käytös muuttunut 2026-07-27:** kahva ja peek ovat 720px keskitettyjä (eivät areenan levyisiä), peek on opaakki, peittää käden ja sulkeutuu ulkoklikkauksesta — ks. Yhtenäinen näkymä -osio
 
 ## Project overview
 
@@ -76,6 +77,7 @@ Jokainen tiedosto on itsenäinen: kaikki CSS ja JS sisäänrakennettu HTML-tiedo
 - `html[data-perf="lite"]` kuittaa kaikki CSS-transitiot automaattisesti `transition-duration:.01ms!important` — uusille animaatioille ei tarvita nopea-tila-erikoistapauksia
 - `transform:translateX(-50%)`-elementteihin (esim. `.notif`) lisää `translateY()` samaan `transform`-arvoon: `translateX(-50%) translateY(8px)` — erillinen `translateY`-sääntö ylikirjoittaa edellisen ja rikkoo keskityksen
 - Asetusnapit kuuluvat hampuriaisvalikkoon (Asetukset-osio), ei profiilipaneeliin — käyttäjä ei löydä piilotettujakin modaaleja
+- Yläpalkki on `.hdr` (`grid-area:topbar`), mutta `#hdr-timer` EI ole sen sisällä — se on oma `position:fixed` -elementti (z:90) oikeassa yläkulmassa. Yläpalkkiin kohdistuvat kuuntelijat eivät tavoita ajastinwidgettiä
 - `position:fixed` lapsi-elementti transformatun vanhemman sisällä positionoituu vanhempaan eikä viewporttiin — toggle-napit yms. sijoitetaan transformatun elementin ULKOPUOLELLE DOM:issa
 - `node --check` ei toimi `.html`-tiedostoille — extractaa ensin: `python3 -c "import re; open('/tmp/chk.js','w').write('\n'.join(s[1] for s in re.findall(r'<script(?! type=[\"\'](module)[\"\']*[^>]*>)(?:[^>]*)>(.*?)</script>', open('index.html').read(), re.DOTALL)))"` → `node --check /tmp/chk.js`
 - Headless Chrome `--screenshot` ei renderöi CSS transformeja luotettavasti — testaa aina oikeassa selaimessa, älä luota headless-kuvakaappauksiin CSS-animaatioiden todentamiseen
@@ -356,6 +358,8 @@ Suunnitelmat: `~/.claude/plans/yhten-inen-n-kym-areena-taustana-sparkling-taco.m
 - Korjattu 2 vikaa: eise-kahvan `max-width` laski `--panel-w`illä → 132px @900 ja kvadranttiluvut ulos laatikosta; oikein `--rail-w` (kahva väistää vain kiskot, auki oleva paneeli peittää sen z:40 > z:10 -sääntönä). `.notif` `bottom:2rem` lepäsi pöydän kehyksellä → desktop-override `calc(var(--ledge-h) + 3rem)`.
 - Impeccable-delta HEAD-baselineen: 0 (samat 4 osumaa, vain rivinumerot siirtyivät)
 - **Jälkikorjaus (Jaakon havainto):** `#eise-peek` aukesi koko areenan levyisenä → vasen reuna leikkautui kiskon alle. Nyt kahvan levyinen (sama `max-width`-kaava). Kaksi ansaa: (1) `#eise-peek.on{transform:translateY(0)}` on globaalisti MYÖHEMMIN lähteessä → override tarvitsee oman `@media (min-width:900px)` -lohkon sen jälkeen, ja `translateX(-50%)` on toistettava MOLEMMISSA transformeissa; (2) `--surface` on rgba — koko areenan levyisenä läpikuultavuus ei näkynyt, kahvan levyisenä areenakortti paistoi läpi → opaakki well-komposiitti (`--well-bg` + `--table-felt-deep`) kuten sivupaneeleissa.
+- **Peek käden päälle (2026-07-27):** `#eise-peek`in oma z-index ei koskaan yllä `#hand-bar`iin (z:60), koska `#arena` on `isolation:isolate` -stacking-konteksti. Nostettava koko areena: `body.eise-open #arena{z-index:62}` (< kehyksen 65, joten pöydän reuna pysyy edessä) + sivupaneelit 63, ettei kiskoja hukata matriisin taakse.
+- **Ulkoklikkaus-idiomi:** capture-vaiheen `click`-kuuntelija, rekisteröinti `setTimeout(...,0)`:lla ettei avaava klikkaus laukaise sitä (sama kuin `eiseOpenMoveMenu`). Sulkufunktiolle `noFocus`-parametri: hiiriklikkaus ei saa siepata fokusta kahvaan, mutta Esc ja `stopAll()` palauttavat sen.
 
 **Opit (vaihe 6) — headless-regressiotyökalut:**
 - **Virtual-time AJAA `setTimeout`in.** JS-mittaussondi toimii: injektoi `<script>` joka mittaa `getBoundingClientRect`illa ja kirjoittaa tuloksen `document.documentElement.setAttribute('data-probe', 'PROBE'+JSON+'ENDPROBE')`, lue `--dump-dom`in tulosteesta regexillä + `html.unescape` (attribuutin `"`-merkit escapataan). Sondi `<title>`en EI toimi — sovellus ylikirjoittaa sen.
