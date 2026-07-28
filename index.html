@@ -281,6 +281,30 @@ input[type=date]{font-family:'DM Sans',sans-serif;font-size:var(--text-sm);color
 .hud-chip:active{transform:scale(.97)}
 .hud-chip.active{background:var(--accent);color:white;border-color:var(--accent)}
 
+/* ── Tilachip: kirjautumisen ja datan sijainnin pysyvä indikaattori ── */
+.auth-chip{
+  display:inline-flex;align-items:center;gap:.4rem;
+  font-family:'DM Sans',sans-serif;font-size:var(--text-xs);font-weight:500;
+  padding:.3rem .7rem;border-radius:20px;
+  border:1.5px solid var(--border);
+  background:var(--surface);
+  color:var(--muted);
+  cursor:pointer;white-space:nowrap;
+  box-shadow:var(--chip-shadow);
+  transition:border-color .15s,color .15s;
+}
+.auth-chip:hover{border-color:var(--accent);color:var(--ink)}
+.auth-chip:active{transform:translateY(1px);box-shadow:var(--chip-shadow-dn)}
+.auth-chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* Ontto vs. täysi piste erottaa paikallisen pilvestä ilman värinäköä */
+.auth-chip__dot{
+  width:9px;height:9px;border-radius:50%;flex-shrink:0;
+  border:2px solid currentColor;background:transparent;
+  transition:background .15s,border-color .15s;
+}
+.auth-chip__dot.is-filled{background:currentColor}
+.auth-chip__label{max-width:9ch;overflow:hidden;text-overflow:ellipsis}
+
 .dnbtn{font-family:'DM Sans',sans-serif;font-size:var(--text-xs);font-weight:500;padding:.2rem .45rem;border-radius:var(--r-sm);border:1.5px solid var(--accent);color:var(--accent);background:var(--surface);cursor:pointer;transition:background .15s,color .15s,transform .15s}
 .dnbtn:hover{background:var(--accent);color:white}
 .dnbtn:active{transform:scale(.97)}
@@ -485,7 +509,7 @@ button[onclick*="exportData"],label[title*="kopio"],button[onclick*="openAI"],bu
 .pstatus{color:rgba(255,255,255,.6) !important}
 
 /* Modals */
-#proj-modal,#profile-panel,#schedule-modal,#eise-modal{background:rgba(15,40,25,.9) !important;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-color:rgba(255,255,255,.2) !important}
+#proj-modal,#profile-panel,#schedule-modal,#eise-modal,#account-modal{background:rgba(15,40,25,.9) !important;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-color:rgba(255,255,255,.2) !important}
 #schedule-modal .sched-day-btn{background:rgba(255,255,255,.12) !important;border-color:rgba(255,255,255,.22) !important;color:rgba(255,255,255,.7) !important}
 #schedule-modal .sched-day-btn.on{background:rgba(196,154,58,.65) !important;border-color:rgba(220,190,100,.5) !important;color:white !important}
 
@@ -637,7 +661,7 @@ html[data-theme="aurinko"] {
 }
 /* Panels */
 html[data-theme="aurinko"] .pbox{background:rgba(250,250,250,.90)!important;border-color:rgba(180,130,70,.30)!important;color:#2d2417!important}
-html[data-theme="aurinko"] #proj-modal,html[data-theme="aurinko"] #profile-panel,html[data-theme="aurinko"] #schedule-modal,html[data-theme="aurinko"] #eise-modal,html[data-theme="aurinko"] #edit-modal,html[data-theme="aurinko"] #jatko-modal,html[data-theme="aurinko"] #wiz-modal{background:rgba(255,255,255,.98)!important;border-color:rgba(180,130,70,.30)!important;color:#2d2417!important;backdrop-filter:blur(20px)}
+html[data-theme="aurinko"] #proj-modal,html[data-theme="aurinko"] #profile-panel,html[data-theme="aurinko"] #schedule-modal,html[data-theme="aurinko"] #eise-modal,html[data-theme="aurinko"] #edit-modal,html[data-theme="aurinko"] #jatko-modal,html[data-theme="aurinko"] #wiz-modal,html[data-theme="aurinko"] #account-modal{background:rgba(255,255,255,.98)!important;border-color:rgba(180,130,70,.30)!important;color:#2d2417!important;backdrop-filter:blur(20px)}
 html[data-theme="aurinko"] #eise-overlay{background:rgba(80,50,10,.35)!important}
 html[data-theme="aurinko"] .eise-quad{background:rgba(248,248,248,.75)!important;border-color:rgba(180,130,70,.25)!important}
 html[data-theme="aurinko"] .eise-card{background:rgba(255,255,255,.95)!important;border-color:rgba(180,130,70,.28)!important;color:#2d2417!important}
@@ -844,26 +868,42 @@ html[data-theme="aurinko"][data-perf="lite"]{
 
   let _lastFsWriteTs = 0;
   let _fsSnapshotUnsub = null;
-  let _syncOkTimer = null;
   let _fsSaveDirty = false; // paikallinen muokkaus odottaa debounce-pushia — älä ylikirjoita snapshotilla
 
-  window._setSyncStatus = function(state) {
-    var el = document.getElementById('fs-sync-status');
-    if (!el) return;
-    clearTimeout(_syncOkTimer);
-    var cfg = {
-      syncing: {text: '☁ ...', color: 'var(--accent)'},
-      ok:      {text: '☁ ✓',  color: '#34A853'},
-      offline: {text: '○ offline', color: 'var(--muted)'},
-      error:   {text: '☁ !',  color: '#e05c3a'}
-    }[state];
-    if (!cfg) return;
-    el.textContent = cfg.text;
-    el.style.color = cfg.color;
-    el.style.display = 'inline';
-    if (state === 'ok') {
-      _syncOkTimer = setTimeout(function() { el.style.display = 'none'; }, 2000);
+  // ── Kirjautumis- ja synkkatila ────────────────────────────────
+  // Yksi totuuden lähde jota sekä yläpalkin chip että tilimodaali lukevat.
+  // phase kertoo MISSÄ data on, sync kertoo pilvisynkan hetkellisen tilan.
+  // Alkutila päätellään fap_data_uid:sta: jos edellinen kirjautuminen jätti
+  // leiman, odotetaan onAuthStateChangedia sen sijaan että väitettäisiin
+  // hetken ajan väärin "Paikallinen".
+  window._authState = {
+    phase: localStorage.getItem('fap_data_uid') ? 'pending' : 'local',
+    sync: 'idle',
+    email: null,
+    name: null,
+    lastOkTs: 0
+  };
+
+  window._renderAuthUi = function() {
+    if (typeof window._renderAuthChip === 'function') window._renderAuthChip();
+    if (typeof window._renderAccountModal === 'function') window._renderAccountModal();
+    if (typeof window._updateHamAuthBtn === 'function') window._updateHamAuthBtn();
+  };
+
+  // Varmistin: jos Firebase ei koskaan vastaa (verkko poikki, SDK ei lataudu),
+  // 'pending' ei saa jäädä päälle ikuisesti.
+  setTimeout(function() {
+    if (window._authState.phase === 'pending') {
+      window._authState.phase = 'local';
+      window._renderAuthUi();
     }
+  }, 6000);
+
+  window._setSyncStatus = function(state) {
+    if (['syncing','ok','offline','error','idle'].indexOf(state) === -1) return;
+    window._authState.sync = state;
+    if (state === 'ok') window._authState.lastOkTs = Date.now();
+    window._renderAuthUi();
   };
 
   window.addEventListener('online',  function() { if (window.currentUser) window._setSyncStatus('ok'); });
@@ -1011,19 +1051,19 @@ html[data-theme="aurinko"][data-perf="lite"]{
     const auth = window._firebaseAuth;
 
     onAuthStateChanged(auth, async function(user) {
-      // Päivitetään auth-UI (9.5C)
-      var signinBtn = document.getElementById('auth-signin-btn');
-      var signedInEl = document.getElementById('auth-signed-in');
-      var userLabel = document.getElementById('auth-user-label');
+      // Päivitetään auth-UI (tilachip + tilimodaali + hampurilaisrivi)
       if (user) {
-        if (signinBtn) signinBtn.style.display = 'none';
-        if (signedInEl) signedInEl.style.display = 'inline-flex';
-        if (userLabel) userLabel.textContent = user.displayName ? user.displayName.split(' ')[0] : user.email ? user.email.split('@')[0] : 'Kirjautunut';
+        window._authState.phase = 'cloud';
+        window._authState.email = user.email || null;
+        window._authState.name = user.displayName || null;
       } else {
-        if (signinBtn) signinBtn.style.display = 'inline-flex';
-        if (signedInEl) signedInEl.style.display = 'none';
+        window._authState.phase = 'local';
+        window._authState.email = null;
+        window._authState.name = null;
+        window._authState.sync = 'idle';
+        window._authState.lastOkTs = 0;
       }
-      if (typeof window._updateHamAuthBtn === 'function') window._updateHamAuthBtn();
+      window._renderAuthUi();
 
       if (user) {
         window.currentUser = user;
@@ -1091,15 +1131,32 @@ html[data-theme="aurinko"][data-perf="lite"]{
   }
 
   // ── Google-kirjautumisen funktio ───────────────────────────────
+  // .notif on white-space:nowrap → viestit on pidettävä lyhyinä.
+  const _AUTH_ERR = {
+    'auth/popup-blocked': 'Selain esti kirjautumisikkunan',
+    'auth/popup-closed-by-user': 'Kirjautuminen peruttu',
+    'auth/cancelled-popup-request': 'Kirjautuminen peruttu',
+    'auth/network-request-failed': 'Ei verkkoyhteyttä',
+    'auth/unauthorized-domain': 'Verkkotunnus ei ole sallittu'
+  };
+
   window.kirjauduGooglella = function() {
     const auth = window._firebaseAuth;
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({prompt: 'select_account'});
+    window._authState.sync = 'syncing';
+    window._renderAuthUi();
     signInWithPopup(auth, provider)
       .then((result) => {
         console.log("✅ Google-popup onnistui!", result.user.uid);
       }).catch((error) => {
         console.error("❌ Virhe Google-kirjautumisessa:", error.message);
+        // Popup-virhe ei laukaise onAuthStateChangedia → tila on palautettava käsin.
+        window._authState.sync = 'idle';
+        window._renderAuthUi();
+        if (typeof window.notify === 'function') {
+          window.notify(_AUTH_ERR[error.code] || 'Kirjautuminen epäonnistui');
+        }
       });
   };
 
@@ -1118,24 +1175,10 @@ html[data-theme="aurinko"][data-perf="lite"]{
     });
   };
 
+  // Säilytetty taaksepäinyhteensopivuuden vuoksi: ohjaa tilimodaaliin,
+  // jottei mikään jäljelle jäänyt viittaus kirjaa ulos vahingossa.
   window.toggleAuth = function() {
-    if (window.currentUser) {
-      window.kirjauduUlos();
-    } else {
-      window.kirjauduGooglella();
-    }
-  };
-
-  // Päivitä hampurilaisvalikon auth-nappi
-  window._updateHamAuthBtn = function() {
-    var lbl = document.getElementById('ham-auth-label');
-    if (!lbl) return;
-    if (window.currentUser) {
-      var name = window.currentUser.displayName ? window.currentUser.displayName.split(' ')[0] : window.currentUser.email ? window.currentUser.email.split('@')[0] : 'Kirjautunut';
-      lbl.textContent = 'Kirjaudu ulos (' + name + ')';
-    } else {
-      lbl.textContent = 'Kirjaudu Googlella';
-    }
+    if (typeof window.openAccountModal === 'function') window.openAccountModal();
   };
 
   // Käynnistetään kuuntelu
@@ -1386,18 +1429,11 @@ html[data-theme="aurinko"][data-perf="lite"]{
     </div>
     <div id="hdr-right" style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
       <input type="date" id="dt">
-      <span id="fs-sync-status" style="display:none;font-size:.68rem;opacity:.8;font-family:'DM Sans',sans-serif"></span>
-      <!-- 9.5C: Auth-indikaattori -->
-      <div id="auth-status-wrap" style="display:flex;align-items:center;gap:.4rem">
-        <button id="auth-signin-btn" onclick="window.kirjauduGooglella()" style="display:inline-flex;align-items:center;gap:.35rem;font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;padding:.35rem .75rem;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer" title="Kirjaudu Googlella">
-          <svg width="13" height="13" viewBox="0 0 18 18" style="flex-shrink:0"><path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 002.38-5.88c0-.57-.05-.66-.15-1.18z"/><path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2.04a4.8 4.8 0 01-7.18-2.54H1.83v2.07A8 8 0 008.98 17z"/><path fill="#FBBC05" d="M4.5 10.48A4.8 4.8 0 014.5 7.5V5.43H1.83a8 8 0 000 7.14z"/><path fill="#EA4335" d="M8.98 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A8 8 0 001.83 5.43L4.5 7.5a4.8 4.8 0 014.48-3.92z"/></svg>
-          Kirjaudu
-        </button>
-        <button id="auth-signed-in" onclick="window.kirjauduUlos()" style="display:none;align-items:center;gap:.35rem;font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--muted);background:none;border:none;cursor:pointer;padding:0" title="Kirjaudu ulos">
-          <span style="width:8px;height:8px;border-radius:50%;background:#34A853;display:inline-block;flex-shrink:0"></span>
-          <span id="auth-user-label"></span>
-        </button>
-      </div>
+      <!-- Tilachip: kertoo koko ajan onko data vain selaimessa vai pilvessä -->
+      <button id="auth-chip" class="auth-chip" onclick="openAccountModal()" aria-haspopup="dialog">
+        <span id="auth-chip-dot" class="auth-chip__dot" aria-hidden="true"></span>
+        <span id="auth-chip-label" class="auth-chip__label">Paikallinen</span>
+      </button>
     </div>
   </div>
 
@@ -1824,6 +1860,81 @@ html[data-theme="aurinko"][data-perf="lite"]{
 .modal-hdr__title{font-family:'DM Serif Display',serif;font-size:1.2rem;font-style:italic;letter-spacing:-0.02em;color:var(--ink)}
 .modal-hdr__close{background:none;border:none;cursor:pointer;color:var(--muted);font-size:1.2rem;padding:.2rem .4rem;border-radius:4px;line-height:1}
 .modal-hdr__close:hover{color:var(--ink);background:var(--surface)}
+
+/* ── TILIMODAALI — kirjautuminen ja datan sijainti ── */
+#account-modal-overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.4);
+  z-index:400;
+  opacity:0;pointer-events:none;
+  transition:opacity .2s;
+  backdrop-filter:blur(3px);
+  -webkit-backdrop-filter:blur(3px);
+}
+#account-modal-overlay.ham-open{opacity:1;pointer-events:auto}
+#account-modal{
+  position:fixed;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%) scale(.97);
+  width:min(460px,96vw);
+  max-height:85vh;
+  background:var(--surface-xs);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  box-shadow:0 12px 40px rgba(0,0,0,.2);
+  z-index:401;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  transition:transform .2s,opacity .2s;
+  opacity:0;pointer-events:none;
+}
+#account-modal.ham-open{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto}
+#account-modal__body{overflow-y:auto;padding:1.25rem;scrollbar-width:none;flex:1}
+#account-modal__body::-webkit-scrollbar{display:none}
+
+.acc-state{
+  display:flex;align-items:flex-start;gap:.7rem;
+  padding:.9rem 1rem;border-radius:var(--r-md);
+  background:var(--surface);
+  border:1px solid var(--border);
+}
+.acc-state__dot{
+  width:12px;height:12px;border-radius:50%;flex-shrink:0;margin-top:.28rem;
+  border:2px solid currentColor;background:transparent;
+}
+.acc-state__dot.is-filled{background:currentColor}
+.acc-state__title{font-family:'DM Sans',sans-serif;font-size:var(--text-base);font-weight:600;color:var(--ink);line-height:1.3}
+.acc-state__detail{font-size:var(--text-sm);color:var(--muted);margin-top:.25rem;line-height:1.45;word-break:break-word}
+.acc-facts{
+  margin-top:.7rem;display:flex;flex-direction:column;gap:.35rem;
+  padding:.7rem 1rem;border-radius:var(--r-md);
+  background:var(--surface);border:1px solid var(--border);
+}
+.acc-fact{display:flex;justify-content:space-between;gap:1rem;font-size:var(--text-xs);color:var(--muted)}
+.acc-fact__val{color:var(--ink);text-align:right;word-break:break-word}
+.acc-actions{margin-top:1.1rem;display:flex;flex-direction:column;gap:.5rem}
+.acc-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:.45rem;
+  font-family:'DM Sans',sans-serif;font-size:var(--text-sm);font-weight:500;
+  padding:.6rem .9rem;border-radius:var(--r-md);
+  border:1.5px solid var(--border);background:var(--surface);color:var(--ink);
+  cursor:pointer;box-shadow:var(--chip-shadow);
+  transition:border-color .15s,color .15s;
+}
+.acc-btn:hover{border-color:var(--accent)}
+.acc-btn:active{transform:translateY(1px);box-shadow:var(--chip-shadow-dn)}
+.acc-btn--primary{border-color:var(--accent);color:var(--accent);font-weight:600}
+.acc-btn--danger{border-color:rgba(224,92,58,.5);color:#e05c3a}
+.acc-btn--danger:hover{border-color:#e05c3a}
+.acc-confirm{
+  margin-top:1rem;padding:.9rem 1rem;
+  border-radius:var(--r-md);
+  border:1.5px solid rgba(224,92,58,.45);
+  background:var(--surface);
+}
+.acc-confirm__title{font-family:'DM Sans',sans-serif;font-size:var(--text-sm);font-weight:600;color:var(--ink);margin-bottom:.5rem}
+.acc-confirm__list{list-style:none;padding:0;margin:0 0 .5rem;font-size:var(--text-xs);color:var(--muted);line-height:1.6}
+.acc-confirm__note{font-size:var(--text-xs);color:var(--muted);margin-bottom:.7rem;line-height:1.5}
 
 /* ── TEHTÄVÄPAKKA INVENTAARIO (Vaihe 7) ── */
 #inv-btn{
@@ -8636,6 +8747,268 @@ function notify(msg){
   if(typeof a11yAnnounce==='function')a11yAnnounce(msg);
 }
 
+/* ══ TILI JA SYNKRONOINTI — chip + modaali ══════════════════════
+   Firebase-moduulilohko headissä omistaa window._authState -objektin
+   ja kutsuu näitä window._renderAuthUi():n kautta. Nämä funktiot vain
+   lukevat tilan ja piirtävät sen.                                   */
+
+var AUTH_GREEN='#34A853', AUTH_RED='#e05c3a';
+
+// Kirjautumistilan tiivistelmä yhtenä objektina — sekä chip että
+// modaali lukevat tästä, jotta sanoitus pysyy varmasti samana.
+function _authView(){
+  var s=window._authState||{phase:'local',sync:'idle',email:null,name:null,lastOkTs:0};
+  var shortName=s.name?s.name.split(' ')[0]:(s.email?s.email.split('@')[0]:'Tili');
+  if(s.phase==='pending'){
+    return {label:'Yhdistetään…',dotColor:'var(--muted)',filled:false,
+            title:'Tarkistetaan kirjautumista',
+            heading:'Tarkistetaan kirjautumista',detail:'Odotetaan yhteyttä palveluun.'};
+  }
+  if(s.phase!=='cloud'){
+    return {label:'Paikallinen',dotColor:'var(--muted)',filled:false,
+            title:'Tiedot vain tässä selaimessa — avaa tilin tiedot',
+            heading:'Tallennettu vain tähän selaimeen',
+            detail:'Tiedot ovat tämän selaimen muistissa. Ne eivät näy muilla laitteilla, ja ne katoavat jos selaimen tiedot tyhjennetään.'};
+  }
+  var acct=s.email||shortName;
+  if(s.sync==='syncing') return {label:shortName,dotColor:'var(--accent)',filled:true,
+    title:'Synkronoidaan…',heading:'Synkronoituu pilveen',detail:'Synkronoidaan…',account:acct};
+  if(s.sync==='offline') return {label:shortName,dotColor:'var(--muted)',filled:false,
+    title:'Ei verkkoyhteyttä — muutokset tallessa paikallisesti',heading:'Ei verkkoyhteyttä',
+    detail:'Muutokset tallentuvat tähän selaimeen ja siirtyvät pilveen kun yhteys palaa.',account:acct};
+  if(s.sync==='error') return {label:shortName,dotColor:AUTH_RED,filled:true,
+    title:'Synkronointivirhe — avaa tilin tiedot',heading:'Synkronointivirhe',
+    detail:'Pilveen tallennus ei onnistunut. Muutokset ovat tallessa tässä selaimessa.',account:acct};
+  var when=s.lastOkTs?_authClock(s.lastOkTs):null;
+  return {label:shortName,dotColor:AUTH_GREEN,filled:true,
+          title:'Synkronoituu tilille '+acct,heading:'Synkronoituu pilveen',
+          detail:when?('Viimeksi synkronoitu klo '+when):'Yhteys pilveen on käytössä.',account:acct};
+}
+
+// Paikallinen kellonaika — ei toISOString(), se siirtäisi ajan UTC:hen
+function _authClock(ts){
+  var d=new Date(ts);
+  return d.getHours()+'.'+String(d.getMinutes()).padStart(2,'0');
+}
+function _authDateTime(ts){
+  var d=new Date(ts);
+  return d.getDate()+'.'+(d.getMonth()+1)+'.'+d.getFullYear()+' klo '+_authClock(ts);
+}
+
+window._renderAuthChip=function(){
+  var chip=document.getElementById('auth-chip');
+  var dot=document.getElementById('auth-chip-dot');
+  var lbl=document.getElementById('auth-chip-label');
+  if(!chip||!dot||!lbl)return;
+  var v=_authView();
+  lbl.textContent=v.label;
+  dot.style.color=v.dotColor;
+  dot.classList.toggle('is-filled',!!v.filled);
+  chip.title=v.title;
+  chip.setAttribute('aria-label',v.title);
+};
+
+// Hampurilaisvalikon tilarivi (auth-moduuli kutsui tätä ennen itse)
+window._updateHamAuthBtn=function(){
+  var el=document.getElementById('ham-auth-status');
+  if(!el)return;
+  el.textContent=_authView().label;
+};
+
+function openAccountModal(){
+  // Luokat ensin: _renderAccountModal ohittaa kiinni olevan modaalin
+  document.getElementById('account-modal-overlay').classList.add('ham-open');
+  document.getElementById('account-modal').classList.add('ham-open');
+  _accConfirmOpen=false;
+  _renderAccountModal();
+  document.addEventListener('keydown',accountEscHandler);
+  _trapOn('account-modal');
+}
+window.openAccountModal=openAccountModal;
+
+function closeAccountModal(){
+  _trapOff('account-modal');
+  document.getElementById('account-modal-overlay').classList.remove('ham-open');
+  document.getElementById('account-modal').classList.remove('ham-open');
+  document.removeEventListener('keydown',accountEscHandler);
+  _accConfirmOpen=false;
+}
+function accountEscHandler(e){ if(e.key==='Escape') closeAccountModal(); }
+
+// Uloskirjautumisen vahvistus elää saman modaalin sisällä — sisäkkäinen
+// modaali sotkisi z-indexin ja fokusloukun.
+var _accConfirmOpen=false;
+
+window._renderAccountModal=function(){
+  var body=document.getElementById('account-modal__body');
+  if(!body)return;
+  // Ei turhaa työtä kun modaali on kiinni; se piirretään auetessa uudelleen.
+  var modal=document.getElementById('account-modal');
+  if(modal&&!modal.classList.contains('ham-open'))return;
+
+  var v=_authView();
+  var s=window._authState||{};
+
+  // Runko rakennetaan joka kerta uusiksi, myös taustasynkan laukaisemana.
+  // Muista mikä nappi oli fokuksessa, jotta fokus ei hyppää käyttäjän alta.
+  var prevFocus=(document.activeElement&&body.contains(document.activeElement)&&document.activeElement.tagName==='BUTTON')
+    ? document.activeElement.textContent : null;
+  var hadFocus=!!prevFocus;
+  body.textContent='';
+
+  // ── Tilalohko ──
+  var state=document.createElement('div');
+  state.className='acc-state';
+  var sdot=document.createElement('span');
+  sdot.className='acc-state__dot'+(v.filled?' is-filled':'');
+  sdot.style.color=v.dotColor;
+  state.appendChild(sdot);
+  var stext=document.createElement('div');
+  var sTitle=document.createElement('div');
+  sTitle.className='acc-state__title';
+  sTitle.textContent=v.heading;
+  stext.appendChild(sTitle);
+  if(v.account){
+    var sAcct=document.createElement('div');
+    sAcct.className='acc-state__detail';
+    sAcct.textContent=v.account;
+    stext.appendChild(sAcct);
+  }
+  var sDet=document.createElement('div');
+  sDet.className='acc-state__detail';
+  sDet.textContent=v.detail;
+  stext.appendChild(sDet);
+  state.appendChild(stext);
+  body.appendChild(state);
+
+  // ── Datalohko ──
+  var facts=document.createElement('div');
+  facts.className='acc-facts';
+  var wsName='';
+  try{
+    var wsId=getActiveWsId();
+    var ws=getWorkspaces().find(function(w){return w.id===wsId;});
+    wsName=(ws&&ws.name)||wsId;
+  }catch(e){ wsName='—'; }
+  var openCount=0,updatedAt=0;
+  try{
+    var raw=localStorage.getItem(wsStorageKey());
+    if(raw){
+      var d=JSON.parse(raw);
+      if(Array.isArray(d.tasks)) openCount=d.tasks.filter(function(t){return !t.done}).length;
+      updatedAt=d.updatedAt||0;
+    }
+  }catch(e){ /* rikkinäinen data ei saa kaataa modaalia */ }
+  _accFact(facts,'Työtila',wsName);
+  _accFact(facts,'Avoimia tehtäviä',String(openCount));
+  _accFact(facts,'Muutettu viimeksi',updatedAt?_authDateTime(updatedAt):'—');
+  body.appendChild(facts);
+
+  // ── Toiminnot ──
+  // Vahvistuksen ollessa auki perustoiminnot piilotetaan, jottei näkyvissä
+  // ole kahta samannimistä "Kirjaudu ulos" -nappia.
+  var confirming=_accConfirmOpen&&s.phase==='cloud';
+  if(!confirming){
+    var actions=document.createElement('div');
+    actions.className='acc-actions';
+    if(s.phase==='cloud'){
+      actions.appendChild(_accBtn('Vie varmuuskopio','',function(){exportData();}));
+      actions.appendChild(_accBtn('Kirjaudu ulos','acc-btn--danger',function(){
+        _accConfirmOpen=true;_renderAccountModal();
+      }));
+    }else{
+      var inBtn=_accBtn('Kirjaudu Googlella','acc-btn--primary',function(){
+        closeAccountModal();
+        if(window.kirjauduGooglella) window.kirjauduGooglella();
+      });
+      if(s.phase==='pending') inBtn.disabled=true;
+      actions.appendChild(inBtn);
+      actions.appendChild(_accBtn('Vie varmuuskopio','',function(){exportData();}));
+    }
+    body.appendChild(actions);
+  }
+
+  // ── Uloskirjautumisen vahvistus ──
+  if(confirming){
+    var c=document.createElement('div');
+    c.className='acc-confirm';
+    var ct=document.createElement('div');
+    ct.className='acc-confirm__title';
+    ct.textContent='Kirjaudutaanko ulos?';
+    c.appendChild(ct);
+    var ul=document.createElement('ul');
+    ul.className='acc-confirm__list';
+    [['Katoaa tästä selaimesta:','tehtävät, työtilat ja Anthropic API-avain'],
+     ['Säilyy:','pilvidata tililläsi, teema ja ajastimen asetukset']].forEach(function(row){
+      var li=document.createElement('li');
+      var b=document.createElement('strong');
+      b.textContent=row[0]+' ';
+      li.appendChild(b);
+      li.appendChild(document.createTextNode(row[1]));
+      ul.appendChild(li);
+    });
+    c.appendChild(ul);
+    var note=document.createElement('div');
+    note.className='acc-confirm__note';
+    note.textContent='Varmuuskopio sisältää vain nykyisen työtilan.';
+    c.appendChild(note);
+    var cActions=document.createElement('div');
+    cActions.className='acc-actions';
+    cActions.style.marginTop='0';
+    cActions.appendChild(_accBtn('Vie varmuuskopio ensin','',function(){exportData();}));
+    // Nimi eroaa tarkoituksella listan "Kirjaudu ulos" -napista: fokus ei saa
+    // hypätä suoraan tuhoavaan nappiin kun vahvistus aukeaa.
+    cActions.appendChild(_accBtn('Vahvista uloskirjautuminen','acc-btn--danger',function(){
+      _accConfirmOpen=false;
+      if(window.kirjauduUlos) window.kirjauduUlos();
+    }));
+    cActions.appendChild(_accBtn('Peruuta','',function(){
+      _accConfirmOpen=false;_renderAccountModal();
+    }));
+    c.appendChild(cActions);
+    body.appendChild(c);
+  }
+
+  // Rungon uudelleenpiirto pudottaa fokuksen bodyyn, jolloin Tab karkaisi
+  // modaalin ulkopuolelle. Palauta se samannimiseen nappiin, tai jos se
+  // katosi (vahvistus aukesi/sulkeutui), rungon ensimmäiseen nappiin.
+  if(hadFocus&&!body.contains(document.activeElement)){
+    var btns=body.querySelectorAll('button:not([disabled])');
+    var target=null;
+    for(var bi=0;bi<btns.length;bi++){ if(btns[bi].textContent===prevFocus){target=btns[bi];break;} }
+    if(!target) target=btns[0];
+    if(target) target.focus();
+  }
+};
+
+function _accFact(parent,label,value){
+  var row=document.createElement('div');
+  row.className='acc-fact';
+  var l=document.createElement('span');
+  l.textContent=label;
+  var v=document.createElement('span');
+  v.className='acc-fact__val';
+  v.textContent=value;
+  row.appendChild(l);row.appendChild(v);
+  parent.appendChild(row);
+}
+
+function _accBtn(text,cls,fn){
+  var b=document.createElement('button');
+  b.type='button';
+  b.className='acc-btn'+(cls?' '+cls:'');
+  b.textContent=text;
+  b.addEventListener('click',fn);
+  return b;
+}
+
+// Chip on piirrettävä heti: auth-moduuli ehtii ajaa ennen kuin nämä
+// funktiot ovat olemassa, jolloin sen _renderAuthUi()-kutsu ei osu.
+document.addEventListener('DOMContentLoaded',function(){
+  _renderAuthChip();
+  _updateHamAuthBtn();
+});
+
 // ── SAVE / LOAD ──
 // ── WORKSPACES ──
 var WS_KEY='fap_workspaces';
@@ -10592,9 +10965,10 @@ document.addEventListener('DOMContentLoaded', function() {
     <span class="ham-row__label">Ajastimen asetukset</span>
   </button>
 
-  <button id="ham-auth-btn" class="ham-row" onclick="closeHamMenu();window.toggleAuth()">
+  <button id="ham-auth-btn" class="ham-row" onclick="closeHamMenu();openAccountModal()">
     <span class="ham-row__icon">☁</span>
-    <span id="ham-auth-label" class="ham-row__label">Kirjaudu Googlella</span>
+    <span class="ham-row__label">Tili ja synkronointi</span>
+    <span id="ham-auth-status" style="font-size:var(--text-xs);color:var(--muted);font-weight:300"></span>
   </button>
 
   <button id="ham-perf-btn" class="ham-row" onclick="togglePerfMode()">
@@ -10622,6 +10996,17 @@ document.addEventListener('DOMContentLoaded', function() {
     <button class="modal-hdr__close" onclick="closeDoneModal()" aria-label="Sulje">×</button>
   </div>
   <div id="done-modal__body">
+  </div>
+</div>
+
+<!-- Tilimodaali — kirjautuminen, datan sijainti, uloskirjautuminen -->
+<div id="account-modal-overlay" onclick="if(event.target===this)closeAccountModal()"></div>
+<div id="account-modal" role="dialog" aria-modal="true" aria-label="Tili ja synkronointi">
+  <div class="modal-hdr">
+    <span class="modal-hdr__title">Tili ja synkronointi</span>
+    <button class="modal-hdr__close" onclick="closeAccountModal()" aria-label="Sulje">×</button>
+  </div>
+  <div id="account-modal__body">
   </div>
 </div>
 
