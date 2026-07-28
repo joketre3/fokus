@@ -1,9 +1,5 @@
 # CLAUDE.md
 
-## Kommunikaatio
-
-Vastaukset minimiin. Luolamieskieli. Säästä tokeneita.
-
 ## Design-backlog
 
 Impeccable-analyysi tehty 2026-06-07. Raportti: `docs/impeccable-kritiikki.md`.
@@ -52,6 +48,10 @@ Ei testejä, ei lintteriä, ei CI:tä.
 | `mockup-lisaa.html` | Lisää tehtävä -napin ja -modalin suunnitteluvaihtoehdot (A/B/C) |
 | `mockup-arena-3d-plus.html` | Areenan 3D-syvyys: heittovarjo, taustaecho, isot reaktiot (referenssi) |
 | `mockup-yhtenainen.html` | Yhtenäinen näkymä: full-bleed areena + hover-peek-paneelit + pöydän kehys (vaihe 1, hyväksytty) |
+| `mockup-fut-kortti.html` | FUT-korttityylin mockup (referenssi) |
+| `mockup-arena-syvyys.html` | Areenan syvyyskokeilu (varhainen, korvattu `mockup-arena-3d-plus`illa) |
+| `mockup-eise-placement.html` | Eisenhower-peekin sijoitteluvaihtoehdot |
+| `dev-seed.html`, `testdata.html` | Testidatan siemennys localStorageen (kehitystyökaluja) |
 
 Pääsovellus avaa `swipe.html` ja `aamu.html` popup-ikkunoina (`window.open`). Timer aukeaa JS:llä generoituna popuppina. Kaikki ikkunat jakavat datan `localStorage`n kautta.
 
@@ -72,6 +72,13 @@ Jokainen tiedosto on itsenäinen: kaikki CSS ja JS sisäänrakennettu HTML-tiedo
 - `position: sticky` rikkoutuu kun vanhemmalla on `overflow-x: hidden` mobiilissa — käytä `position: fixed` + placeholder-elementti (`#pb-ph`)
 - Firebase API-avain client-side koodissa on tarkoituksella julkinen, ei tietoturvariski
 - Python `content.replace(old, new, 1)` on luotettava fallback kun `str_replace` epäonnistuu isoissa JS-funktioissa
+- `dataset.*` palauttaa AINA merkkijonon — `parseInt` ennen `===`-vertailua numeeriseen id:hen (`t.projectId===p.id` hajoaa muuten hiljaa)
+- `innerHTML`-klooni (esim. `openDoneModal`) pudottaa `onclick`-**propertyt** — kloonattavien elementtien napit tarvitsevat `data-*`-attribuutit + delegoidun kuuntelijan
+- `save()` ei saa riippua `animationend`ista: `render()` voi irrottaa noden kesken animaation, jolloin eventtiä ei tule. Tallenna heti mutaation jälkeen + `setTimeout(_renderOnce,600)` fallbackiksi (`markDone` on malli)
+- JS:n `\b` on ASCII-only — `^Selvitä\b` ei täsmää koskaan. Käytä `(?=\s|$|[,.;:!?])`
+- `toISOString()` paikallisesta päivämäärästä siirtää päivän UTC+2/+3:ssa edelliselle — rakenna `getFullYear/getMonth/getDate`illa
+- Inline-`style`ssä sama property kahdesti → jälkimmäinen voittaa (`display:none;...;display:flex` = elementti on näkyvissä a11y-puussa)
+- `text`, `verbi` ja `kuvaus` on pidettävä synkassa: `text = verbi + ' ' + kuvaus`. ICS-vienti ja verbi-chip lukevat `verbi`/`kuvaus`, eivät `text`iä
 - `backdrop-filter` on pääsyyllinen hitaaseen suorituskykyyn MacBook Pro 2010:llä (Intel HD Graphics, ei NVIDIA) — `html[data-perf="lite"]`-attribuutti poistaa sen kaikista elementeistä
 - Usvametsä-teeman `--surface-xs` (rgba .35) ja `--surface` (rgba .42) ovat läpinäkyviä ja luottavat backdrop-filteriin — nopean tilan CSS ylikirjoittaa ne opaakeiksi (.97)
 - `html[data-perf="lite"]` kuittaa kaikki CSS-transitiot automaattisesti `transition-duration:.01ms!important` — uusille animaatioille ei tarvita nopea-tila-erikoistapauksia
@@ -113,7 +120,14 @@ Kaikki tehtävädata `localStorage`-avaimessa `eis_v5_<wsId>` (oletus: `eis_v5_w
     done: Boolean,
     frog: Boolean,       // "syö sammakko ensin"
     waiting: Boolean,
-    scheduledDate: String|null,
+    verbi: String,       // text = verbi + ' ' + kuvaus — pidä synkassa!
+    kuvaus: String,
+    schedule: Object|null,     // ajastus; scheduled_hidden piilottaa listalta
+    scheduled_hidden: Boolean, // true kunnes ajastettu hetki koittaa
+    projectId: Number|null,    // numero, EI merkkijono (dataset.pid → parseInt)
+    pomos: Number,
+    doneAt: String|null,       // ISO, asetetaan valmistuessa
+    chainId, chainPosition, chainTotal, isChained,  // jatkokortit
     tags: String[],
     lisatiedot: String|null,
     linkki: String|null
@@ -132,6 +146,10 @@ Kaikki tehtävädata `localStorage`-avaimessa `eis_v5_<wsId>` (oletus: `eis_v5_w
 - `fap_apikey` — Anthropic API-avain
 - `fap_profile` — käyttäjäprofiili AI-analyysiä varten
 - `fap_perf` — `'1'` kun Nopea tila päällä (asettaa `html[data-perf="lite"]`)
+- `fap_data_uid` — paikallisen datan omistaja; eri uid kirjautuessa → data tyhjennetään
+- `fap_onboarded` — onboarding nähty
+
+`_clearLocalAppData()` pyyhkii kaiken `eis_v5*` + `fap_*` paitsi `fap_theme`, `fap_perf`, `fap_onboarded`, `fap_timer_settings` (laiteasetuksia, ei käyttäjädataa).
 
 ## Tehtävien verbi-formaatti
 
@@ -186,10 +204,9 @@ CSS custom properties: `--ink`, `--surface-xs`, `--surface`, `--surface-md`, `--
 
 ## Työskentelytapa
 
-- **Vaihe kerrallaan:** Jaakko vahvistaa "toimii" / "jatketaan" / "aloitetaan" ennen seuraavaa. Ei jatketa ilman vihreää valoa.
-- **Jako ensin:** Jaa vaihe osiin (esim. 15a–15d) ennen toteutusta.
+(Yleiset säännöt globaalissa CLAUDE.md:ssä — tässä vain projektikohtaiset.)
+
 - **Lue vain relevantti osa** suunnitteludokumenteista — ei koko tiedostoa.
-- **Mockup ensin** UI-päätöksille: erillinen mockup-tiedosto, ei working copya.
 - **Validoi ennen toimitusta:** `node --check` syntaksille; `sed -n` kontekstin lukemiseen ennen korvausta.
 - **Massamuutokset:** sed tai Python-skriptit, ei manuaalisia rivirivi-muutoksia.
 - DOM-haut: käytä aina id-pohjaisia selektoreja. Style-attribuuttiselektorit (`closest('div[style*="display:flex"]')`) ovat hauraita.
@@ -229,12 +246,12 @@ Analyysi- ja suunnitteludokumentit: `analysis/ASSESSMENT.md`, `analysis/report.h
 
 MacBook Pro 2010 (Intel HD, ei GPU) suorituskykyoptionointi Chromessa.
 
-| Muutos | Tiedosto | Mitä |
-|--------|----------|------|
-| `html[data-perf="lite"]` CSS-lohko | index.html:~682 | `backdrop-filter:none`, transitiot pois kaikista elementeistä |
-| Opaakki `--surface-xs`/`--surface` | index.html:~696 | Usva .35→.97, havu/aurinko omat arvot |
-| `togglePerfMode()`, `initPerfMode()` | index.html:~7537 | localStorage `fap_perf`, `data-perf` attribute |
-| Hampurilaisvalikko → Asetukset | index.html:~9137 | `#ham-perf-btn` nappi |
+| Muutos | Mitä |
+|--------|------|
+| `html[data-perf="lite"]` CSS-lohko | `backdrop-filter:none`, transitiot pois kaikista elementeistä |
+| Opaakki `--surface-xs`/`--surface` | Usva .35→.97, havu/aurinko omat arvot |
+| `togglePerfMode()`, `initPerfMode()` | localStorage `fap_perf`, `data-perf` attribute |
+| Hampurilaisvalikko → Asetukset | `#ham-perf-btn` nappi |
 
 ### Firestore-synkronointi (2026-06-11) — valmis
 
@@ -400,31 +417,29 @@ Opit:
 - **Huoneen värin pitää olla selvästi tummempi kuin huovan reuna.** Ensimmäinen yritys (`#0c1a13`) osui 1 RGB-yksikön päähän huovan reunasta (11,24,17 vs 12,25,20) → huopa katosi taustaan, vain `inset 0 0 0 1px var(--engrave-dim)` -kultaviiva erotti ne. Mittaa pikselit `getpixel`illä molemmin puolin rajaa (x=10 huone / x=28 viiva / x=40 huopa), älä luota silmään pienessä kuvassa.
 - Suuret base64-lohkot: muokkaa Python-skriptillä `re.subn(..., count=1)` + osumamäärän tarkistus, älä `sed`illä. `grep -v base64` ei riitä kun lohko on yhdellä rivillä muun CSS:n seassa.
 
-### Jäljellä (manuaalinen)
+### Code review -kierros (2026-07-28) — valmis, ei vielä testattu selaimessa
 
-- **`renderCardNew()`-jako** — `renderArenaCard()` tehty ✅; `renderDeckCard()` jätetty pois tarkoituksella (ks. Parannuskierros 2026-06-12)
+Ultrareview kolmessa osassa + aamu/swipe manuaalisesti. 16 normal + 9 nit korjattu, commit `31f4bb8`.
 
-### Impeccable-jono (critique-score 16/20 harden+audit tehty, snapshot `.impeccable/critique/2026-06-11T10-44-50Z__index-html.md`)
+**Ultrareviewn ajaminen isolle koodikannalle:**
+- `/code-review ultra <haara>` — argumentti on **kantahaara**, ei reviewtava. Reviewtava = se haara jolla olet.
+- Rajat: **500 tiedostoa / 8 000 riviä**. `index.html` (11 k riviä) ei mahdu yhteen ajoon.
+- Diff on kolmipiste (`base...HEAD`), joten kanta pitää olla **aito esi-isä**. Sisarhaarat eivät toimi: merge-base valuu juurcommittiin ja diff räjähtää koko koodikannaksi.
+- Toimiva kaava per lohko: orphan-commit jossa lohko on **poistettu** → sen päälle commit jossa lohko on takaisin. Diff = vain se lohko. `git checkout --orphan base-N` → muokkaa → commit → `git checkout -b rev-N` → `git checkout <täysi> -- .` → commit.
+- Ilmaisia ajoja 3/kk, sen jälkeen usage credits (käyttäjän kytkettävä selaimessa).
+- Raportissa voi olla `synthesis_incomplete: true` — kattavuus on silloin epävarma, käy lohko itse läpi.
 
-| Komento | Mitä | Prioriteetti |
-|---------|------|-------------|
-| ~~`$impeccable harden index.html`~~ | ~~Undo-toast poisto/valmis-toiminnoille~~ | ~~P1~~ ✅ |
-| ~~`$impeccable audit index.html`~~ | ~~Touch targets 44px, focus-indikaattorit~~ | ~~P1~~ ✅ |
-| ~~`$impeccable polish index.html`~~ | ~~6 side-tab border-left → poistettu, box-shadow inset~~ | ~~P2~~ ✅ |
-| ~~`$impeccable optimize index.html`~~ | ~~6 layout-animaatiota → transform/grid-template-rows~~ | ~~P2~~ ✅ |
-| ~~`$impeccable document index.html`~~ | ~~DESIGN.md + .impeccable/design.json~~ | ~~P2~~ ✅ |
+**Löydösten laadusta:** kaikki siteeratut rivinumerot pitivät paikkansa, mutta perustelut arvasivat toisinaan väärin *miksi* koodi on rikki (esim. duplikaatti-CSS:ää arveltiin review-haaran artefaktiksi — se oli mainissa ennestään). Vahvista väite koodista, älä perustelusta.
 
-### TCG-korttipeli-ilme (2026-06-04/05) — haara `claude/graphic-design-skills-t3mNx`, PR auki
+**Toistuva bugiluokka tässä koodikannassa:** popupit (`aamu.html`, `swipe.html`) jäävät jälkeen `index.html`:n suojauksista. Modernization-vaiheen 2 try/catch, `scheduled_hidden`-suodatus ja kenttäsynkka puuttuivat kaikki. Kun index.html saa datansuojauksen, tarkista popupit samalla.
 
-| Komponentti | Status | Sijainti |
-|---|---|---|
-| `.tcg-card*` CSS-lohko | ✅ | index.html:~3000 |
-| `renderArenaCard(t, container, anyFrog, mode)` | ✅ | index.html:~6440 |
-| `mkCostPips()` — pyöreät mana-helmet | ✅ | index.html:~6290 |
-| `_tcgIconId()`, `_tcgSvgIcon()` | ✅ | index.html:~6383 |
-| Viuhka-käsi (`#hand-bar`) peek-tila | ✅ | index.html:~2008 |
-| Cinzel `@import` | ✅ | index.html:9 |
-| `--plate-top/bot`, `--hand-card-w/h`, `--hand-peek-h` | ✅ | index.html:51 |
+### Impeccable-jono — kaikki komennot ajettu
+
+`harden`, `audit`, `polish`, `optimize`, `document` tehty (critique-score 16/20, snapshot `.impeccable/critique/2026-06-11T10-44-50Z__index-html.md`). Tulokset DESIGN.md:ssä ja `.impeccable/design.json`issa. Jäljellä vain deltan seuranta detektorilla — ks. baseline-rivi Bash-työkaluissa.
+
+### TCG-korttipeli-ilme (2026-06-04/05) — valmis, live
+
+Komponentit `index.html`:ssä (etsi nimellä, rivinumerot vanhenevat): `.tcg-card*`-CSS-lohko, `renderArenaCard()`, `mkCostPips()`, `_tcgIconId()`/`_tcgSvgIcon()`, viuhka-käsi `#hand-bar`, Cinzel-`@import`, tokenit `--plate-top/bot`, `--hand-card-w/h`, `--hand-peek-h`.
 
 **`renderArenaCard` mode:** `'arena'` = täysi kortti; `'hand'` = kompakti `.tcg-card--hand` ilman stats/footer/jatkokortti
 **`#hand-toggle` on `#hand-bar`:n ULKOPUOLELLA DOM:issa** — position:fixed toimii oikein vain näin
