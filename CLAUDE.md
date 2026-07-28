@@ -81,13 +81,13 @@ Jokainen tiedosto on itsenäinen: kaikki CSS ja JS sisäänrakennettu HTML-tiedo
 - Yläpalkki on `.hdr` (`grid-area:topbar`), mutta `#hdr-timer` EI ole sen sisällä — se on oma `position:fixed` -elementti (z:90) oikeassa yläkulmassa. Yläpalkkiin kohdistuvat kuuntelijat eivät tavoita ajastinwidgettiä
 - `position:fixed` lapsi-elementti transformatun vanhemman sisällä positionoituu vanhempaan eikä viewporttiin — toggle-napit yms. sijoitetaan transformatun elementin ULKOPUOLELLE DOM:issa
 - `node --check` ei toimi `.html`-tiedostoille — extractaa ensin: `python3 -c "import re; open('/tmp/chk.js','w').write('\n'.join(s[1] for s in re.findall(r'<script(?! type=[\"\'](module)[\"\']*[^>]*>)(?:[^>]*)>(.*?)</script>', open('index.html').read(), re.DOTALL)))"` → `node --check /tmp/chk.js`
-- Headless Chrome `--screenshot` ei renderöi CSS transformeja luotettavasti — testaa aina oikeassa selaimessa, älä luota headless-kuvakaappauksiin CSS-animaatioiden todentamiseen
-- Headless Chrome ei jaa `localStorage`:a eri origineista — modaaleja ja onboardingia ei voi testata automaattisesti headless-tilassa (eri portti = eri origin)
+- Headless Chrome `--screenshot` renderöi **staattiset** transformit (rotate, rotateX, perspektiivi) luotettavasti — käsiviuhka 2026-07-27 todennettiin näin. Se mitä se EI tee on siirtymien ja keyframejen ajaminen: virtuaaliaika ei etene CSS-transitionin aikana, joten ajonaikainen luokanvaihto jäätyy lähtöarvoon. Lataa tila valmiiksi päällä tai injektoi `transition:none!important` ennen mittausta
+- Headless Chrome ei jaa `localStorage`:a eri origineista (eri portti = eri origin) → erillinen seed-sivu ei toimi. **Kierto:** injektoi `localStorage.setItem`-skripti testikopion `<body>`-alkuun — tällöin modaalit ja onboarding testautuvat normaalisti
 - `checkMorningTask()` lisää tehtävän heti startup:ssa ja kutsuu `render()` — vaikuttaa `tasks.length`-pohjaisiin tarkistuksiin; suodata `aamusuunnittelu`-tagi pois ennen laskentaa
 - CSS hover-bounce: kun elementti liikkuu `:hover`-tilassa ylös, lisää `::after { position:absolute; bottom:-64px; left:-8px; right:-8px; height:64px; }` laajentamaan hit-aluetta — muuten elementti pomputtaa itseään
-- `position:fixed` lapsielementti grid-rivin sisällä positionoituu viewporttiin kun vanhemmalla ei ole `transform`ia — käytä tätä viuhkan kaltaisiin fixed-overlayhin gridin sisällä
+- `position:fixed` lapsielementti grid-rivin sisällä positionoituu viewporttiin kun vanhemmalla ei ole `transform`ia — käytä tätä viuhkan kaltaisiin fixed-overlayhin gridin sisällä. (Käsi ei enää ole gridissä: `grid-area:auto` + full-bleed — ks. Yhtenäinen näkymä)
 - `.wrap { overflow:hidden }` katkaisee gridin ulkopuolelle menevän sisällön — piilota elementit `translateY(100%)`:llä, älä siirrä fyysisesti gridin ulkopuolelle
-- Grid-rivi säilyttää korkeutensa vaikka sen sisältö on `position:fixed` — käytä tätä pitämään muut elementit (esim. arena-kortti) paikallaan viuhkan avautuessa
+- ~~Grid-rivi säilyttää korkeutensa vaikka sen sisältö on `position:fixed`~~ — koski vanhaa käsiriviä, joka poistettiin Yhtenäisessä näkymässä. Areenakortin ja käden törmäys ratkaistaan nyt mittaamalla (`_syncHandLift()`)
 - `startTmr()` ei kutsu `render()` — kutsu manuaalisesti heti perään jos UI pitää päivittää (esim. nappi-teksti)
 - Mobiilikaappaus headlessilla: `google-chrome --headless=new --no-sandbox --disable-gpu --window-size=390,844 --screenshot=/tmp/out.png "http://localhost:8765/file.html"`
 - Impeccable-detektori: `node /home/jaakko/.agents/skills/impeccable/scripts/detect.mjs --json index.html`
@@ -317,25 +317,25 @@ Suunnitelmat: `~/.claude/plans/yhten-inen-n-kym-areena-taustana-sparkling-taco.m
 | 6 | DESIGN.md z:40-kaista + täysregressio | ✅ |
 
 **Toteutus index.html:ssä (vaiheet 2–5):**
-- Tokenit `:root`iin: `--panel-w:340px`, `--rail-w:44px`, `--ledge-h:38px`, `--dur-panel:300ms`, `--rail-ink` (3 teemaa), `--room-grid` (3 teemaa)
-- `.wrap` desktop-grid: `auto 1fr` / `1fr`, areat `"topbar" "stage"`. `.tcg-arena` + `.tcg-left` + `.tcg-right` kaikki `grid-area:stage`; paneelit `justify-self:start/end`, `align-self:stretch`, `width:var(--panel-w)`, `z:40`, `margin:.75rem 0` + `margin-bottom:var(--ledge-h)`
+- Tokenit `:root`iin: `--panel-w:340px`, `--rail-w:44px`, `--ledge-h:38px`, `--dur-panel:300ms`, `--rail-ink` (3 teemaa), `--room-grid` (3 teemaa). Myöhemmin lisätty `--ledge-total`, `--fan-r/-step/-step-open`, `--hand-rest-t/-open-t` (ks. Käsiviuhka uusiksi)
+- `.wrap` desktop-grid: `auto 1fr` / `1fr`, areat `"topbar" "stage"`. `.tcg-arena` + `.tcg-left` + `.tcg-right` kaikki `grid-area:stage`; paneelit `justify-self:start/end`, `align-self:stretch`, `width:var(--panel-w)`, `z:40`, `margin:.75rem 0` (erillinen `margin-bottom:var(--ledge-h)` oli kuollut — myöhempi `margin` ylikirjoitti sen; poistettu 2026-07-27)
 - Paneeli = läpinäkyvä flex-rivi; well-skin (`linear-gradient(0deg,var(--well-bg),var(--well-bg)), var(--table-felt-deep)`) siirtyi `.side-panel__body`yn ja `.side-panel__tab`iin. Vieritys bodylle. Base-CSS: `.side-panel__body` pelkkä flex-pinoaja, `.side-panel__tab{display:none}`, `.table-ledge{display:none}` → mobiili + 600–899px ennallaan
 - `_attachSidePanelRails()` (kutsu `_attachHandHoverDesktop()`:n perässä): `aria-expanded`-synkka, kiskon klik-toggle `.is-open` (touch), Esc + blur
 - `body.focus-mode` päälle `toggleTimer`issa (eise-kahvan piilotuksen vieressä), pois `stopAll()`:ssa
 - `_syncCastShadow()` render()-lopussa + resize: mittaa areenakortin alareunan → `--card-base` `#arena-room`iin
-- `.tcg-arena` alapadding `7rem` → kortti ~56px keskikohdan yläpuolella (käsi ei peitä sitä)
+- `.tcg-arena` alapadding `7rem` → `9rem` (2026-07-27). Pelkkä padding ei riitä: käsi seuraa viewportia 1:1, kortti 1:2 → matalilla ikkunoilla ne törmäävät. `_syncHandLift()` hoitaa loput
 
 **Vaiheen 1 ratkaisut (siirrettävä index.html:ään vaiheissa 2–5):**
 - `.wrap` grid `auto 1fr` / `"topbar" "stage"`; `#arena` JA molemmat paneelit `grid-area:stage` (päällekkäiset grid-solut). Paneelit `justify-self:start/end`, `width:340px`, `z-index:40`. Paneelit pysyvät `#arena`n sisaruksina → sisarus z:40 maalautuu isoloidun areenan päälle.
 - Kisko on `<button class="side-panel__tab">` paneelin sisällä (vasen: viimeinen lapsi, oikea: ensimmäinen). Lepotila `translateX(∓(340−44)px)`, avaus `:hover,:focus-within → translateX(0)`. Sulkuviive `transition-delay:250ms` VAIN lepotilasäännössä. `--dur-panel:300ms`.
-- `.table-ledge`: 38px pöydän kehys huovan alalaidassa, `z:65` (käden 60 päällä), `pointer-events:none`. Sivupaneeleille `margin-bottom:var(--ledge-h)`.
+- `.table-ledge`: 38px pöydän kehys huovan alalaidassa, `z:65` (käden 60 päällä). (Mockup-vaiheessa `pointer-events:none`; tuotannossa se on `<button id="deck-rail">` eli `auto` — ks. PAKKA-palkki.)
 - `#hand-bar` = viuhkan rajausikkuna (`left/right:.75rem; top:0; bottom:.75rem; overflow:hidden`), `#hand-bar-cards` sen sisällä `position:absolute`.
 - 3D-viritys full-bleedille: perspective 1000→1300px, perspective-origin 50% 38%→40%, `__side` 16%→10%, `__spot` `min(70%,900px)`, `__echo-art` `min(60%,560px)` keskitettynä, `__echo::after` `min(52%,620px)`, `#arena-room` inset `48px 0 0`→`0`. Wall/floor/castshadow-arvot säilyvät.
 - Eise-kahva: keskitetty `max-width:min(720px, calc(100% - 2*var(--panel-w) - 2rem))`.
 
 **Opit (vaihe 1):**
 - **Heittovarjo full-bleedissä:** `bottom:5%` irtoaa kortista — kuilu kasvaa ikkunan korkeuden mukaan (120px @1600). Ankkuroi kortin tyveen: `top:calc(50% + 188px); bottom:auto` (kortti pystykeskitetty, puolikorkeus 196px − translateY 12px).
-- **Käsiviuhka + kehys:** auki-tilassa viuhka on nostettava kehyksen yläpuolelle (`translateY(-(ledge-h + 12px))`) — muuten korttien alaosa (verbi + nimi) jää kehyksen taakse. +12px kattaa viuhkan alimman kortin `translateY(11px)`-poikkeaman.
+- ~~**Käsiviuhka + kehys:** auki-tilassa viuhka on nostettava kehyksen yläpuolelle~~ — kumottu jo vaiheessa 2–5 (ks. alla) ja lopullisesti 2026-07-27: nosto on mitattu, ei kiinteä.
 - `#hand-bar-cards` koko viewportin levyisenä + `pointer-events:auto` on ansa: tukkii sivupaneelien alaosan ja avaa viuhkan mistä tahansa alareunan hoveristä → `pointer-events:none` kontainerille, `auto` korteille. `:hover` propagoituu silti kontaineriin lapsen kautta.
 - **`*` ei osu pseudo-elementteihin** — `html[data-perf="lite"] *{animation:none}` jättää `::after`-keyframet pyörimään. Käytä `*,*::before,*::after` sekä litessä että reduced-motionissa. (index.html tekee tämän jo oikein riveillä 785, 799–801.)
 - `writing-mode:vertical-rl` lukee JO ylhäältä alas — `rotate(180deg)` oikealle kiskolle kääntäisi tekstin alhaalta ylös JA badgen numeron ylösalaisin. Älä kierrä.
@@ -346,8 +346,8 @@ Suunnitelmat: `~/.claude/plans/yhten-inen-n-kym-areena-taustana-sparkling-taco.m
 
 **Opit (vaiheet 2–5, korjaavat osan vaiheen 1 oletuksista):**
 - **Heittovarjon kiinteä offset ei riitä:** mockupin `top:calc(50% + 188px)` olettaa 392px kortin, mutta index-areenakortissa on lisäksi toimintanapit (~490px) → varjo jäi kortin taakse. Ratkaisu: JS mittaa kortin alareunan (`.tcg-card--arena-size`, EI `.card-new--arena`) ja asettaa `--card-base`.
-- **Käden auki-tila ei saa nousta kehyksen yläpuolelle** (vastoin vaiheen 1 opetusta): `translateY(-(ledge-h+12px))` nostaa kortin kokonaan kehyksen yli → viuhka kelluu eikä "tule pöydän alta". Oikein `translateY(0)`: alin `--ledge-h` (vain "N pom" -rivi) jää kehyksen taakse.
-- **Kehys kiinni ikkunan alareunaan:** `bottom:.75rem` jättää 12px raon, josta näkyy huovan alamarginaali ja paneelien alareunat. Oikein `bottom:0; height:calc(var(--ledge-h) + .75rem); border-radius:0`.
+- **Käden auki-tila ei saa nousta kehyksen yläpuolelle** (vastoin vaiheen 1 opetusta): `translateY(-(ledge-h+12px))` nostaa kortin kokonaan kehyksen yli → viuhka kelluu eikä "tule pöydän alta". Periaate pätee yhä; kiinteä `translateY(0)` korvattiin 2026-07-27 mitatulla `--hand-open-t`:llä.
+- **Kehys kiinni ikkunan alareunaan:** `bottom:.75rem` jättää 12px raon, josta näkyy huovan alamarginaali ja paneelien alareunat. Oikein `bottom:0; height:var(--ledge-total); border-radius:0`.
 - **`.tcg-card`-perusreunus oli läpikuultava** (`rgba(255,255,255,.30)`-liuku) → areenakortti paistoi käsikortin läpi. Lisää opaakki `var(--plate-bot)` viimeiseksi taustakerrokseksi. Rare/mythic/uncommon olivat jo opaakkeja.
 - **Globaali eise-peek-CSS on desktop-media-lohkon JÄLKEEN** (rivi ~4227) → `#eise-handle`-override desktop-blokissa häviää lähdejärjestyksessä. Tarvitsee oman `@media (min-width:900px)` -lohkon globaalin säännön perään.
 - `#main-content-area` + `#v-inbox` `display:contents` tekee KAIKISTA lapsista grid-itemeitä — `#onboarding` (näkyvissä 1. käynnistyksellä) luo implisiittisen rivin ja litistää stagen. Näkyy vain uudella käyttäjällä / headless-testissä.
@@ -367,7 +367,7 @@ Suunnitelmat: `~/.claude/plans/yhten-inen-n-kym-areena-taustana-sparkling-taco.m
 - **Sondi VIIMEISEN `</body>`:n eteen** — ensimmäinen `</body>` on ajastin-popupin HTML-templaatissa merkkijonona. `html.rfind('</body>')`, ei `.replace(..., 1)`.
 - **Vain YKSI viivästetty snapshot** (`setTimeout(snap, 2500)`). Jos sondi ottaa myös välittömän ja `load`-snapshotin, viimeinen kirjoitus ei ole deterministisesti se myöhäisin → mittaus osuu kesken 300 ms:n paneelisiirtymän ja antaa satunnaisia välituloksia (paneeli näytti auki 1920:ssä, kiinni 900:ssa). `--virtual-time-budget` sondin viivettä isommaksi (9000).
 - **Pikselivertailun ansa:** eri `--window-size`-korkeus tuottaa eri kokoiset PNG:t, ja `ImageChops.difference` vertaa hiljaa vain leikkausta → "2,84 % regressio" oli 700×800 vs 700×844. Tarkista `Image.size` ennen diffiä. Kohinataso samasta tiedostosta kahdella ajolla: ~20 px.
-- **Osumatestaus:** `document.elementFromPoint` ei kelpaa maalausjärjestyksen todentamiseen, jos elementillä on `pointer-events:none` (esim. `.notif`, `.table-ledge`) — se ohitetaan aina. Päättele z-järjestys stacking-konteksteista.
+- **Osumatestaus:** `document.elementFromPoint` ei kelpaa maalausjärjestyksen todentamiseen, jos elementillä on `pointer-events:none` (esim. `.notif`; `.table-ledge` oli tällainen ennen PAKKA-palkkia) — se ohitetaan aina. Päättele z-järjestys stacking-konteksteista.
 - Regressiovertailun baseline: `git show HEAD:index.html` → sama seed-generaattori molemmille → pikselidiffi. 700 px 0,02 % ja 390 px 0,03 % = kohinataso.
 
 ### PAKKA-palkki (2026-07-27) — valmis
@@ -411,7 +411,7 @@ Viuhka liukui ylös ruudun alareunasta ilman lähdettä. Kolme vaihtoehtoa mocku
 | Lepotila | 49px → 96px näkyvissä: taide + verbisiru lukeutuu. Kaari, ei suora rivi |
 | Ote | `#hand-grip` — tumma pooli PAKKA-palkin yläreunassa, laajenee auetessa. Litessä pois |
 | Törmäysbugi | Auki-tila peitti Aloita/Tehty/✕. `.tcg-arena` padding 7rem→9rem **ja** `_syncHandLift()` |
-| `--ledge-total` | Uusi token: palkin todellinen korkeus (50px). `--ledge-h` (38px) on nimellinen |
+| `--ledge-total` | Uusi token: palkin laatikon korkeus (50px). `--ledge-h` (38px) on näkyvä korkeus — molemmat päteviä, eri tarkoitukseen |
 | Kuollut koodi | `#hand-bar--hidden`-CSS, `_handBarVisible`, `#hand-cards`/`#hand-label`/`#hand-empty`/`#hand-bar-empty`, kuollut `.tcg-left/.tcg-right{margin-bottom}` |
 
 Opit:
@@ -421,14 +421,17 @@ Opit:
 - **Vaakajako = d·sin(θ)** missä d = `--fan-r` − puolikorkeus (836−91=745). Auki-tilassa säteen kaventaminen kaventaa myös jakoa → nimet jäävät naapurin alle. **Muuta vain kulmaa, älä sädettä**
 - **Virtuaaliaika EI etene CSS-siirtymän aikana.** Luokan lisääminen ajonaikaisesti + `getComputedStyle` palauttaa lähtöarvon koko keston ajan → auki-tila mittautui lepotilaksi. Joko lataa sivu tila valmiiksi päällä tai injektoi `transition:none!important` ennen mittausta
 - **Yhteinen auki-sääntö ennen varianttilohkoa voittaa saman spesifisyyden.** `html[data-hand="open"] #x` ja `html[data-variant="c"] #x` ovat molemmat (1,1,1) → lähdejärjestys ratkaisee. Varianttikohtainen transform tarvitsee oman auki-säännön
-- **`--ledge-h` (38px) ei ole palkin korkeus** — se on `calc(--ledge-h + .75rem)` = 50px. Sama 12px virhe oli `--hand-peek-h`-laskussa ja kuolleessa `margin-bottom`-säännössä. Nyt `--ledge-total`
+- **Palkilla on kaksi korkeutta.** `--ledge-h` (38px) on **näkyvä** korkeus: `.wrap` ylittää viewportin .75rem, joten palkin alin .75rem jää ruudun alle. `--ledge-total` (50px) on **laatikon** korkeus. Näkyvää reunaa väistävä (`.notif`) lukee `--ledge-h`:n oikein; laatikkoa mittaava tarvitsee `--ledge-total`in — vanha `--hand-peek-h: calc(36px + var(--ledge-h))` luki väärää ja jäi 12px vajaaksi
 - Kuollut `hand-bar--hidden`: luokkaa ei lisätty missään, vain poistettiin 5 kohdassa. Ajastimen aikainen piilotus hoituu `body.focus-mode`illa
 - Aurinko-teemassa musta ei ole varjo vaan harmaa laatta — `rgba(0,0,0,.5)` vaalean huovan päällä. Syvennysvärit tokenoitava kuten `--well-bg`
-- Mobiili (<900px) koskematon: kaikki uudet säännöt ovat desktop-lohkossa. Pikselidiffi HEAD:iin 390px = 0,00 %
+- Mobiili (<900px) koskematon: kaikki uudet säännöt ovat desktop-lohkossa. Pikselidiffi HEAD:iin 390px = 0,00 % (`.notif`-alue maskattuna)
+- **Pikselidiffin kaksi väärää hälytystä samassa sessiossa.** (1) Baseline oli kaapattu ennen keskiyötä, vertailu sen jälkeen → `checkMorningTask()` näytti "Uusi päivä" -toastin vain toisessa ja päivämääräkenttä erosi → 3,4 % "regressio". **Kaappaa baseline ja vertailu samalla ajolla**, älä käytä eilistä kuvaa. (2) `.notif`-toast on näkyvissä vaihtelevalla opasiteetilla → maskaa sen alue ennen diffiä (mobiili y≈660–780, desktop y≈670–780). Maskattuna kohina on 0,002 %; ilman maskia 3,4 %
 
 ### Jäljellä (manuaalinen)
 
 - **`renderCardNew()`-jako** — `renderArenaCard()` tehty ✅; `renderDeckCard()` jätetty pois tarkoituksella (ks. Parannuskierros 2026-06-12)
+- **`.card-new--hand`-CSS on kuollutta** (~60 riviä, 11 esiintymää: `grep -n 'card-new--hand' index.html`). Elementtiä ei luoda missään eikä luokkaa lisätä JS:stä. Jätetty 2026-07-27 siivouksesta pois vain diffin rajaamiseksi — turvallinen poistaa
+- **Impeccable-detektoria ei ole etäympäristössä** (`/home/jaakko/.agents/...`) — delta on ajettava paikallisesti ennen mainiin mergeä
 
 ### Impeccable-jono (critique-score 16/20 harden+audit tehty, snapshot `.impeccable/critique/2026-06-11T10-44-50Z__index-html.md`)
 
@@ -440,22 +443,25 @@ Opit:
 | ~~`$impeccable optimize index.html`~~ | ~~6 layout-animaatiota → transform/grid-template-rows~~ | ~~P2~~ ✅ |
 | ~~`$impeccable document index.html`~~ | ~~DESIGN.md + .impeccable/design.json~~ | ~~P2~~ ✅ |
 
-### TCG-korttipeli-ilme (2026-06-04/05) — haara `claude/graphic-design-skills-t3mNx`, PR auki
+### TCG-korttipeli-ilme (2026-06-04/05) — mergetty mainiin
 
-| Komponentti | Status | Sijainti |
-|---|---|---|
-| `.tcg-card*` CSS-lohko | ✅ | index.html:~3000 |
-| `renderArenaCard(t, container, anyFrog, mode)` | ✅ | index.html:~6440 |
-| `mkCostPips()` — pyöreät mana-helmet | ✅ | index.html:~6290 |
-| `_tcgIconId()`, `_tcgSvgIcon()` | ✅ | index.html:~6383 |
-| Viuhka-käsi (`#hand-bar`) peek-tila | ✅ | index.html:~2008 |
-| Cinzel `@import` | ✅ | index.html:9 |
-| `--plate-top/bot`, `--hand-card-w/h`, `--hand-peek-h` | ✅ | index.html:51 |
+Rivinumerot jätetty pois tarkoituksella: ne vanhenevat joka commitissa. Käytä grep-ankkuria.
+
+| Komponentti | Ankkuri |
+|---|---|
+| `.tcg-card*` CSS-lohko | `grep -n '^\.tcg-card{' index.html` |
+| `renderArenaCard(t, container, anyFrog, mode)` | `grep -n '^function renderArenaCard'` |
+| `mkCostPips()` — pyöreät mana-helmet | `grep -n '^function mkCostPips'` |
+| `_tcgIconId()`, `_tcgSvgIcon()` | `grep -n '^function _tcgIconId'` |
+| Viuhka-käsi | `grep -n '^#hand-bar{'` (perus) / `'#hand-bar {'` (desktop-lohko) |
+| Cinzel `@import` | index.html:9 |
+| `--plate-top/bot`, `--hand-card-w/h` | `:root` |
 
 **`renderArenaCard` mode:** `'arena'` = täysi kortti; `'hand'` = kompakti `.tcg-card--hand` ilman stats/footer/jatkokortti
-**`#hand-toggle` on `#hand-bar`:n ULKOPUOLELLA DOM:issa** — position:fixed toimii oikein vain näin
-**`#hand-bar-cards` on desktopilla `position:fixed`** — overlay viewportin alareunassa, hover avaa, 5s mouseleave sulkee. `#hand-bar` pysyy gridin pohjarivissä (182px) pitäen areenan paikallaan.
-**Viuhkan tilat desktopilla:** peek (oletus, ~36px näkyvissä) → `hand-bar--open` (täysin auki) → `hand-bar--hidden` (ajastin käynnissä, `translateY(100%)`)
+**`#hand-toggle` on `#hand-bar`:n ULKOPUOLELLA DOM:issa** — position:fixed toimii oikein vain näin. Desktopilla `display:none` (hover hoitaa), mobiilissa elävä
+**`#hand-bar` on desktopilla `position:fixed`** viuhkan rajausikkunana; `#hand-bar-cards` on sen sisällä `position:absolute`, ja kortit ovat sen sisällä absoluuttisia (ks. The Fan Rule, DESIGN.md §8)
+**Viuhkan tilat desktopilla:** lepo (96px näkyvissä) → `hand-bar--open` (132px, hover; 5s mouseleave sulkee). Ajastimen aikainen piilotus on `body.focus-mode`, ei `hand-bar--hidden` — se luokka oli kuollut ja poistettiin 2026-07-27
+**`--hand-peek-h` on enää mobiilin token** — desktop käyttää `--hand-rest-t` / `--hand-open-t`, jotka `_syncHandLift()` ylikirjoittaa matalilla ikkunoilla
 
 ## Firebase
 

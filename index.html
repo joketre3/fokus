@@ -72,8 +72,10 @@
   --fan-step-open:9deg;      /* auki ≈ 117px jako, uloin kortti ±18deg */
   /* Pöydän kehys (desktop) */
   --ledge-h:38px;
-  /* Palkin TODELLINEN korkeus. --ledge-h yksin on 12px liian pieni —
-     kaikki mikä tarvitsee palkin oikean korkeuden lukee tämän. */
+  /* Palkin laatikon korkeus. --ledge-h on palkin NÄKYVÄ korkeus: .wrap
+     ylittää viewportin .75rem, joten palkin alin .75rem jää ruudun alle.
+     Näkyvää reunaa väistävä (esim. .notif) lukee --ledge-h:n, palkin
+     laatikkoa mittaava lukee tämän. */
   --ledge-total:calc(var(--ledge-h) + .75rem);
   --frog:#6b8a30;
   --frog-deep:#3d7a52;
@@ -3883,7 +3885,7 @@ svg[aria-hidden="true"]{pointer-events:none;}
        kehyksen yli. */
     position: absolute;
     left: 0; right: 0; bottom: 0;
-    height: calc(var(--ledge-h) + .75rem);
+    height: var(--ledge-total);
     z-index: 65;
     pointer-events: auto;
     border: none;
