@@ -52,6 +52,7 @@ Ei testejä, ei lintteriä, ei CI:tä.
 | `mockup-lisaa.html` | Lisää tehtävä -napin ja -modalin suunnitteluvaihtoehdot (A/B/C) |
 | `mockup-arena-3d-plus.html` | Areenan 3D-syvyys: heittovarjo, taustaecho, isot reaktiot (referenssi) |
 | `mockup-yhtenainen.html` | Yhtenäinen näkymä: full-bleed areena + hover-peek-paneelit + pöydän kehys (vaihe 1, hyväksytty) |
+| `mockup-kasi.html` | Käsiviuhkan kolme vaihtoehtoa: teline / pidetty viuhka / pöytäkäsi (B valittu) |
 
 Pääsovellus avaa `swipe.html` ja `aamu.html` popup-ikkunoina (`window.open`). Timer aukeaa JS:llä generoituna popuppina. Kaikki ikkunat jakavat datan `localStorage`n kautta.
 
@@ -399,6 +400,31 @@ Opit:
 Opit:
 - **Huoneen värin pitää olla selvästi tummempi kuin huovan reuna.** Ensimmäinen yritys (`#0c1a13`) osui 1 RGB-yksikön päähän huovan reunasta (11,24,17 vs 12,25,20) → huopa katosi taustaan, vain `inset 0 0 0 1px var(--engrave-dim)` -kultaviiva erotti ne. Mittaa pikselit `getpixel`illä molemmin puolin rajaa (x=10 huone / x=28 viiva / x=40 huopa), älä luota silmään pienessä kuvassa.
 - Suuret base64-lohkot: muokkaa Python-skriptillä `re.subn(..., count=1)` + osumamäärän tarkistus, älä `sed`illä. `grep -v base64` ei riitä kun lohko on yhdellä rivillä muun CSS:n seassa.
+
+### Käsiviuhka uusiksi (2026-07-27) — valmis
+
+Viuhka liukui ylös ruudun alareunasta ilman lähdettä. Kolme vaihtoehtoa mockupattiin (`mockup-kasi.html`: A teline / B pidetty viuhka / C pöytäkäsi), **B valittiin**.
+
+| Osa | Mitä |
+|---|---|
+| Viuhkan geometria | `nth-child(1..5)`-viritys → yksi kaava: `transform-origin:50% var(--fan-r)` + `rotate(calc(var(--i)*var(--fan-step)))`. `renderHandBar` asettaa `--i`/`--ia`. Toimii millä tahansa korttimäärällä |
+| Lepotila | 49px → 96px näkyvissä: taide + verbisiru lukeutuu. Kaari, ei suora rivi |
+| Ote | `#hand-grip` — tumma pooli PAKKA-palkin yläreunassa, laajenee auetessa. Litessä pois |
+| Törmäysbugi | Auki-tila peitti Aloita/Tehty/✕. `.tcg-arena` padding 7rem→9rem **ja** `_syncHandLift()` |
+| `--ledge-total` | Uusi token: palkin todellinen korkeus (50px). `--ledge-h` (38px) on nimellinen |
+| Kuollut koodi | `#hand-bar--hidden`-CSS, `_handBarVisible`, `#hand-cards`/`#hand-label`/`#hand-empty`/`#hand-bar-empty`, kuollut `.tcg-left/.tcg-right{margin-bottom}` |
+
+Opit:
+- **Käden nostoa ei voi kovakoodata.** Käsi on `position:fixed` viewportin pohjaan → liikkuu 1:1 ikkunan korkeuden mukana. Areenakortti on `justify-content:center` → liikkuu 1:2. Ne lähestyvät toisiaan ikkunan madaltuessa: 9rem padding riitti ≥782px korkeudella, 720p:ssä ei. Riittävä padding olisi ollut ~17,7rem = areena litistyy. Oikea työkalu on mittaus (`_syncHandLift()`), sama kuin `--card-base` heittovarjossa
+- **Näkyvä osa palkin yläpuolella = 156px − translateY**, riippumaton ikkunan korkeudesta: leikkuupohja on vp−12, palkin yläreuna vp−38, kortti 182px. Areenakortin sijainti sen sijaan RIIPPUU korkeudesta → törmäystesti on ajettava useassa koossa, ja **lyhin ikkuna on pahin tapaus** (ei pisin)
+- **Kaukainen pivot antaa kaaren ilmaiseksi.** `transform-origin:bottom center` kiertää jokaisen kortin omasta tyvestään → pohjat eivät konvergoi. Siirrä origo `--fan-r`:n (836px) päähän kortin yläreunasta alaspäin: pohjat konvergoivat ja uloimmat kortit laskeutuvat `d(1−cos θ)` verran automaattisesti
+- **Vaakajako = d·sin(θ)** missä d = `--fan-r` − puolikorkeus (836−91=745). Auki-tilassa säteen kaventaminen kaventaa myös jakoa → nimet jäävät naapurin alle. **Muuta vain kulmaa, älä sädettä**
+- **Virtuaaliaika EI etene CSS-siirtymän aikana.** Luokan lisääminen ajonaikaisesti + `getComputedStyle` palauttaa lähtöarvon koko keston ajan → auki-tila mittautui lepotilaksi. Joko lataa sivu tila valmiiksi päällä tai injektoi `transition:none!important` ennen mittausta
+- **Yhteinen auki-sääntö ennen varianttilohkoa voittaa saman spesifisyyden.** `html[data-hand="open"] #x` ja `html[data-variant="c"] #x` ovat molemmat (1,1,1) → lähdejärjestys ratkaisee. Varianttikohtainen transform tarvitsee oman auki-säännön
+- **`--ledge-h` (38px) ei ole palkin korkeus** — se on `calc(--ledge-h + .75rem)` = 50px. Sama 12px virhe oli `--hand-peek-h`-laskussa ja kuolleessa `margin-bottom`-säännössä. Nyt `--ledge-total`
+- Kuollut `hand-bar--hidden`: luokkaa ei lisätty missään, vain poistettiin 5 kohdassa. Ajastimen aikainen piilotus hoituu `body.focus-mode`illa
+- Aurinko-teemassa musta ei ole varjo vaan harmaa laatta — `rgba(0,0,0,.5)` vaalean huovan päällä. Syvennysvärit tokenoitava kuten `--well-bg`
+- Mobiili (<900px) koskematon: kaikki uudet säännöt ovat desktop-lohkossa. Pikselidiffi HEAD:iin 390px = 0,00 %
 
 ### Jäljellä (manuaalinen)
 

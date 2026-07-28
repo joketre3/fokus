@@ -281,7 +281,10 @@ Desktopilla (≥900px) pöytä on **yhtenäinen**: 3D-areena täyttää koko sta
 | `--etch-ink` / `--etch-shadow` | valk. .38 / tumma alle | tumma .55 / vaalea alle | letterpress-labelit |
 | `--chip-shadow` / `-dn` | koho / painettu | lämmin koho / painettu | nappimateriaali |
 | `--panel-w` / `--rail-w` | 340px / 44px | sama | sivupaneelin auki-/lepoleveys |
-| `--ledge-h` | 38px | sama | pöydän kehyksen korkeus |
+| `--ledge-h` | 38px | sama | pöydän kehyksen nimellinen korkeus |
+| `--ledge-total` | `calc(--ledge-h + .75rem)` = 50px | sama | palkin **todellinen** korkeus — käytä tätä, ei `--ledge-h`:ta |
+| `--fan-r` / `--fan-step` / `--fan-step-open` | 836px / 5.5° / 9° | — | viuhkan pivot-säde ja kulmajako korttia kohden |
+| `--hand-rest-t` / `--hand-open-t` | 60px / 24px | — | viuhkan nosto; JS ylikirjoittaa matalilla ikkunoilla |
 | `--dur-panel` | 300ms | sama | paneeliliu'un kesto |
 | `--rail-ink` | valk. .72 | ruskea .82 | kiskotekstin väri (ei `--subtle`) |
 | `--room-grid` | valk. .028 | ruskea .07 | lattiaruudukon viivat |
@@ -305,7 +308,11 @@ Desktopilla (≥900px) pöytä on **yhtenäinen**: 3D-areena täyttää koko sta
 
 **The Rail Rule.** Sivupaneeli lepää 44px kiskona (`--rail-w`) ja avautuu 340px:ksi (`--panel-w`) `:hover`/`:focus-within`-tilassa — liuku on `transform:translateX`, ei leveysanimaatio. Kisko on `<button>` paneelin sisällä (vasen: viimeinen lapsi, oikea: ensimmäinen), ja `writing-mode:vertical-rl` lukee jo ylhäältä alas — **ei `rotate(180deg)`**. Sulkuviive (`transition-delay:250ms`) kuuluu vain lepotilasääntöön, ei avaukseen. Fokustilassa piilotus on `visibility:hidden` + `transform`, ei pelkkä siirto — muuten kiskot ja käsikortit jäävät tab-järjestykseen ruudun ulkopuolelle (WCAG 2.4.3/2.4.7).
 
-**The Ledge Rule.** Pöydän kehys (`.table-ledge`) on työkalun fyysinen alareuna **ja PAKKA-palkki** — kiskojen vaakasuuntainen sisarus. `position:absolute` `.wrap`in sisällä (`left:0;right:0;bottom:0`), jolloin se linjautuu yläpalkin kanssa ja `.wrap`in `border-radius` + `overflow:hidden` pyöristää alakulmat. `z-index:65` käden 60 päällä. Käsiviuhka tulee palkin **alta**: auki-tilan `translateY(0)` jättää alimman `--ledge-h`:n palkin taakse. Viuhkaa ei nosteta palkin yli — silloin se kelluisi eikä nousisi pöydän alta. Sivupaneeleille `margin-bottom:var(--ledge-h)`.
+**The Ledge Rule.** Pöydän kehys (`.table-ledge`) on työkalun fyysinen alareuna **ja PAKKA-palkki** — kiskojen vaakasuuntainen sisarus. `position:absolute` `.wrap`in sisällä (`left:0;right:0;bottom:0`), jolloin se linjautuu yläpalkin kanssa ja `.wrap`in `border-radius` + `overflow:hidden` pyöristää alakulmat. `z-index:65` käden 60 päällä. Käsiviuhka tulee palkin **alta**: auki-tilan nosto jättää kortin alaosan palkin taakse. Viuhkaa ei nosteta palkin yli — silloin se kelluisi eikä nousisi pöydän alta. Palkin todellinen korkeus on `--ledge-total` (50px), ei `--ledge-h` (38px) — kaikki mikä väistää palkkia lukee `--ledge-total`in.
+
+**The Fan Rule.** Käsiviuhka on **yksi kaava, ei viisi sääntöä**. Kortit ladotaan keskelle päällekkäin (`position:absolute; left:50%`) ja leviävät pelkällä rotaatiolla yhteisen pivotin ympäri: `transform-origin: 50% var(--fan-r)` + `rotate(calc(var(--i) * var(--fan-step)))`. Pivot on kaukana kortin alapuolella, joten **pohjat konvergoivat kuten pidetyssä kädessä** ja kaari (uloimmat kortit alempana) syntyy geometriasta — ei käsin viritetyistä `translateY`-arvoista. `renderHandBar` asettaa `--i` (etumerkillinen, 5 korttia → −2…2) ja `--ia` (itseisarvo, syvyyshimmennykseen); CSS:n `abs()` ei ole vielä luotettava. Toimii millä tahansa korttimäärällä — `nth-child`-viritys ei toiminut.
+
+**The Hand Lift Rule.** Käden nostoa ei saa kovakoodata. Käsi on ankkuroitu viewportin pohjaan (liikkuu 1:1 ikkunan korkeuden mukana), areenakortti on pystykeskitetty (liikkuu 1:2) — matalilla ikkunoilla ne törmäävät ja viuhka peittää kortin toimintanapit. `_syncHandLift()` mittaa areenakortin alareunan ja asettaa `--hand-rest-t` / `--hand-open-t` niin, että viuhkan yläreuna jää aina sen alapuolelle. Sama opetus kuin heittovarjossa (`--card-base`): **mittaa, älä oleta.** Näkyvä osa palkin yläpuolella = `156px − translateY`, riippumaton ikkunan korkeudesta.
 
 **The Deck Rule.** Pakka (`#inv-modal`) nousee PAKKA-palkista samalla liu'ulla kuin kiskot (`var(--dur-panel) var(--ease-out)`) ja peittää palkin. Se pysähtyy **yläpalkin alle**: `top:var(--hdr-b)`, jonka `_syncHdrBottom()` mittaa `.hdr`in alareunasta — yläpalkki jää aina näkyviin ja sen klikkaus sulkee pakan. Palkin kvadranttiluvut käyttävät taustana `color-mix(var(--qN) 78%, black)`: sävy säilyy, mutta valkoinen teksti yltää ≥4,7:1 kaikissa teemoissa (puhdas `--q4` jäisi ~2,6:1).
 
