@@ -421,6 +421,18 @@ Opit:
 
 Ultrareview kolmessa osassa + aamu/swipe manuaalisesti. 16 normal + 9 nit korjattu, commit `31f4bb8`.
 
+**⚠ TESTAAMATTA SELAIMESSA** — nämä viisi eivät ole todennettavissa staattisesti, ja koodi on livenä GitHub Pagesissa. Palautus: `git revert 31f4bb8 && git push`.
+
+| # | Testi | Odotettu |
+|---|---|---|
+| 1 | Kirjaudu ulos | Sivu latautuu uudelleen, tehtävät ja työtilat tyhjenevät, teema + ajastinasetukset säilyvät. **API-avain katoaa** (tarkoituksellista) |
+| 2 | Vaihda työtilaa kirjautuneena | Muokkaa tehtävää → vaihda heti työtilaa → palaa takaisin: muutos tallessa. Toisen laitteen muutos näkyy vaihdon jälkeenkin (kuuntelija kytkeytyi uudelleen) |
+| 3 | Hampuriaisvalikko → Tehdyt | Palauta ja × toimivat modaalin sisällä, ja lista päivittyy heti |
+| 4 | swipe: ✎ Muokkaa → tallenna | Sulje popup, avaa uudelleen: nimi, tärkeys, kiireellisyys, arvio, lisätiedot ja linkki tallessa. Kirjoita nimikenttään "aika" — ei saa swaipata |
+| 5 | aamu: "Ohita aamusuunnittelu" | Eilinen 🐸 on yhä sammakko |
+
+Lisäksi kevyt varmistus: ICS-lataus koko päivän muistutuksena → tiedostossa oikea päivä (ei edellinen).
+
 **Ultrareviewn ajaminen isolle koodikannalle:**
 - `/code-review ultra <haara>` — argumentti on **kantahaara**, ei reviewtava. Reviewtava = se haara jolla olet.
 - Rajat: **500 tiedostoa / 8 000 riviä**. `index.html` (11 k riviä) ei mahdu yhteen ajoon.
