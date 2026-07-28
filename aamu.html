@@ -517,12 +517,25 @@ function getStorageKey(){
   return 'eis_v5_' + wsId;
 }
 
+// Turvallinen luku: rikki mennyt localStorage ei saa kaataa velhoa
+function readData(){
+  try{
+    var raw = localStorage.getItem(getStorageKey());
+    if(!raw) return null;
+    var d = JSON.parse(raw);
+    if(!d || typeof d !== 'object') return null;
+    if(!Array.isArray(d.tasks)) d.tasks = [];
+    return d;
+  }catch(e){
+    console.warn('Fokus: tehtävädatan luku epäonnistui', e);
+    return null;
+  }
+}
+
 function loadData(){
-  var key = getStorageKey();
-  var raw = localStorage.getItem(key);
-  if(!raw){ allTasks=[]; queue=[]; active=null; turn=[]; return; }
-  var d = JSON.parse(raw);
-  allTasks = (d.tasks||[]).filter(function(t){ return t && !t.done; });
+  var d = readData();
+  if(!d){ allTasks=[]; queue=[]; active=null; turn=[]; q1Tasks=[]; q2Tasks=[]; return; }
+  allTasks = (d.tasks||[]).filter(function(t){ return t && !t.done && !t.scheduled_hidden; });
   // Migraatio: vanha queue[] → active+turn
   if(d.active!==undefined){
     active = d.active;
@@ -533,29 +546,28 @@ function loadData(){
     turn = oldQ.slice(1);
   }
   queue = (active?[active]:[]).concat(turn);
-  var today = new Date(); today.setHours(0,0,0,0);
-  allTasks = allTasks.filter(function(t){
-    if(!t.scheduledDate) return true;
-    return new Date(t.scheduledDate) <= today;
-  });
+  // (Aiempi scheduledDate-suodatin poistettu: kenttää ei ole olemassa.
+  //  Ajastetut tehtävät karsitaan nyt scheduled_hidden-lipulla yllä.)
   q1Tasks = allTasks.filter(function(t){ return t.quad==='q1'; });
   q2Tasks = allTasks.filter(function(t){ return t.quad==='q2'; });
 }
 
-function saveData(){
+function saveData(applyFrog){
   var key = getStorageKey();
-  var raw = localStorage.getItem(key); if(!raw) return;
-  var d = JSON.parse(raw);
+  var d = readData(); if(!d) return;
   // Apply quad changes
   allTasks.forEach(function(t){
     var o = d.tasks.find(function(u){ return u.id===t.id; });
     if(o){ o.quad=t.quad; o.important=t.important; o.urgent=t.urgent; }
   });
-  // Apply frog selection: clear all, set selected
-  d.tasks.forEach(function(t){ t.frog=false; });
-  if(selectedFrog){
-    var ft = d.tasks.find(function(t){ return t.id===selectedFrog; });
-    if(ft) ft.frog=true;
+  // Apply frog selection: clear all, set selected.
+  // VAIN jos sammakkovaihe käytiin — ohitettaessa vanha sammakko on säilytettävä.
+  if(applyFrog){
+    d.tasks.forEach(function(t){ t.frog=false; });
+    if(selectedFrog){
+      var ft = d.tasks.find(function(t){ return t.id===selectedFrog; });
+      if(ft) ft.frog=true;
+    }
   }
   // Rebuild queue: frog first, then scheduled, then rest
   // Order: Q1+frog → Q1 → Q2+frog → Q2 (from scheduled slots)
@@ -798,28 +810,37 @@ function isScheduled(id){
   return slots.aamu.indexOf(id)>=0 || slots.paiva.indexOf(id)>=0 || slots.loppu.indexOf(id)>=0;
 }
 
-function slotMinutes(slotName){
-  var key = getStorageKey();
-  var raw = localStorage.getItem(key);
-  var dtasks = raw ? JSON.parse(raw).tasks : [];
+// Yksi hakufunktio kaikille aikataulunäkymille: ensin muistin tehtävät,
+// sitten tallennettu data. Ilman tätä jokainen rivi parsi localStoragen uudelleen.
+function taskLookup(){
+  var map = {};
+  var d = readData();
+  (d ? d.tasks : []).forEach(function(t){ if(t && t.id!==undefined) map[t.id]=t; });
+  getSchedulableTasks().forEach(function(t){ if(t && t.id!==undefined) map[t.id]=t; });
+  return map;
+}
+
+function slotMinutes(slotName, lookup){
+  var map = lookup || taskLookup();
   return slots[slotName].reduce(function(s,id){
-    var t = getSchedulableTasks().find(function(u){return u.id===id;}) ||
-            dtasks.find(function(u){return u.id===id;});
+    var t = map[id];
     return s + (t ? (t.est||1)*POMO_MIN : POMO_MIN);
   },0);
 }
 
 function renderSchedule(){
-  ['aamu','paiva','loppu'].forEach(function(s){ renderSlot(s); });
+  var map = taskLookup();
+  ['aamu','paiva','loppu'].forEach(function(s){ renderSlot(s, map); });
   renderPickers();
-  checkOverload();
+  checkOverload(map);
 }
 
-function renderSlot(slotName){
+function renderSlot(slotName, lookup){
+  var map = lookup || taskLookup();
   var box = document.getElementById('box-'+slotName);
   var pomoEl = document.getElementById('pomo-'+slotName);
   box.innerHTML = '';
-  var m = slotMinutes(slotName);
+  var m = slotMinutes(slotName, map);
   var max = SLOT_MAX[slotName]*POMO_MIN;
   pomoEl.textContent = m>0 ? (m+' / '+max+' min') : '';
   if(m>max) pomoEl.style.color='var(--pomo)'; else pomoEl.style.color='var(--muted)';
@@ -827,12 +848,8 @@ function renderSlot(slotName){
     box.innerHTML='<div class="slot-empty">Ei tehtäviä</div>';
     return;
   }
-  var key = getStorageKey();
-  var raw = localStorage.getItem(key);
-  var dtasks = raw ? JSON.parse(raw).tasks : [];
   slots[slotName].forEach(function(id){
-    var t = getSchedulableTasks().find(function(u){return u.id===id;}) ||
-            dtasks.find(function(u){return u.id===id;});
+    var t = map[id];
     if(!t) return;
     var item = document.createElement('div');
     item.className='slot-item';
@@ -877,10 +894,11 @@ function removeFromSlot(slotName, id){
   renderSchedule();
 }
 
-function checkOverload(){
+function checkOverload(lookup){
+  var map = lookup || taskLookup();
   var over = false;
   ['aamu','paiva','loppu'].forEach(function(s){
-    if(slotMinutes(s) > SLOT_MAX[s]*POMO_MIN) over=true;
+    if(slotMinutes(s, map) > SLOT_MAX[s]*POMO_MIN) over=true;
   });
   var w = document.getElementById('overloadWarn');
   if(over) w.classList.add('on'); else w.classList.remove('on');
@@ -888,7 +906,7 @@ function checkOverload(){
 
 // ── FINISH ────────────────────────────────────────────
 function finish(){
-  saveData();
+  saveData(true);
   setStep(5);
   document.getElementById('s4').classList.remove('active');
   document.getElementById('nav4').style.display='none';
@@ -897,23 +915,30 @@ function finish(){
 }
 
 function renderDone(){
-  var q1count = q1Tasks.length;
-  var q2count = selectedQ2.length;
+  // Jonoon meni vain aikataulutetut (+ sammakko jos se jäi sijoittamatta),
+  // ei koko Q1-lista + valitut Q2:t
+  var scheduledIds = [];
+  ['aamu','paiva','loppu'].forEach(function(s){
+    slots[s].forEach(function(id){ if(scheduledIds.indexOf(id)<0) scheduledIds.push(id); });
+  });
+  if(selectedFrog && scheduledIds.indexOf(selectedFrog)<0) scheduledIds.push(selectedFrog);
   var frogTask = selectedFrog ? getFrogCandidates().find(function(t){ return t.id===selectedFrog; }) : null;
   var frogText = frogTask ? ' Sammakko: ' + frogTask.text.substring(0,40) + (frogTask.text.length>40?'…':'') + '.' : '';
   document.getElementById('doneSubText').textContent =
-    'Jonoon lisätty ' + (q1count+q2count) + ' tehtävää.' + frogText;
+    'Jonoon lisätty ' + scheduledIds.length + ' tehtävää.' + frogText;
 
   var slotNames = {aamu:'🌅 Aamu',paiva:'☀️ Iltapäivä',loppu:'🌆 Päätös'};
-  var key = getStorageKey();
-  var raw = localStorage.getItem(key);
-  var dtasks = raw ? JSON.parse(raw).tasks : [];
+  // Tallennettu data voittaa: saveData on juuri kirjoittanut frog-liput,
+  // muistin objekteissa on yhä vanha tila
+  var d = readData();
+  var map = {};
+  getSchedulableTasks().forEach(function(t){ if(t && t.id!==undefined) map[t.id]=t; });
+  (d ? d.tasks : []).forEach(function(t){ if(t && t.id!==undefined) map[t.id]=t; });
   var html='';
   ['aamu','paiva','loppu'].forEach(function(s){
     if(!slots[s].length) return;
     var names = slots[s].map(function(id){
-      var t = getSchedulableTasks().find(function(u){return u.id===id;}) ||
-              dtasks.find(function(u){return u.id===id;});
+      var t = map[id];
       return t ? (t.frog?'🐸 ':'')+t.text : '';
     }).filter(Boolean).join(', ');
     html+='<div class="ds-row"><div class="ds-slot">'+slotNames[s]+'</div><div class="ds-tasks">'+esc(names)+'</div></div>';
@@ -923,7 +948,8 @@ function renderDone(){
 }
 
 function skipToEnd(){
-  saveData();
+  // Ohitus: Q1-tarkistuksen kvadranttimuutokset tallennetaan, sammakko ei.
+  saveData(false);
   window.close();
 }
 

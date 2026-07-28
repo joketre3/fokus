@@ -653,7 +653,7 @@ html[data-theme="aurinko"] .pbtn{background:rgba(248,248,248,.92)!important;bord
 html[data-theme="aurinko"] .pbtn.nxt{border-color:rgba(196,104,30,.60)!important;color:rgba(196,104,30,.90)!important}
 html[data-theme="aurinko"] .pbtn.dnx{border-color:rgba(196,104,30,.60)!important;color:rgba(196,104,30,.90)!important}
 /* Badges & stats */
-html[data-theme="aurinko"] .demp,.iemp,.qemp{color:rgba(45,36,23,.22)!important}
+html[data-theme="aurinko"] .demp,html[data-theme="aurinko"] .iemp,html[data-theme="aurinko"] .qemp{color:rgba(45,36,23,.22)!important}
 html[data-theme="aurinko"] .qbdg.q1{background:rgba(196,104,30,.75)!important}
 html[data-theme="aurinko"] .qbdg.q2{background:rgba(61,107,48,.75)!important}
 html[data-theme="aurinko"] .qbdg.q3{background:rgba(138,122,90,.75)!important}
@@ -876,16 +876,20 @@ html[data-theme="aurinko"][data-perf="lite"]{
       const ref = doc(db, 'users', uid, 'workspaces', wsId);
       await setDoc(ref, data, {merge: true});
       _lastFsWriteTs = data.updatedAt || 0;
-      _fsSaveDirty = false;
       window._setSyncStatus('ok');
       console.log('☁️ Firestore tallennettu:', wsId);
     } catch(e) {
       window._setSyncStatus('error');
       console.warn('⚠️ Firestore-tallennus epäonnistui:', e.message);
+    } finally {
+      // Lippu on nollattava myös virheessä — muuten onSnapshot hylkää
+      // kaikki saapuvat snapshotit loppusession ajan.
+      _fsSaveDirty = false;
     }
   }
 
   // ── onSnapshot-kuuntelu aktiiviselle workspacelle ──────────────
+  window._startFsListener = function(uid, wsId) { startFsListener(uid, wsId); };
   function startFsListener(uid, wsId) {
     if (_fsSnapshotUnsub) { _fsSnapshotUnsub(); _fsSnapshotUnsub = null; }
     const ref = doc(db, 'users', uid, 'workspaces', wsId);
@@ -927,23 +931,56 @@ html[data-theme="aurinko"][data-perf="lite"]{
     return null;
   }
 
+  // ── Paikallisen datan tyhjennys (tilinvaihto / uloskirjautuminen) ──
+  function _clearLocalAppData() {
+    const keep = /^(fap_theme|fap_perf|fap_onboarded|fap_timer_settings)$/;
+    const drop = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+      if (k.indexOf('eis_v5') === 0 || (k.indexOf('fap_') === 0 && !keep.test(k))) drop.push(k);
+    }
+    drop.forEach(function(k) { localStorage.removeItem(k); });
+  }
+
   // ── Debounce-ajastin Firestore-tallennukselle ──────────────────
   let _fsSaveTimer = null;
-  window._scheduleFsSave = function() {
-    _fsSaveDirty = true;
+  // Vireillä oleva tallennus: {wsId, key} kaapattuna AJASTUSHETKELLÄ.
+  // switchWorkspace ehtii vaihtaa fap_active_ws:n ennen kuin debounce
+  // laukeaa — ilman kaappausta muutos kirjoittuisi väärän työtilan doksuun.
+  let _fsPendingWs = null;
+
+  function _flushFsSave() {
+    const p = _fsPendingWs;
+    _fsPendingWs = null;
     clearTimeout(_fsSaveTimer);
-    _fsSaveTimer = setTimeout(function() {
-      if (!window.currentUser) { _fsSaveDirty = false; return; }
-      const uid = window.currentUser.uid;
-      const wsId = localStorage.getItem('fap_active_ws') || 'work';
-      const key = 'eis_v5_' + wsId;
-      const raw = localStorage.getItem(key);
-      if (!raw) { _fsSaveDirty = false; return; }
-      let data;
-      try { data = JSON.parse(raw); } catch(e) { _fsSaveDirty = false; console.warn('Fokus: FS-save LS-parse epäonnistui', e); return; }
-      saveToFirestore(uid, wsId, data);
-    }, 500);
+    _fsSaveTimer = null;
+    if (!p) return;
+    if (!window.currentUser) { _fsSaveDirty = false; return; }
+    const raw = localStorage.getItem(p.key);
+    if (!raw) { _fsSaveDirty = false; return; }
+    let data;
+    try { data = JSON.parse(raw); } catch(e) { _fsSaveDirty = false; console.warn('Fokus: FS-save LS-parse epäonnistui', e); return; }
+    saveToFirestore(window.currentUser.uid, p.wsId, data);
+  }
+
+  function _cancelFsSave() {
+    _fsPendingWs = null;
+    clearTimeout(_fsSaveTimer);
+    _fsSaveTimer = null;
+  }
+
+  window._scheduleFsSave = function() {
+    const wsId = localStorage.getItem('fap_active_ws') || 'work';
+    // Toisen työtilan tallennus vireillä → huuhtele se ensin.
+    // Pelkkä clearTimeout hukkaisi edellisen työtilan muutoksen.
+    if (_fsPendingWs && _fsPendingWs.wsId !== wsId) _flushFsSave();
+    _fsSaveDirty = true;
+    _fsPendingWs = { wsId: wsId, key: 'eis_v5_' + wsId };
+    clearTimeout(_fsSaveTimer);
+    _fsSaveTimer = setTimeout(_flushFsSave, 500);
   };
+  window._flushFsSave = _flushFsSave;
 
   // ── Firestore: timer-asetukset ─────────────────────────────────
   window._saveTimerToFs = async function(work, sbrk, lbrk) {
@@ -992,12 +1029,21 @@ html[data-theme="aurinko"][data-perf="lite"]{
         window.currentUser = user;
         console.log('✅ Kirjautuminen onnistui:', user.uid);
 
+        // Tilinvaihto jaetulla laitteella: edellisen käyttäjän paikallinen data
+        // ei saa päätyä tämän käyttäjän pilveen. Tyhjennä ennen kuin wsId luetaan.
+        const prevUid = localStorage.getItem('fap_data_uid');
+        if (prevUid && prevUid !== user.uid) {
+          console.log('🔄 Eri käyttäjä kuin paikallisen datan omistaja → tyhjennetään paikallinen data');
+          _clearLocalAppData();
+        }
+        localStorage.setItem('fap_data_uid', user.uid);
+
         const wsId = localStorage.getItem('fap_active_ws') || 'work';
         const lsKey = 'eis_v5_' + wsId;
         window._setSyncStatus('syncing');
 
         // Estä race: peru vireillä oleva pilvitallennus ennen latausta
-        clearTimeout(_fsSaveTimer);
+        _cancelFsSave();
 
         const fsData = await loadFromFirestore(user.uid, wsId);
 
@@ -1058,8 +1104,15 @@ html[data-theme="aurinko"][data-perf="lite"]{
   };
 
   window.kirjauduUlos = function() {
+    // Vireillä oleva tallennus peruttava — muuten se kirjoittaisi juuri
+    // tyhjennetyn datan takaisin pilveen 500 ms:n päästä.
+    _cancelFsSave();
     signOut(window._firebaseAuth).then(function() {
       console.log('👋 Kirjauduttu ulos');
+      // Paikallinen data ei saa jäädä odottamaan seuraavaa kirjautujaa.
+      // Reload varmistaa ettei muistissa oleva tila kirjoitu takaisin.
+      _clearLocalAppData();
+      location.reload();
     }).catch(function(e) {
       console.warn('⚠️ Uloskirjautuminen epäonnistui:', e.message);
     });
@@ -3713,31 +3766,6 @@ html[data-perf="lite"] .just-landed{animation:none!important;}
 
 /* Mobiili (<= 768px) */
 @media(max-width:768px){
-  /* Pomo sticky mobiilissa */
-  #pb{
-    position:sticky;
-    top:0;
-    z-index:50;
-    margin-bottom:.75rem;
-  }
-
-  /* Areena-kortti täysleveys mobiilissa */
-  .card-new--arena{
-    width:100%;
-    box-sizing:border-box;
-  }
-
-  /* Käsikortti sopeutuu kapeuteen */
-  #hand-cards{
-    flex-wrap:wrap;
-    overflow-x:visible;
-    gap:.5rem;
-  }
-  .card-new--hand{
-    width:calc(50vw - 1.25rem);
-    min-width:140px;
-    max-width:220px;
-  }
 
   /* Ei vaakasuoraa vieritystä — vain html-tasolla, EI bodylle (body overflow rikkoo stickyn) */
   html{overflow-x:hidden;}
@@ -4434,7 +4462,7 @@ svg[aria-hidden="true"]{pointer-events:none;}
   </div>
 </div>
 <div id="ai-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)" onclick="if(event.target===this)closeAI()"></div>
-<div id="ai-panel" style="display:none;position:fixed;top:0;right:0;bottom:0;width:min(420px,100vw);background:var(--surface-xs);border-left:1px solid var(--subtle);z-index:201;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)">
+<div id="ai-panel" style="display:none;position:fixed;top:0;right:0;bottom:0;width:min(420px,100vw);background:var(--surface-xs);border-left:1px solid var(--subtle);z-index:201;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid var(--subtle);flex-shrink:0">
     <div>
       <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;font-style:italic;letter-spacing:-0.02em;color:var(--ink)">✦ Analyysi</div>
@@ -5622,6 +5650,9 @@ function saveEditModal(){
   var txt=document.getElementById('edit-text').value.trim();
   if(!txt)return;
   t.text=txt;
+  // verbi/kuvaus on pidettävä synkassa tekstin kanssa — ICS-vienti ja
+  // areenakortin verbi-chip lukevat niitä, eivät t.text:iä
+  syncVerbiKuvaus(t);
   t.lisatiedot=document.getElementById('edit-notes').value.trim()||null;
   t.linkki=document.getElementById('edit-link').value.trim()||null;
   t.important=document.getElementById('edit-important').classList.contains('on');
@@ -5639,9 +5670,18 @@ function saveEditModal(){
   // Projekti
   var pb=document.getElementById('edit-proj-btns');
   var activeBtn=pb.querySelector('button.active');
-  if(activeBtn)t.projectId=activeBtn.dataset.pid||null;
+  // dataset.pid on merkkijono, p.id numero → parseInt tai kaikki
+  // === -vertailut projekteihin menevät epätodeksi
+  if(activeBtn)t.projectId=activeBtn.dataset.pid?parseInt(activeBtn.dataset.pid,10):null;
   save();render();
   closeEditModal();
+}
+
+// Pilkkoo tehtävätekstin verbiin ja kuvaukseen (addTask: text=verbi+' '+kuvaus)
+function syncVerbiKuvaus(t){
+  var m=(t.text||'').match(/^(\S+)\s+([\s\S]+)$/);
+  if(m){t.verbi=m[1];t.kuvaus=m[2];}
+  else{t.verbi=t.text||'';t.kuvaus='';}
 }
 
 // ESC sulkee muokkausmodaalin
@@ -6413,7 +6453,9 @@ function detectVerb(text) {
   var t = text.trim();
   for (var i = 0; i < SPLIT_VERBS.length; i++) {
     var v = SPLIT_VERBS[i];
-    var re = new RegExp('^' + v + '\\b', 'i');
+    // \b on ASCII-only → 'Selvitä'/'Lähetä' eivät koskaan täsmänneet.
+    // Lookahead sanan loppuun toimii myös ä/ö-päätteisillä verbeillä.
+    var re = new RegExp('^' + v + '(?=\\s|$|[,.;:!?])', 'i');
     if (re.test(t)) {
       var rest = t.replace(re, '').trim();
       rest = rest.replace(/^[,;:\-]\s*/, '');
@@ -6886,11 +6928,15 @@ function doneActive(){
     }
     active=turn.length>0?turn.shift():null;
     soundBell();
+    save();  // persistoi heti — animaatio ei saa olla tallennuksen ehto
     // Vaihe 10: animoi areenakortti ulos
     var cardEl=document.querySelector('[data-task-id="'+cur.id+'"]');
     if(cardEl){
+      var _rendered=false;
+      var _renderOnce=function(){ if(!_rendered){_rendered=true;render();} };
       cardEl.classList.add('card-exiting');
-      cardEl.addEventListener('animationend',function(){save();render();},{once:true});
+      cardEl.addEventListener('animationend',_renderOnce,{once:true});
+      setTimeout(_renderOnce,600);  // fallback: irronnut node ei laukaise animationendia
       return;
     }
   }
@@ -7852,14 +7898,20 @@ function promoteToHand(id){
     active=id;
   }
   notify(hadActive?'🎴 Kortti siirretty jonon perään':'🎴 Kortti nostettu areenalle');
+  save();  // persistoi heti — animaatio ei saa olla tallennuksen ehto
   // Vaihe 10: animoi lähdekortti ulos, kohde sisään
   var srcEl=document.querySelector('[data-task-id="'+id+'"]');
   if(srcEl){
-    srcEl.classList.add('card-exiting');
-    srcEl.addEventListener('animationend',function(){
+    var _rendered=false;
+    var _renderOnce=function(){
+      if(_rendered)return;
+      _rendered=true;
       _newTaskId=id; // merkitään: tämä kortti animoituu sisään uudessa paikassaan
-      save();render();
-    },{once:true});
+      render();
+    };
+    srcEl.classList.add('card-exiting');
+    srcEl.addEventListener('animationend',_renderOnce,{once:true});
+    setTimeout(_renderOnce,600);  // fallback: irronnut node ei laukaise animationendia
   } else {
     _newTaskId=id;
     save();render();
@@ -8314,8 +8366,10 @@ function render(){
     var ac=document.createElement('div');ac.className='tact';
     if(t.quad){var bg=document.createElement('span');bg.className='qbdg '+t.quad;bg.textContent=QL[t.quad];ac.appendChild(bg)}
     var st=document.createElement('span');st.className='pstat';st.textContent=(t.pomos||0)+'/'+fe(t.est||1)+' 🍅';ac.appendChild(st);
-    var rb=document.createElement('button');rb.className='rbtn';rb.textContent='Palauta';rb.onclick=(function(i){return function(){restore(i)}})(t.id);ac.appendChild(rb);
-    var xb=document.createElement('button');xb.className='delbtn';xb.textContent='×';xb.onclick=(function(i){return function(){del(i)}})(t.id);ac.appendChild(xb);
+    // data-attribuutit + delegointi: openDoneModal kloonaa nämä innerHTML:llä,
+    // eivätkä onclick-propertyt selviä serialisoinnista
+    var rb=document.createElement('button');rb.className='rbtn';rb.textContent='Palauta';rb.setAttribute('data-done-act','restore');rb.setAttribute('data-done-id',t.id);ac.appendChild(rb);
+    var xb=document.createElement('button');xb.className='delbtn';xb.textContent='×';xb.setAttribute('data-done-act','del');xb.setAttribute('data-done-id',t.id);ac.appendChild(xb);
     tw.appendChild(ac);card.appendChild(tx);card.appendChild(tw);dl.appendChild(card);
   });
 
@@ -8603,11 +8657,17 @@ function getActiveWsId(){return localStorage.getItem(WS_ACTIVE)||'work';}
 
 function switchWorkspace(id){
   save(); // save current before switching
+  // Huuhtele vanhan työtilan vireillä oleva pilvitallennus ennen vaihtoa
+  if(typeof window._flushFsSave==='function') window._flushFsSave();
   localStorage.setItem(WS_ACTIVE,id);
   tasks=[];active=null;turn=[];projects=[];nid=1;pnid=1;pomoDone=0;totalPomos=0;
   // Reset morning check so it can recheck for new workspace
   load();
   renderWsSwitcher();
+  // onSnapshot kuunteli vanhaa työtilaa (wsId on suljettu closureen) → kytke uudelleen
+  if(window.currentUser && typeof window._startFsListener==='function'){
+    window._startFsListener(window.currentUser.uid, id);
+  }
   notify('Vaihdettu: '+getWorkspaces().find(function(w){return w.id===id}).name);
 }
 
@@ -8960,7 +9020,7 @@ function setIcsType(type) {
     : 'Tarkka aikavaraus — päivämäärä, alkuaika ja kesto';
 }
 
-function lataаIcs() {
+function lataaIcs() {
   if(!_icsTask) return;
   var dateVal = document.getElementById('ics-date').value;
   if(!dateVal) { notify('Valitse päivämäärä'); return; }
@@ -8999,11 +9059,19 @@ function lataаIcs() {
 function generoiICS(tehtava, tyyppi, pvm, alkuaika, kestoMin) {
   var dtstart, dtend;
 
+  // DATE-arvo on rakennettava PAIKALLISISTA komponenteista: toISOString()
+  // muuntaa UTC:hen, jolloin paikallinen keskiyö putoaa UTC+2/+3:ssa
+  // edelliselle päivälle (28.7. → DTSTART:20260727).
+  var pvmFmt = function(dt) {
+    return dt.getFullYear() +
+      String(dt.getMonth()+1).padStart(2,'0') +
+      String(dt.getDate()).padStart(2,'0');
+  };
   if(tyyppi === 'muistutus') {
-    var d = pvm.toISOString().slice(0,10).replace(/-/g,'');
+    var d = pvmFmt(pvm);
     var seuraava = new Date(pvm);
     seuraava.setDate(seuraava.getDate() + 1);
-    var d2 = seuraava.toISOString().slice(0,10).replace(/-/g,'');
+    var d2 = pvmFmt(seuraava);
     dtstart = 'DTSTART;VALUE=DATE:' + d;
     dtend = 'DTEND;VALUE=DATE:' + d2;
   } else {
@@ -9033,6 +9101,15 @@ function generoiICS(tehtava, tyyppi, pvm, alkuaika, kestoMin) {
 
   var uid = 'fokus-' + Date.now() + '@fap';
 
+  // RFC 5545 §3.3.11: kenoviiva ensin, muuten myöhemmät escapet tuplaantuvat
+  var icsEsc = function(s) {
+    return String(s == null ? '' : s)
+      .replace(/\\/g, '\\\\')
+      .replace(/;/g, '\\;')
+      .replace(/,/g, '\\,')
+      .replace(/\r?\n/g, '\\n');
+  };
+
   var lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
@@ -9041,10 +9118,10 @@ function generoiICS(tehtava, tyyppi, pvm, alkuaika, kestoMin) {
     'UID:' + uid,
     dtstart,
     dtend,
-    'SUMMARY:' + summary.replace(/,/g, '\,'),
+    'SUMMARY:' + icsEsc(summary),
   ];
-  if(kuvaus) lines.push('DESCRIPTION:' + kuvaus.replace(/\n/g,'\\n').replace(/,/g,'\,'));
-  if(tehtava.projekti) lines.push('CATEGORIES:' + tehtava.projekti);
+  if(kuvaus) lines.push('DESCRIPTION:' + icsEsc(kuvaus));
+  if(tehtava.projekti) lines.push('CATEGORIES:' + icsEsc(tehtava.projekti));
   lines.push('END:VEVENT');
   lines.push('END:VCALENDAR');
 
@@ -9252,7 +9329,7 @@ function renderPresetList(){
     row.innerHTML='<span style="font-size:1rem;flex-shrink:0">📋</span>'
       +'<div style="flex:1;min-width:0">'
       +'<div style="font-size:var(--text-sm);font-weight:500;color:var(--ink)">'+esc(p.title||'Nimetön pohja')+'</div>'
-      +'<div style="font-size:.62rem;color:var(--muted);margin-top:.1rem">'+(p.description||'')+(p.shareCode?' · '+p.shareCode:'')+'</div>'
+      +'<div style="font-size:.62rem;color:var(--muted);margin-top:.1rem">'+esc(p.description||'')+(p.shareCode?' · '+esc(p.shareCode):'')+'</div>'
       +'</div>'
       +'<span style="font-size:.62rem;color:var(--accent);background:var(--accent-dim);padding:.1rem .4rem;border-radius:99px;white-space:nowrap;flex-shrink:0">'+((p.cards||[]).length)+' korttia</span>';
     row.onclick=function(){
@@ -9657,9 +9734,9 @@ function renderPresetInstance(p){
     var shEl=document.createElement('div');
     shEl.style.cssText='background:rgba(196,154,58,.1);border:1px solid rgba(196,154,58,.35);border-radius:var(--r-md);padding:.6rem .8rem;display:flex;flex-direction:column;gap:.4rem';
     shEl.innerHTML='<div style="font-size:var(--text-xs);font-weight:500;color:var(--accent)">🔄 Jaettu muuttuja — täytetään kerran kaikkiin kortteihin</div>';
-    sharedPhs.forEach(function(ph){
+    sharedPhs.forEach(function(ph,phIdx){
       shEl.innerHTML+='<div><div style="font-size:var(--text-xs);color:var(--muted);margin-bottom:.2rem">'+esc(ph)+'</div>'
-        +'<input id="ph-shared-'+ph+'" placeholder="arvo..." style="width:100%;font-family:\'DM Sans\',sans-serif;font-size:var(--text-sm);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:.38rem .6rem;color:rgba(255,255,255,.85);outline:none;box-sizing:border-box"></div>';
+        +'<input id="ph-shared-'+phIdx+'" placeholder="arvo..." style="width:100%;font-family:\'DM Sans\',sans-serif;font-size:var(--text-sm);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:.38rem .6rem;color:rgba(255,255,255,.85);outline:none;box-sizing:border-box"></div>';
     });
     body.appendChild(shEl);
   }
@@ -9704,8 +9781,8 @@ function createFromPreset(){
 
   // Kerää jaettujen muuttujien arvot
   var sharedVals={};
-  (p.sharedPlaceholders||[]).forEach(function(ph){
-    var el=document.getElementById('ph-shared-'+ph);
+  (p.sharedPlaceholders||[]).forEach(function(ph,phIdx){
+    var el=document.getElementById('ph-shared-'+phIdx);
     sharedVals[ph]=el?el.value.trim():'';
   });
 
@@ -9830,7 +9907,7 @@ function closeChainView(){
   <!-- Listanäkymä -->
   <div id="presets-list-view" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
     <div id="presets-list" style="padding:.85rem 1.1rem;display:flex;flex-direction:column;gap:.4rem;overflow-y:auto;flex:1"></div>
-    <div id="presets-detail" style="display:none;padding:.75rem 1.1rem;border-top:1px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;gap:.5rem">
+    <div id="presets-detail" style="display:none;padding:.75rem 1.1rem;border-top:1px solid var(--border);flex-shrink:0;flex-direction:column;gap:.5rem">
       <div style="font-size:var(--text-xs);color:var(--muted);font-weight:300" id="presets-detail-desc"></div>
       <div style="display:flex;gap:.4rem">
         <button onclick="openPresetInstance(_selectedPresetId)" style="font-family:'DM Sans',sans-serif;font-size:var(--text-sm);font-weight:500;padding:.5rem;flex:1;border-radius:var(--r-md);background:var(--accent);color:white;border:none;cursor:pointer">▶ Käytä pohjaa</button>
@@ -9981,7 +10058,7 @@ function closeChainView(){
     </div>
 
     <div style="display:flex;gap:.5rem;margin-top:.2rem">
-      <button onclick="lataаIcs()" style="font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;padding:.6rem 1.3rem;border-radius:8px;border:none;background:var(--accent);color:white;cursor:pointer;flex:1">📥 Lataa .ics</button>
+      <button onclick="lataaIcs()" style="font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;padding:.6rem 1.3rem;border-radius:8px;border:none;background:var(--accent);color:white;cursor:pointer;flex:1">📥 Lataa .ics</button>
       <button onclick="closeIcsDialog()" style="font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:400;padding:.6rem .9rem;border-radius:8px;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);background:none;cursor:pointer">Peruuta</button>
     </div>
   </div>
@@ -10584,6 +10661,23 @@ function updateHamThemeBtns(){
 }
 
 // ── TEHDYT-MODAALI ──
+// Delegoitu käsittelijä: toimii sekä Tehdyt-välilehdellä (#dl) että
+// modaalissa, johon rivit kloonataan innerHTML:llä
+document.addEventListener('click',function(e){
+  var btn=e.target.closest?e.target.closest('button[data-done-act]'):null;
+  if(!btn)return;
+  var id=parseInt(btn.getAttribute('data-done-id'),10);
+  if(isNaN(id))return;
+  if(btn.getAttribute('data-done-act')==='restore')restore(id);
+  else del(id);
+  // render() päivittää #v-done:n, ei modaalin klooniä → kloonaa uudelleen
+  var dm=document.getElementById('done-modal');
+  if(dm&&dm.classList.contains('ham-open')){
+    var src=document.getElementById('v-done'), body=document.getElementById('done-modal__body');
+    if(src&&body)body.innerHTML=src.innerHTML;
+  }
+});
+
 function openDoneModal(){
   closeHamMenu();
   var src = document.getElementById('v-done');

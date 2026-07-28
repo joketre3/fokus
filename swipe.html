@@ -246,12 +246,26 @@ function startSwipe(override){
   renderStack();renderQueuePanel();
 }
 
+// Turvallinen luku: rikki mennyt localStorage ei saa kaataa näkymää
+function readData(){
+  try{
+    var wsId=localStorage.getItem('fap_active_ws')||'work';
+    var raw=localStorage.getItem('eis_v5_'+wsId)||localStorage.getItem('eis_v5');
+    if(!raw)return null;
+    var d=JSON.parse(raw);
+    if(!d||typeof d!=='object')return null;
+    if(!Array.isArray(d.tasks))d.tasks=[];
+    return d;
+  }catch(e){
+    console.warn('Fokus: tehtävädatan luku epäonnistui',e);
+    return null;
+  }
+}
+
 function loadData(){
-  var wsId=localStorage.getItem('fap_active_ws')||'work';
-  var raw=localStorage.getItem('eis_v5_'+wsId)||localStorage.getItem('eis_v5');
-  if(!raw){tasks=[];queue=[];active=null;turn=[];return;}
-  var d=JSON.parse(raw);
-  tasks=JSON.parse(JSON.stringify(d.tasks||[])).filter(function(t){return !t.done});
+  var d=readData();
+  if(!d){tasks=[];queue=[];active=null;turn=[];total=0;return;}
+  tasks=JSON.parse(JSON.stringify(d.tasks)).filter(function(t){return !t.done&&!t.scheduled_hidden});
   // Migraatio: vanha queue[] → active+turn
   if(d.active!==undefined){
     active=d.active;
@@ -276,28 +290,48 @@ function loadData(){
 function saveQueue(){
   var wsId=localStorage.getItem('fap_active_ws')||'work';
   var key='eis_v5_'+wsId;
-  var raw=localStorage.getItem(key)||localStorage.getItem('eis_v5');
-  if(!raw)return;
-  var d=JSON.parse(raw);
+  var d=readData();
+  if(!d)return;
   // Synkronoi sisäinen queue → active+turn
   active=queue.length>0?queue[0]:null;
   turn=queue.slice(1);
   d.active=active;
   d.turn=turn;
   delete d.queue; // poistetaan vanha kenttä
-  tasks.forEach(function(t){var o=d.tasks.find(function(u){return u.id===t.id});if(o)o.frog=t.frog;});
+  // tasks on syväkopio (loadData) → muokkaukset EIVÄT näy d.tasks:issa itsestään.
+  // Kopioi kaikki kentät, joita tämä näkymä voi muuttaa.
+  tasks.forEach(function(t){
+    var o=d.tasks.find(function(u){return u.id===t.id});
+    if(!o)return;
+    o.frog=t.frog;
+    o.text=t.text;
+    o.important=t.important;
+    o.urgent=t.urgent;
+    o.quad=t.quad;
+    o.verbi=t.verbi;
+    o.kuvaus=t.kuvaus;
+    o.est=t.est;
+    o.lisatiedot=t.lisatiedot;
+    o.linkki=t.linkki;
+  });
   d.updatedAt=Date.now(); // last-write-wins -leima pilvisynkkaan
   localStorage.setItem(key,JSON.stringify(d));
   // Delegoi pilvitallennus pääikkunalle (Firebase-SDK vain siellä)
   try{ if(window.opener&&window.opener._scheduleFsSave) window.opener._scheduleFsSave(); }catch(e){}
 }
 
-function queueTotalMin(){
-  var wsId=localStorage.getItem('fap_active_ws')||'work';
-  var raw=localStorage.getItem('eis_v5_'+wsId);
-  var dtasks=(raw?JSON.parse(raw).tasks:[])||[];
+// Yksi hakukartta: muistin tehtävät voittavat, tallennettu data täydentää
+function taskLookup(){
+  var map={},d=readData();
+  (d?d.tasks:[]).forEach(function(t){if(t&&t.id!==undefined)map[t.id]=t;});
+  tasks.forEach(function(t){if(t&&t.id!==undefined)map[t.id]=t;});
+  return map;
+}
+
+function queueTotalMin(lookup){
+  var map=lookup||taskLookup();
   return queue.reduce(function(s,id){
-    var t=tasks.find(function(u){return u.id===id})||dtasks.find(function(u){return u.id===id});
+    var t=map[id];
     return s+(t?(t.est||1)*POMO_MIN:POMO_MIN);
   },0);
 }
@@ -374,6 +408,9 @@ function saveEditCard(){
   var id=parseInt(document.getElementById('edit-id').value);
   var t=tasks.find(function(u){return u.id===id});if(!t)return;
   t.text=document.getElementById('edit-name').value.trim()||t.text;
+  // verbi/kuvaus synkkaan tekstin kanssa (ICS-vienti + kortin verbi-chip)
+  var vm=t.text.match(/^(\S+)\s+([\s\S]+)$/);
+  if(vm){t.verbi=vm[1];t.kuvaus=vm[2];}else{t.verbi=t.text;t.kuvaus='';}
   t.important=document.getElementById('edit-important').checked;
   t.urgent=document.getElementById('edit-urgent').checked;
   t.est=parseFloat(document.getElementById('edit-est').value)||1;
@@ -408,7 +445,8 @@ function showDone(){
 
 function renderQueuePanel(){
   var list=document.getElementById('qpList');list.innerHTML='';
-  var m=queueTotalMin();
+  var map=taskLookup();
+  var m=queueTotalMin(map);
   var bEl=document.getElementById('qpBudget');
   var wEl=document.getElementById('budgetWarn');
   if(budgetMin>0){
@@ -420,11 +458,8 @@ function renderQueuePanel(){
     bEl.textContent=m>0?m+' min':'';wEl.classList.remove('on');
   }
   if(!queue.length){list.innerHTML='<div class="qp-empty">Ei tehtäviä</div>';document.getElementById('qpTotal').textContent='';return;}
-  var wsId=localStorage.getItem('fap_active_ws')||'work';
-  var raw=localStorage.getItem('eis_v5_'+wsId);
-  var dtasks=raw?JSON.parse(raw).tasks:[];
   queue.forEach(function(id){
-    var t=tasks.find(function(u){return u.id===id})||dtasks.find(function(u){return u.id===id});
+    var t=map[id];
     if(!t)return;
     var item=document.createElement('div');item.className='qp-item';
     var dot=document.createElement('div');dot.className='qp-dot '+(t.quad||'q4');
@@ -499,6 +534,12 @@ function setupDrag(wrap){
 }
 
 document.addEventListener('keydown',function(e){
+  // Kirjainoikopolut eivät saa laueta kirjoitettaessa eivätkä
+  // muokkauspaneelin ollessa auki — 'a' ja 'd' ovat tavallisia kirjaimia
+  var tag=(e.target&&e.target.tagName)||'';
+  if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||(e.target&&e.target.isContentEditable))return;
+  var ep=document.getElementById('edit-panel');
+  if(ep&&ep.style.display==='flex')return;
   if(e.key==='ArrowRight'||e.key==='d')swipeRight();
   else if(e.key==='ArrowLeft'||e.key==='a')swipeLeft();
   else if(e.key==='f')swipeFrog();
