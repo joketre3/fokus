@@ -517,6 +517,11 @@ function getStorageKey(){
   return 'eis_v5_' + wsId;
 }
 
+// Aamusuunnittelun aloituskortti (index.html luo sen checkMorningTask():ssa)
+function isMorningTask(t){
+  return !!(t && t.tags && t.tags.indexOf('aamusuunnittelu')>=0);
+}
+
 // Turvallinen luku: rikki mennyt localStorage ei saa kaataa velhoa
 function readData(){
   try{
@@ -535,7 +540,11 @@ function readData(){
 function loadData(){
   var d = readData();
   if(!d){ allTasks=[]; queue=[]; active=null; turn=[]; q1Tasks=[]; q2Tasks=[]; return; }
-  allTasks = (d.tasks||[]).filter(function(t){ return t && !t.done && !t.scheduled_hidden; });
+  // Aamusuunnittelun oma aloituskortti suodatetaan pois: velho ei kysy
+  // itsestään "onko tämä oikeasti Q1" eikä tarjoa sitä sammakoksi.
+  allTasks = (d.tasks||[]).filter(function(t){
+    return t && !t.done && !t.scheduled_hidden && !isMorningTask(t);
+  });
   // Migraatio: vanha queue[] → active+turn
   if(d.active!==undefined){
     active = d.active;
@@ -568,6 +577,11 @@ function saveData(applyFrog){
       var ft = d.tasks.find(function(t){ return t.id===selectedFrog; });
       if(ft) ft.frog=true;
     }
+    // Velho vietiin loppuun → suunnittelu on tehty. Ohitus (skipToEnd) ei
+    // kuittaa korttia, jotta suunnittelu on yhä avattavissa myöhemmin.
+    d.tasks.forEach(function(t){
+      if(isMorningTask(t) && !t.done){ t.done=true; t.doneAt=new Date().toISOString(); }
+    });
   }
   // Rebuild queue: frog first, then scheduled, then rest
   // Order: Q1+frog → Q1 → Q2+frog → Q2 (from scheduled slots)
@@ -588,6 +602,11 @@ function saveData(applyFrog){
   // Merge: scheduled first, then existing turn items not in scheduled
   var newQueue = scheduled.slice();
   queue.forEach(function(id){ if(newQueue.indexOf(id)<0) newQueue.push(id); });
+  // Kuitatut tehtävät (esim. aamusuunnittelukortti) pois jonosta
+  newQueue = newQueue.filter(function(id){
+    var tt = d.tasks.find(function(u){ return u.id===id; });
+    return tt && !tt.done;
+  });
   // Tallenna active+turn rakenteella
   d.active = newQueue.length>0 ? newQueue[0] : null;
   d.turn = newQueue.slice(1);
