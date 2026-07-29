@@ -884,6 +884,18 @@ html[data-theme="aurinko"][data-perf="lite"]{
     lastOkTs: 0
   };
 
+  // Kirjautumistila on ratkennut (suuntaan tai toiseen). Sovellus ei saa
+  // kirjoittaa dataa ennen tätä: käynnistyksessä tehty save() antaisi
+  // paikalliselle datalle tuoreimman aikaleiman ja voittaisi pilviversion.
+  window._authResolved = false;
+  function _markAuthResolved() {
+    if (window._authResolved) return;
+    window._authResolved = true;
+    if (typeof window._onAuthReady === 'function') {
+      try { window._onAuthReady(); } catch(e) { console.warn('⚠️ _onAuthReady epäonnistui:', e.message); }
+    }
+  }
+
   window._renderAuthUi = function() {
     if (typeof window._renderAuthChip === 'function') window._renderAuthChip();
     if (typeof window._renderAccountModal === 'function') window._renderAccountModal();
@@ -897,6 +909,7 @@ html[data-theme="aurinko"][data-perf="lite"]{
       window._authState.phase = 'local';
       window._renderAuthUi();
     }
+    _markAuthResolved();
   }, 6000);
 
   window._setSyncStatus = function(state) {
@@ -981,6 +994,20 @@ html[data-theme="aurinko"][data-perf="lite"]{
       if (k.indexOf('eis_v5') === 0 || (k.indexOf('fap_') === 0 && !keep.test(k))) drop.push(k);
     }
     drop.forEach(function(k) { localStorage.removeItem(k); });
+  }
+
+  // Kirjautuessa korvattu paikallinen data otetaan talteen, ettei mitään
+  // katoa jäljettömiin kumpaankaan suuntaan. Yksi paikka riittää: tämä on
+  // hätävara, ei versiohistoria.
+  function _stashLocalBackup(wsId, data) {
+    try {
+      localStorage.setItem('fap_local_backup', JSON.stringify({
+        wsId: wsId,
+        savedAt: Date.now(),
+        taskCount: (data.tasks || []).length,
+        data: data
+      }));
+    } catch(e) { console.warn('⚠️ Paikallisen datan talteenotto epäonnistui:', e.message); }
   }
 
   // Paikallisen datan tyhjennys käyttäjän pyynnöstä.
@@ -1090,6 +1117,9 @@ html[data-theme="aurinko"][data-perf="lite"]{
           console.log('🔄 Eri käyttäjä kuin paikallisen datan omistaja → tyhjennetään paikallinen data');
           _clearLocalAppData();
         }
+        // Onko paikallinen data tämän käyttäjän aiemmin synkkaamaa?
+        // Luetaan ENNEN leiman kirjoitusta — muuten kaikki näyttäisi omalta.
+        const sameOwner = prevUid === user.uid;
         localStorage.setItem('fap_data_uid', user.uid);
 
         const wsId = localStorage.getItem('fap_active_ws') || 'work';
@@ -1111,12 +1141,21 @@ html[data-theme="aurinko"][data-perf="lite"]{
         const localTs = (localData && localData.updatedAt) || 0;
 
         if (fsHas && localHas) {
-          // Molemmilla dataa → uudempi voittaa. Tasapelissä Firestore (deterministinen).
-          if (localTs > fsTs) {
+          // Aikaleimavertailu on mielekäs VAIN jos paikallinen data on saman
+          // käyttäjän aiemmin synkattua dataa. Omistajaton paikallinen data
+          // (tyhjennyksen tai uuden selaimen jäljiltä) saa aina tuoreimman
+          // leiman heti käynnistyksessä — esim. checkMorningTask() luo
+          // aamutehtävän ja kutsuu save():n. Ilman tätä ehtoa se voittaisi
+          // vertailun ja pyyhkisi koko pilvidatan.
+          if (sameOwner && localTs > fsTs) {
             console.log('📦 localStorage uudempi (' + localTs + ' > ' + fsTs + ') → pilveen');
             await saveToFirestore(user.uid, wsId, localData);
           } else {
-            console.log('☁️ Firestore uudempi/tasapeli → localStorageen (' + fsData.tasks.length + ' tehtävää)');
+            if (!sameOwner) {
+              console.log('🛟 Omistajaton paikallinen data (' + localData.tasks.length + ' tehtävää) → talteen ennen pilviversion käyttöä');
+              _stashLocalBackup(wsId, localData);
+            }
+            console.log('☁️ Firestore voittaa → localStorageen (' + fsData.tasks.length + ' tehtävää)');
             localStorage.setItem(lsKey, JSON.stringify(fsData));
           }
         } else if (fsHas) {
@@ -1135,11 +1174,13 @@ html[data-theme="aurinko"][data-perf="lite"]{
         }
 
         startFsListener(user.uid, wsId);
+        _markAuthResolved();
 
       } else {
         window.currentUser = null;
         if (_fsSnapshotUnsub) { _fsSnapshotUnsub(); _fsSnapshotUnsub = null; }
         console.log('Odotetaan kirjautumista...');
+        _markAuthResolved();
       }
     });
   }
@@ -8918,6 +8959,50 @@ window._renderAccountModal=function(){
   _accFact(facts,'Muutettu viimeksi',updatedAt?_authDateTime(updatedAt):'—');
   body.appendChild(facts);
 
+  // ── Kirjautuessa korvattu paikallinen data ──
+  // Lataus eikä suora palautus: palauttaminen menee olemassa olevan
+  // "Tuo varmuuskopio" -polun kautta, jottei tämä itse ylikirjoita mitään.
+  var stashRaw=null;
+  try{ stashRaw=localStorage.getItem('fap_local_backup'); }catch(e){}
+  if(stashRaw){
+    var stash=null;
+    try{ stash=JSON.parse(stashRaw); }catch(e){ stash=null; }
+    if(stash&&stash.data){
+      var sb=document.createElement('div');
+      sb.className='acc-confirm';
+      var sbt=document.createElement('div');
+      sbt.className='acc-confirm__title';
+      sbt.textContent='Talteen otettuja tehtäviä';
+      sb.appendChild(sbt);
+      var sbn=document.createElement('div');
+      sbn.className='acc-confirm__note';
+      sbn.textContent=(stash.taskCount||0)+' tehtävää tästä selaimesta korvattiin pilviversiolla '
+        +_authDateTime(stash.savedAt||Date.now())+'. Lataa tiedosto ja tuo se hampurilaisvalikosta jos tarvitset ne.';
+      sb.appendChild(sbn);
+      var sba=document.createElement('div');
+      sba.className='acc-actions';
+      sba.style.marginTop='0';
+      sba.appendChild(_accBtn('Lataa talteen otetut','',function(){
+        try{
+          var blob=new Blob([JSON.stringify(stash.data,null,2)],{type:'application/json'});
+          var a=document.createElement('a');
+          a.href=URL.createObjectURL(blob);
+          a.download='fokus-talteen-'+(stash.wsId||'data')+'.json';
+          a.click();
+          URL.revokeObjectURL(a.href);
+          notify('Tiedosto ladattu');
+        }catch(e){ notify('Lataus epäonnistui'); }
+      }));
+      sba.appendChild(_accBtn('Hylkää','',function(){
+        try{ localStorage.removeItem('fap_local_backup'); }catch(e){}
+        _renderAccountModal();
+        notify('Talteenotto hylätty');
+      }));
+      sb.appendChild(sba);
+      body.appendChild(sb);
+    }
+  }
+
   // ── Toiminnot ──
   // Vahvistuksen ollessa auki perustoiminnot piilotetaan, jottei näkyvissä
   // ole kahta samannimistä nappia.
@@ -9298,7 +9383,16 @@ function checkMorningTask(){
   notify('\u2600 Uusi p\u00e4iv\u00e4 \u2014 aloita suunnittelulla!');
 }
 
-checkMorningTask();
+// Aamutehtävä lisätään VASTA kun kirjautumistila on ratkennut. Se kutsuu
+// save():n, ja käynnistyksessä ajettuna se antaisi paikalliselle datalle
+// tuoreimman aikaleiman ennen kuin pilviversio on ehditty ladata — jolloin
+// kirjautumisen aikaleimavertailu pyyhkisi pilvidatan.
+window._onAuthReady = function(){ checkMorningTask(); };
+if(window._authResolved) checkMorningTask();
+// Varmistin: jos Firebase-moduuli ei lataudu lainkaan, _onAuthReady ei laukea.
+setTimeout(function(){
+  if(!window._authResolved){ window._authResolved=true; checkMorningTask(); }
+}, 6500);
 
 // ── STORAGE SYNC: päivitä kun aamu.html tai toinen välilehti kirjoittaa ──
 window.addEventListener('storage', function(e){
