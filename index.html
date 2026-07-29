@@ -739,7 +739,7 @@ html[data-theme="aurinko"] .card.needs-review{border-color:rgba(196,160,50,.40)!
 /* Header divider */
 html[data-theme="aurinko"] .hdr{border-bottom-color:rgba(180,130,70,.30)!important}
 /* Vaihe 6: yläpalkin varjo lämpimänä ruskeana desktopilla (tumma rgba liian kova vaalealla) */
-@media (min-width: 900px){
+@media (min-width: 900px) and (min-height: 501px){
   html[data-theme="aurinko"] .hdr{box-shadow:0 1px 0 var(--engrave-dim), 0 2px 0 rgba(120,80,30,.22)}
 }
 /* Vaihe 5: jonopino — vaalea kortti aurinko-teemassa */
@@ -848,7 +848,7 @@ html[data-theme="aurinko"][data-perf="lite"]{
   --surface-strong:rgba(245,235,210,.98);
 }
 /* Nopea tila: pöytäpinta ilman kohinatekstuuria — tasainen huopa + vinjetti (vain desktop-pöytä) */
-@media (min-width:900px){
+@media (min-width:900px) and (min-height:501px){
   html[data-perf="lite"] .wrap{
     background: radial-gradient(ellipse 130% 130% at 50% 50%, transparent 52%, var(--vignette) 100%), var(--table-felt) !important;
   }
@@ -4092,7 +4092,7 @@ select:focus-visible{
 svg[aria-hidden="true"]{pointer-events:none;}
 
 /* ── VAIHE 1: TCG Desktop Layout (min-width: 900px) ────────────── */
-@media (min-width: 900px) {
+@media (min-width: 900px) and (min-height: 501px) {
   html, body {
     height: 100vh;
     overflow: hidden;
@@ -4479,7 +4479,7 @@ svg[aria-hidden="true"]{pointer-events:none;}
 /* Yhtenäinen näkymä: kahva keskitetyksi. Kahva on #arenan stacking-kontekstissa
    (z:10) eikä voi nousta paneelien (z:40) päälle → pidetään paneelivyöhykkeiden
    välissä. Oma media-lohko, koska globaali sääntö on desktop-blokin JÄLKEEN. */
-@media (min-width: 900px){
+@media (min-width: 900px) and (min-height: 501px){
   #eise-handle{
     left:50%; right:auto; transform:translateX(-50%);
     /* Väistetään KISKOT, ei koko paneelileveyttä: paneeli on auki vain hoverissa ja
@@ -4509,7 +4509,7 @@ svg[aria-hidden="true"]{pointer-events:none;}
    #eise-peek.on -säännön JÄLKEEN — @media ei nosta spesifisyyttä, joten
    lähdejärjestys ratkaisee. translateX(-50%) kuuluu MOLEMPIIN transformeihin:
    erillinen translateY ylikirjoittaisi keskityksen. */
-@media (min-width: 900px){
+@media (min-width: 900px) and (min-height: 501px){
   #eise-peek{
     left:50%; right:auto;
     width:100%; max-width:min(720px, calc(100% - 2 * var(--rail-w) - 2rem));
@@ -4657,7 +4657,7 @@ svg[aria-hidden="true"]{pointer-events:none;}
 /* Alanavigaatio on olemassa vain mobiilissa. */
 #mnav{display:none}
 
-@media (max-width:899.98px){
+@media (max-width:899.98px), (max-height:500px){
 
   /* ── Sovelluskehys: yksi ruudullinen, sivu ei vierry ───────────── */
   html,body{height:100%;overflow:hidden}
@@ -4785,7 +4785,7 @@ svg[aria-hidden="true"]{pointer-events:none;}
   #v-matrix .quad{min-height:0}
 }
 
-@media (max-width:899.98px){
+@media (max-width:899.98px), (max-height:500px){
 
   /* ── Alanavigaatio ─────────────────────────────────────────────── */
   #mnav{
@@ -4841,15 +4841,83 @@ svg[aria-hidden="true"]{pointer-events:none;}
   .notif{bottom:calc(var(--mnav-total) + 1rem)}
   #ham-sheet{padding-bottom:calc(2rem + var(--safe-b));max-height:78dvh}
   #inv-modal{padding-bottom:var(--safe-b)}
+
+  /* ══ KENTTÄTILA ═══════════════════════════════════════════════════
+     3D-huone (seinä, lattia, valopooli, heittovarjo, taustaecho) on
+     työpöydän lavaste: se olettaa leveän areenan ja on mobiilin
+     raskain efekti. Kortti jää, huone lähtee. */
+  #arena-room{display:none!important}
+  #arena{perspective:none}
+
+  .tcg-card.tcg-card--arena-size{
+    /* Ei kallistusta eikä nostoa — kortti makaa ruudulla. Inline-style
+       ei ole tässä pelissä: staattinen transform kuuluu sääntöön. */
+    transform:none;
+    margin:0 auto;              /* kortti oli vasempaan reunaan sidottu */
+    max-width:min(320px,88vw);
+    will-change:auto;
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,.10),
+      inset 0 0 0 3px rgba(0,0,0,.35),
+      0 6px 18px rgba(0,0,0,.45);
+  }
+  .tcg-card.tcg-card--arena-size:hover{transform:none}
+
+  /* Kortin toimintonapit kosketuskokoon. */
+  .tcg-card__actions-tcg{gap:.4rem;padding:.5rem}
+  .tcg-card__actions-tcg button{min-height:var(--tap);font-size:.8rem}
+
+  /* Areenan otsikkorivi on mobiilissa turha koriste — kortti on ainoa
+     asia ruudulla, eikä sitä tarvitse nimetä. */
+  #arena-label{display:none}
+
+  /* Eleen suuntapalaute. Vihje on #arenan pseudo-elementissä eikä kortin
+     sisällä, koska render() luo kortin uudelleen jokaisella muutoksella. */
+  #arena{position:relative}
+  #arena[data-swipe]::before{
+    content:attr(data-swipe-label);
+    position:absolute;top:50%;left:50%;
+    transform:translate(-50%,-50%);
+    z-index:4;pointer-events:none;
+    font-family:'DM Sans',sans-serif;
+    font-size:.78rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;
+    padding:.5rem .9rem;border-radius:var(--r-md);
+    background:rgba(10,16,12,.82);
+    border:1px solid var(--border);
+    color:var(--ink);
+  }
+  #arena[data-swipe="done"]::before{content:'✓ Tehty';border-color:var(--q2);color:#9fc89f}
+  #arena[data-swipe="wait"]::before{content:'⏳ Odottaa';border-color:var(--wait);color:#8fb6cf}
+  #arena[data-swipe="next"]::before{content:'→ Seuraava';border-color:var(--accent);color:var(--accent)}
+  #arena[data-swipe=""]::before{content:none}
 }
 
-/* ── Vaakapuhelin: korkeutta on alle 500px ────────────────────────── */
-@media (max-width:899.98px) and (orientation:landscape) and (max-height:500px){
+/* ── Vaakapuhelin: korkeutta on alle 500px ──────────────────────────
+   Käytettävää korkeutta jää ~210–260px. 5:7-kortti siinä korkeudessa on
+   ~150–185px leveä eli lukukelvoton. Ratkaisu ei ole kutistaa korttia
+   vaan pudottaa siitä se osa joka ei kanna tietoa: iso kuvitus. Kortti
+   muuttuu automaattikorkuiseksi ja mahtuu kokonaan ruudulle.           */
+@media (orientation:landscape) and (max-height:500px){
   .hdr{min-height:44px;padding-top:.2rem;padding-bottom:.2rem}
   #mnav{height:calc(46px + var(--safe-b))}
   .mnav__lbl{display:none}
   .mnav__btn--add .mnav__plus{width:34px;height:34px;font-size:1.2rem}
   #main-content-area,#v-matrix,#v-done,#v-projects{padding:.5rem .75rem}
+
+  /* Ajastinchip mahtuu 44px yläpalkkiin vasta kutistettuna. */
+  #hdr-timer{padding:.25rem .45rem;border-radius:11px}
+  .hdr-timer__ring-wrap,.hdr-timer__ring-svg{width:24px;height:24px}
+  .hdr-timer__time{font-size:.85rem}
+
+  .tcg-card.tcg-card--arena-size{
+    aspect-ratio:auto;
+    height:auto;
+    max-width:min(460px,72vw);
+  }
+  /* Kuvitus pois — kvadranttitausta (.tcg-card__qart) jää, joten kortin
+     väri-identiteetti säilyy. */
+  .tcg-card--arena-size .tcg-card__art{display:none}
+  .tcg-card--arena-size .tcg-card__body{padding-top:.5rem}
 }
 </style>
 
@@ -6605,6 +6673,13 @@ function _updateHamViewLabel(){
   var names={inbox:'',matrix:'Matriisi',done:'Tehty',projects:'Projektit'};
   var name=names[_curView]||'';
   if(label){label.textContent=name;label.hidden=!name;}
+}
+
+// Yksi totuuden lähde sille milloin mobiilirunko on käytössä. Pidettävä
+// synkassa mobile-shell-lohkon media-ehdon kanssa: leveä mutta matala
+// ruutu (vaakapuhelin 932×430) saa mobiilirungon, ei työpöytägridiä.
+function _isMobileLayout(){
+  return !matchMedia('(min-width:900px) and (min-height:501px)').matches;
 }
 
 // ── MOBIILIN ALANAVIGAATIO ──────────────────────────────────────────
@@ -9782,11 +9857,16 @@ function togglePerfMode(){
   if(!arena)return;
   var MAX=8;
   var rmq=matchMedia('(prefers-reduced-motion:reduce)');
+  // Tilt on hiiriefekti. Kosketuksella pointermove tulee vasta sormen
+  // ollessa kortilla, jolloin kortti nytkähtää jokaisesta pyyhkäisystä ja
+  // taistelee eleiden kanssa — ja mobiilissa koko 3D-huone on piilotettu.
+  var hoverq=matchMedia('(hover:hover) and (pointer:fine)');
   var PROPS=['--ry','--rx','--px','--py','--sx','--sy'];
   function arenaCard(){return arena.querySelector('.tcg-card--arena-size');}
   function castShadow(){return arena.querySelector('.arena-room__castshadow');}
   arena.addEventListener('pointermove',function(e){
     if(rmq.matches)return;
+    if(!hoverq.matches)return;
     if(document.documentElement.getAttribute('data-perf')==='lite')return;
     var card=arenaCard();
     if(!card)return;
@@ -9808,6 +9888,80 @@ function togglePerfMode(){
     var sh=castShadow();
     if(sh){sh.style.removeProperty('--px');sh.style.removeProperty('--shs');}
   });
+})();
+
+// ── Areenakortin kosketuseleet (mobiili) ────────────────────────────
+// Oikealle = tehty, vasemmalle = odottaa, ylös = seuraava.
+// Sama kaava kuin swipe.html:ssä: touchstart passive, touchmove
+// non-passive (preventDefault estää sivun kumiefektin), suuntalukitus.
+// Delegointi #arenaan, koska render() poistaa kortin ja luo sen uudelleen.
+// Eleet ovat oikopolku — samat toiminnot ovat yhä kortin napeissa.
+(function(){
+  var arena=document.getElementById('arena');
+  if(!arena)return;
+  var THRESH=80;        // px ennen kuin ele laukeaa
+  var LOCK=12;          // px ennen kuin suunta lukitaan
+  var card=null,x0=0,y0=0,dx=0,dy=0,dir='';
+
+  function reset(animate){
+    if(!card)return;
+    var c=card;card=null;dir='';dx=dy=0;
+    arena.removeAttribute('data-swipe');
+    c.style.transition=animate?'transform .18s ease-out,opacity .18s ease-out':'';
+    c.style.transform='';
+    c.style.opacity='';
+    if(animate)setTimeout(function(){c.style.transition='';},200);
+  }
+
+  arena.addEventListener('touchstart',function(e){
+    if(!_isMobileLayout())return;
+    if(e.touches.length!==1)return;
+    // Napit ja linkit hoitavat oman toimintonsa — ele ei saa varastaa niitä.
+    if(e.target.closest('button,a,input,textarea,select'))return;
+    var c=e.target.closest('.tcg-card--arena-size');
+    // Vain aktiivinen kortti: jonokortilla ei ole doneActivea.
+    if(!c||active==null)return;
+    card=c;x0=e.touches[0].clientX;y0=e.touches[0].clientY;dx=dy=0;dir='';
+    card.style.transition='none';
+  },{passive:true});
+
+  arena.addEventListener('touchmove',function(e){
+    if(!card||e.touches.length!==1)return;
+    dx=e.touches[0].clientX-x0;
+    dy=e.touches[0].clientY-y0;
+    if(!dir){
+      if(Math.abs(dx)<LOCK&&Math.abs(dy)<LOCK)return;
+      // Alas pyyhkäisy jätetään selaimelle (vieritys) — ylös on ele.
+      if(Math.abs(dy)>Math.abs(dx)&&dy>0){reset(false);return;}
+      dir=Math.abs(dx)>Math.abs(dy)?'x':'y';
+    }
+    e.preventDefault();
+    if(dir==='x'){
+      card.style.transform='translateX('+dx.toFixed(0)+'px) rotate('+(dx*.04).toFixed(2)+'deg)';
+      arena.setAttribute('data-swipe',dx>LOCK?'done':(dx<-LOCK?'wait':''));
+    }else{
+      var up=Math.min(0,dy);
+      card.style.transform='translateY('+up.toFixed(0)+'px)';
+      arena.setAttribute('data-swipe',up<-LOCK?'next':'');
+    }
+    card.style.opacity=String(Math.max(.45,1-Math.max(Math.abs(dx),Math.abs(dy))/(THRESH*3)));
+  },{passive:false});
+
+  function end(){
+    if(!card)return;
+    var fired=null;
+    if(dir==='x'&&dx>THRESH)fired='done';
+    else if(dir==='x'&&dx<-THRESH)fired='wait';
+    else if(dir==='y'&&dy<-THRESH)fired='next';
+    reset(true);
+    if(!fired)return;
+    // Toiminnot kutsuvat save()n ja render()n itse.
+    if(fired==='done')doneActive();
+    else if(fired==='wait')waitActive();
+    else if(turn.length>0)doNext();
+  }
+  arena.addEventListener('touchend',end);
+  arena.addEventListener('touchcancel',function(){reset(true);});
 })();
 
 // ── ICS KALENTERI ──────────────────────────────────────
