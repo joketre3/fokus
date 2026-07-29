@@ -983,6 +983,20 @@ html[data-theme="aurinko"][data-perf="lite"]{
     drop.forEach(function(k) { localStorage.removeItem(k); });
   }
 
+  // Paikallisen datan tyhjennys käyttäjän pyynnöstä.
+  // VAIN kirjautumattomana: kirjautuneena tyhjennys johtaisi siihen, että
+  // reloadin jälkeen load() ei löydä mitään, tasks jää tyhjäksi ja seuraava
+  // save() työntäisi tyhjän listan pilveen tuoreella aikaleimalla — jolloin
+  // last-write-wins tuhoaisi pilvidatan. Kirjautuneena sama hoituu
+  // kirjauduUlos():lla, jossa signOut() ehtii ensin.
+  window.tyhjennaPaikallisetTiedot = function() {
+    if (window.currentUser) return false;
+    _cancelFsSave();
+    _clearLocalAppData();
+    location.reload();
+    return true;
+  };
+
   // ── Debounce-ajastin Firestore-tallennukselle ──────────────────
   let _fsSaveTimer = null;
   // Vireillä oleva tallennus: {wsId, key} kaapattuna AJASTUSHETKELLÄ.
@@ -8819,7 +8833,7 @@ function openAccountModal(){
   // Luokat ensin: _renderAccountModal ohittaa kiinni olevan modaalin
   document.getElementById('account-modal-overlay').classList.add('ham-open');
   document.getElementById('account-modal').classList.add('ham-open');
-  _accConfirmOpen=false;
+  _accConfirm=null;
   _renderAccountModal();
   document.addEventListener('keydown',accountEscHandler);
   _trapOn('account-modal');
@@ -8831,13 +8845,13 @@ function closeAccountModal(){
   document.getElementById('account-modal-overlay').classList.remove('ham-open');
   document.getElementById('account-modal').classList.remove('ham-open');
   document.removeEventListener('keydown',accountEscHandler);
-  _accConfirmOpen=false;
+  _accConfirm=null;
 }
 function accountEscHandler(e){ if(e.key==='Escape') closeAccountModal(); }
 
 // Uloskirjautumisen vahvistus elää saman modaalin sisällä — sisäkkäinen
 // modaali sotkisi z-indexin ja fokusloukun.
-var _accConfirmOpen=false;
+var _accConfirm=null; // null | 'signout' | 'clear'
 
 window._renderAccountModal=function(){
   var body=document.getElementById('account-modal__body');
@@ -8906,15 +8920,16 @@ window._renderAccountModal=function(){
 
   // ── Toiminnot ──
   // Vahvistuksen ollessa auki perustoiminnot piilotetaan, jottei näkyvissä
-  // ole kahta samannimistä "Kirjaudu ulos" -nappia.
-  var confirming=_accConfirmOpen&&s.phase==='cloud';
+  // ole kahta samannimistä nappia.
+  var cloud=s.phase==='cloud';
+  var confirming=(_accConfirm==='signout'&&cloud)||(_accConfirm==='clear'&&!cloud);
   if(!confirming){
     var actions=document.createElement('div');
     actions.className='acc-actions';
-    if(s.phase==='cloud'){
+    if(cloud){
       actions.appendChild(_accBtn('Vie varmuuskopio','',function(){exportData();}));
       actions.appendChild(_accBtn('Kirjaudu ulos','acc-btn--danger',function(){
-        _accConfirmOpen=true;_renderAccountModal();
+        _accConfirm='signout';_renderAccountModal();
       }));
     }else{
       var inBtn=_accBtn('Kirjaudu Googlella','acc-btn--primary',function(){
@@ -8924,22 +8939,32 @@ window._renderAccountModal=function(){
       if(s.phase==='pending') inBtn.disabled=true;
       actions.appendChild(inBtn);
       actions.appendChild(_accBtn('Vie varmuuskopio','',function(){exportData();}));
+      // Tyhjennys vain kirjautumattomana: kirjautuneena tyhjä lista voisi
+      // päätyä pilveen ja tuhota datan — siellä uloskirjautuminen hoitaa saman.
+      actions.appendChild(_accBtn('Tyhjennä paikalliset tiedot','acc-btn--danger',function(){
+        _accConfirm='clear';_renderAccountModal();
+      }));
     }
     body.appendChild(actions);
   }
 
-  // ── Uloskirjautumisen vahvistus ──
+  // ── Vahvistus: uloskirjautuminen tai paikallisen datan tyhjennys ──
   if(confirming){
+    var isClear=_accConfirm==='clear';
     var c=document.createElement('div');
     c.className='acc-confirm';
     var ct=document.createElement('div');
     ct.className='acc-confirm__title';
-    ct.textContent='Kirjaudutaanko ulos?';
+    ct.textContent=isClear?'Tyhjennetäänkö paikalliset tiedot?':'Kirjaudutaanko ulos?';
     c.appendChild(ct);
     var ul=document.createElement('ul');
     ul.className='acc-confirm__list';
-    [['Katoaa tästä selaimesta:','tehtävät, työtilat ja Anthropic API-avain'],
-     ['Säilyy:','pilvidata tililläsi, teema ja ajastimen asetukset']].forEach(function(row){
+    var rows=isClear
+      ? [['Poistetaan:','tehtävät, työtilat ja Anthropic API-avain'],
+         ['Säilyy:','teema, nopea tila ja ajastimen asetukset']]
+      : [['Katoaa tästä selaimesta:','tehtävät, työtilat ja Anthropic API-avain'],
+         ['Säilyy:','pilvidata tililläsi, teema ja ajastimen asetukset']];
+    rows.forEach(function(row){
       var li=document.createElement('li');
       var b=document.createElement('strong');
       b.textContent=row[0]+' ';
@@ -8950,20 +8975,35 @@ window._renderAccountModal=function(){
     c.appendChild(ul);
     var note=document.createElement('div');
     note.className='acc-confirm__note';
-    note.textContent='Varmuuskopio sisältää vain nykyisen työtilan.';
+    note.textContent=isClear
+      ? 'Tätä ei voi perua. Varmuuskopio sisältää vain nykyisen työtilan.'
+      : 'Varmuuskopio sisältää vain nykyisen työtilan.';
     c.appendChild(note);
     var cActions=document.createElement('div');
     cActions.className='acc-actions';
     cActions.style.marginTop='0';
     cActions.appendChild(_accBtn('Vie varmuuskopio ensin','',function(){exportData();}));
-    // Nimi eroaa tarkoituksella listan "Kirjaudu ulos" -napista: fokus ei saa
-    // hypätä suoraan tuhoavaan nappiin kun vahvistus aukeaa.
-    cActions.appendChild(_accBtn('Vahvista uloskirjautuminen','acc-btn--danger',function(){
-      _accConfirmOpen=false;
-      if(window.kirjauduUlos) window.kirjauduUlos();
-    }));
+    // Nimi eroaa tarkoituksella listan napista: fokus ei saa hypätä suoraan
+    // tuhoavaan nappiin kun vahvistus aukeaa ja runko piirretään uusiksi.
+    if(isClear){
+      cActions.appendChild(_accBtn('Vahvista tyhjennys','acc-btn--danger',function(){
+        _accConfirm=null;
+        // Funktio elää Firebase-moduulissa; jos se ei latautunut, älä jää hiljaiseksi.
+        // Onnistuessa se lataa sivun uudelleen, joten piirto koskee vain virhepolkuja.
+        var msg=null;
+        if(typeof window.tyhjennaPaikallisetTiedot!=='function') msg='Tyhjennys ei ole nyt käytettävissä';
+        else if(!window.tyhjennaPaikallisetTiedot()) msg='Kirjaudu ensin ulos';
+        if(msg){ _renderAccountModal(); notify(msg); }
+      }));
+    }else{
+      cActions.appendChild(_accBtn('Vahvista uloskirjautuminen','acc-btn--danger',function(){
+        _accConfirm=null;
+        if(typeof window.kirjauduUlos==='function'){ window.kirjauduUlos(); }
+        else { _renderAccountModal(); notify('Uloskirjautuminen ei onnistu nyt'); }
+      }));
+    }
     cActions.appendChild(_accBtn('Peruuta','',function(){
-      _accConfirmOpen=false;_renderAccountModal();
+      _accConfirm=null;_renderAccountModal();
     }));
     c.appendChild(cActions);
     body.appendChild(c);
