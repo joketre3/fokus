@@ -7822,10 +7822,17 @@ function renderArenaCard(t, container, anyFrog, mode){
 
   var startBtn=document.createElement('button');
   startBtn.className='act-start';
-  var timerRunning=(tmr!==null&&phase==='work');
-  startBtn.textContent=timerRunning?'■ Lopeta':'▶ Aloita';
-  if(timerRunning) startBtn.classList.add('act-start--running');
-  startBtn.onclick=function(e){e.stopPropagation();toggleTimer();};
+  if(isMorningTask(t)){
+    // Aamusuunnittelukortti ei ole pomodoro-tehtävä: sen nappi avaa velhon.
+    startBtn.textContent='\u2600 Aloita suunnittelu';
+    startBtn.setAttribute('aria-label','Avaa aamusuunnittelu');
+    startBtn.onclick=function(e){e.stopPropagation();openAamu();};
+  }else{
+    var timerRunning=(tmr!==null&&phase==='work');
+    startBtn.textContent=timerRunning?'■ Lopeta':'▶ Aloita';
+    if(timerRunning) startBtn.classList.add('act-start--running');
+    startBtn.onclick=function(e){e.stopPropagation();toggleTimer();};
+  }
   acts.appendChild(startBtn);
 
   if(t.quad){
@@ -9326,6 +9333,10 @@ function load(){
     var d;try{d=JSON.parse(r);}catch(e){d={};console.warn('Fokus: load() JSON-parse epäonnistui',e);}
     window._loadedTs=d.updatedAt||0;
     tasks=d.tasks||[];nid=d.nid||1;
+    // Suojaa id-törmäyksiltä: puuttuva tai jäljessä oleva nid antaisi uudelle
+    // tehtävälle jo käytössä olevan id:n, jolloin active osoittaa väärään
+    // korttiin ja markDone kuittaa väärän tehtävän.
+    tasks.forEach(function(t){ if(t&&typeof t.id==='number'&&t.id>=nid) nid=t.id+1; });
     // Migraatio: lisää chain-kentät vanhoille tehtäville
     tasks.forEach(function(t){
       if(t.chainId===undefined) t.chainId=null;
@@ -9369,16 +9380,50 @@ load();
 renderWsSwitcher();
 
 // ── NEW TASK TAG INPUT INIT ──
+// ── POPUP-IKKUNAT (aamu.html / swipe.html) ──
+// Yhteinen avaaja: jo auki oleva ikkuna nostetaan eteen uuden sijaan, ja
+// selaimen estämä popup kerrotaan käyttäjälle — muuten klikkaus katoaa tyhjään.
+function _openPopup(url,name,features,winKey){
+  try{
+    var existing=window[winKey];
+    if(existing&&!existing.closed){existing.focus();return existing;}
+  }catch(e){/* ikkuna suljettu tai eri origin */}
+  var w=window.open(url,name,features);
+  if(!w){notify('Selain esti ponnahdusikkunan \u2014 salli se osoiterivin kuvakkeesta');return null;}
+  window[winKey]=w;
+  try{w.focus();}catch(e){}
+  return w;
+}
+
+// Aamusuunnitteluvelho — avataan hampurilaisvalikosta ja aamusuunnittelukortista.
+function openAamu(){
+  return _openPopup('aamu.html','FokusAamu','width=560,height=780,resizable=yes,scrollbars=yes','_aamuWin');
+}
+function openSwipe(){
+  return _openPopup('swipe.html','FokusSwipe','width=420,height=700,resizable=yes,scrollbars=yes','_swipeWin');
+}
+
+// Onko tehtävä aamusuunnittelun aloituskortti?
+function isMorningTask(t){
+  return !!(t&&t.tags&&t.tags.indexOf('aamusuunnittelu')>=0);
+}
+
 // ── MORNING TASK ──
 function checkMorningTask(){
-  var today=new Date().toISOString().split('T')[0];
+  // Paikallinen päivämäärä: toISOString() muuntaa UTC:hen, jolloin paikallinen
+  // keskiyö putoaa UTC+2/+3:ssa edelliselle päivälle ja kortti syntyy kahdesti.
+  var _d=new Date();
+  var today=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0');
   if(localStorage.getItem('fap_morning')===today)return;
   localStorage.setItem('fap_morning',today);
-  var existing=tasks.find(function(t){return t.tags&&t.tags.indexOf('aamusuunnittelu')>=0&&!t.done});
+  var existing=tasks.find(function(t){return isMorningTask(t)&&!t.done});
   if(existing)return;
   var mt={id:nid++,text:'\u2600 P\u00e4iv\u00e4n suunnittelu \u2014 k\u00e4y teht\u00e4v\u00e4t l\u00e4pi, arvioi ja aseta t\u00e4m\u00e4n p\u00e4iv\u00e4n fokus',quad:'q1',done:false,pomos:1,est:1,important:true,urgent:true,tags:['aamusuunnittelu'],projectId:null,frog:false,needsReview:false};
   tasks.unshift(mt);
-  if(active===null){active=mt.id;}else{turn.unshift(mt.id);}
+  // Suunnittelukortin on oltava areenalla eikä jonon jatkona: velho avataan
+  // sen omasta napista, joka renderöityy vain aktiiviselle kortille.
+  if(active!==null&&active!==mt.id)turn.unshift(active);
+  active=mt.id;
   save();render();
   notify('\u2600 Uusi p\u00e4iv\u00e4 \u2014 aloita suunnittelulla!');
 }
@@ -9427,13 +9472,16 @@ function setTheme(t){
     if(id===t){btn.style.opacity='1';btn.style.borderColor='rgba(255,255,255,.35)';btn.style.background='rgba(255,255,255,.12)';}
     else{btn.style.opacity='.5';btn.style.borderColor='transparent';btn.style.background='transparent';}
   });
-  // Sync to swipe windows if open
-  try{
-    if(window._swipeWin&&!window._swipeWin.closed){
-      window._swipeWin.document.documentElement.setAttribute('data-theme',t);
-      window._swipeWin.localStorage.setItem('fap_theme',t);
-    }
-  }catch(e){/* popup suljettu */}
+  // Sync to popup windows if open
+  ['_swipeWin','_aamuWin'].forEach(function(k){
+    try{
+      var w=window[k];
+      if(w&&!w.closed){
+        w.document.documentElement.setAttribute('data-theme',t);
+        w.localStorage.setItem('fap_theme',t);
+      }
+    }catch(e){/* popup suljettu */}
+  });
 }
 (function initTheme(){
   var saved=localStorage.getItem('fap_theme')||'usva';
@@ -11059,6 +11107,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
   <div class="ham-sheet__title">Työkalut</div>
 
+  <button class="ham-row" onclick="closeHamMenu();openAamu()">
+    <span class="ham-row__icon">☀</span>
+    <span class="ham-row__label">Aamusuunnittelu</span>
+  </button>
+
   <button class="ham-row" onclick="closeHamMenu();document.getElementById('ham-tuo-input').click()">
     <span class="ham-row__icon">↓</span>
     <span class="ham-row__label">Tuo varmuuskopio</span>
@@ -11070,7 +11123,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <span class="ham-row__label">Vie varmuuskopio</span>
   </button>
 
-  <button class="ham-row" onclick="closeHamMenu();window._swipeWin=window.open('swipe.html','FokusSwipe','width=420,height=700')">
+  <button class="ham-row" onclick="closeHamMenu();openSwipe()">
     <span class="ham-row__icon">⇄</span>
     <span class="ham-row__label">Selaa tehtäviä</span>
   </button>
