@@ -386,6 +386,28 @@ Suunnitelmat: `~/.claude/plans/yhten-inen-n-kym-areena-taustana-sparkling-taco.m
 - **Osumatestaus:** `document.elementFromPoint` ei kelpaa maalausjärjestyksen todentamiseen, jos elementillä on `pointer-events:none` (esim. `.notif`, `.table-ledge`) — se ohitetaan aina. Päättele z-järjestys stacking-konteksteista.
 - Regressiovertailun baseline: `git show HEAD:index.html` → sama seed-generaattori molemmille → pikselidiffi. 700 px 0,02 % ja 390 px 0,03 % = kohinataso.
 
+### Aamusuunnittelun aktivointi (2026-07-29) — valmis
+
+**Vika:** `aamu.html`ää ei voinut avata mistään. `checkMorningTask()` loi aamukortin, mutta `index.html`:ssä ei ollut yhtäkään `window.open('aamu.html')`-kutsua — ei nappia, ei valikkoriviä. Velho oli siis olemassa mutta täysin tavoittamattomissa.
+
+| Osa | Mitä |
+|---|---|
+| `_openPopup(url,name,features,winKey)` | Yhteinen popup-avaaja: jo auki oleva ikkuna nostetaan eteen, estetty popup kerrotaan `notify()`llä. `openAamu()` + `openSwipe()` käyttävät sitä — aiemmin swipe-rivi teki `window.open`in suoraan inline-onclickissä ilman estotarkistusta |
+| Areenakortin päänappi | `isMorningTask(t)` → "☀ Aloita suunnittelu" (avaa velhon) `▶ Aloita`n sijaan. Aamukortti ei ole pomodoro-tehtävä |
+| Hampurilaisvalikko | Uusi rivi ☀ Aamusuunnittelu (Työkalut-osion ensimmäisenä) — toimii myös kun kortti on jo kuitattu |
+| Kortti areenalle | `checkMorningTask` teki `turn.unshift(mt.id)` kun `active` oli varattu → kortti jäi jonoon eikä sen nappi renderöitynyt (napit ovat vain aktiivisella kortilla). Nyt vanha aktiivinen siirtyy jonon kärkeen ja aamukortti tulee areenalle |
+| Paikallinen päivämäärä | `fap_morning`-leima rakennettiin `toISOString()`illa → UTC+2/+3:ssa keskiyön jälkeen leima meni edelliselle päivälle ja kortti syntyi kahdesti. Nyt `getFullYear/getMonth/getDate` |
+| `nid`-törmäyssuoja | `load()`: `nid=d.nid||1` antoi uudelle tehtävälle jo käytössä olevan id:n jos `nid` puuttui tai oli jäljessä (varmuuskopio, käsin muokattu data) → `active` osoitti väärään korttiin. Nyt `nid` nostetaan aina suurimman id:n yli |
+| Teemasynkka | `setTheme` synkkasi vain `_swipeWin`in → silmukka `['_swipeWin','_aamuWin']` |
+| `aamu.html`: oma kortti pois | `loadData` suodattaa `aamusuunnittelu`-tagin — velho ei enää kysy itsestään "onko tämä oikeasti Q1" eikä tarjoa sitä sammakoksi |
+| `aamu.html`: kuittaus | `finish()` (= `saveData(true)`) merkitsee aamukortin tehdyksi; `skipToEnd()` EI, jotta ohitettu suunnittelu on yhä avattavissa. Valmiit tehtävät suodatetaan `newQueue`sta, muuten kuitattu kortti palaisi jonoon `queue`n kautta |
+
+Opit:
+- **Popup-ikkuna on koko ominaisuuden ainoa sisäänkäynti** — jos `window.open`-kutsua ei ole, ominaisuus on kuollutta koodia vaikka kaikki muu toimisi. `grep -n "window.open" index.html` paljastaa mitkä popupit on oikeasti kytketty.
+- **Areenakortin toimintonapit renderöityvät vain aktiiviselle kortille** (`mode==='hand'` palaa ennen `.tcg-card__actions-tcg`-lohkoa, ja jonokorteilla on vain ✎/×). Kortti jonka nappi on koko UX:n ydin on siis pakko asettaa `active`ksi, ei `turn`iin.
+- **Headless-sondi voi paljastaa muutakin kuin mitä testaa:** `taskIds:["1","1","2","3"]` testiseedissä (jossa `nid` puuttui) paljasti `load()`in id-törmäyksen. Kun sondi tulostaa listoja, lue ne — älä katso vain sitä kenttää jota varten sondi kirjoitettiin.
+- Sondi voi myös *ajaa* toimintoja: `window.open` monkeypatchattiin sondissa ja napin `click()` todensi että oikea URL avautuu — ei tarvitse luottaa siihen että onclick "näyttää oikealta".
+
 ### PAKKA-palkki (2026-07-27) — valmis
 
 Alakehyksestä tuli kiskojen kaltainen vaakapalkki, josta tehtäväpakka nousee. Ei muutoksia pakan sisältöön tai toimintoihin — vain kuori ja avaustapa.
