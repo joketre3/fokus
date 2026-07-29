@@ -1276,7 +1276,9 @@ html[data-theme="aurinko"][data-perf="lite"]{
   initAuth();
 </script>
 </head>
-<body>
+<!-- mtab-fokus on mobiilin oletusvälilehti. Luokka on merkkauksessa eikä
+     JS:ssä, jotta ensimmäinen maalaus osuu heti oikeaan tilaan. -->
+<body class="mtab-fokus view-inbox">
 <!-- Vaihe 9.6: Custom verbi-ikonien SVG sprite -->
 <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
 <defs>
@@ -1755,6 +1757,29 @@ html[data-theme="aurinko"][data-perf="lite"]{
     <div id="proj-list"></div>
     <div id="proj-empty" style="text-align:center;padding:3rem 1rem;color:var(--subtle);font-size:var(--text-base);font-style:italic">Ei projekteja. Luo ensimmäinen projekti.</div>
   </div>
+
+  <!-- ── MOBIILIN ALANAVIGAATIO ──────────────────────────────────────
+       Vain <900px. Peukalon ulottuvilla oleva korvaaja kahdelle 40px
+       napille jotka olivat ruudun vasemmassa alakulmassa. -->
+  <nav id="mnav" aria-label="Päänavigaatio">
+    <button type="button" class="mnav__btn" id="mnav-fokus" onclick="setMobileTab('fokus')">
+      <span class="mnav__ico" aria-hidden="true">◎</span><span class="mnav__lbl">Fokus</span>
+    </button>
+    <button type="button" class="mnav__btn" id="mnav-jono" onclick="setMobileTab('jono')">
+      <span class="mnav__ico" aria-hidden="true">≡</span><span class="mnav__lbl">Jono</span>
+      <span class="mnav__badge" id="mnav-jono-count" hidden></span>
+    </button>
+    <button type="button" class="mnav__btn mnav__btn--add" id="mnav-add"
+            onclick="wizIsOpen()?wizReset():wizStart()" aria-label="Lisää tehtävä">
+      <span class="mnav__plus" aria-hidden="true">+</span>
+    </button>
+    <button type="button" class="mnav__btn" id="mnav-matriisi" onclick="setMobileTab('matriisi')">
+      <span class="mnav__ico" aria-hidden="true">▦</span><span class="mnav__lbl">Matriisi</span>
+    </button>
+    <button type="button" class="mnav__btn" id="mnav-pakka" onclick="openInventory()">
+      <span class="mnav__ico" aria-hidden="true">▤</span><span class="mnav__lbl">Pakka</span>
+    </button>
+  </nav>
 </div>
 
 <style>
@@ -4615,6 +4640,219 @@ svg[aria-hidden="true"]{pointer-events:none;}
 @media (max-width:600px){.split-cols,.split-cols.split-3{grid-template-columns:1fr}}
 </style>
 
+<style id="mobile-shell">
+/* ══ MOBIILIRUNKO (<900px) ═══════════════════════════════════════════
+   Työpöytä on grid "topbar / stage" ≥900px. Alle sen sovellus oli tähän
+   asti pelkkä pystyyn valuva dokumentti, jossa areenakortti jäi taitteen
+   alle ja koko navigaatio oli kaksi 40px nappia alakulmassa.
+
+   Tämä lohko on TARKOITUKSELLA viimeisenä lähteessä: se voittaa
+   tasapisteissä vanhemmat max-width:768/640/600 -paikkaukset ilman
+   !important-viidakkoa. Työpöytä (≥900px) ei näe tästä mitään.
+
+   Katvealue 769–899px oli aiemmin ei-kenenkään-maata: mobiilipaikkaukset
+   loppuivat 768:aan mutta työpöytägrid alkoi vasta 900:sta. Siksi raja
+   on tässä 899.98px eikä 768px.                                        */
+
+/* Alanavigaatio on olemassa vain mobiilissa. */
+#mnav{display:none}
+
+@media (max-width:899.98px){
+
+  /* ── Sovelluskehys: yksi ruudullinen, sivu ei vierry ───────────── */
+  html,body{height:100%;overflow:hidden}
+  body{padding:0}
+  /* Vanha globaali käsiviuhkan pehmuste (rivi ~2805) ei koske mobiilia. */
+  body,body.hand-open,body.hand-hidden{padding-bottom:0}
+
+  .wrap{
+    max-width:none;
+    margin:0;
+    height:100vh;
+    height:100dvh;              /* dvh kutistuu iOS:n osoitepalkin mukana */
+    display:grid;
+    grid-template-rows:auto 1fr auto;
+    grid-template-columns:100%;
+    padding:var(--safe-t) var(--safe-r) 0 var(--safe-l);
+    background:var(--table-felt-deep,var(--room-bg));
+  }
+
+  /* Näkymät jaetaan riveille eksplisiittisesti. Vain yksi .view on
+     kerrallaan näkyvissä, joten ne voivat kaikki jakaa rivin 2 —
+     järjestykseen luottaminen hajoaisi heti kun sv() vaihtaa näkymää. */
+  .hdr{grid-row:1;grid-column:1}
+  #main-content-area,#v-matrix,#v-done,#v-projects{
+    grid-row:2;
+    /* grid-column on pakko kertoa: pelkkä grid-row jättää sijoituksen
+       automaattiselle algoritmille, joka työntää seuraavat näkymät
+       implisiittisiin SARAKKEISIIN — matriisi päätyi x=500 eli ruudun
+       ulkopuolelle vaikka sen display oli block. */
+    grid-column:1;
+    min-height:0;               /* ilman tätä grid-rivi ei anna vierittää */
+    overflow-y:auto;
+    overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+    padding:.75rem .75rem 1rem;
+  }
+  #mnav{grid-row:3;grid-column:1}
+
+  /* ── Yläpalkki kutistuu 52px:iin ───────────────────────────────── */
+  .hdr{
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    flex-wrap:nowrap;
+    gap:.55rem;
+    min-height:52px;
+    /* vasemmalla ☰ (44px), oikealla ajastinchip — molemmat fixed */
+    padding:.35rem 10.5rem .35rem 4rem;
+    margin-bottom:0;
+    border-bottom:1px solid var(--border);
+  }
+  .hdr>div:first-child{display:flex;align-items:center;min-width:0}
+  .hdr svg{width:88px;height:20px;margin-bottom:0!important;flex-shrink:0}
+  /* Iso "+ Lisää tehtävä" ja päivämäärä siirtyvät pois yläpalkista:
+     lisäys on alanavigaation +, ja päivämäärä on aina kuluva päivä. */
+  #btn-add-task,#dt{display:none}
+  #hdr-right{gap:.35rem;flex-wrap:nowrap}
+  /* Tilachip pelkkänä pisteenä — väri kertoo tilan, teksti veisi
+     yläpalkista tilan jonka ajastin tarvitsee. Koko tila on yhä
+     luettavissa chippiä napauttamalla ja hampurilaisvalikosta. */
+  #auth-chip-label{display:none}
+  #auth-chip{min-width:34px;min-height:34px;justify-content:center;padding:.3rem}
+
+  /* ☰ yläpalkin vasempaan reunaan, kosketuskokoisena */
+  #ham-btn{
+    top:calc(var(--safe-t) + .45rem);
+    bottom:auto;
+    left:calc(var(--safe-l) + .6rem);
+    width:var(--tap);height:var(--tap);
+  }
+  /* Pakka on alanavigaatiossa — kelluva 📦-nappi olisi päällekkäinen. */
+  #inv-btn{display:none}
+
+  /* Ajastinchip yläpalkin oikeaan reunaan */
+  #hdr-timer{
+    top:calc(var(--safe-t) + .45rem);
+    right:calc(var(--safe-r) + .6rem);
+  }
+
+  /* ── Työpöydän lavasteet pois ──────────────────────────────────── */
+  /* Käsiviuhka, PAKKA-palkki ja kiskot ovat 900px+ -metaforia. */
+  #hand-bar,#hand-toggle,#deck-rail,.table-ledge,.side-panel__tab{display:none!important}
+  /* Matriisi on nyt oma välilehtensä — kahva veisi 48px kortin päältä. */
+  #eise-handle,#eise-peek{display:none!important}
+  #arena{padding-top:0}
+
+  /* ── Välilehtien sisältö ───────────────────────────────────────── */
+  /* Sivupaneelit piiloon oletuksena (Fokus), esiin Jono-välilehdellä.
+     Vanha sääntö piilotti nämä vasta <600px, mikä jätti 600–899px
+     rikkinäiseen välitilaan. */
+  .side-panel--left,.side-panel--right{display:none}
+  /* Matriisi / Tehty / Projektit: areena ja paneelit kokonaan pois tieltä. */
+  body:not(.view-inbox) #arena,
+  body:not(.view-inbox) .side-panel--left,
+  body:not(.view-inbox) .side-panel--right{display:none!important}
+  body.mtab-jono.view-inbox .side-panel--left,
+  body.mtab-jono.view-inbox .side-panel--right{
+    display:flex;
+    width:100%;
+    height:auto;                /* muuten paneeli venyy ja jättää tyhjää */
+    margin:0 0 .85rem;
+    transform:none;
+    visibility:visible;
+  }
+  body.mtab-jono #arena{display:none}
+  body.mtab-jono .side-panel__body{width:100%;max-height:none}
+  /* Aktiivinen näkymä luetaan alanavigaatiosta — ☰ on mobiilissa vain
+     44px nappi, johon teksti ei mahdu. */
+  .ham-view-label{display:none!important}
+
+  /* Kvadrantin oletus-min-width on auto, jolloin pitkä sana leventää
+     sarakkeen yli ruudukon ja oikea palsta leikkautuu. */
+  #v-matrix .quad{min-width:0}
+}
+
+/* Kapea ruutu: matriisi pinoon. 2×2 vaatii ~700px ollakseen luettava, ja
+   rivi-/sarakeotsikot (Kiireinen / Tärkeä) ovat merkityksellisiä vain
+   ruudukkomuodossa — kvadranttien omat otsikot kertovat saman. */
+@media (max-width:599.98px){
+  #v-matrix .mgrid{grid-template-columns:1fr;grid-template-rows:none;gap:.7rem}
+  #v-matrix .mgrid>div:first-child,
+  #v-matrix .clbl,
+  #v-matrix .rlbl{display:none}
+  #v-matrix .quad{min-height:0}
+}
+
+@media (max-width:899.98px){
+
+  /* ── Alanavigaatio ─────────────────────────────────────────────── */
+  #mnav{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    align-items:stretch;
+    height:calc(var(--mnav-h) + var(--safe-b));
+    padding-bottom:var(--safe-b);
+    background:
+      linear-gradient(0deg,var(--well-bg,rgba(0,0,0,.35)),var(--well-bg,rgba(0,0,0,.35))),
+      var(--table-felt-deep,var(--room-bg));
+    box-shadow:0 -1px 0 var(--engrave-dim,var(--border)),0 -8px 24px rgba(0,0,0,.35);
+  }
+  .mnav__btn{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:.12rem;
+    min-height:var(--tap);
+    border:none;background:none;
+    color:var(--muted);
+    font-family:'DM Sans',sans-serif;
+    cursor:pointer;
+    position:relative;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .mnav__ico{font-size:1.15rem;line-height:1}
+  .mnav__lbl{font-size:.62rem;letter-spacing:.04em}
+  .mnav__btn[aria-current="page"]{color:var(--accent)}
+  .mnav__btn[aria-current="page"]::before{
+    content:'';position:absolute;top:0;left:22%;right:22%;height:2px;
+    background:var(--accent);border-radius:0 0 2px 2px;
+  }
+  .mnav__btn:active{background:rgba(255,255,255,.06)}
+  /* Lisäysnappi: kullattu, mutta ei ympyrä joka rikkoisi rivin rytmin */
+  .mnav__btn--add .mnav__plus{
+    display:flex;align-items:center;justify-content:center;
+    width:40px;height:40px;border-radius:var(--r-md);
+    border:1.5px solid var(--gold,var(--accent));
+    color:var(--gold-hi,var(--accent));
+    font-size:1.4rem;line-height:1;
+    background:linear-gradient(160deg,var(--plate-top),var(--plate-bot));
+    box-shadow:var(--chip-shadow);
+  }
+  .mnav__btn--add:active .mnav__plus{transform:translateY(1px);box-shadow:var(--chip-shadow-dn)}
+  .mnav__badge{
+    position:absolute;top:5px;right:calc(50% - 20px);
+    min-width:16px;height:16px;padding:0 4px;
+    border-radius:8px;
+    background:var(--accent);color:#1a1c18;
+    font-size:.6rem;font-weight:600;line-height:16px;text-align:center;
+  }
+
+  /* ── Kelluvat kerrokset väistävät alanavigaatiota ──────────────── */
+  .notif{bottom:calc(var(--mnav-total) + 1rem)}
+  #ham-sheet{padding-bottom:calc(2rem + var(--safe-b));max-height:78dvh}
+  #inv-modal{padding-bottom:var(--safe-b)}
+}
+
+/* ── Vaakapuhelin: korkeutta on alle 500px ────────────────────────── */
+@media (max-width:899.98px) and (orientation:landscape) and (max-height:500px){
+  .hdr{min-height:44px;padding-top:.2rem;padding-bottom:.2rem}
+  #mnav{height:calc(46px + var(--safe-b))}
+  .mnav__lbl{display:none}
+  .mnav__btn--add .mnav__plus{width:34px;height:34px;font-size:1.2rem}
+  #main-content-area,#v-matrix,#v-done,#v-projects{padding:.5rem .75rem}
+}
+</style>
+
 <!-- Vaihe 6c: Ajastinasetukset -->
 <div id="tset-overlay" style="position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:200;backdrop-filter:blur(2px)" onclick="if(event.target===this)closeTimerSettings()" aria-hidden="true"></div>
 <div id="tset-panel" role="dialog" aria-modal="true" aria-label="Ajastimen asetukset" style="position:fixed;top:50%;left:50%;width:min(440px,96vw);max-height:90vh;background:var(--surface-xs);border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.15);z-index:201;flex-direction:column;overflow:hidden;display:flex">
@@ -6352,7 +6590,14 @@ function sv(n){
   var m={inbox:'Tehtävälista',matrix:'Matriisi',done:'Tehty',projects:'Projektit'};
   document.querySelectorAll('.tab').forEach(function(t){if(t.textContent.trim().startsWith(m[n]))t.classList.add('on')});
   _curView=n;
+  // Areena ja sivupaneelit ovat #main-content-arean sisällä eivätkä siis
+  // .view-elementtejä — sv() ei piilota niitä. Mobiilissa ne jäisivät
+  // matriisin/tehtyjen päälle (areena on positioitu, .view ei), joten
+  // näkymä on kerrottava myös bodylle jotta CSS voi piilottaa ne.
+  document.body.classList.remove('view-inbox','view-matrix','view-done','view-projects');
+  document.body.classList.add('view-'+n);
   _updateHamViewLabel();
+  _syncMnav();
   render();
 }
 function _updateHamViewLabel(){
@@ -6360,6 +6605,41 @@ function _updateHamViewLabel(){
   var names={inbox:'',matrix:'Matriisi',done:'Tehty',projects:'Projektit'};
   var name=names[_curView]||'';
   if(label){label.textContent=name;label.hidden=!name;}
+}
+
+// ── MOBIILIN ALANAVIGAATIO ──────────────────────────────────────────
+// Välilehdet eivät ole uusia näkymiä vaan olemassa olevan DOM:n
+// näyttämistä eri tavalla: Fokus = areena, Jono = molemmat sivupaneelit
+// pinossa. Siksi tämä ei tarvitse omaa render-funktiota — renderTurnPanel
+// ja renderWaiting piirtävät saman sisällön kuin työpöydällä.
+var _mtab='fokus';
+
+function setMobileTab(name){
+  _mtab=name;
+  document.body.classList.remove('mtab-fokus','mtab-jono','mtab-matriisi');
+  document.body.classList.add('mtab-'+name);
+  // sv() kutsuu renderin ja _syncMnavin — ei tuplakutsua tässä.
+  sv(name==='matriisi'?'matrix':'inbox');
+}
+
+function _syncMnav(){
+  var nav=document.getElementById('mnav');
+  if(!nav)return;
+  // Tehty/Projektit avataan hampurilaisvalikosta: silloin mikään
+  // välilehti ei ole aktiivinen eikä yhtään aria-currentia aseteta.
+  var act=_curView==='matrix'?'matriisi':(_curView==='inbox'?_mtab:null);
+  ['fokus','jono','matriisi'].forEach(function(k){
+    var b=document.getElementById('mnav-'+k);
+    if(!b)return;
+    if(k===act)b.setAttribute('aria-current','page');
+    else b.removeAttribute('aria-current');
+  });
+  var badge=document.getElementById('mnav-jono-count');
+  if(badge){
+    var n=(active!=null?1:0)+(turn?turn.length:0);
+    badge.textContent=n>99?'99+':String(n);
+    badge.hidden=n===0;
+  }
 }
 
 // ── TASKS ──
@@ -8589,6 +8869,7 @@ function render(){
   _syncCastShadow();
   _syncDeckRail();
   _syncHdrBottom();
+  _syncMnav();
 }
 
 // PAKKA-palkin kvadranttiluvut: tekemättömät tehtävät kvadranteittain.
