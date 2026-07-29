@@ -1,0 +1,35 @@
+{
+  "name": "Fokus A Priori",
+  "short_name": "Fokus",
+  "description": "Eisenhower-matriisi, Pomodoro ja ohjattu aamurutiini — yksi tehtävä kerrallaan.",
+  "lang": "fi",
+  "dir": "ltr",
+  "start_url": "index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#071009",
+  "theme_color": "#071009",
+  "categories": ["productivity"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Aamusuunnittelu",
+      "short_name": "Aamu",
+      "description": "Käy tehtävät läpi ja aseta päivän fokus",
+      "url": "aamu.html",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Korttiselaus",
+      "short_name": "Selaa",
+      "description": "Rakenna tehtäväjono korteista",
+      "url": "swipe.html",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

@@ -2,13 +2,33 @@
 <html lang="fi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline' https://www.gstatic.com https://apis.google.com; connect-src https://api.anthropic.com https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://www.gstatic.com https://identitytoolkit.googleapis.com https://accounts.google.com; font-src https://fonts.gstatic.com; style-src 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; frame-src https://accounts.google.com https://fokus-a-priori.firebaseapp.com">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" id="meta-theme-color" content="#071009">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fokus">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png" sizes="192x192">
 <title>Fokus A Priori</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&family=Cinzel:wght@600;700&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
+  /* ── Mobiilin turva-alueet ja korkeus ──────────────
+     env() palauttaa 0px ilman viewport-fit=cover, joten nämä ovat
+     turvallisia myös työpöydällä. --mnav-h on alanavigaation korkeus
+     ilman turva-aluetta; --mnav-total on se mitä sisältö väistää.      */
+  --safe-t:env(safe-area-inset-top,0px);
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-l:env(safe-area-inset-left,0px);
+  --safe-r:env(safe-area-inset-right,0px);
+  --mnav-h:56px;
+  --mnav-total:calc(var(--mnav-h) + var(--safe-b));
+  --tap:44px;
+
   /* ── Usvametsä — 3 core colors ─────────────────── */
   /* 60% PINTA  — tumma metsänvihreä lasi             */
   --ink:rgba(255,255,255,.95);
@@ -840,7 +860,7 @@ html[data-theme="aurinko"][data-perf="lite"]{
 <script type="module">
   // 1. TÄRKEÄT IMPORTIT (Tässä on mukana Google-työkalut)
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
   import { initializeFirestore, persistentLocalCache, onSnapshot, doc, getDoc, setDoc, collection, getDocs, deleteDoc, query, where, collectionGroup } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   const firebaseConfig = {
@@ -1064,6 +1084,21 @@ html[data-theme="aurinko"][data-perf="lite"]{
   function initAuth() {
     const auth = window._firebaseAuth;
 
+    // Redirect-kirjautumisen paluu. Ajettava ENNEN onAuthStateChangedia:
+    // muuten paluun virhe jää huomaamatta ja chip jää "syncing"-tilaan.
+    // Onnistuneesta paluusta ei tarvitse tehdä mitään — onAuthStateChanged
+    // laukeaa joka tapauksessa ja hoitaa datan latauksen.
+    getRedirectResult(auth).then(function(result) {
+      if (result && result.user) console.log('✅ Redirect-kirjautuminen onnistui:', result.user.uid);
+    }).catch(function(error) {
+      console.error('❌ Redirect-kirjautuminen epäonnistui:', error.code, error.message);
+      window._authState.sync = 'idle';
+      window._renderAuthUi();
+      if (typeof window.notify === 'function') {
+        window.notify(_AUTH_ERR[error.code] || 'Kirjautuminen epäonnistui');
+      }
+    });
+
     onAuthStateChanged(auth, async function(user) {
       // Päivitetään auth-UI (tilachip + tilimodaali + hampurilaisrivi)
       if (user) {
@@ -1151,28 +1186,70 @@ html[data-theme="aurinko"][data-perf="lite"]{
     'auth/popup-closed-by-user': 'Kirjautuminen peruttu',
     'auth/cancelled-popup-request': 'Kirjautuminen peruttu',
     'auth/network-request-failed': 'Ei verkkoyhteyttä',
-    'auth/unauthorized-domain': 'Verkkotunnus ei ole sallittu'
+    'auth/unauthorized-domain': 'Verkkotunnus ei ole sallittu',
+    // iOS Safari osioi kolmannen osapuolen tallennuksen → paluutila katoaa.
+    'auth/missing-initial-state': 'Salli evästeet ja yritä uudelleen',
+    'auth/web-storage-unsupported': 'Selain estää tallennuksen'
   };
+
+  // Popup ei ole luotettava kosketuslaitteella: mobiiliselaimet estävät sen
+  // herkästi ja iOS Safari kaataa sen kokonaan. Redirect on siellä ainoa
+  // toimiva reitti — työpöydällä popup on parempi, koska se ei hukkaa
+  // sovelluksen tilaa sivulatauksen taakse.
+  const _AUTH_REDIRECT_ERR = [
+    'auth/popup-blocked',
+    'auth/popup-closed-by-user',
+    'auth/cancelled-popup-request',
+    'auth/operation-not-supported-in-this-environment'
+  ];
+
+  function _preferRedirectAuth() {
+    try {
+      return !window.matchMedia('(hover:hover) and (pointer:fine)').matches
+          || window.innerWidth < 900;
+    } catch(e) { return false; }
+  }
+
+  function _newGoogleProvider() {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({prompt: 'select_account'});
+    return provider;
+  }
 
   window.kirjauduGooglella = function() {
     const auth = window._firebaseAuth;
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({prompt: 'select_account'});
     window._authState.sync = 'syncing';
     window._renderAuthUi();
-    signInWithPopup(auth, provider)
+
+    if (_preferRedirectAuth()) {
+      // Sivu poistuu — tuloksen poimii getRedirectResult initAuthissa.
+      signInWithRedirect(auth, _newGoogleProvider()).catch(_authFailed);
+      return;
+    }
+
+    signInWithPopup(auth, _newGoogleProvider())
       .then((result) => {
         console.log("✅ Google-popup onnistui!", result.user.uid);
       }).catch((error) => {
-        console.error("❌ Virhe Google-kirjautumisessa:", error.message);
-        // Popup-virhe ei laukaise onAuthStateChangedia → tila on palautettava käsin.
-        window._authState.sync = 'idle';
-        window._renderAuthUi();
-        if (typeof window.notify === 'function') {
-          window.notify(_AUTH_ERR[error.code] || 'Kirjautuminen epäonnistui');
+        // Popup estettiin → yritetään redirectillä ennen kuin luovutetaan.
+        if (_AUTH_REDIRECT_ERR.indexOf(error.code) >= 0) {
+          console.warn('⚠️ Popup ei onnistunut (' + error.code + ') → redirect');
+          signInWithRedirect(auth, _newGoogleProvider()).catch(_authFailed);
+          return;
         }
+        _authFailed(error);
       });
   };
+
+  // Popup-/redirect-virhe ei laukaise onAuthStateChangedia → tila käsin.
+  function _authFailed(error) {
+    console.error("❌ Virhe Google-kirjautumisessa:", error.code, error.message);
+    window._authState.sync = 'idle';
+    window._renderAuthUi();
+    if (typeof window.notify === 'function') {
+      window.notify(_AUTH_ERR[error.code] || 'Kirjautuminen epäonnistui');
+    }
+  }
 
   window.kirjauduUlos = function() {
     // Vireillä oleva tallennus peruttava — muuten se kirjoittaisi juuri
@@ -9368,9 +9445,14 @@ window.addEventListener('focus', function(){
   var oldSig = tasks.length + '_' + (active||'') + '_' + turn.join(',');
   if(newSig !== oldSig){ load(); render(); }
 });
+// Selaimen käyttöliittymän väri standalone-tilassa (PWA:n statusbar).
+// Vastaa --room-bg:tä eli huoneen taustaa huovan ympärillä.
+var THEME_META_COLOR={usva:'#071009',havu:'#010402',aurinko:'#d8c6a4'};
 function setTheme(t){
   document.documentElement.setAttribute('data-theme',t);
   localStorage.setItem('fap_theme',t);
+  var mtc=document.getElementById('meta-theme-color');
+  if(mtc&&THEME_META_COLOR[t])mtc.setAttribute('content',THEME_META_COLOR[t]);
   // Update active button indicator
   ['havu','usva','aurinko'].forEach(function(id){
     var btn=document.getElementById('tbtn-'+id);
@@ -11664,6 +11746,32 @@ function invEscHandler(e){
     <button onclick="fetchPresetByEnteredCode()" class="badd" style="font-size:var(--text-sm);padding:.55rem">Hae pohja</button>
   </div>
 </div>
+
+<!-- ── SERVICE WORKER ─────────────────────────────────────────────
+     Rekisteröinti vain https:ssä. file://-käyttö on tietoinen
+     arkkitehtuurirajoite, eikä service worker toimi siellä lainkaan —
+     vartioimaton register() heittäisi konsoliin joka avauksella.        -->
+<script>
+(function(){
+  if(location.protocol!=='https:'||!('serviceWorker' in navigator))return;
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js').then(function(reg){
+      // Uusi versio asennettu vanhan ollessa käytössä → kerrotaan kerran.
+      reg.addEventListener('updatefound',function(){
+        var nw=reg.installing;
+        if(!nw)return;
+        nw.addEventListener('statechange',function(){
+          if(nw.state==='installed'&&navigator.serviceWorker.controller){
+            if(typeof window.notify==='function')window.notify('Päivitys ladattu — avaa uudelleen');
+          }
+        });
+      });
+    })['catch'](function(e){
+      console.warn('Service workerin rekisteröinti epäonnistui:',e&&e.message);
+    });
+  });
+})();
+</script>
 
 </body>
 </html>
