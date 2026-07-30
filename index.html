@@ -993,7 +993,10 @@ html[data-theme="aurinko"][data-perf="lite"]{
 
   // ── Paikallisen datan tyhjennys (tilinvaihto / uloskirjautuminen) ──
   function _clearLocalAppData() {
-    const keep = /^(fap_theme|fap_perf|fap_onboarded|fap_timer_settings)$/;
+    // fap_device_id/-label ovat laitteen tunniste jaetussa istunnossa,
+    // eivät käyttäjädataa — id:n vaihtuminen tekisi laitteesta uuden
+    // osallistujan ja jättäisi vanhan "eläväksi" kahdeksi minuutiksi.
+    const keep = /^(fap_theme|fap_perf|fap_onboarded|fap_timer_settings|fap_device_id|fap_device_label)$/;
     const drop = [];
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
@@ -1055,6 +1058,46 @@ html[data-theme="aurinko"][data-perf="lite"]{
     _fsSaveTimer = setTimeout(_flushFsSave, 500);
   };
   window._flushFsSave = _flushFsSave;
+
+  // ── Firestore: jaettu istunto ──────────────────────────────────
+  // users/{uid}/session/live on pieni dokumentti joka kertoo MISSÄ
+  // TILASSA ajastin on — ei sitä paljonko aikaa on jäljellä. Aika
+  // tallennetaan määräaikana (endsAt), joten tikitys ei aiheuta yhtään
+  // kirjoitusta ja taustavälilehden throttlaus ei voi ajautua eteen.
+  // Kirjoituksia tulee vain siirtymissä: ~20–40 päivässä.
+  let _sessionUnsub = null;
+  let _lastSessionWriteTs = 0;
+
+  function _sessionRef() {
+    return doc(db, 'users', window.currentUser.uid, 'session', 'live');
+  }
+
+  window._sessionPush = function(state) {
+    if (!window.currentUser) return;
+    const payload = Object.assign({}, state, {updatedAt: Date.now()});
+    _lastSessionWriteTs = payload.updatedAt;
+    setDoc(_sessionRef(), payload, {merge: true})['catch'](function(e) {
+      console.warn('⚠️ Istunnon kirjoitus epäonnistui:', e.message);
+    });
+  };
+
+  window._sessionSubscribe = function() {
+    if (_sessionUnsub) { _sessionUnsub(); _sessionUnsub = null; }
+    if (!window.currentUser) return;
+    _sessionUnsub = onSnapshot(_sessionRef(), function(snap) {
+      if (!snap.exists()) return;
+      const d = snap.data();
+      // Oma echo — sama vertailu kuin työtiladokumentissa.
+      if (d.updatedAt && d.updatedAt === _lastSessionWriteTs) return;
+      if (typeof window._applyRemoteSession === 'function') window._applyRemoteSession(d);
+    }, function(err) {
+      console.warn('⚠️ Istunnon kuuntelu epäonnistui:', err.message);
+    });
+  };
+
+  window._sessionUnsubscribe = function() {
+    if (_sessionUnsub) { _sessionUnsub(); _sessionUnsub = null; }
+  };
 
   // ── Firestore: timer-asetukset ─────────────────────────────────
   window._saveTimerToFs = async function(work, sbrk, lbrk) {
@@ -1170,10 +1213,13 @@ html[data-theme="aurinko"][data-perf="lite"]{
         }
 
         startFsListener(user.uid, wsId);
+        window._sessionSubscribe();
 
       } else {
         window.currentUser = null;
         if (_fsSnapshotUnsub) { _fsSnapshotUnsub(); _fsSnapshotUnsub = null; }
+        window._sessionUnsubscribe();
+        if (typeof window._clearRemoteSession === 'function') window._clearRemoteSession();
         console.log('Odotetaan kirjautumista...');
       }
     });
@@ -5358,6 +5404,90 @@ var newTags=[],newProjectId=null;
 var projects=[],pnid=1;
 var tmr=null,tleft=25*60,phase='idle',startAt=null,startTleft=25*60;
 var pomoDone=0;
+
+// ── JAETTU ISTUNTO ──────────────────────────────────────────────────
+// Puhelin ja työpöytä ovat sama istunto: ajastimen tila elää
+// Firestoressa määräaikana (endsAt), ja kumpi tahansa laite ohjaa sitä.
+// Kirjautumattomana kaikki tämä on no-op ja sovellus toimii kuten ennen.
+var _sessionOwner=null;      // laitteen id joka viimeksi ohjasi ajastinta
+var _sessionOwnerLabel='';
+var _sessionSeenTs=0;        // milloin toisen laitteen tila viimeksi nähtiin
+var _applyingRemote=false;   // estää kaiun: etätila ei saa kirjoittaa takaisin
+
+function _deviceId(){
+  var id=localStorage.getItem('fap_device_id');
+  if(!id){
+    id=(Date.now().toString(36)+Math.random().toString(36).slice(2,8));
+    localStorage.setItem('fap_device_id',id);
+  }
+  return id;
+}
+function _deviceLabel(){
+  var saved=localStorage.getItem('fap_device_label');
+  if(saved)return saved;
+  return _isMobileLayout()?'Puhelin':'Työpöytä';
+}
+
+// Toinen laite katsotaan eläväksi kahden minuutin ajan viimeisestä
+// viestistä — sen jälkeen Ohjain-välilehti katoaa itsestään.
+function _remoteDeviceLive(){
+  return !!_sessionOwner && _sessionOwner!==_deviceId()
+      && (Date.now()-_sessionSeenTs)<120000;
+}
+// Seuraaja ei sitouta vaiheenvaihtoa: muuten pomos ja pomoDone
+// kasvaisivat kahdesti kun molemmat laitteet laskevat nollaan.
+function _isSessionFollower(){
+  return !!window.currentUser && !!_sessionOwner && _sessionOwner!==_deviceId();
+}
+
+function _pushSession(){
+  if(_applyingRemote)return;
+  if(typeof window._sessionPush!=='function')return;
+  _sessionOwner=_deviceId();
+  _sessionOwnerLabel=_deviceLabel();
+  window._sessionPush({
+    wsId:getActiveWsId(),
+    phase:phase,
+    running:!!tmr,
+    endsAt:tmr?(Date.now()+tleft*1000):null,
+    remaining:tleft,
+    pomoDone:pomoDone,
+    owner:_sessionOwner,
+    ownerLabel:_sessionOwnerLabel
+  });
+}
+
+window._applyRemoteSession=function(d){
+  if(!d)return;
+  // Eri työtila → ei kuulu tähän näkymään.
+  if(d.wsId&&d.wsId!==getActiveWsId())return;
+  if(d.owner===_deviceId())return;
+  _applyingRemote=true;
+  try{
+    _sessionOwner=d.owner||null;
+    _sessionOwnerLabel=d.ownerLabel||'';
+    _sessionSeenTs=Date.now();
+    phase=d.phase||'idle';
+    pomoDone=d.pomoDone||0;
+    if(d.running&&d.endsAt){
+      // Aika luetaan määräajasta, ei lähetetystä jäljellä-arvosta:
+      // viive verkossa ei kerry kelloon.
+      tleft=Math.max(0,Math.round((d.endsAt-Date.now())/1000));
+      startAt=Date.now();startTleft=tleft;
+      if(!tmr){tmr=setInterval(tick,250);setClockIcon(true);keepAwake();_requestWakeLock();}
+    }else{
+      tleft=(typeof d.remaining==='number')?d.remaining:WORK;
+      if(tmr){clearInterval(tmr);tmr=null;}
+      startAt=null;setClockIcon(false);stopKeepAwake();
+    }
+    updClock();render();
+  }finally{_applyingRemote=false;}
+};
+
+window._clearRemoteSession=function(){
+  _sessionOwner=null;_sessionOwnerLabel='';_sessionSeenTs=0;
+  render();
+};
 var totalPomos=0; // total today
 var collapsedProjects={}; // persist collapse state across renders
 
@@ -5871,6 +6001,7 @@ function popoutTimer(){
 function resetCycle(){
   pomoDone=0;
   save();updClock();
+  _pushSession();
   notify('Kierros nollattu — aloitetaan alusta.');
 }
 
@@ -7564,10 +7695,12 @@ function startTmr(){
   setClockIcon(true);
   // Hiljainen äänisolmu — pitää välilehden hereillä
   keepAwake();
+  _requestWakeLock();
   requestNotifPermission();
   soundClick();
   tmr=setInterval(tick,250);
   updClock();render();
+  _pushSession();
 }
 
 // ── SOUNDS ──
@@ -7694,7 +7827,30 @@ function keepAwake(){
 }
 function stopKeepAwake(){
   try{if(_audioNode){_audioNode.stop();_audioNode=null;}}catch(e){/* ääni ei-kriittinen */}
+  _releaseWakeLock();
 }
+
+// ── NÄYTÖN WAKE LOCK ────────────────────────────────────────────────
+// Hiljainen äänisolmu pitää välilehden hereillä mutta ei estä ruutua
+// sammumasta. Puhelimessa pomodoro on juuri se hetki jolloin ruudun
+// pitää pysyä päällä. Ei tuettu kaikkialla → koko lohko on best-effort.
+var _wakeLock=null;
+function _requestWakeLock(){
+  try{
+    if(!navigator.wakeLock||_wakeLock)return;
+    navigator.wakeLock.request('screen').then(function(wl){
+      _wakeLock=wl;
+      wl.addEventListener('release',function(){_wakeLock=null;});
+    })['catch'](function(){/* esim. akunsäästötila — ei kriittinen */});
+  }catch(e){/* ei tuettu */}
+}
+function _releaseWakeLock(){
+  try{if(_wakeLock){_wakeLock.release();_wakeLock=null;}}catch(e){}
+}
+// Wake lock katoaa kun välilehti menee taustalle — pyydetään takaisin.
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='visible'&&tmr)_requestWakeLock();
+});
 
 function tick(){
   if(!startAt)return;
@@ -7709,6 +7865,15 @@ function tick(){
 }
 
 function onPhaseEnd(){
+  // Jaetussa istunnossa vain omistaja sitouttaa vaiheenvaihdon. Ilman
+  // tätä molemmat laitteet laskisivat nollaan ja kasvattaisivat pomos-
+  // ja pomoDone-lukemat kahdesti. Seuraaja jää odottamaan omistajan
+  // snapshotia, joka saapuu käytännössä välittömästi.
+  if(_isSessionFollower()){
+    if(tmr){clearInterval(tmr);tmr=null;}
+    startAt=null;updClock();
+    return;
+  }
   if(phase==='work'){
     var act=getActive();
     if(act){act.pomos=(act.pomos||0)+1;save();}
@@ -7741,6 +7906,7 @@ function onPhaseEnd(){
     if(tmr){clearInterval(tmr);tmr=null;}
     setClockIcon(false);
     updClock();render();
+    _pushSession();
   }
 }
 
@@ -7771,6 +7937,7 @@ function stopAll(){
   document.getElementById('btnDn').style.display='none';
   var wt=document.getElementById('btnWt');if(wt)wt.style.display='none';
   updClock();render();
+  _pushSession();
 }
 
 function setClockIcon(running){
