@@ -199,7 +199,7 @@ CSS custom properties: `--ink`, `--surface-xs`, `--surface`, `--surface-md`, `--
 
 **Sammakko (Frog):** Tärkein tehtävä päivässä. Aina ensimmäisenä jonossa. Renderöidään 🐸:llä kaikkialla.
 
-**Käsi (Hand):** TCG-inspired käsikorttipalkki desktopilla — top 5 jonotehtävää kortteina. Toggle: `window._useCardUI`.
+**Käsi (Hand):** TCG-inspired käsikortit — **ei jono vaan ehdokasjoukko**: `buildHandQueue` valitsee tähtikortit (`handForced`) ja niiden jälkeen q1/q2-tehtävät jotka **eivät** ole areenalla eivätkä jonossa, järjestyksessä q1+sammakko → q1 → q2+sammakko → q2. `renderHandBar` näyttää niistä 5. Napautus → `promoteToHand`: areenalle jos areena on tyhjä, muuten jonon perään. Työpöydällä viuhka joka avautuu hoverilla, mobiilissa hylly joka lepää huulena (ks. The Hand Rule, DESIGN.md §9). Toggle: `window._useCardUI`.
 
 **Areena:** Pääfokusialue, näyttää aktiivisen (jonon kärki) tehtävän isona korttina.
 
@@ -506,7 +506,7 @@ Mobiili oli jäänyt paikkaustasolle: kaikki 2026 tehty työ on `min-width:900px
 - **Jaettu ajastin tarvitsee johtajuuden.** Ilman sitä molemmat laitteet laskevat nollaan ja `onPhaseEnd` kasvattaa `pomos`/`pomoDone` kahdesti. Vain `owner === oma laite` sitouttaa; seuraaja odottaa snapshotia.
 - **Popupeilla ei ole Firebase-SDK:ta.** CLAUDE.md:n "aamu.html Firebase sync ✅" tarkoitti opener-delegointia, ei SDK:ta. Samassa välilehdessä `window.opener` puuttuu → pilvipush jäisi tekemättä. `_resyncFromLocal()` (`visibilitychange` + `pageshow`) lataa levyltä ja työntää pilveen jos leima on tuoreempi.
 - **`window.close()` ei sulje välilehteä jota se ei avannut** — samassa välilehdessä paluu on `history.back()`, fallback `location.href`.
-- **Areenan hehkuanimaatio antaa ~16 % pikselikohinaa.** Regressiovertailu on tehtävä animaatiot jäädytettynä (`*,*::before,*::after{animation:none!important;transition:none!important}`), muuten diffi on lukukelvoton. Jäädytettynä 1440×900 ja 1920×1080 antoivat **0,0000 %** kaikissa viidessä vaiheessa.
+- **Areenan hehkuanimaatio antaa ~16 % pikselikohinaa.** Regressiovertailu on tehtävä animaatiot jäädytettynä (`*,*::before,*::after{animation:none!important;transition:none!important}`), muuten diffi on lukukelvoton. Jäädytettynä 1440×900 ja 1920×1080 antoivat **0,0000 %** jokaisessa vaiheessa. Portti on skriptinä: `scratchpad/regress.sh` (seedaus + jäädytys + `pngdiff.py`, joka on riippuvuudeton PNG-lukija — PIL:iä ei ole).
 - **`pkill -f "chrome-linux/chrome"` tappaa oman kutsuvan shellinsä** (komentorivi täsmää kuvioon) → exit 144. Käytä `pkill -f "[c]hrome-linux/chrome"`.
 - **`--dump-dom` ei näe `location.href`-navigointia** — se palaa ensimmäisen latauksen DOM:illa. Samaan välilehteen navigointia ei voi todentaa näin; testaa määränpääsivu suoraan.
 - **Firebase-SDK ei lataudu hiekkalaatikossa** (ei pääsyä `gstatic.com`iin) → `window._firebaseApp` on `undefined` ja kaikki `window._*`-moduulifunktiot puuttuvat. Firestore-riippuvainen koodi on testattava tyngillä (`window._sessionPush=...`). Sivutuote: kuvakaappaukset todistavat että sovellus toimii ilman Firebasea.
@@ -515,6 +515,28 @@ Mobiili oli jäänyt paikkaustasolle: kaikki 2026 tehty työ on `min-width:900px
 - **Virtuaaliaika EI aja CSS-siirtymiä.** `getComputedStyle(el).transform` jää alkuarvoon vaikka luokka on vaihdettu — ja niin jää myös inline-tyylillä asetettu arvo, koska sekin siirtyy. Oire näyttää tasan siltä kuin CSS-sääntö ei osuisi. Injektoi `*,*::before,*::after{transition:none!important}` ennen tilamittauksia. (Tämä maksoi kolme sondia käsihyllyä tehdessä.)
 - **Käden peek-kaista tarvitsee oman napautuskohteen.** Ilman `#hand-lip`-nappia korttien päällä peek-alueen napautus osuu korttiin ja `promoteToHand` nostaa sen areenalle vahingossa — käyttäjä yritti vain avata hyllyn.
 - `body.focus-mode #hand-bar-cards` (1,1,0) häviää `#hand-bar.hand-bar--open #hand-bar-cards` -säännölle (2,1,0). Ajastimen käynnistyessä hylly on suljettava **tilan kautta** (`setHandBarOpen(false)`), ei luokkaa lisäämällä — muuten localStorageen jää auki-tila jota ruudulla ei näy.
+- **Ominaisuus voi olla valmis mutta tavoittamaton.** Mobiilikäsi oli jo koodattu (`toggleHandBar`, `initHandBarState`, `fap_hand_open`), ja `renderHandBar` täytti kortit myös puhelimessa — vain `display:none` esti kaiken. Sama kuvio kuin aamusuunnittelussa 2026-07-29 (velho oli olemassa, `window.open`-kutsua ei). **Ennen kuin rakennat mobiiliversion jostakin, tarkista onko se jo olemassa nukkumassa.**
+
+#### Käden kuollut koodi — todennettu 2026-07-30, ei siivottu
+
+Käsihyllyn yhteydessä kartoitettu. Jätetty tarkoituksella koskematta (oma
+siivouksensa), mutta **älä oleta näiden toimivan** ja poista ne kun siivoat.
+Rivinumerot vanhenevat — hae nimellä.
+
+| Tunniste | Tila |
+|---|---|
+| `#hand-cards`, `#hand-label`, `#hand-empty`, `#hand-bar-empty` | Pelkkää CSS:ää, ei DOM-elementtiä eikä JS-viittausta. Jäänne TCG:tä edeltävästä vaakavieritys-kädestä |
+| `.card-new--hand` (+ sen `→ Nosta` -tooltip), `.card-new__star-mark` | CSS-lohkoja joita mikään ei lisää. Korvattu `.tcg-card--hand`illa |
+| `hand-bar--hidden` | CSS on olemassa (2 sääntöä) ja luokkaa *poistetaan* neljässä paikassa ja *tarkistetaan* yhdessä — mutta **sitä ei lisätä missään**. Ajastimen piilotus tehdään `body.focus-mode`illa |
+| `body-hand-hidden` | Vain poistetaan, ei koskaan lisätä, ei CSS:ää |
+| `body.hand-hidden` | CSS olemassa, mutta luokkaa ei koskaan lisätä |
+| `body.hand-open` | `setHandBarOpen` asettaa sen, mutta molemmat CSS-vaikutukset ovat kuolleita: `body.hand-open{padding-bottom}` on ylikirjoitettu nollaksi kummassakin media-lohkossa, ja `body.hand-open #hand-toggle` osoittaa piilotettuun nappiin. Tilapeili, ei tyyliä |
+| `_handBarVisible` | Julistetaan `true`, ei lueta koskaan |
+| `#hand-toggle` + `#hand-toggle-label` + `toggleHandBar()` | Nappi on `display:none` **kummassakin** media-lohkossa (työpöytä ja mobiili kattavat koko leveysalueen), joten se ei ole koskaan näkyvissä. `toggleHandBar` on siis tavoittamaton: mobiilihylly kutsuu `setHandBarOpen`ia suoraan. `renderHandBar` päivittää yhä `#hand-toggle-label`in tekstin — kirjoitus näkymättömään |
+
+Elossa ovat vain: `#hand-bar`, `#hand-bar-cards`, `#hand-lip`, `.tcg-card--hand`,
+`hand-bar--open`, `buildHandQueue`, `renderHandBar`, `promoteToHand`,
+`setHandBarOpen`, `initHandBarState`, `_attachHandHoverDesktop`, `_attachHandMobile`.
 
 **⚠ TESTAAMATTA OIKEALLA LAITTEELLA.** Palautus: `git revert` vaiheittain tai koko haara.
 
