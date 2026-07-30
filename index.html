@@ -1059,6 +1059,23 @@ html[data-theme="aurinko"][data-perf="lite"]{
   };
   window._flushFsSave = _flushFsSave;
 
+  // aamu.html ja swipe.html kirjoittavat vain localStorageen ja delegoivat
+  // pilvitallennuksen window.openerille — niissä ei ole Firebase-SDK:ta.
+  // Mobiilissa ne avautuvat samaan välilehteen, jolloin openeria ei ole ja
+  // muutos jäisi vain laitteelle. Kun palataan, verrataan paikallista
+  // leimaa viimeksi pilveen kirjoitettuun ja työnnetään tarvittaessa.
+  window._pushLocalIfNewer = function() {
+    if (!window.currentUser) return false;
+    const wsId = localStorage.getItem('fap_active_ws') || 'work';
+    let ts = 0;
+    try { ts = (JSON.parse(localStorage.getItem('eis_v5_' + wsId) || '{}').updatedAt) || 0; }
+    catch(e) { return false; }
+    if (ts <= _lastFsWriteTs) return false;
+    console.log('☁️ Paikallinen data uudempi kuin pilvessä (' + ts + ' > ' + _lastFsWriteTs + ') → työnnetään');
+    window._scheduleFsSave();
+    return true;
+  };
+
   // ── Firestore: jaettu istunto ──────────────────────────────────
   // users/{uid}/session/live on pieni dokumentti joka kertoo MISSÄ
   // TILASSA ajastin on — ei sitä paljonko aikaa on jäljellä. Aika
@@ -8065,6 +8082,27 @@ document.addEventListener('visibilitychange',function(){
   if(document.visibilityState==='visible'&&tmr)_requestWakeLock();
 });
 
+// ── PALUU POPUPISTA ─────────────────────────────────────────────────
+// Mobiilissa aamu.html ja swipe.html avautuvat samaan välilehteen ja
+// kirjoittavat vain localStorageen. Kun tänne palataan, luetaan tuorein
+// data ja varmistetaan että se päätyy myös pilveen.
+function _resyncFromLocal(){
+  var lsTs=0;
+  try{
+    lsTs=(JSON.parse(localStorage.getItem(wsStorageKey())||'{}').updatedAt)||0;
+  }catch(e){return;}
+  // Vain jos levyllä on tuoreempaa kuin muistissa — muuten load()
+  // pyyhkisi juuri tehdyn muutoksen.
+  if(lsTs>(window._loadedTs||0))load();
+  if(window._pushLocalIfNewer)window._pushLocalIfNewer();
+}
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='visible')_resyncFromLocal();
+});
+// pageshow laukeaa myös selaimen back-forward-välimuistista, jolloin
+// visibilitychange voi jäädä tulematta.
+window.addEventListener('pageshow',function(){_resyncFromLocal();});
+
 function tick(){
   if(!startAt)return;
   var elapsed=Math.floor((Date.now()-startAt)/1000);
@@ -10114,6 +10152,13 @@ renderWsSwitcher();
 // Yhteinen avaaja: jo auki oleva ikkuna nostetaan eteen uuden sijaan, ja
 // selaimen estämä popup kerrotaan käyttäjälle — muuten klikkaus katoaa tyhjään.
 function _openPopup(url,name,features,winKey){
+  // Mobiilissa window.open avaa välilehden, ei ikkunaa: kokoparametrit
+  // ohitetaan, paluu on hankalaa ja iOS voi katkaista opener-yhteyden.
+  // Navigoidaan samassa välilehdessä ja annetaan kohteelle paluunappi.
+  if(_isMobileLayout()){
+    location.href=url+(url.indexOf('?')<0?'?':'&')+'back=1';
+    return null;
+  }
   try{
     var existing=window[winKey];
     if(existing&&!existing.closed){existing.focus();return existing;}

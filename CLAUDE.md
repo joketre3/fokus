@@ -51,6 +51,9 @@ Ei testejä, ei lintteriä, ei CI:tä.
 | `mockup-fut-kortti.html` | FUT-korttityylin mockup (referenssi) |
 | `mockup-arena-syvyys.html` | Areenan syvyyskokeilu (varhainen, korvattu `mockup-arena-3d-plus`illa) |
 | `mockup-eise-placement.html` | Eisenhower-peekin sijoitteluvaihtoehdot |
+| `manifest.json` | PWA-manifesti — asennettava sovellus, standalone-tila |
+| `sw.js` | Service worker — navigointi verkosta ensin, muu välimuistista (offline) |
+| `icon-192.png`, `icon-512.png`, `icon-180.png` | Sovellusikonit (512 myös maskable) |
 | `dev-seed.html`, `testdata.html` | Testidatan siemennys localStorageen (kehitystyökaluja) |
 
 Pääsovellus avaa `swipe.html` ja `aamu.html` popup-ikkunoina (`window.open`). Timer aukeaa JS:llä generoituna popuppina. Kaikki ikkunat jakavat datan `localStorage`n kautta.
@@ -148,8 +151,10 @@ Kaikki tehtävädata `localStorage`-avaimessa `eis_v5_<wsId>` (oletus: `eis_v5_w
 - `fap_perf` — `'1'` kun Nopea tila päällä (asettaa `html[data-perf="lite"]`)
 - `fap_data_uid` — paikallisen datan omistaja; eri uid kirjautuessa → data tyhjennetään
 - `fap_onboarded` — onboarding nähty
+- `fap_device_id` — laitteen tunniste jaetussa istunnossa (kumpi laite ohjaa ajastinta)
+- `fap_device_label` — laitteen nimi Ohjain-näkymässä (oletus UA:sta: Puhelin / Työpöytä)
 
-`_clearLocalAppData()` pyyhkii kaiken `eis_v5*` + `fap_*` paitsi `fap_theme`, `fap_perf`, `fap_onboarded`, `fap_timer_settings` (laiteasetuksia, ei käyttäjädataa).
+`_clearLocalAppData()` pyyhkii kaiken `eis_v5*` + `fap_*` paitsi `fap_theme`, `fap_perf`, `fap_onboarded`, `fap_timer_settings`, `fap_device_id`, `fap_device_label` (laiteasetuksia, ei käyttäjädataa).
 
 ## Tehtävien verbi-formaatti
 
@@ -467,6 +472,57 @@ Lisäksi kevyt varmistus: ICS-lataus koko päivän muistutuksena → tiedostossa
 
 **Toistuva bugiluokka tässä koodikannassa:** popupit (`aamu.html`, `swipe.html`) jäävät jälkeen `index.html`:n suojauksista. Modernization-vaiheen 2 try/catch, `scheduled_hidden`-suodatus ja kenttäsynkka puuttuivat kaikki. Kun index.html saa datansuojauksen, tarkista popupit samalla.
 
+### Mobiili + jaettu istunto (2026-07-30) — valmis, ei vielä testattu oikealla laitteella
+
+Mobiili oli jäänyt paikkaustasolle: kaikki 2026 tehty työ on `min-width:900px` -lohkossa. PRODUCT.md sanoo "mobiili toissijainen" — se ei enää pidä.
+
+**Mitatut lähtöviat** (headless-sondi, ei arvioita):
+
+| Vika | Todiste |
+|---|---|
+| Katvealue 769–899px | mobiilipaikkaukset loppuivat 768:aan, työpöytägrid alkoi 900:sta |
+| Vaakapuhelimessa areenakortti taitteen alla | 844×390: viewport 303px, kortti `y=355`, dokumentti 994px = 3,3 ruutua vieritystä |
+| 932×430 sai täyden työpöytägridin | kortista näkyi yläkolmannes, käsiviuhka peitti loput |
+| Sivupaneelit piiloutuivat vasta <600px | 600–899px ne pinoutuivat pystyyn ilman gridiä |
+| Navigaatio = 2 × 40px nappia alavasemmalla | alle 44px minimin, ei safe-areaa → iOS-kotipalkin alla |
+| `signInWithPopup` ainoana kirjautumistapana | popup-esto + iOS ITP → **koko synkka oli tavoittamattomissa puhelimella** |
+
+| Vaihe | Mitä |
+|---|---|
+| 0 | `signInWithRedirect` kosketuslaitteella + popup-fallback + `getRedirectResult`. `manifest.json`, `sw.js`, ikonit 192/512/180. `viewport-fit=cover`, `--safe-*`, `--mnav-h`, `--tap`. `theme-color` seuraa teemaa |
+| 1 | `.wrap` mobiilissa grid `auto 1fr auto`, `100dvh`. `#mnav` (Fokus·Jono·+·Matriisi·Pakka). `setMobileTab()` näyttää olemassa olevaa DOM:ia — ei uutta renderiä. Käsiviuhka, PAKKA-palkki, kiskot ja eise-kahva pois. Matriisi pinoon <600px |
+| 2 | Arena-room pois, kortti keskitetty ilman kallistusta, napit 44px. Eleet: oikea=tehty, vasen=odottaa, ylös=seuraava. Vaakapuhelimessa kortista pudotetaan kuvitus → automaattikorkeus |
+| 3 | `users/{uid}/session/live`: jaettu ajastin **määräaikana** (`endsAt`). Vaiheenvaihdon johtajuus `owner`-kentällä. Wake Lock |
+| 4 | `#v-remote` — portti `popoutTimer()`-rungosta, lähde jaettu istunto. Välilehti ilmestyy kun toinen laite on elossa (5→6 saraketta) |
+| 5 | Popupit samaan välilehteen (`?back=1`) + paluunappi. `swipe.html` pinoon <700px. `_resyncFromLocal()` paluun yhteydessä |
+
+**Opit:**
+- **`grid-row` ilman `grid-column`ia on ansa.** Sijoitus jää automaattiselle algoritmille, joka työntää seuraavat itemit implisiittisiin **sarakkeisiin**: `#v-matrix` päätyi `x=500` eli ruudun ulkopuolelle, vaikka `display` oli `block` ja sisältö renderöity. Aina molemmat.
+- **Areena ja sivupaneelit eivät ole `.view`-elementtejä** vaan `#main-content-arean` sisällä → `sv()` ei piilota niitä. Areena on positioitu, `.view` ei, joten areena maalautui matriisin päälle. Ratkaisu: `body.view-<n>` -luokka `sv()`:ssä.
+- **Työpöydän breakpoint tarvitsee korkeusehdon.** `(min-width:900px)` yksin antaa vaakapuhelimelle (932×430) koko pöydän. Nyt `and (min-height:501px)` kaikissa viidessä desktop-lohkossa, ja mobiililohko vastaavasti `, (max-height:500px)`. `_isMobileLayout()` pitää JS:n samassa ehdossa — pidä ne synkassa.
+- **5:7-kortti ei mahdu vaakapuhelimeen.** ~230px korkeudessa se olisi 165px leveä eli lukukelvoton. Kutistaminen ei ole ratkaisu: pudota kortista se osa joka ei kanna tietoa (`.tcg-card__art`) ja anna `aspect-ratio:auto`. Kvadranttitausta jää → väri-identiteetti säilyy.
+- **Ajastin pilveen määräaikana, ei jäljellä olevana aikana.** `endsAt` tarkoittaa ettei tikitys aiheuta yhtään kirjoitusta, verkkoviive ei kerry kelloon eikä taustathrottlaus voi ajautua eteen. Kirjoituksia ~20–40/vrk.
+- **Jaettu ajastin tarvitsee johtajuuden.** Ilman sitä molemmat laitteet laskevat nollaan ja `onPhaseEnd` kasvattaa `pomos`/`pomoDone` kahdesti. Vain `owner === oma laite` sitouttaa; seuraaja odottaa snapshotia.
+- **Popupeilla ei ole Firebase-SDK:ta.** CLAUDE.md:n "aamu.html Firebase sync ✅" tarkoitti opener-delegointia, ei SDK:ta. Samassa välilehdessä `window.opener` puuttuu → pilvipush jäisi tekemättä. `_resyncFromLocal()` (`visibilitychange` + `pageshow`) lataa levyltä ja työntää pilveen jos leima on tuoreempi.
+- **`window.close()` ei sulje välilehteä jota se ei avannut** — samassa välilehdessä paluu on `history.back()`, fallback `location.href`.
+- **Areenan hehkuanimaatio antaa ~16 % pikselikohinaa.** Regressiovertailu on tehtävä animaatiot jäädytettynä (`*,*::before,*::after{animation:none!important;transition:none!important}`), muuten diffi on lukukelvoton. Jäädytettynä 1440×900 ja 1920×1080 antoivat **0,0000 %** kaikissa viidessä vaiheessa.
+- **`pkill -f "chrome-linux/chrome"` tappaa oman kutsuvan shellinsä** (komentorivi täsmää kuvioon) → exit 144. Käytä `pkill -f "[c]hrome-linux/chrome"`.
+- **`--dump-dom` ei näe `location.href`-navigointia** — se palaa ensimmäisen latauksen DOM:illa. Samaan välilehteen navigointia ei voi todentaa näin; testaa määränpääsivu suoraan.
+- **Firebase-SDK ei lataudu hiekkalaatikossa** (ei pääsyä `gstatic.com`iin) → `window._firebaseApp` on `undefined` ja kaikki `window._*`-moduulifunktiot puuttuvat. Firestore-riippuvainen koodi on testattava tyngillä (`window._sessionPush=...`). Sivutuote: kuvakaappaukset todistavat että sovellus toimii ilman Firebasea.
+- Ikonit voi renderöidä ilman PIL:iä: inline-SVG HTML-kääreessä + `--screenshot` halutulla `--window-size`illa, `file://`-URL (http-palvelin kuolee shellin mukana).
+
+**⚠ TESTAAMATTA OIKEALLA LAITTEELLA.** Palautus: `git revert` vaiheittain tai koko haara.
+
+| # | Testi | Odotettu |
+|---|---|---|
+| 1 | Kirjaudu Googlella puhelimella | Redirect vie Googleen ja takaisin; tehtävät ilmestyvät koneelta. Jos epäonnistuu `auth/missing-initial-state`illa → julkaise Firebase Hostingiin, jolloin authDomain on sama origin |
+| 2 | Lisää aloitusnäyttöön | Aukeaa ilman selaimen palkkeja; lentotilassa aukeaa yhä |
+| 3 | Ajastin käyntiin puhelimesta | Ruutu ei sammu; lukitus ja paluu → kello oikeassa |
+| 4 | Vaaka ja pysty | Aktiivinen kortti näkyvissä ilman vieritystä molemmissa |
+| 5 | Eleet kortilla | Oikea = tehty, vasen = odottaa, ylös = seuraava |
+| 6 | Aamusuunnittelu → ← Takaisin | Muutokset tallessa, ja **näkyvät myös koneella** (paluusynkka) |
+| 7 | Kone auki samaan aikaan | Ohjain-välilehti ilmestyy; ✓ Tehty puhelimesta päivittää koneen; pomodoro-laskuri ei kasva kahdesti |
+
 ### Impeccable-jono — kaikki komennot ajettu
 
 `harden`, `audit`, `polish`, `optimize`, `document` tehty (critique-score 16/20, snapshot `.impeccable/critique/2026-06-11T10-44-50Z__index-html.md`). Tulokset DESIGN.md:ssä ja `.impeccable/design.json`issa. Jäljellä vain deltan seuranta detektorilla — ks. baseline-rivi Bash-työkaluissa.
@@ -485,7 +541,8 @@ Komponentit `index.html`:ssä (etsi nimellä, rivinumerot vanhenevat): `.tcg-car
 - Projekti: `fokus-a-priori`
 - Auth domain: `fokus-a-priori.firebaseapp.com`
 - Firestore workspace-data: `users/{uid}/workspaces/{wsId}`
-- Firestore timer-asetukset: `users/{uid}/timerSettings/default`
+- Firestore timer-asetukset: `users/{uid}/settings/timer`
+- Firestore jaettu istunto: `users/{uid}/session/live` — ajastimen tila `endsAt`-mallilla, kirjoitus vain siirtymissä
 
 ## AI-analyysi
 
