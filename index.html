@@ -1743,9 +1743,19 @@ html[data-theme="aurinko"][data-perf="lite"]{
         </div>
       </div>
 
-    <!-- ── Vaihe 5A TCG: Tehtäväkäsi-baari (desktop) ── -->
-    <div id="hand-bar" aria-label="Tehtäväkäsi">
-      <div id="hand-bar-cards"></div>
+    <!-- ── Vaihe 5A TCG: Tehtäväkäsi-baari ──
+         Työpöydällä viuhka joka avautuu hoverilla, mobiilissa hylly joka
+         lepää huulena ja nousee huulta napauttamalla. #hand-lip on vain
+         mobiilin kuori (CSS piilottaa sen työpöydällä) — se ei kuulu
+         #hand-bar-cardsiin, jonka renderHandBar tyhjentää joka renderissä. -->
+    <div id="hand-bar">
+      <div id="hand-bar-cards" role="group" aria-label="Tehtäväkäsi"></div>
+      <button type="button" id="hand-lip" aria-expanded="false" aria-controls="hand-bar-cards">
+        <span class="hand-lip__pill">
+          <span>Käsi</span>
+          <span class="hand-lip__count" id="hand-lip-count">0</span>
+        </span>
+      </button>
     </div>
     <button id="hand-toggle" onclick="toggleHandBar()" aria-label="Näytä/piilota tehtäväkäsi">
       <span class="htog-fan"><b></b><b></b><b></b></span>
@@ -4755,6 +4765,8 @@ svg[aria-hidden="true"]{pointer-events:none;}
 #mnav{display:none}
 /* Ohjain on mobiilinäkymä eikä koskaan esillä työpöydällä. */
 #v-remote{display:none}
+/* Käden huuli on mobiilin kuori: työpöydällä viuhka avautuu hoverilla. */
+#hand-lip{display:none}
 
 /* ── OHJAIN ──────────────────────────────────────────────────────── */
 .rmt-owner{
@@ -4881,8 +4893,11 @@ svg[aria-hidden="true"]{pointer-events:none;}
   }
 
   /* ── Työpöydän lavasteet pois ──────────────────────────────────── */
-  /* Käsiviuhka, PAKKA-palkki ja kiskot ovat 900px+ -metaforia. */
-  #hand-bar,#hand-toggle,#deck-rail,.table-ledge,.side-panel__tab{display:none!important}
+  /* PAKKA-palkki ja kiskot ovat 900px+ -metaforia. Käsi EI ole lavaste
+     vaan TCG-mallin ydinkäsite — se saa oman mobiilikuorensa alempana.
+     #hand-toggle pysyy piilossa: kolmas kelluva nappi alakulmassa oli
+     juuri se ongelma jonka alanavigaatio ratkaisi. */
+  #hand-toggle,#deck-rail,.table-ledge,.side-panel__tab{display:none!important}
   /* Matriisi on nyt oma välilehtensä — kahva veisi 48px kortin päältä. */
   #eise-handle,#eise-peek{display:none!important}
   #arena{padding-top:0}
@@ -5040,6 +5055,125 @@ svg[aria-hidden="true"]{pointer-events:none;}
   #arena[data-swipe="wait"]::before{content:'⏳ Odottaa';border-color:var(--wait);color:#8fb6cf}
   #arena[data-swipe="next"]::before{content:'→ Seuraava';border-color:var(--accent);color:var(--accent)}
   #arena[data-swipe=""]::before{content:none}
+
+  /* ══ TEHTÄVÄKÄSI ══════════════════════════════════════════════════
+     Käsi = mitä voisit pelata seuraavaksi (buildHandQueue: q1/q2 jotka
+     eivät ole areenalla eivätkä jonossa). Se kuuluu Fokus-välilehdelle,
+     mutta ei saa kilpailla areenakortin kanssa — siksi se lepää
+     huulena ja nousee vasta napautuksesta.
+
+     Datapolku on jo elossa: renderHandBar() täyttää #hand-bar-cardsin
+     joka renderissä myös mobiilissa. Tässä on pelkkä kuori.           */
+  #hand-bar{
+    /* Globaali sääntö on bottom:0 — se peittäisi alanavigaation. */
+    bottom:var(--mnav-total);
+    left:0;right:0;
+    height:calc(var(--hand-card-h,182px) + .5rem);
+    overflow:hidden;            /* rajausikkuna: kortit eivät vuoda navin yli */
+    pointer-events:none;
+    z-index:55;                 /* alanavigaation (auto) päällä, modaalien alla */
+  }
+  #hand-bar-cards{
+    position:absolute;left:0;right:0;bottom:0;
+    height:var(--hand-card-h,182px);
+    /* Vaakavieritys viuhkan sijaan: viisi 130px korttia -12px limityksellä
+       vie 554px eikä mahdu 390px ruudulle. Työpöydällä limityksen voi
+       tehdä koska :hover nostaa kortin esiin — kosketuksella hoveria ei
+       ole, joten valinta tapahtuisi lukukelvottomista siivuista. */
+    display:flex;
+    justify-content:flex-start;
+    align-items:flex-end;
+    gap:0;
+    overflow-x:auto;
+    overflow-y:hidden;
+    scroll-snap-type:x proximity;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior-x:contain;
+    padding:0 .75rem;
+    scrollbar-width:none;
+    pointer-events:auto;
+    transform:translateY(calc(100% - var(--hand-peek-h,36px)));
+  }
+  #hand-bar-cards::-webkit-scrollbar{display:none}
+  #hand-bar.hand-bar--open #hand-bar-cards{transform:translateY(0)}
+
+  /* Kortit: työpöydän limitys säilyy, kierrot eivät — vinot kortit
+     vaakavierityksessä näyttävät rikkinäisiltä, eivät viuhkalta. */
+  #hand-bar-cards .tcg-card--hand{
+    scroll-snap-align:center;
+    flex:none;
+  }
+  #hand-bar-cards .tcg-card--hand:nth-child(1),
+  #hand-bar-cards .tcg-card--hand:nth-child(2),
+  #hand-bar-cards .tcg-card--hand:nth-child(3),
+  #hand-bar-cards .tcg-card--hand:nth-child(4),
+  #hand-bar-cards .tcg-card--hand:nth-child(5){transform:none}
+
+  /* Hover-silta on 64px näkymätön alue kortin ALLA. Kosketuksella se
+     ulottuisi alanavigaation päälle ja kaappaisi napautukset. */
+  .tcg-card--hand::after{content:none}
+
+  /* Huuli on oma napautuskohteensa: sitä painamalla hylly aukeaa.
+     Kortit ovat sen alla ja saavat napautuksen vasta auki-tilassa. */
+  #hand-lip{
+    position:absolute;left:0;right:0;bottom:0;
+    height:var(--hand-peek-h,36px);
+    z-index:2;
+    pointer-events:auto;
+    display:flex;align-items:center;justify-content:center;
+    /* Läpinäkyvä: kortit kuultavat huulen läpi, pilleri on ainoa maali.
+       Ilman tätä nappia peek-alueen napautus osuisi korttiin ja
+       nostaisi sen areenalle vahingossa. */
+    background:none;border:none;padding:0;
+    -webkit-tap-highlight-color:transparent;
+    cursor:pointer;
+  }
+  #hand-bar.hand-bar--open #hand-lip{display:none}
+  .hand-lip__pill{
+    display:inline-flex;align-items:center;gap:.4rem;
+    padding:.2rem .6rem;border-radius:10px;
+    background:var(--well-bg,rgba(0,0,0,.55));
+    box-shadow:0 1px 0 var(--engrave-dim,var(--border)),0 2px 10px rgba(0,0,0,.4);
+    font-family:'DM Sans',sans-serif;
+    font-size:.6rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--muted);
+  }
+  .hand-lip__count{
+    min-width:16px;height:16px;padding:0 4px;border-radius:8px;
+    background:var(--accent);color:#1a1c18;
+    font-size:.6rem;font-weight:600;line-height:16px;text-align:center;
+  }
+  #hand-lip:active .hand-lip__pill{transform:translateY(1px)}
+  /* Käsi tyhjänä: ei huulta eikä hyllyä — ei tyhjää laatikkoa. */
+  #hand-bar.hand-bar--empty{display:none}
+
+  /* Ajastin käynnissä: käsi pois kokonaan. body.focus-mode asetetaan jo
+     toggleTimerissä ja poistetaan stopAllissa — CSS oli vain
+     työpöytälohkossa, joten mobiili saa piilotuksen ilman uutta tilaa.
+     visibility:hidden eikä pelkkä transform, jotta kortit poistuvat
+     tab-järjestyksestä (WCAG 2.4.3/2.4.7). */
+  body.focus-mode #hand-bar{
+    visibility:hidden;
+    pointer-events:none;
+    transition:visibility 0s linear var(--dur-panel,300ms);
+  }
+  body.focus-mode #hand-bar-cards{transform:translateY(100%)}
+
+  /* Käsi kuuluu vain Fokus-välilehdelle. */
+  body:not(.view-inbox) #hand-bar,
+  body.mtab-jono #hand-bar{display:none}
+
+  /* Sisältörivi väistää huulta, ettei areenakortin alareuna jää sen alle. */
+  body.mtab-fokus.view-inbox #main-content-area{
+    padding-bottom:calc(var(--hand-peek-h,36px) + 1rem);
+  }
+}
+
+/* Näppäimistöllä hyllyyn tabattaessa kortti olisi 80 % ruudun alapuolella.
+   Sivupaneeleissa tämä on hoidettu :focus-withinillä, kädessä ei ollut. */
+@media (max-width:899.98px), (max-height:500px){
+  #hand-bar:focus-within #hand-bar-cards{transform:translateY(0)}
+  #hand-bar:focus-within #hand-lip{display:none}
 }
 
 /* ── Vaakapuhelin: korkeutta on alle 500px ──────────────────────────
@@ -5052,6 +5186,10 @@ svg[aria-hidden="true"]{pointer-events:none;}
   #mnav{height:calc(46px + var(--safe-b))}
   .mnav__lbl{display:none}
   .mnav__btn--add .mnav__plus{width:34px;height:34px;font-size:1.2rem}
+  /* Käsi on pystyasennon ominaisuus: vaakana areenakortin jälkeen jää
+     ~9px, joten 182px hylly peittäisi juuri sen kortin jota katsot. */
+  #hand-bar{display:none}
+  body.mtab-fokus.view-inbox #main-content-area{padding-bottom:0}
   #main-content-area,#v-matrix,#v-done,#v-projects{padding:.5rem .75rem}
 
   /* Ajastinchip mahtuu 44px yläpalkkiin vasta kutistettuna. */
@@ -7906,6 +8044,10 @@ function toggleTimer(){
     if(bar){ bar.classList.remove('hand-bar--open'); }
     if(_handHideTimer){ clearTimeout(_handHideTimer); _handHideTimer=null; }
   }
+  // Mobiilissa hylly suljetaan tilan kautta, ei pelkällä luokalla:
+  // body.focus-mode -sääntö (1,1,0) häviäisi auki-säännölle (2,1,0), ja
+  // localStorageen jäisi auki-tila jota ruudulla ei näy.
+  if(_handBarOpen) setHandBarOpen(false);
   // Piilota eise-handle kun ajastin käynnistyy
   var _eh=document.getElementById('eise-handle');if(_eh)_eh.classList.add('eise-handle--hidden');
   // Fokustila: sivupaneelit + käsi piiloon ajastimen ajaksi
@@ -8711,28 +8853,28 @@ var _handBarVisible = true;
 var _handBarOpen = false;
 var _handHideTimer = null;
 
-function toggleHandBar(){
-  // Vain mobiililla (desktopilla hover hoitaa)
-  if(window.innerWidth >= 900) return;
+function setHandBarOpen(open){
+  // Vain mobiililla — työpöydällä hover hoitaa avaamisen.
+  // Vartio on _isMobileLayout eikä innerWidth>=900, jotta vaakapuhelin
+  // (932×430) ei putoa työpöytähaaralle.
+  if(!_isMobileLayout()) return;
   var bar = document.getElementById('hand-bar');
   if(!bar) return;
-  _handBarOpen = !_handBarOpen;
-  if(_handBarOpen){
-    bar.classList.add('hand-bar--open');
-    bar.classList.remove('hand-bar--hidden');
-    document.body.classList.remove('hand-hidden','body-hand-hidden');
-    document.body.classList.add('hand-open');
-  } else {
-    bar.classList.remove('hand-bar--open');
-    document.body.classList.remove('hand-open');
-  }
+  _handBarOpen = !!open;
+  bar.classList.toggle('hand-bar--open', _handBarOpen);
+  document.body.classList.toggle('hand-open', _handBarOpen);
+  if(_handBarOpen) bar.classList.remove('hand-bar--hidden');
+  var lip = document.getElementById('hand-lip');
+  if(lip) lip.setAttribute('aria-expanded', _handBarOpen ? 'true' : 'false');
   try{ localStorage.setItem('fap_hand_open', _handBarOpen ? '1' : '0'); }catch(e){/* UI-tila ei-kriittinen */}
 }
+
+function toggleHandBar(){ setHandBarOpen(!_handBarOpen); }
 
 function initHandBarState(){
   try{
     var bar = document.getElementById('hand-bar');
-    var isDesktop = window.innerWidth >= 900;
+    var isDesktop = !_isMobileLayout();
     if(isDesktop){
       // Desktop: peek oletuksena, hover hoitaa avaamisen
       if(bar){ bar.classList.remove('hand-bar--hidden','hand-bar--open'); }
@@ -8797,6 +8939,61 @@ function _attachSidePanelRails(){
       });
     })(panels[i]);
   }
+}
+
+// ── Käsi mobiilissa: huuli → hylly ─────────────────────────────────
+// Työpöydällä viuhka avautuu hoverilla; kosketuksella hoveria ei ole,
+// joten käsi lepää 36px huulena alanavigaation yläpuolella ja nousee
+// huulta napauttamalla. Huuli on oma nappinsa korttien PÄÄLLÄ — ilman
+// sitä peek-alueen napautus osuisi korttiin ja nostaisi sen areenalle.
+function _attachHandMobile(){
+  var bar=document.getElementById('hand-bar');
+  var lip=document.getElementById('hand-lip');
+  var cards=document.getElementById('hand-bar-cards');
+  if(!bar||!lip||!cards)return;
+
+  lip.addEventListener('click',function(){ setHandBarOpen(true); });
+
+  // Pyyhkäisy ylös huulella avaa — nopeampi kuin tähtääminen pilleriin.
+  var lipY=null;
+  lip.addEventListener('touchstart',function(e){
+    if(e.touches.length===1)lipY=e.touches[0].clientY;
+  },{passive:true});
+  lip.addEventListener('touchend',function(e){
+    if(lipY===null)return;
+    var dy=e.changedTouches[0].clientY-lipY; lipY=null;
+    if(dy<-30) setHandBarOpen(true);
+  });
+
+  // Auki-tilassa alaspyyhkäisy sulkee. Suuntalukitus, ettei vaakavieritys
+  // (korttien selaus) sulje hyllyä vahingossa.
+  var sx=0,sy=0,dir='';
+  cards.addEventListener('touchstart',function(e){
+    if(e.touches.length!==1)return;
+    sx=e.touches[0].clientX;sy=e.touches[0].clientY;dir='';
+  },{passive:true});
+  cards.addEventListener('touchmove',function(e){
+    if(dir||e.touches.length!==1)return;
+    var dx=e.touches[0].clientX-sx,dy=e.touches[0].clientY-sy;
+    if(Math.abs(dx)<10&&Math.abs(dy)<10)return;
+    dir=Math.abs(dy)>Math.abs(dx)?'y':'x';
+  },{passive:true});
+  cards.addEventListener('touchend',function(e){
+    if(dir!=='y')return;
+    if(e.changedTouches[0].clientY-sy>40) setHandBarOpen(false);
+  });
+
+  // Ulkoklikkaus sulkee. Capture-vaihe kuten eiseOpenMoveMenussa; huulen
+  // oma klikkaus ei laukaise tätä, koska _handBarOpen on silloin vielä false.
+  document.addEventListener('click',function(e){
+    if(!_handBarOpen)return;
+    if(bar.contains(e.target))return;
+    setHandBarOpen(false);
+  },true);
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&_handBarOpen) setHandBarOpen(false);
+  });
 }
 // ── /Vaihe 5A TCG ──────────────────────────────────────────────────
 
@@ -8880,7 +9077,14 @@ function promoteToHand(id){
     // Ei areenaa — nosta suoraan areenalle
     active=id;
   }
-  notify(hadActive?'🎴 Kortti siirretty jonon perään':'🎴 Kortti nostettu areenalle');
+  var _msg=hadActive?'Kortti siirretty jonon perään':'Kortti nostettu areenalle';
+  notify('🎴 '+_msg);
+  // notify() on visuaalinen: ruudunlukija tarvitsee oman kuulutuksensa.
+  var _t=tasks.find(function(u){return u.id===id;});
+  a11yAnnounce(_msg+(_t?': '+_t.text:''));
+  // Mobiilissa valinta päättää hyllyn tehtävän — jätettynä auki se
+  // peittäisi juuri sen kortin jonka käyttäjä nosti areenalle.
+  if(_handBarOpen) setHandBarOpen(false);
   save();  // persistoi heti — animaatio ei saa olla tallennuksen ehto
   // Vaihe 10: animoi lähdekortti ulos, kohde sisään
   var srcEl=document.querySelector('[data-task-id="'+id+'"]');
@@ -9140,6 +9344,11 @@ function renderHandBar(inbox){
   var handTasks = buildHandQueue(inbox).slice(0, 5);
 
   var lbl = document.getElementById('hand-toggle-label');
+  var bar = document.getElementById('hand-bar');
+  var lipCount = document.getElementById('hand-lip-count');
+  // Tyhjä käsi: mobiilissa koko hylly pois, ettei jää tyhjää huulta.
+  if(bar) bar.classList.toggle('hand-bar--empty', handTasks.length === 0);
+  if(lipCount) lipCount.textContent = String(handTasks.length);
   if(handTasks.length === 0){
     if(lbl) lbl.textContent = 'Käsi';
     return;
@@ -9150,6 +9359,8 @@ function renderHandBar(inbox){
     var card = renderArenaCard(t, null, anyFrog, 'hand');
     if(_prevHandIds.indexOf(t.id)<0) card.classList.add('card-arriving'); // uusi käteen → fade-in
     card.title = active===null ? 'Nosta areenalle' : 'Siirrä jonon perään';
+    // Klikattava kortti on nappi, ei pelkkä fokusoitava div.
+    card.setAttribute('role','button');
     card.onclick = (function(tid){ return function(e){
       if(e.target.closest('button')) return;
       promoteToHand(tid);
@@ -9177,6 +9388,7 @@ document.addEventListener('DOMContentLoaded', function(){
   setTimeout(_updatePbPlaceholder, 100);
   initHandBarState();
   _attachHandHoverDesktop();
+  _attachHandMobile();
   _attachSidePanelRails();
   initSolidius();
 });

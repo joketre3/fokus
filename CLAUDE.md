@@ -495,6 +495,7 @@ Mobiili oli jäänyt paikkaustasolle: kaikki 2026 tehty työ on `min-width:900px
 | 3 | `users/{uid}/session/live`: jaettu ajastin **määräaikana** (`endsAt`). Vaiheenvaihdon johtajuus `owner`-kentällä. Wake Lock |
 | 4 | `#v-remote` — portti `popoutTimer()`-rungosta, lähde jaettu istunto. Välilehti ilmestyy kun toinen laite on elossa (5→6 saraketta) |
 | 5 | Popupit samaan välilehteen (`?back=1`) + paluunappi. `swipe.html` pinoon <700px. `_resyncFromLocal()` paluun yhteydessä |
+| 6 | **Tehtäväkäsi mobiiliin**: `#hand-bar` pois lavastekiellosta. Hylly lepää 36px huulena (`#hand-lip`) alanavigaation yläpuolella ja nousee huulta napauttamalla. Vaakavieritys viuhkan sijaan. Vain Fokus-välilehdellä, vain pystyasennossa |
 
 **Opit:**
 - **`grid-row` ilman `grid-column`ia on ansa.** Sijoitus jää automaattiselle algoritmille, joka työntää seuraavat itemit implisiittisiin **sarakkeisiin**: `#v-matrix` päätyi `x=500` eli ruudun ulkopuolelle, vaikka `display` oli `block` ja sisältö renderöity. Aina molemmat.
@@ -510,6 +511,10 @@ Mobiili oli jäänyt paikkaustasolle: kaikki 2026 tehty työ on `min-width:900px
 - **`--dump-dom` ei näe `location.href`-navigointia** — se palaa ensimmäisen latauksen DOM:illa. Samaan välilehteen navigointia ei voi todentaa näin; testaa määränpääsivu suoraan.
 - **Firebase-SDK ei lataudu hiekkalaatikossa** (ei pääsyä `gstatic.com`iin) → `window._firebaseApp` on `undefined` ja kaikki `window._*`-moduulifunktiot puuttuvat. Firestore-riippuvainen koodi on testattava tyngillä (`window._sessionPush=...`). Sivutuote: kuvakaappaukset todistavat että sovellus toimii ilman Firebasea.
 - Ikonit voi renderöidä ilman PIL:iä: inline-SVG HTML-kääreessä + `--screenshot` halutulla `--window-size`illa, `file://`-URL (http-palvelin kuolee shellin mukana).
+- **Iframe kiertää headlessin 500px-minimileveyden.** `--window-size=390,844` antaa silti `innerWidth` 500; `<iframe width="390">` isomman ikkunan sisällä antaa todellisen 390px viewportin. Kaikki kapean ruudun mittaukset on tehtävä näin.
+- **Virtuaaliaika EI aja CSS-siirtymiä.** `getComputedStyle(el).transform` jää alkuarvoon vaikka luokka on vaihdettu — ja niin jää myös inline-tyylillä asetettu arvo, koska sekin siirtyy. Oire näyttää tasan siltä kuin CSS-sääntö ei osuisi. Injektoi `*,*::before,*::after{transition:none!important}` ennen tilamittauksia. (Tämä maksoi kolme sondia käsihyllyä tehdessä.)
+- **Käden peek-kaista tarvitsee oman napautuskohteen.** Ilman `#hand-lip`-nappia korttien päällä peek-alueen napautus osuu korttiin ja `promoteToHand` nostaa sen areenalle vahingossa — käyttäjä yritti vain avata hyllyn.
+- `body.focus-mode #hand-bar-cards` (1,1,0) häviää `#hand-bar.hand-bar--open #hand-bar-cards` -säännölle (2,1,0). Ajastimen käynnistyessä hylly on suljettava **tilan kautta** (`setHandBarOpen(false)`), ei luokkaa lisäämällä — muuten localStorageen jää auki-tila jota ruudulla ei näy.
 
 **⚠ TESTAAMATTA OIKEALLA LAITTEELLA.** Palautus: `git revert` vaiheittain tai koko haara.
 
@@ -522,6 +527,7 @@ Mobiili oli jäänyt paikkaustasolle: kaikki 2026 tehty työ on `min-width:900px
 | 5 | Eleet kortilla | Oikea = tehty, vasen = odottaa, ylös = seuraava |
 | 6 | Aamusuunnittelu → ← Takaisin | Muutokset tallessa, ja **näkyvät myös koneella** (paluusynkka) |
 | 7 | Kone auki samaan aikaan | Ohjain-välilehti ilmestyy; ✓ Tehty puhelimesta päivittää koneen; pomodoro-laskuri ei kasva kahdesti |
+| 8 | Käsi: napauta huulta ("Käsi N") | Hylly nousee. Kortin napautus nostaa sen areenalle tai jonon perään — sama ilmoitus kuin koneella. Hylly sulkeutuu valinnasta |
 
 ### Impeccable-jono — kaikki komennot ajettu
 
