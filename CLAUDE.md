@@ -485,11 +485,11 @@ Mobiili oli jäänyt paikkaustasolle: kaikki 2026 tehty työ on `min-width:900px
 | 932×430 sai täyden työpöytägridin | kortista näkyi yläkolmannes, käsiviuhka peitti loput |
 | Sivupaneelit piiloutuivat vasta <600px | 600–899px ne pinoutuivat pystyyn ilman gridiä |
 | Navigaatio = 2 × 40px nappia alavasemmalla | alle 44px minimin, ei safe-areaa → iOS-kotipalkin alla |
-| `signInWithPopup` ainoana kirjautumistapana | popup-esto + iOS ITP → **koko synkka oli tavoittamattomissa puhelimella** |
+| Kirjautuminen ei onnistunut puhelimella | **koko synkka oli tavoittamattomissa**. Alkuperäinen diagnoosi (popup-esto) osoittautui vääräksi — todellinen syy oli cross-domain authDomain, ks. jälkikorjaus 1 |
 
 | Vaihe | Mitä |
 |---|---|
-| 0 | `signInWithRedirect` kosketuslaitteella + popup-fallback + `getRedirectResult`. `manifest.json`, `sw.js`, ikonit 192/512/180. `viewport-fit=cover`, `--safe-*`, `--mnav-h`, `--tap`. `theme-color` seuraa teemaa |
+| 0 | Kirjautuminen: popup ensisijainen kaikkialla, redirect varareittinä (ks. jälkikorjaus 1). `manifest.json`, `sw.js`, ikonit 192/512/180. `viewport-fit=cover`, `--safe-*`, `--mnav-h`, `--tap`. `theme-color` seuraa teemaa |
 | 1 | `.wrap` mobiilissa grid `auto 1fr auto`, `100dvh`. `#mnav` (Fokus·Jono·+·Matriisi·Pakka). `setMobileTab()` näyttää olemassa olevaa DOM:ia — ei uutta renderiä. Käsiviuhka, PAKKA-palkki, kiskot ja eise-kahva pois. Matriisi pinoon <600px |
 | 2 | Arena-room pois, kortti keskitetty ilman kallistusta, napit 44px. Eleet: oikea=tehty, vasen=odottaa, ylös=seuraava. Vaakapuhelimessa kortista pudotetaan kuvitus → automaattikorkeus |
 | 3 | `users/{uid}/session/live`: jaettu ajastin **määräaikana** (`endsAt`). Vaiheenvaihdon johtajuus `owner`-kentällä. Wake Lock |
@@ -540,18 +540,27 @@ Elossa ovat vain: `#hand-bar`, `#hand-bar-cards`, `#hand-lip`, `.tcg-card--hand`
 `hand-bar--open`, `buildHandQueue`, `renderHandBar`, `promoteToHand`,
 `setHandBarOpen`, `initHandBarState`, `_attachHandHoverDesktop`, `_attachHandMobile`.
 
-**⚠ TESTAAMATTA OIKEALLA LAITTEELLA.** Palautus: `git revert` vaiheittain tai koko haara.
+**Testitila oikealla laitteella (2026-07-30):**
 
-| # | Testi | Odotettu |
+| # | Testi | Tila |
 |---|---|---|
-| 1 | Kirjaudu Googlella puhelimella | Redirect vie Googleen ja takaisin; tehtävät ilmestyvät koneelta. Jos epäonnistuu `auth/missing-initial-state`illa → julkaise Firebase Hostingiin, jolloin authDomain on sama origin |
-| 2 | Lisää aloitusnäyttöön | Aukeaa ilman selaimen palkkeja; lentotilassa aukeaa yhä |
-| 3 | Ajastin käyntiin puhelimesta | Ruutu ei sammu; lukitus ja paluu → kello oikeassa |
-| 4 | Vaaka ja pysty | Aktiivinen kortti näkyvissä ilman vieritystä molemmissa |
-| 5 | Eleet kortilla | Oikea = tehty, vasen = odottaa, ylös = seuraava |
-| 6 | Aamusuunnittelu → ← Takaisin | Muutokset tallessa, ja **näkyvät myös koneella** (paluusynkka) |
-| 7 | Kone auki samaan aikaan | Ohjain-välilehti ilmestyy; ✓ Tehty puhelimesta päivittää koneen; pomodoro-laskuri ei kasva kahdesti |
-| 8 | Käsi: napauta huulta ("Käsi N") | Hylly nousee. Kortin napautus nostaa sen areenalle tai jonon perään — sama ilmoitus kuin koneella. Hylly sulkeutuu valinnasta |
+| 1 | Mobiilinäkymä ja toiminnot | ✅ Jaakko: "kaikki toimii" (ennen käsihyllyä) |
+| 2 | Kirjautuminen puhelimella | ✅ toimii popup-korjauksen jälkeen |
+| 3 | Lisää aloitusnäyttöön / offline | ⬜ testaamatta |
+| 4 | Ajastin: ruutu ei sammu, kello oikeassa lukituksen jälkeen | ⬜ testaamatta |
+| 5 | Eleet kortilla (oikea/vasen/ylös) | ⬜ testaamatta laitteella (headless-TouchEventit läpi) |
+| 6 | Aamusuunnittelu → ← Takaisin, muutokset näkyvät koneella | ⬜ testaamatta |
+| 7 | Kone auki samaan aikaan: Ohjain-välilehti, ei kaksinkertaista pomo-laskuria | ⬜ testaamatta — vaatii kaksi laitetta |
+| 8 | Käsihylly: huuli → kortin napautus → jonon perään | ⬜ testaamatta laitteella |
+
+Palautus: `git revert` vaiheittain tai koko haara.
+
+**Jälkikorjaukset oikean laitteen testauksen jälkeen:**
+
+1. **Popup ensisijaiseksi myös mobiiliin.** Vaiheessa 0 valitsin redirectin mobiilin ensisijaiseksi reitiksi. Se oli väärin tälle hosting-asetelmalle: sovellus ajetaan `joketre3.github.io`-originista mutta `authDomain` on `fokus-a-priori.firebaseapp.com`, ja `signInWithRedirect` tallettaa paluutilan authDomainin tallennukseen, jonka selaimet osioivat. Kirjautuminen kävi Googlessa ja palasi hiljaa kirjautumattomana — sekä selaimessa että aloitusnäytön sovelluksessa. Popup ei nojaa säilyneeseen tilaan (`postMessage`), joten se on ensisijainen kaikkialla. `popup-closed-by-user` ja `cancelled-popup-request` **eivät** enää putoa redirectiin: ne tarkoittavat että käyttäjä perui.
+2. **Kirjautuessa tilin tiedot voittavat vieraan paikallisen datan.** Ks. Opit-kohta "Kirjautuminen ei ole yhdistämistä".
+
+**⚠ Avoin:** Firestore-säännöt `users/{uid}/{document=**}` pitäisi kattaa uuden `session/live` -dokumentin, mutta sitä ei ole varmistettu konsolista. Oire jos ei kata: konsolissa `⚠️ Istunnon kirjoitus epäonnistui: Missing or insufficient permissions`, eikä Ohjain-välilehti koskaan ilmesty.
 
 ### Impeccable-jono — kaikki komennot ajettu
 
@@ -595,8 +604,8 @@ Firebase-integraatiosuunnitelma: `docs/firebase-integraatio-suunnitelma.md`
 | | Nyt | Tavoite |
 |---|---|---|
 | `index.html` | Firebase Auth + Firestore ✅ | — |
-| `aamu.html` | Firebase sync ✅ | — |
-| `swipe.html` | Firebase sync ✅ | — |
+| `aamu.html` | Synkka opener-delegoinnilla ⚠ | Ei omaa Firebase-SDK:ta. Samassa välilehdessä (mobiili) `_resyncFromLocal()` hoitaa pushin paluun yhteydessä |
+| `swipe.html` | Synkka opener-delegoinnilla ⚠ | Sama |
 | Maksut | Ei mitään ❌ | Stripe + Vercel functions |
 | Freemium-rajat | Ei enforcea ❌ | 30 tehtävää / 1 työtila ilmaisella |
 
@@ -617,7 +626,9 @@ Fokuksen etu: ohjattu aamurutiini metodologiana (ei vain näkymänä), selkeämp
 
 ### Seuraavat askeleet prioriteettijärjestyksessä
 
-- [x] Firebase-integraatio `aamu.html` ja `swipe.html`:ään ✅
+- [x] Firebase-integraatio `aamu.html` ja `swipe.html`:ään ✅ (opener-delegointi, ei omaa SDK:ta)
+- [ ] **Firebase Hosting** — `authDomain` samaan originiin kuin sovellus. Poistaa koko cross-domain-kirjautumisongelmaluokan (ks. mobiiliosion jälkikorjaus 1) ja tekee `signInWithRedirect`istä toimivan varareitin. Projekti on jo olemassa: `firebase init hosting` + `firebase deploy`. Vaihtaa osoitteen → käyttäjän päätös
+- [ ] Firestore-sääntöjen varmistus `session/live`-dokumentille
 - [ ] Stripe + Vercel-funktiot (checkout, webhook, portal)
 - [ ] Freemium-rajojen enforkointi Firestoresta
 - [ ] Email-kirjautuminen Google-kirjautumisen rinnalle
