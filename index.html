@@ -1223,9 +1223,32 @@ html[data-theme="aurinko"][data-perf="lite"]{
         const fsTs = (fsData && fsData.updatedAt) || 0;
         const localTs = (localData && localData.updatedAt) || 0;
 
+        // Onko paikallinen data tämän tilin omaa? fap_data_uid asetetaan vasta
+        // kirjautuessa, joten sen puuttuminen tarkoittaa dataa joka syntyi
+        // kirjautumattomana eikä ole koskaan kuulunut tälle tilille.
+        const localIsOwned = prevUid === user.uid;
+
         if (fsHas && localHas) {
-          // Molemmilla dataa → uudempi voittaa. Tasapelissä Firestore (deterministinen).
-          if (localTs > fsTs) {
+          if (!localIsOwned) {
+            // Aikaleimavertailu on tässä merkityksetön: leimat mittaavat eri
+            // datajoukkojen muokkaushetkiä, eivät saman datan versioita.
+            // Tuore paikallinen data voittaisi tilin oikeat tehtävät ja
+            // työntäisi ne pilveen — juuri näin kävi puhelimen testidatalle.
+            // Kirjautuminen tarkoittaa "tuo tilini tiedot", joten tili voittaa.
+            console.log('🔐 Paikallinen data ei kuulu tälle tilille → tilin tiedot voittavat ('
+              + localData.tasks.length + ' → ' + fsData.tasks.length + ' tehtävää)');
+            // Ei hiljaista hävitystä: talteen ennen ylikirjoitusta.
+            try {
+              localStorage.setItem(lsKey + '__prelogin', JSON.stringify(localData));
+              console.log('↩️ Paikalliset talteen. Palautus konsolista:\n'
+                + '   localStorage.setItem("' + lsKey + '", localStorage.getItem("' + lsKey + '__prelogin")); location.reload()');
+            } catch(e) { console.warn('⚠️ Varmuuskopiota ei voitu tallentaa:', e.message); }
+            localStorage.setItem(lsKey, JSON.stringify(fsData));
+            if (typeof window.notify === 'function') {
+              window.notify('Tilin tehtävät korvasivat paikalliset');
+            }
+          } else if (localTs > fsTs) {
+            // Saman tilin omaa dataa → aikaleimat ovat vertailukelpoisia.
             console.log('📦 localStorage uudempi (' + localTs + ' > ' + fsTs + ') → pilveen');
             await saveToFirestore(user.uid, wsId, localData);
           } else {
@@ -1236,6 +1259,9 @@ html[data-theme="aurinko"][data-perf="lite"]{
           console.log('☁️ Data ladattu Firestoresta (' + fsData.tasks.length + ' tehtävää)');
           localStorage.setItem(lsKey, JSON.stringify(fsData));
         } else if (localHas) {
+          // Tilillä ei ole dataa → paikallinen työ nostetaan pilveen.
+          // Tämä on ensikirjautumisen migraatio eikä hävitä mitään, joten
+          // se tehdään myös silloin kun paikallinen data ei ole "omaa".
           console.log('📦 Migraatio/palautus: localStorage → Firestore');
           await saveToFirestore(user.uid, wsId, localData);
         }
