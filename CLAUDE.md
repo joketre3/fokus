@@ -472,9 +472,9 @@ Lisäksi kevyt varmistus: ICS-lataus koko päivän muistutuksena → tiedostossa
 
 **Toistuva bugiluokka tässä koodikannassa:** popupit (`aamu.html`, `swipe.html`) jäävät jälkeen `index.html`:n suojauksista. Modernization-vaiheen 2 try/catch, `scheduled_hidden`-suodatus ja kenttäsynkka puuttuivat kaikki. Kun index.html saa datansuojauksen, tarkista popupit samalla.
 
-### Mobiili + jaettu istunto (2026-07-30) — valmis, ei vielä testattu oikealla laitteella
+### Mobiili + jaettu istunto (2026-07-30) — käytössä, osin testattu laitteella
 
-Mobiili oli jäänyt paikkaustasolle: kaikki 2026 tehty työ on `min-width:900px` -lohkossa. PRODUCT.md sanoo "mobiili toissijainen" — se ei enää pidä.
+Mobiili oli jäänyt paikkaustasolle: kaikki 2026 tehty työ on `min-width:900px` -lohkossa. **Mobiili on yhä toissijainen — mutta kehittyvä haara, ei paikkaustaso.** Työpöytä on paikka jossa päivä suunnitellaan, puhelin se laite joka on mukana kun päivä tapahtuu (PRODUCT.md § Users). Käytännön seuraus: uusi ominaisuus rakennetaan yhä ensin työpöydälle, mutta mobiilille tehdään sen oma kenttätilaversio eikä kutistettua pöytää.
 
 **Mitatut lähtöviat** (headless-sondi, ei arvioita):
 
