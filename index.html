@@ -1149,8 +1149,26 @@ html[data-theme="aurinko"][data-perf="lite"]{
     // Onnistuneesta paluusta ei tarvitse tehdä mitään — onAuthStateChanged
     // laukeaa joka tapauksessa ja hoitaa datan latauksen.
     getRedirectResult(auth).then(function(result) {
-      if (result && result.user) console.log('✅ Redirect-kirjautuminen onnistui:', result.user.uid);
+      if (result && result.user) {
+        console.log('✅ Redirect-kirjautuminen onnistui:', result.user.uid);
+        _clearAuthPending();
+        return;
+      }
+      // Palasimme redirectistä ilman käyttäjää JA ilman virhettä: authDomain
+      // on eri origin kuin sovellus, ja selain on osioinut sen tallennuksen,
+      // joten paluutila katosi matkalla. Tämä epäonnistuu hiljaa — ilman
+      // omaa lippua käyttäjä näkisi vain sen ettei mitään tapahtunut.
+      if (_authPending()) {
+        _clearAuthPending();
+        console.warn('⚠️ Redirect palasi ilman käyttäjää — authDomainin paluutila katosi');
+        window._authState.sync = 'idle';
+        window._renderAuthUi();
+        if (typeof window.notify === 'function') {
+          window.notify('Kirjautuminen ei palautunut — yritä uudelleen');
+        }
+      }
     }).catch(function(error) {
+      _clearAuthPending();
       console.error('❌ Redirect-kirjautuminen epäonnistui:', error.code, error.message);
       window._authState.sync = 'idle';
       window._renderAuthUi();
@@ -1255,23 +1273,29 @@ html[data-theme="aurinko"][data-perf="lite"]{
     'auth/web-storage-unsupported': 'Selain estää tallennuksen'
   };
 
-  // Popup ei ole luotettava kosketuslaitteella: mobiiliselaimet estävät sen
-  // herkästi ja iOS Safari kaataa sen kokonaan. Redirect on siellä ainoa
-  // toimiva reitti — työpöydällä popup on parempi, koska se ei hukkaa
-  // sovelluksen tilaa sivulatauksen taakse.
+  // ── Popup ensin, myös mobiilissa ────────────────────────────────
+  // Sovellus ajetaan joketre3.github.io:sta mutta authDomain on
+  // fokus-a-priori.firebaseapp.com. signInWithRedirect tallettaa paluutilan
+  // AUTHDOMAININ tallennukseen, jonka nykyselaimet osioivat kolmannen
+  // osapuolen kontekstina — paluu Googlelta ei löydä tilaa ja kirjautuminen
+  // epäonnistuu hiljaa. Näin kävi puhelimella sekä selaimessa että
+  // aloitusnäytön sovelluksessa.
+  //
+  // Popup ei kärsi samasta: se palauttaa tunnisteen postMessagella eikä
+  // nojaa säilyneeseen tilaan. Siksi popup on ensisijainen kaikkialla, ja
+  // redirect vain varareittinä jos popup on oikeasti estetty.
+  //
+  // Pysyvä ratkaisu on saada authDomain samaan originiin (Firebase Hosting).
   const _AUTH_REDIRECT_ERR = [
     'auth/popup-blocked',
-    'auth/popup-closed-by-user',
-    'auth/cancelled-popup-request',
     'auth/operation-not-supported-in-this-environment'
   ];
 
-  function _preferRedirectAuth() {
-    try {
-      return !window.matchMedia('(hover:hover) and (pointer:fine)').matches
-          || window.innerWidth < 900;
-    } catch(e) { return false; }
-  }
+  // Redirect epäonnistuu hiljaa: ilman lippua paluu ilman käyttäjää ei
+  // erotu siitä ettei kirjautumista koskaan yritetty.
+  function _markAuthPending(){ try{ sessionStorage.setItem('fap_auth_pending','1'); }catch(e){} }
+  function _authPending(){ try{ return sessionStorage.getItem('fap_auth_pending')==='1'; }catch(e){ return false; } }
+  function _clearAuthPending(){ try{ sessionStorage.removeItem('fap_auth_pending'); }catch(e){} }
 
   function _newGoogleProvider() {
     const provider = new GoogleAuthProvider();
@@ -1279,25 +1303,25 @@ html[data-theme="aurinko"][data-perf="lite"]{
     return provider;
   }
 
+  function _authRedirectFallback(auth, why) {
+    console.warn('⚠️ Popup ei onnistunut (' + why + ') → redirect');
+    _markAuthPending();
+    signInWithRedirect(auth, _newGoogleProvider()).catch(function(e){
+      _clearAuthPending(); _authFailed(e);
+    });
+  }
+
   window.kirjauduGooglella = function() {
     const auth = window._firebaseAuth;
     window._authState.sync = 'syncing';
     window._renderAuthUi();
 
-    if (_preferRedirectAuth()) {
-      // Sivu poistuu — tuloksen poimii getRedirectResult initAuthissa.
-      signInWithRedirect(auth, _newGoogleProvider()).catch(_authFailed);
-      return;
-    }
-
     signInWithPopup(auth, _newGoogleProvider())
       .then((result) => {
         console.log("✅ Google-popup onnistui!", result.user.uid);
       }).catch((error) => {
-        // Popup estettiin → yritetään redirectillä ennen kuin luovutetaan.
         if (_AUTH_REDIRECT_ERR.indexOf(error.code) >= 0) {
-          console.warn('⚠️ Popup ei onnistunut (' + error.code + ') → redirect');
-          signInWithRedirect(auth, _newGoogleProvider()).catch(_authFailed);
+          _authRedirectFallback(auth, error.code);
           return;
         }
         _authFailed(error);
