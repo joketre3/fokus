@@ -1612,6 +1612,11 @@ html[data-theme="aurinko"][data-perf="lite"]{
           </div>
           <div class="eise-peek-grid" id="eise-peek-grid"></div>
         </div>
+        <!-- Taukobanneri: näkyy vain tauolla, teksti asetetaan _syncTimerUI():ssä -->
+        <div id="break-banner" role="status" aria-live="polite">
+          <div class="break-banner__ttl"></div>
+          <div class="break-banner__txt"></div>
+        </div>
         <!-- FUT-huone: pysyvät lavastekerrokset kortin taakse (render() säästää tämän) -->
         <div id="arena-room" aria-hidden="true" data-quad="q1">
           <div class="arena-room__wall"><svg class="arena-room__art"><use href="#qart-q1"/></svg></div>
@@ -3508,6 +3513,37 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
 }
 /* Areenan sisältö huonekerrosten päälle */
 #arena-label,#arena-empty{position:relative; z-index:3;}
+/* ── Taukobanneri ──
+   Näkyy vain tauolla (sbrk/lbrk). Mobiilissa virrassa kortin yläpuolella —
+   absoluuttinen asemointi peittäisi siellä kortin toimintonapit. */
+#break-banner{
+  display:none;
+  position:relative; z-index:5; pointer-events:none;
+  text-align:center; padding:0 1rem; margin:.25rem 0 .5rem;
+}
+/* Desktopilla areenan alalaita on vapaa (käsi piilossa fokustilassa) → banneri
+   sinne, jottei keskitetty kortti hyppää. PAKKA-palkin (--ledge-h) yläpuolelle. */
+@media (min-width:900px){
+  #break-banner{
+    position:absolute; left:0; right:0;
+    bottom:calc(var(--ledge-h) + 1.5rem);
+    margin:0;
+  }
+}
+#break-banner.on{display:block}
+.break-banner__ttl{
+  font-family:'DM Serif Display',serif;
+  font-size:1.35rem; line-height:1.2;
+  /* Vaihesävy sekoitettuna teeman inkkiin: vaalenee tummissa, tummenee auringossa */
+  color:color-mix(in srgb, var(--brk-ink,#2980b9) 50%, var(--ink));
+  margin-bottom:.25rem;
+}
+.break-banner__txt{
+  font-size:var(--text-xs);
+  /* --muted jää auringossa 3.1:1 huovan päällä — vahvistetaan inkillä */
+  color:color-mix(in srgb, var(--muted) 50%, var(--ink));
+  letter-spacing:.02em;
+}
 /* Perf-lite: ei hiukkasia, ei blend-seinätaidetta, ei raskasta echoa */
 html[data-perf="lite"] .arena-room__dust,
 html[data-perf="lite"] .arena-room__echo,
@@ -4473,6 +4509,8 @@ svg[aria-hidden="true"]{pointer-events:none;}
 .eise-peek-hdr{display:flex;align-items:center;gap:.5rem;padding:.55rem .85rem .4rem;flex-shrink:0;border-bottom:1px solid var(--border)}
 .eise-peek-ttl{font-size:var(--text-xs);font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .eise-peek-sub{font-size:var(--text-xs);color:var(--subtle);flex:1}
+/* Tauolla peek peittää koko areenan → taukokehotus tulee tähän, ei --subtle-sävyyn */
+.eise-peek-sub--break{color:color-mix(in srgb, var(--brk-ink,#2980b9) 50%, var(--ink));font-size:.82rem;font-weight:500}
 .eise-peek-close{background:none;border:none;cursor:pointer;color:var(--muted);font-size:1.1rem;line-height:1;padding:.15rem .4rem;border-radius:4px;margin-left:auto}
 .eise-peek-close:hover{color:var(--ink)}
 .eise-peek-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;flex:1;min-height:0}
@@ -4672,8 +4710,17 @@ function openEisePeek(isAuto){
   // Sulje klikkaamalla lehden ulkopuolelle. setTimeout: avaava klikkaus ei saa
   // laueta tähän. Sama idiomi kuin eiseOpenMoveMenu:ssa.
   setTimeout(function(){document.addEventListener('click',_eiseOutsideClick,true);},0);
+  // Tauolla peek peittää koko areenan, joten taukokehotus näytetään täällä —
+  // areenan #break-banner jää tämän taakse ja näkyy vasta kun peek suljetaan.
   var sub=document.getElementById('eise-peek-sub');
-  if(sub)sub.textContent=isAuto?'Hyvä hetki tarkistaa prioriteetit':'';
+  if(sub){
+    var onBrk=(phase==='sbrk'||phase==='lbrk');
+    sub.classList.toggle('eise-peek-sub--break',onBrk);
+    sub.style.setProperty('--brk-ink',phase==='lbrk'?'#8e44ad':'#2980b9');
+    sub.textContent=onBrk
+      ?(phase==='lbrk'?'🌿 Pitkä tauko — poistu ruudulta kokonaan, palaa levänneenä':'☕ Tauko — nouse ylös, juo vettä. Älä avaa sähköpostia.')
+      :(isAuto?'Hyvä hetki tarkistaa prioriteetit':'');
+  }
   if(!isAuto){
     var first=p.querySelector('.eise-peek-card');
     if(first)first.focus();
@@ -7139,6 +7186,33 @@ function doNext(){
 
 
 // ── TIMER ──
+/* Ajastimen tila → UI. Yksi totuuden lähde, kutsutaan jokaisesta siirtymästä.
+   - fokustila (paneelit + käsi piiloon) on päällä aina kun ajastin käy — sekä
+     työjaksolla että tauolla. Tauon PÄÄTYTTYÄ ajastin pysähtyy → kaikki esiin.
+   - eise-kahva piilotetaan vain työjakson ajaksi; tauolla matriisi saa näkyä.
+     Jos peek on auki, se omistaa kahvan (openEisePeek/closeEisePeek) → ei kosketa.
+   - taukobanneri näkyy vain tauolla. */
+function _syncTimerUI(){
+  var running=!!tmr;
+  var working=(phase==='work'&&running);
+  document.body.classList.toggle('focus-mode',running);
+  var h=document.getElementById('eise-handle');
+  if(h&&!_eisePeekOpen)h.classList.toggle('eise-handle--hidden',working);
+  var bb=document.getElementById('break-banner');
+  if(bb){
+    var onBreak=(phase==='sbrk'||phase==='lbrk');
+    bb.classList.toggle('on',onBreak);
+    if(onBreak){
+      var isLong=phase==='lbrk';
+      bb.style.setProperty('--brk-ink',isLong?'#8e44ad':'#2980b9');
+      bb.querySelector('.break-banner__ttl').textContent=isLong?'🌿 Pitkä tauko — ansaittu':'☕ Tauko';
+      bb.querySelector('.break-banner__txt').textContent=isLong
+        ?'Poistu ruudulta kokonaan. Palaa levänneenä.'
+        :'Nouse ylös, juo vettä. Älä avaa sähköpostia.';
+    }
+  }
+}
+
 function toggleTimer(){
   if(tmr){
     // Running → stop
@@ -7154,12 +7228,10 @@ function toggleTimer(){
     if(bar){ bar.classList.remove('hand-bar--open'); }
     if(_handHideTimer){ clearTimeout(_handHideTimer); _handHideTimer=null; }
   }
-  // Piilota eise-handle kun ajastin käynnistyy
-  var _eh=document.getElementById('eise-handle');if(_eh)_eh.classList.add('eise-handle--hidden');
-  // Fokustila: sivupaneelit + käsi piiloon ajastimen ajaksi
-  document.body.classList.add('focus-mode');
   if(_eisePeekOpen)closeEisePeek();
   startTmr();
+  // Fokustila + kahvan piilotus vasta startTmr():n jälkeen — tmr asetetaan siellä
+  _syncTimerUI();
   render();
   var act=getActive();
   var wmin=Math.round(WORK/60);
@@ -7339,6 +7411,7 @@ function onPhaseEnd(){
       a11yAnnounce('Pomodoro valmis. Tauko '+smin+' minuuttia alkaa.');
     }
     startTmr();
+    _syncTimerUI();
     openEisePeek(true);
   } else if(phase==='sbrk'||phase==='lbrk'){
     phase='work';tleft=WORK;startAt=null;
@@ -7349,6 +7422,8 @@ function onPhaseEnd(){
     a11yAnnounce('Tauko ohi. Voit aloittaa seuraavan pomodoran.');
     if(tmr){clearInterval(tmr);tmr=null;}
     setClockIcon(false);
+    // Tauko ohi, ajastin pysähtynyt → jono, käsi ja odottavat takaisin näkyviin
+    _syncTimerUI();
     updClock();render();
   }
 }
@@ -7372,10 +7447,8 @@ function stopAll(){
       },5000);
     }
   }
-  // Näytä eise-handle kun ajastin pysähtyy
-  var _seh=document.getElementById('eise-handle');if(_seh)_seh.classList.remove('eise-handle--hidden');
-  // Fokustila pois: sivupaneelit + käsi takaisin
-  document.body.classList.remove('focus-mode');
+  // Fokustila pois, eise-kahva esiin, taukobanneri piiloon (phase on jo 'idle')
+  _syncTimerUI();
   document.getElementById('btnNx').style.display='none';
   document.getElementById('btnDn').style.display='none';
   var wt=document.getElementById('btnWt');if(wt)wt.style.display='none';
@@ -8422,7 +8495,7 @@ function render(){
   // ── Vaihe 6a: Areena — renderöi queue[0] isona kortina ──
   var arenaEl=document.getElementById('arena');
   if(arenaEl){
-    Array.from(arenaEl.children).forEach(function(ch){if(ch.id!=='eise-peek'&&ch.id!=='eise-handle'&&ch.id!=='arena-room')ch.remove();});
+    Array.from(arenaEl.children).forEach(function(ch){if(ch.id!=='eise-peek'&&ch.id!=='eise-handle'&&ch.id!=='arena-room'&&ch.id!=='break-banner')ch.remove();});
     if(window._useCardUI){
       var label=document.createElement('div');
       label.id='arena-label';
