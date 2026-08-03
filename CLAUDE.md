@@ -52,6 +52,9 @@ Ei testejä, ei lintteriä, ei CI:tä.
 | `mockup-arena-syvyys.html` | Areenan syvyyskokeilu (varhainen, korvattu `mockup-arena-3d-plus`illa) |
 | `mockup-eise-placement.html` | Eisenhower-peekin sijoitteluvaihtoehdot |
 | `dev-seed.html`, `testdata.html` | Testidatan siemennys localStorageen (kehitystyökaluja) |
+| `manifest.webmanifest` | PWA-manifest — **linkitetään vain työpöydällä**, ks. Asennettava työpöytäsovellus |
+| `sw.js` | Service worker (offline). Sisältää hätäjarru-ohjeen ylimmässä kommentissa |
+| `icons/` | Sovellusikonit (192/512/maskable) + lähde-SVG |
 
 Pääsovellus avaa `swipe.html` ja `aamu.html` popup-ikkunoina (`window.open`). Timer aukeaa JS:llä generoituna popuppina. Kaikki ikkunat jakavat datan `localStorage`n kautta.
 
@@ -407,6 +410,39 @@ Opit:
 - **Areenakortin toimintonapit renderöityvät vain aktiiviselle kortille** (`mode==='hand'` palaa ennen `.tcg-card__actions-tcg`-lohkoa, ja jonokorteilla on vain ✎/×). Kortti jonka nappi on koko UX:n ydin on siis pakko asettaa `active`ksi, ei `turn`iin.
 - **Headless-sondi voi paljastaa muutakin kuin mitä testaa:** `taskIds:["1","1","2","3"]` testiseedissä (jossa `nid` puuttui) paljasti `load()`in id-törmäyksen. Kun sondi tulostaa listoja, lue ne — älä katso vain sitä kenttää jota varten sondi kirjoitettiin.
 - Sondi voi myös *ajaa* toimintoja: `window.open` monkeypatchattiin sondissa ja napin `click()` todensi että oikea URL avautuu — ei tarvitse luottaa siihen että onclick "näyttää oikealta".
+
+### Asennettava työpöytäsovellus (PWA) (2026-08-03) — valmis
+
+**Miksi:** taustavälilehdellä Edge kuristaa ajastimet (Sleeping Tabs / Tehokkuustila). `tick()` laskee ajan seinäkellosta, mutta `onPhaseEnd()` — ilmoitus ja ääni — ajetaan vain kun `tick` ehtii ajoon → pomodoron loppuilmoitus myöhästyy. Asennetut PWA-ikkunat eivät kuulu Sleeping Tabsin piiriin. Sivutuotteena aito offline: data oli jo localStoragessa, mutta **itse HTML haettiin verkosta**, joten ilman yhteyttä sovellus ei auennut lainkaan.
+
+**Ehdoton reunaehto:** mobiilikäyttö ei saanut muuttua. Jaakolla on puhelimessa kotinäyttöasennus joka on **jo standalone** (ei osoiteriviä) ilman manifestia, ja hän käyttää siitä aamu- ja swipe-popupeja.
+
+| Osa | Työpöytä (≥900px) | Mobiili |
+|---|---|---|
+| manifest + asennettavuus | ✅ | ❌ ei tarjoilla |
+| `theme-color` | ✅ | ❌ ei lisätä |
+| service worker / offline | ✅ | ✅ |
+
+| Tiedosto | Mitä |
+|---|---|
+| `manifest.webmanifest` | `scope:"./"`, `start_url:"./index.html"`, `display:standalone`. Suhteelliset polut toimivat sekä Pagesin `/fokus/`-alipolussa että `localhost`issa. Scope kattaa aamu+swipe → ne aukeavat sovellusikkunoina, eivät selaimeen |
+| `sw.js` | Dokumentit network-first (korjaukset näkyvät heti), staattiset ja versioidut CDN-tiedostot cache-first. **Kaikki muu ilman `respondWith`ia** → Firestore, auth ja Anthropic API menevät koskemattomina |
+| `icons/` | Kuusimerkki logosta (index.html:1477–1480), 192 + 512 + 512-maskable + lähde-SVG |
+| `index.html` | CSP `worker-src 'self'`; `<head>`iin manifest-injektio + SW-rekisteröinti; `setTheme` päivittää `theme-color`in |
+
+`aamu.html` ja `swipe.html`: **ei muutoksia.**
+
+**HÄTÄJARRU — `git revert` EI riitä.** Service worker jää asennettuna selaimeen vaikka repo palautetaan. Poisto: korvaa `sw.js`:n sisältö unregister-versiolla (malli tiedoston ylimmässä kommentissa) ja deployaa, tai sivulta `navigator.serviceWorker.controller.postMessage({type:'FOKUS_UNREGISTER'})`.
+
+Opit:
+- **CSP `worker-src` periytyy `script-src`istä, ei `default-src`istä.** Tämän projektin `script-src`issä ei ole `'self'`ia, joten `register('sw.js')` torjuttiin hiljaa (`Refused to create a worker`). `manifest-src` sen sijaan periytyy `default-src 'self'`istä ja toimi ilman muutosta.
+- **SW-rekisteröinti EI saa olla bodyn lopussa.** Sivun `<style>` alkaa `@import`illa fonts.googleapis.comista, ja vireillä oleva tyylitiedosto estää sitä seuraavien skriptien ajon → koko dokumentin jäsennyksen. Jos CDN roikkuu, bodyn loppua ei koskaan saavuteta. Mitattu: lopussa **0 rekisteröintiä**, `<head>`issä toimii. Sama syy miksi pelkkä `window.addEventListener('load')` ei riitä — mukana `setTimeout(go,3000)`, kumpi ensin.
+- **Manifest injektoidaan ajonaikaisesti** `matchMedia('(min-width:900px)')`-ehdolla, jottei mobiili näe sitä. Todennettu CDP:n `Page.getAppManifest`illa (= mitä Chrome oikeasti resolvoi, ei DOM-tarkistus): 1280px → manifest, 899px ja 390px → tyhjä.
+- **`--window-size` ei anna deterministista viewporttia headlessissa.** `innerHeight` heitteli 760↔761 samalla tiedostolla, ja 1px siirsi KAIKKEA pystysuunnassa → näytti 9 elementin regressiolta. Baseline-vs-baseline sattui osumaan samaan arvoon ja "todisti" determinismin. Korjaus: `Emulation.setDeviceMetricsOverride` pinnaa viewportin tarkasti. **Käytä tätä aina rect-vertailuissa.**
+- **Offline on hiekkalaatikossa determinisTISEMPI kuin online:** online-ajossa CDN-pyynnöt roikkuvat proxyn takana ja jäsennys jumittaa kesken; offlinessa ne epäonnistuvat heti ja dokumentti valmistuu. Jos `readyState` on `loading` 9 s jälkeen, epäile verkkoa älä koodia.
+- **Tarkista mitä välimuistiin oikeasti päätyy** (`caches.open(n).keys()`), älä luota siihen että fetch-haarat "näyttävät oikeilta". Odotettu tulos: 8 oman originin tiedostoa, ei yhtään `googleapis`/`firestore`-osoitetta.
+- CDN-sallittulista on tarkka **etuliitelista** eikä origin-sääntö: `www.gstatic.com` tarjoilee muutakin kuin Firebase-SDK:n, ja `*.googleapis.com` sisältää Firestoren live-liikenteen jota ei saa välimuistittaa.
+- Node 22:ssa on globaali `WebSocket` → CDP-asiakkaan voi kirjoittaa ilman riippuvuuksia, kun Playwrightia ei ole asennettu.
 
 ### PAKKA-palkki (2026-07-27) — valmis
 

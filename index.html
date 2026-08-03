@@ -3,8 +3,95 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline' https://www.gstatic.com https://apis.google.com; connect-src https://api.anthropic.com https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://www.gstatic.com https://identitytoolkit.googleapis.com https://accounts.google.com; font-src https://fonts.gstatic.com; style-src 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; frame-src https://accounts.google.com https://fokus-a-priori.firebaseapp.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline' https://www.gstatic.com https://apis.google.com; worker-src 'self'; connect-src https://api.anthropic.com https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://www.gstatic.com https://identitytoolkit.googleapis.com https://accounts.google.com; font-src https://fonts.gstatic.com; style-src 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; frame-src https://accounts.google.com https://fokus-a-priori.firebaseapp.com">
 <title>Fokus A Priori</title>
+<script>
+/* ── Asennettavuus: manifest VAIN työpöydälle ───────────────────────────────
+ * Manifestia ei saa tarjoilla staattisella <link>illä. Mobiilissa sovellus on
+ * jo standalone-tilassa ilman manifestia, joten siellä ei ole mitään
+ * voitettavaa — mutta display/scope voisi muuttaa kotinäyttöikonin käytöstä ja
+ * rikkoa window.open-popupit (aamu.html, swipe.html). Siksi linkki injektoidaan
+ * ajonaikaisesti vain kun ollaan työpöytäleveydellä.
+ *
+ * 900px on koodikannan vakiintunut työpöytäraja (vrt. _attachHandHoverDesktop,
+ * _syncCastShadow, _syncHdrBottom) — ei uutta kynnystä.
+ *
+ * Todennettu CDP:n Page.getAppManifestilla: 1280px → Chrome resolvoi manifestin,
+ * 899px ja 390px → ei manifestia lainkaan. Injektion on tapahduttava <head>issä
+ * synkronisesti, ennen bodyn jäsennystä. */
+(function(){
+  try{
+    if(!window.matchMedia || !window.matchMedia('(min-width:900px)').matches) return;
+
+    var link=document.createElement('link');
+    link.rel='manifest';
+    link.href='manifest.webmanifest';
+    document.head.appendChild(link);
+
+    /* theme-color värittää asennetun ikkunan otsikkopalkin. Mobiilissa se
+     * värittäisi tilapalkin — yksi syy lisää pitää tämä työpöytäpuolella. */
+    var COLORS={usva:'#071009',havu:'#010402',aurinko:'#d8c6a4'};
+    var t;
+    try{ t=localStorage.getItem('fap_theme'); }catch(e){}
+    var meta=document.createElement('meta');
+    meta.name='theme-color';
+    meta.content=COLORS[t]||COLORS.usva;
+    document.head.appendChild(meta);
+  }catch(e){/* asennettavuus ei ole kriittinen — sovellus toimii ilmankin */}
+})();
+</script>
+<script>
+/* ── Service worker: offline-tuki ──────────────────────────────────────────
+ * Rekisteröidään sekä työpöydällä että mobiilissa (toisin kuin manifest).
+ * Worker ei koske Firestoreen, kirjautumiseen eikä Anthropic APIin — ks. sw.js.
+ *
+ * file://-käyttö on tietoinen arkkitehtuurirajoite: siellä ei ole service
+ * workereita, joten rekisteröinti ohitetaan kokonaan eikä konsoliin tule
+ * virhettä.
+ *
+ * TÄMÄ LOHKO KUULUU <head>iin, ei bodyn loppuun. Sivun <style> alkaa
+ * @importilla fonts.googleapis.comista, ja vireillä oleva tyylitiedosto estää
+ * sitä seuraavien skriptien ajon — eli koko dokumentin jäsennyksen. Jos CDN
+ * roikkuu, bodyn loppu ei koskaan toteudu ja rekisteröinti jää tekemättä.
+ * Todennettu: lopussa 0 rekisteröintiä, headissä toimii.
+ *
+ * HÄTÄJARRU: navigator.serviceWorker.controller.postMessage({type:'FOKUS_UNREGISTER'})
+ * Ks. sw.js:n ylin kommentti ja CLAUDE.md. */
+(function(){
+  if(!('serviceWorker' in navigator)) return;
+  var ok = location.protocol==='https:' ||
+           location.hostname==='localhost' || location.hostname==='127.0.0.1';
+  if(!ok) return;
+
+  /* Rekisteröinti odottaa load-tapahtumaa, jottei esilataus kilpaile sivun omien
+     resurssien kanssa — MUTTA ei loputtomiin. Sovellus hakee fontit ja
+     Firebase-SDK:n CDN:stä, ja hitaassa tai suodattavassa työverkossa 'load' voi
+     viipyä kauan tai jäädä kokonaan tulematta. Silloin juuri se käyttäjä, joka
+     offline-tuen eniten tarvitsisi, ei saisi sitä koskaan. Kumpi ensin. */
+  var done=false;
+  function go(){
+    if(done) return; done=true;
+    navigator.serviceWorker.register('sw.js').then(function(reg){
+      reg.addEventListener('updatefound', function(){
+        var sw=reg.installing;
+        if(!sw) return;
+        sw.addEventListener('statechange', function(){
+          /* controller olemassa = tämä on päivitys, ei ensiasennus */
+          if(sw.state==='installed' && navigator.serviceWorker.controller){
+            if(typeof notify==='function') notify('Uusi versio ladattu — päivittyy kun avaat sovelluksen uudelleen');
+          }
+        });
+      });
+    }).catch(function(err){
+      /* Yleisin syy: CSP puuttuva worker-src 'self' → "Refused to create a worker" */
+      console.warn('Fokus: service workerin rekisteröinti epäonnistui', err && err.message);
+    });
+  }
+  if(document.readyState==='complete') go();
+  else window.addEventListener('load', go, {once:true});
+  setTimeout(go, 3000);
+})();
+</script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&family=Cinzel:wght@600;700&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -9465,6 +9552,13 @@ window.addEventListener('focus', function(){
 function setTheme(t){
   document.documentElement.setAttribute('data-theme',t);
   localStorage.setItem('fap_theme',t);
+  /* Asennetun ikkunan otsikkopalkki seuraa teemaa. Meta on olemassa vain
+     työpöydällä (ks. <head>in manifest-injektio) — mobiilissa tämä ei tee mitään. */
+  var tc=document.querySelector('meta[name="theme-color"]');
+  if(tc){
+    var TC={usva:'#071009',havu:'#010402',aurinko:'#d8c6a4'};
+    if(TC[t]) tc.content=TC[t];
+  }
   // Update active button indicator
   ['havu','usva','aurinko'].forEach(function(id){
     var btn=document.getElementById('tbtn-'+id);
