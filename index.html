@@ -4467,6 +4467,9 @@ svg[aria-hidden="true"]{pointer-events:none;}
   /* Ilmoitus nousee pöydän kehyksen yläpuolelle — muuten se lepää tummalla
      kehyksellä (kehys z:65, notif z:100 → näkyy, mutta kontrasti romahtaa). */
   .notif{ bottom: calc(var(--ledge-h) + 3rem); }
+  /* Tauolla banneri on areenan alalaidassa → nosta toast sen yläpuolelle,
+     muuten "Pomodoro valmis" -viesti leikkaa taukotekstin otsikon. */
+  body.on-break .notif{ bottom: calc(var(--ledge-h) + 5rem); }
 }
 .eise-hgrid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;width:30px;height:24px;gap:2px;flex-shrink:0}
 .eise-hcell{border-radius:2px;opacity:.75}
@@ -4699,7 +4702,9 @@ function esc(s){if(s==null)return '';return String(s).replace(/&/g,'&amp;').repl
 
 // ── EISENHOWER PEEK ──
 var _eisePeekOpen=false;
-function openEisePeek(isAuto){
+// Avataan vain käyttäjän toimesta (kahva tai hampurilaisvalikko) — ei koskaan
+// automaattisesti. Aiempi isAuto-parametri poistettu tarpeettomana.
+function openEisePeek(){
   var p=document.getElementById('eise-peek'),h=document.getElementById('eise-handle');
   if(!p)return;
   renderEisePeek();
@@ -4710,8 +4715,8 @@ function openEisePeek(isAuto){
   // Sulje klikkaamalla lehden ulkopuolelle. setTimeout: avaava klikkaus ei saa
   // laueta tähän. Sama idiomi kuin eiseOpenMoveMenu:ssa.
   setTimeout(function(){document.addEventListener('click',_eiseOutsideClick,true);},0);
-  // Tauolla peek peittää koko areenan, joten taukokehotus näytetään täällä —
-  // areenan #break-banner jää tämän taakse ja näkyy vasta kun peek suljetaan.
+  // Jos matriisi avataan kesken tauon, se peittää areenan bannerin → kehotus
+  // toistetaan otsikkorivillä, jottei taukoviesti katoa näkyvistä.
   var sub=document.getElementById('eise-peek-sub');
   if(sub){
     var onBrk=(phase==='sbrk'||phase==='lbrk');
@@ -4719,12 +4724,10 @@ function openEisePeek(isAuto){
     sub.style.setProperty('--brk-ink',phase==='lbrk'?'#8e44ad':'#2980b9');
     sub.textContent=onBrk
       ?(phase==='lbrk'?'🌿 Pitkä tauko — poistu ruudulta kokonaan, palaa levänneenä':'☕ Tauko — nouse ylös, juo vettä. Älä avaa sähköpostia.')
-      :(isAuto?'Hyvä hetki tarkistaa prioriteetit':'');
+      :'';
   }
-  if(!isAuto){
-    var first=p.querySelector('.eise-peek-card');
-    if(first)first.focus();
-  }
+  var first=p.querySelector('.eise-peek-card');
+  if(first)first.focus();
 }
 // Ulkoklikkaus: capture-vaiheessa, jotta sulkeutuminen tapahtuu ennen kohteen
 // omaa käsittelijää. noFocus=true — hiiriklikkaus ei saa siepata fokusta kahvaan.
@@ -4744,7 +4747,7 @@ function closeEisePeek(noFocus){
   document.body.classList.remove('eise-open');
   document.removeEventListener('click',_eiseOutsideClick,true);
 }
-function toggleEisePeek(){_eisePeekOpen?closeEisePeek():openEisePeek(false);}
+function toggleEisePeek(){_eisePeekOpen?closeEisePeek():openEisePeek();}
 function renderEisePeek(){
   var grid=document.getElementById('eise-peek-grid');
   if(!grid)return;
@@ -7195,12 +7198,13 @@ function doNext(){
 function _syncTimerUI(){
   var running=!!tmr;
   var working=(phase==='work'&&running);
+  var onBreak=(phase==='sbrk'||phase==='lbrk');
   document.body.classList.toggle('focus-mode',running);
+  document.body.classList.toggle('on-break',onBreak);
   var h=document.getElementById('eise-handle');
   if(h&&!_eisePeekOpen)h.classList.toggle('eise-handle--hidden',working);
   var bb=document.getElementById('break-banner');
   if(bb){
-    var onBreak=(phase==='sbrk'||phase==='lbrk');
     bb.classList.toggle('on',onBreak);
     if(onBreak){
       var isLong=phase==='lbrk';
@@ -7411,11 +7415,10 @@ function onPhaseEnd(){
       a11yAnnounce('Pomodoro valmis. Tauko '+smin+' minuuttia alkaa.');
     }
     startTmr();
+    // Matriisi ei aukea automaattisesti — taukokehotus näkyy #break-bannerissa
     _syncTimerUI();
-    openEisePeek(true);
   } else if(phase==='sbrk'||phase==='lbrk'){
     phase='work';tleft=WORK;startAt=null;
-    closeEisePeek();
     soundWater();
     pushNotif('⏰ Tauko ohi','Paina ▶ aloittaaksesi seuraavan pomodoran.');
     notify('⏰ Tauko ohi — paina ▶ aloittaaksesi seuraavan pomodoran.');
@@ -11201,7 +11204,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <span class="ham-row__label">Selaa tehtäviä</span>
   </button>
 
-  <button class="ham-row" onclick="closeHamMenu();openEisePeek(false)">
+  <button class="ham-row" onclick="closeHamMenu();openEisePeek()">
     <span class="ham-row__icon">▦</span>
     <span class="ham-row__label">Eisenhower-matriisi</span>
   </button>

@@ -16,7 +16,7 @@ PRODUCT.md luotu 2026-06-10. P0 valmis.
 - Drag-and-drop kvadrantista toiseen + klikkauspohjainen siirtovalikko (mobiili)
 - ↑-nappi suoraan matriisista jonoon; indikaattorit: 🐸 sammakko, ⌛ odottava, 🍅 jonossa
 - Timer käynnistyessä: handle piiloutuu automaattisesti; pysähtyessä: tulee takaisin
-- Tauon alkaessa (sbrk/lbrk): peek aukeaa automaattisesti tarjolle
+- ~~Tauon alkaessa (sbrk/lbrk): peek aukeaa automaattisesti tarjolle~~ **poistettu 2026-08-04** — matriisi ei aukea automaattisesti missään tilanteessa, vain kahvasta tai hampurilaisvalikosta. Tauon kehotus näkyy `#break-banner`issa
 - Ham-btn näkymätunnus: näyttää "Matriisi" / "Tehty" / "Projektit" kun ei olla Tehtävälistalla
 - Toimii sekä desktopilla että mobiililla (CSS siirretty globaaliksi)
 - **Desktop-käytös muuttunut 2026-07-27:** kahva ja peek ovat 720px keskitettyjä (eivät areenan levyisiä), peek on opaakki, peittää käden ja sulkeutuu ulkoklikkauksesta — ks. Yhtenäinen näkymä -osio
@@ -385,6 +385,24 @@ Suunnitelmat: `~/.claude/plans/yhten-inen-n-kym-areena-taustana-sparkling-taco.m
 - **Pikselivertailun ansa:** eri `--window-size`-korkeus tuottaa eri kokoiset PNG:t, ja `ImageChops.difference` vertaa hiljaa vain leikkausta → "2,84 % regressio" oli 700×800 vs 700×844. Tarkista `Image.size` ennen diffiä. Kohinataso samasta tiedostosta kahdella ajolla: ~20 px.
 - **Osumatestaus:** `document.elementFromPoint` ei kelpaa maalausjärjestyksen todentamiseen, jos elementillä on `pointer-events:none` (esim. `.notif`, `.table-ledge`) — se ohitetaan aina. Päättele z-järjestys stacking-konteksteista.
 - Regressiovertailun baseline: `git show HEAD:index.html` → sama seed-generaattori molemmille → pikselidiffi. 700 px 0,02 % ja 390 px 0,03 % = kohinataso.
+
+### Fokustila + taukokehotus (2026-08-04) — valmis
+
+**Vika:** sivupaneelit ja käsi jäivät piiloon tauon jälkeenkin. `focus-mode` lisättiin `toggleTimer`issä ja poistettiin vain `stopAll`:ssa, jonne `onPhaseEnd` ei koskaan mene. Tauon päätyttyä `tmr` on `null` → ▶ meni käynnistyshaaraan eikä luokkaa poistettu koskaan. Ainoa kiertotie oli aloittaa pomodoro ja keskeyttää se heti.
+
+| Osa | Mitä |
+|---|---|
+| `_syncTimerUI()` | Ajastintilan ainoa totuuden lähde, kutsutaan neljästä siirtymästä (`toggleTimer`, `onPhaseEnd` ×2, `stopAll`). `focus-mode` = `!!tmr` (työ JA tauko), `eise-handle--hidden` = `phase==='work' && tmr`, `body.on-break` + `#break-banner` = tauko |
+| Auto-peek poistettu | `openEisePeek(true)` `onPhaseEnd`ista pois — matriisi ei aukea automaattisesti missään. Samalla pois parillinen `closeEisePeek()` tauon lopusta: se olisi sulkenut käyttäjän itse avaaman matriisin. `isAuto`-parametri poistettu tarpeettomana |
+| `#break-banner` | Taukokehotus areenassa. Desktopilla absoluuttinen PAKKA-palkin yläpuolella, mobiilissa virrassa kortin yläpuolella |
+| `.eise-peek-sub--break` | Sama kehotus peekin otsikkorivillä, jos matriisi avataan käsin kesken tauon |
+
+Opit:
+- **Tilaluokka ilman poistopolkua on aikapommi:** `classList.add` yhdessä funktiossa ja `remove` toisessa kestää vain niin kauan kuin kaikki polut kulkevat molempien kautta. `onPhaseEnd` oli kolmas polku joka ei kulkenut. Yksi `_sync*()`-funktio joka JOHTAA luokat tilamuuttujista (`phase`, `tmr`) ei voi jäädä epäsynkroniin.
+- **Virtual-time EI aja viivästettyjä CSS-siirtymiä.** `.tcg-left`illa on `transition-delay:250ms`, `#hand-bar-cards`illa ei → headless-mittaus väitti paneelien jäävän piiloon while `focus-mode` oli jo pois. Sama ajo Playwrightilla reaaliajassa antoi oikean tuloksen. Ristiriitainen tulos samassa CSS-säännössä olevien elementtien välillä = mittausvirhe, ei bugi.
+- **Peek peittää tauolla koko areenan** (mitattu: 99–912 px 900 px ikkunassa) → mikään areenaan sijoitettu banneri ei näkynyt sen alta. Mittaa peittävyys ennen kuin sijoitat elementtejä areenaan.
+- `.notif`-toast (`bottom: --ledge-h + 3rem`, 40 px korkea) törmää areenan alalaidan elementteihin 6 px:llä → `body.on-break .notif` nostaa sen 5rem:iin. Toast ilmestyy juuri kun taukoteksti pitäisi lukea.
+- Mobiilissa absoluuttinen `bottom` areenassa peittää kortin toimintonapit — banneri virtaan (`position:relative`) alle 900 px:ssä.
 
 ### Aamusuunnittelun aktivointi (2026-07-29) — valmis
 
