@@ -6,6 +6,7 @@ Impeccable-analyysi tehty 2026-06-07. Raportti: `docs/impeccable-kritiikki.md`.
 PRODUCT.md luotu 2026-06-10. P0 valmis.
 
 **P0 ✅ valmis (2026-06-10):** Aurinko-teema kerma → puhdas valkoinen; aamu.html usva-synkronointi; --muted .55 → .72
+*(Aurinkoteeman värinäkyvyys korjattu rakenteellisesti 2026-08-07 — ks. oma osio alempana.)*
 
 **P1 ✅ valmis (2026-06-11):** text-xs tokenoitu; SVG-ajastinvärit → var(--pomo); reduced-motion aamu+swipe; empty states dashed-border
 
@@ -188,7 +189,9 @@ ICS-kalenteri aktivoituu automaattisesti verbeille: Sovi, Aikatauluta, Varaa (--
 - `havu` — Havumetsä: syvä tumma metsä
 - `aurinko` — Aurinko: lämmin vaalea/terracotta
 
-CSS custom properties: `--ink`, `--surface-xs`, `--surface`, `--surface-md`, `--surface-strong`, `--border`, `--subtle`, `--accent`, `--accent-dim`, `--muted`. Q2-värit ja logo-SVG:t pysyvät vihreinä.
+CSS custom properties: `--ink`, `--surface-xs`, `--surface`, `--surface-md`, `--surface-strong`, `--border`, `--subtle`, `--accent`, `--accent-dim`, `--muted`, `--faint`. Q2-värit ja logo-SVG:t pysyvät vihreinä.
+
+**Tekstivärit ovat `--ink` / `--muted` / `--faint` — vain nämä kolme.** `--subtle` (rajat, koriste), `--accent-dim` (taustasävy) ja `--etch-ink` (letterpress-koriste) EIVÄT ole tekstitokeneita; aurinkoteemassa niiden kontrasti on 1,1–3,2:1. Pysyvästi tummilla pinnoilla (TCG-kortin plate, `#hdr-timer`) muste on `--tcg-plate-ink*` tai eksplisiittinen valkoinen, ei teeman `--ink`. Ks. DESIGN.md §2 **The Text Token Rule** ja **The Theme Scope Rule**.
 
 ## Keskeiset käsitteet
 
@@ -385,6 +388,49 @@ Suunnitelmat: `~/.claude/plans/yhten-inen-n-kym-areena-taustana-sparkling-taco.m
 - **Pikselivertailun ansa:** eri `--window-size`-korkeus tuottaa eri kokoiset PNG:t, ja `ImageChops.difference` vertaa hiljaa vain leikkausta → "2,84 % regressio" oli 700×800 vs 700×844. Tarkista `Image.size` ennen diffiä. Kohinataso samasta tiedostosta kahdella ajolla: ~20 px.
 - **Osumatestaus:** `document.elementFromPoint` ei kelpaa maalausjärjestyksen todentamiseen, jos elementillä on `pointer-events:none` (esim. `.notif`, `.table-ledge`) — se ohitetaan aina. Päättele z-järjestys stacking-konteksteista.
 - Regressiovertailun baseline: `git show HEAD:index.html` → sama seed-generaattori molemmille → pikselidiffi. 700 px 0,02 % ja 390 px 0,03 % = kohinataso.
+
+### Aurinkoteeman värinäkyvyys (2026-08-07) — valmis, ei vielä testattu selaimessa
+
+**Vika:** vaaleassa teemassa laaja joukko käyttöliittymää oli lukukelvotonta — valkoista tekstiä valkoisella tai tummaa tummalla.
+
+**Juurisyy oli rakenteellinen, ei yksittäisiä värejä.** `index.html`:n rivit 436–580 (`/* GLASS MIXIN */`) olivat **teematon** lohko, jossa oli kovakoodattuja tumman teeman literaaleja lähes kauttaaltaan `!important`illa. Alla olevat perussäännöt olivat jo oikein tokenisoituja (`color:var(--muted)` jne.) — glass-lohko vain yliajoi ne kaikissa teemoissa. Aurinko-lohko oli kasvanut ~40 paikkauksen listaksi, joka kumosi tämän komponentti kerrallaan; **jokainen komponentti jota listalla ei ollut, oli rikki** — ja jokainen myöhemmin lisätty komponentti syntyi rikkinäisenä.
+
+| Vaihe | Mitä |
+|---|---|
+| 1 | 82 sääntöä prefiksoitu `html:not([data-theme="aurinko"])`:lla → aurinko putoaa tokenisoituihin perussääntöihin |
+| 2 | Turhaksi jääneet aurinko-paikkaukset pois (6 kpl); liian heikot alfat (`.pstat` .50, `.clbl/.rlbl` .45, `.drag-handle` .20) → tokeneiksi |
+| 3 | Uusi `--faint` tertiääriselle tekstille; 28 × `color:var(--subtle)` → `var(--faint)` |
+| 4 | Aurinko-lohkosta puuttuneet `--accent-dim`, `--frog-deep`, `--q2-bright`, `--pomo-hi` |
+| 5 | Kovakoodatut tummat pinnat: `.verb-pop`, `#chain-view-panel`, 3 arviosliderin kääre, ketjurivit, ajastin-popupin kello |
+
+Opit:
+- **Teematon `!important`-sääntö väriliteraalilla on aina bugi jossain teemassa.** Se ei näy heti, koska vastalohko paikkaa oireet — mutta paikkauslista ei voi koskaan olla täydellinen. Ks. DESIGN.md **The Theme Scope Rule**.
+- **`button{color:…}` ei saa prefiksiä.** Spesifisyys nousisi 0-0-1 → 0-1-2 ja voittaisi `.pbtn`/`.badd`/`.vbtn` (0-1-0) → tummat teemat regressoituisivat. Tokenisoi arvo sen sijaan. `html:not([data-theme="x"])` lisää 0-1-1, koska `:not()`in spesifisyys on sen argumentin spesifisyys.
+- **`var(--tokeni, var(--fallback))` ei laukea koskaan, jos tokeni on määritelty.** `.ham-theme-btn--active{color:var(--accent-dim,var(--accent))}` maalasi tekstin 12 % taustasävyllä *kaikissa* teemoissa — fallback oli kirjoitettu ikään kuin `--accent-dim` puuttuisi.
+- **Sama tokeni voi olla oikein vaalealla ja väärin tummalla.** `--muted`in tummentaminen (#7a6a4a → #5f5334) korjasi huoneen taustalla lepäävät labelit mutta huononsi areenakortin ikoneita, jotka ovat **pysyvästi tummalla** plate-pinnalla. Ne tarvitsevat kortin oman `--tcg-plate-ink-dim`in. Sama koskee `#hdr-timer`iä: se on tumma widgetti kaikissa teemoissa, joten `var(--ink)` on siellä väärin.
+- Kvadranttivärit valkoisen tekstin taustana tarvitsevat `color-mix(in srgb, var(--qN) 78%, black)` — puhdas `--q4` antaa 2,9:1. Kaava oli jo PAKKA-palkissa; nyt myös `.qbdg`issä ja JS-badgessa.
+
+**Jäljellä tietoisesti:** ~50 osumaa on `--accent` `#c4681e` tekstivärinä vaalealla = 3,4–3,9:1. Se on DESIGN.md:ssä lukittu brändiväri (terracotta), joten sitä ei muutettu — erillinen suunnittelupäätös. Nykyisellään se täyttää AA:n isolle tekstille ja UI-komponenteille (3:1), muttei pienelle leipätekstille.
+
+**Todentamistyökalut (`/tmp/.../scratchpad`, eivät repossa):**
+- `seed.py` — injektoi `localStorage`-siemenen + kovakoodatun `data-theme`n; **jäädyttää animaatiot** (`*,*::before,*::after{animation:none;transition:none}` + `.notif{display:none}`). Ilman jäädytystä kahden identtisen ajon pikselidiffi oli **22 %** (deal-in, echo, toast); jäädytettynä **0,000 %**.
+- `probe.py` — kontrastisondi: `getComputedStyle`illa jokaisen tekstisolmun väri + efektiivinen tausta (alfa-komposiitti ylöspäin), WCAG-suhde, tulos `data-probe`-attribuuttiin ja ulos `--dump-dom`ista.
+- **Sondin ansat:** (1) `file://` vaatii **absoluuttisen** polun — suhteellinen `file://base/x.html` tulkitsee `base`n hostiksi ja epäonnistuu hiljaa. (2) `color-mix()` resolvoituu Chromessa muotoon `color(srgb r g b)`, ei `rgb()` — pelkkä `rgba?\(` -regex ohittaa sen, kävelee vanhempaan ja tuottaa **vääriä positiivisia**. (3) Elementti `display:none`-vanhemman sisällä palauttaa itse `display:block` → modaalit tulevat mittaukseen mukaan avaamatta niitä; **hyödyllistä tässä**, mutta muista se lukiessasi tuloksia. (4) `background-image` (gradientti) ei näy `backgroundColor`issa → korttiselkänapit yms. raportoituvat vääränä positiivisena; sondi tulostaa `img`-lipun sitä varten.
+- **Kuvakaappaus ei todenna tätä työtä.** Desktop- ja mobiilinäkymä näyttävät vain areenan; rikkinäiset komponentit (välilehdet, `.qb`, syötteet, verbinapit) ovat modaaleissa ja listanäkymässä eivätkä näy kuvassa lainkaan. Aurinkoteeman pikselidiffi oli vaiheen 1 jälkeen 0,000 % vaikka 14 vikaa korjaantui. Käytä sondia, kuvaa vain regressiosuojana.
+
+**⚠ TESTAAMATTA SELAIMESSA** — mittaus on staattinen; interaktiiviset tilat (`:hover`, `:focus`, avatut modaalit, ajastin-popup) on käytävä läpi käsin. Palautus: `git revert e6a7633 5070edb`.
+
+| # | Testi | Odotettu |
+|---|---|---|
+| 1 | Aurinko + Lisää tehtävä | Verbinapit (Soita/Sovi/…), kvadranttivalitsin, arviovalitsin ja placeholderit luettavia; valittu verbi terracottana |
+| 2 | Aurinko + välilehdet | Välilehtien tekstit ja laskurimerkit näkyvissä |
+| 3 | Aurinko + verbi-popover (▾) | Vaalea paneeli, tumma teksti |
+| 4 | Aurinko + Ketju-paneeli | Vaalea paneeli; otsikko ja × näkyvissä |
+| 5 | Aurinko + ajastin-popup (↗) | Kellonumerot tummia vaalealla; jonolista luettava |
+| 6 | Usva & havu yleissilmäys | Ennallaan; tyhjät tilat, ×-napit ja vetokahvat aiempaa selvemmin näkyvissä (`--faint`) |
+| 7 | Nopea tila (aurinko-lite) | Ei mudanväristä; pinnat opaakkeja |
+
+Impeccable-detektoria **ei ajettu** — `~/.agents/skills/impeccable/scripts/detect.mjs` on Jaakon koneella, ei tässä ympäristössä. Aja delta paikallisesti ennen julkaisua.
 
 ### Aamusuunnittelun aktivointi (2026-07-29) — valmis
 
