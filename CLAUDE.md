@@ -32,7 +32,7 @@ python3 -m http.server 8080
 # http://localhost:8080
 ```
 
-Ei testejä, ei lintteriä, ei CI:tä.
+Testit: `python3 tests/run.py` (ks. `tests/README.md`). Ei lintteriä, ei CI:tä.
 
 ## File structure
 
@@ -535,3 +535,26 @@ Fokuksen etu: ohjattu aamurutiini metodologiana (ei vain näkymänä), selkeämp
 - [ ] Freemium-rajojen enforkointi Firestoresta
 - [ ] Email-kirjautuminen Google-kirjautumisen rinnalle
 - [ ] Englanninkielinen versio
+
+### Selaintestit (2026-08-08)
+
+`tests/`-hakemisto: headless-Chrome-testipohja, ei riippuvuuksia.
+Ajo `python3 tests/run.py` (~3 min), suitet `tests/suites/*.js`.
+Ks. `tests/README.md`. PR-läpikäynti ja merge-prosessi:
+`docs/pr-testaus-ja-merge-prosessi.md`.
+
+- Aiemman "Ei testejä, ei lintteriä, ei CI:tä" -rivin tilalle: testit ovat
+  olemassa, CI:tä ei edelleenkään ole — aja käsin ennen pushia.
+- **Kontrolliajo molempiin suuntiin on osa testin kirjoittamista.** Suite joka
+  läpäisee korjatun puun mutta EI kaadu korjaamattomaan ei mittaa mitään.
+  `tests/run.py --tree <vanha-puu>` on se tarkistus.
+- **`tasks.every(...)` tyhjällä taulukolla on tosi.** `swipe.html` ei lataa
+  pakkaa ennen `startSwipe()`ia, joten suodatustestit menivät ensin läpi
+  tyhjästi. Väitä aina ensin että aineistoa on (`tasks.length>0`).
+- **Headless ei palauta `visibility`ä** tilaluokan poiston jälkeen — sama
+  `main`issa, ei siis regressio. Todenna palautussuunta luokasta.
+- `_clearLocalAppData` on moduulinäkyvyydessä → ei tavoitettavissa sivun
+  sisältä. Testattavissa vain irrottamalla funktio Nodeen.
+- Kontrastisondi: `color-mix()` resolvoituu muotoon `color(srgb …)`, ja
+  gradienttitaustalla oleva elementti raportoituu vääränä positiivisena →
+  sondi merkitsee ne `img`-lipulla.
