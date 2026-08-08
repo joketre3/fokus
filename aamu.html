@@ -14,6 +14,9 @@
   --accent:#c49a3a;--warm:rgba(255,255,255,.18);
   --q1:#a84c28;--q2:#2d5a3d;--q3:#7a6a50;--q4:#9a9a8e;
   --pomo:#a84c28;
+  /* 1-3-5 -budjettimittari: omat tokenit, --q2 on tayttovari (kontrasti 1.9:1) */
+  --budget-ok:#63a463;
+  --budget-over:#ec6b45;
 }
 
 /* USVAMETSÄ */
@@ -52,6 +55,8 @@ html[data-theme="havu"] .step-num.done{background:#2d5a3d;color:#4fa870;}
 html[data-theme="aurinko"]{
   --ink:#2d2417;--paper:#ffffff;--muted:#7a6a4a;--light:#e8d8b8;
   --accent:#c4681e;--warm:#b48246;--q1:#c4681e;--q2:#3d6b30;
+  /* Vaalea tausta: tummat savyt (ks. :root) */
+  --budget-ok:#2d5a3d;--budget-over:#8c2f14;
 }
 html[data-theme="aurinko"] body{background:#fafafa;}
 html[data-theme="aurinko"] .card{background:#f8f8f8;border-color:#e8d8b8;}
@@ -301,6 +306,19 @@ html[data-theme="aurinko"] .sp-btn:hover{border-color:var(--accent);color:var(--
 }
 .overload-warn.on{opacity:1;}
 
+/* 1-3-5 paivan budjetti: 1 iso / 3 keskikokoista / 5 pienta */
+.day135{
+  display:flex;align-items:center;justify-content:center;
+  gap:.9rem;flex-wrap:wrap;
+  padding:.5rem .75rem .1rem;
+  font-size:.72rem;font-weight:300;color:var(--muted);
+}
+.day135__slot{display:flex;align-items:center;gap:.25rem;line-height:1;white-space:nowrap}
+.day135__ico{font-size:.8rem;line-height:1}
+.day135__n{font-weight:500;color:var(--ink);font-variant-numeric:tabular-nums}
+.day135__slot.full .day135__n{color:var(--budget-ok)}
+.day135__slot.over .day135__n{color:var(--budget-over);font-weight:600}
+
 /* VALMIS */
 .done-wrap{
   flex:1;display:flex;flex-direction:column;
@@ -466,6 +484,7 @@ html[data-theme="aurinko"] .done-summary{background:#f8f8f8;border-color:#e8d8b8
       <div class="slot-picker" id="pick-loppu"></div>
     </div>
   </div>
+  <div class="day135" id="day135" role="status" aria-label="Päivän 1-3-5 budjetti"></div>
   <div class="overload-warn" id="overloadWarn">⚠ Päivässä on enemmän tehtäviä kuin aikaa. Harkitse siirtämistä huomiseen.</div>
 </div>
 <div class="bottom-nav" id="nav4" style="display:none">
@@ -543,7 +562,8 @@ function loadData(){
   // Aamusuunnittelun oma aloituskortti suodatetaan pois: velho ei kysy
   // itsestään "onko tämä oikeasti Q1" eikä tarjoa sitä sammakoksi.
   allTasks = (d.tasks||[]).filter(function(t){
-    return t && !t.done && !t.scheduled_hidden && !isMorningTask(t);
+    // 2 min -saanto: est 0 = pikatehtava, hoidetaan nipussa eika jonoteta
+    return t && !t.done && !t.scheduled_hidden && !isMorningTask(t) && t.est!==0;
   });
   // Migraatio: vanha queue[] → active+turn
   if(d.active!==undefined){
@@ -852,6 +872,52 @@ function renderSchedule(){
   ['aamu','paiva','loppu'].forEach(function(s){ renderSlot(s, map); });
   renderPickers();
   checkOverload(map);
+  renderDay135(map);
+}
+
+// ── 1-3-5: 1 iso / 3 keskikokoista / 5 pientä ─────────────────
+// Lasketaan slotteihin sijoitetuista tehtävistä — ne ovat päivän sitoumus.
+var DAY135_LIMITS = { iso:1, keski:3, pieni:5 };
+
+function day135Counts(lookup){
+  var map = lookup || taskLookup();
+  var seen = {}, out = { iso:0, keski:0, pieni:0 };
+  ['aamu','paiva','loppu'].forEach(function(sn){
+    slots[sn].forEach(function(id){
+      if(seen[id]) return;
+      seen[id] = 1;
+      var t = map[id];
+      if(!t) return;
+      var e = (t.est == null ? 1 : t.est);
+      if(e === 0) return;                       // pikatehtävä ei kuulu budjettiin
+      if(t.frog || id === selectedFrog || e >= 3) out.iso++;
+      else if(e >= 1) out.keski++;
+      else out.pieni++;
+    });
+  });
+  return out;
+}
+
+function renderDay135(lookup){
+  var host = document.getElementById('day135');
+  if(!host) return;
+  var b = day135Counts(lookup);
+  host.textContent = '';
+  [['iso','🐸','iso'],['keski','◆','keskikokoista'],['pieni','·','pientä']].forEach(function(row){
+    var key = row[0], max = DAY135_LIMITS[key], n = b[key];
+    var slot = document.createElement('span');
+    slot.className = 'day135__slot' + (n > max ? ' over' : (n === max ? ' full' : ''));
+    var ico = document.createElement('span');
+    ico.className = 'day135__ico'; ico.textContent = row[1];
+    slot.appendChild(ico);
+    var num = document.createElement('span');
+    num.className = 'day135__n'; num.textContent = n + '/' + max;
+    slot.appendChild(num);
+    var lbl = document.createElement('span');
+    lbl.textContent = row[2];
+    slot.appendChild(lbl);
+    host.appendChild(slot);
+  });
 }
 
 function renderSlot(slotName, lookup){
@@ -985,7 +1051,7 @@ function setStep(n){
 }
 
 // ── UTILS ─────────────────────────────────────────────
-function fe(v){ if(v===0.5)return'½'; if(v%1!==0)return Math.floor(v)+'½'; return String(v); }
+function fe(v){ if(v===0)return'⚡'; if(v===0.5)return'½'; if(v%1!==0)return Math.floor(v)+'½'; return String(v); }
 function esc(s){ var d=document.createElement('div');d.textContent=s;return d.innerHTML; }
 </script>
 </body>

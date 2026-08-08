@@ -9,6 +9,8 @@ PRODUCT.md luotu 2026-06-10. P0 valmis.
 
 **P1 ✅ valmis (2026-06-11):** text-xs tokenoitu; SVG-ajastinvärit → var(--pomo); reduced-motion aamu+swipe; empty states dashed-border
 
+**Tuottavuustavat ✅ valmis (2026-08-08):** 2 min -sääntö (pikakortit), 1-3-5 päivän budjetti, keskeytysparkki — ks. oma osio alempana
+
 **P2 ✅ valmis (2026-06-11) — Eisenhower-peek + navigaatio:**
 - Eisenhower-matriisi yhdistetty: vanha full-screen modaali poistettu → uusi `#eise-peek` areenan yläreunassa
 - Handle (48px, koko areenan leveys, mini 2×2-matriisi kvadranttiväreillä, tehtävämäärät per kvadrantti)
@@ -385,6 +387,29 @@ Suunnitelmat: `~/.claude/plans/yhten-inen-n-kym-areena-taustana-sparkling-taco.m
 - **Pikselivertailun ansa:** eri `--window-size`-korkeus tuottaa eri kokoiset PNG:t, ja `ImageChops.difference` vertaa hiljaa vain leikkausta → "2,84 % regressio" oli 700×800 vs 700×844. Tarkista `Image.size` ennen diffiä. Kohinataso samasta tiedostosta kahdella ajolla: ~20 px.
 - **Osumatestaus:** `document.elementFromPoint` ei kelpaa maalausjärjestyksen todentamiseen, jos elementillä on `pointer-events:none` (esim. `.notif`, `.table-ledge`) — se ohitetaan aina. Päättele z-järjestys stacking-konteksteista.
 - Regressiovertailun baseline: `git show HEAD:index.html` → sama seed-generaattori molemmille → pikselidiffi. 700 px 0,02 % ja 390 px 0,03 % = kohinataso.
+
+### Tuottavuustavat: 2 min, 1-3-5, keskeytysparkki (2026-08-08) — valmis
+
+Kolme tapaa integroitu. Pomodoro, sammakko ja tehtävien pilkkominen olivat jo
+valmiina; 5 sekunnin sääntö jätettiin tietoisesti pois (sotii PRODUCT.md:n
+"rauhallinen varmuus" -periaatetta, eikä aloituskynnys ole Fokuksen ongelma —
+keskeytykset ovat).
+
+| Tapa | Mitä | Missä |
+|---|---|---|
+| **Keskeytysparkki** | Ajastimen sääntöteksti lupasi jo "merkitse se ylös ja jatka" ilman toteutusta. Nyt `#hdr-timer`iin ilmestyy työvaiheessa kenttä: Enter luo tehtävän (`quad:'q3'`, `est:.5`, `tags:['keskeytys']`, `needsReview:true`) ilman että pomodoro katkeaa | `parkInterrupt()`, `updParkRow()`, `updParkCount()`, `_parkCount` |
+| **2 min -sääntö** | `est===0` = pikatehtävä. Liukusäätimen minimi 0.5 → 0 (lisäys- ja muokkausmodaalissa). Pikatehtävät eivät mene areenalle, käteen, jonoon, aamuvelhoon eivätkä swipe-pakkaan — ne kootaan `#pika-modal`iin ruksattavaksi | `isQuick()`, `quickTasks()`, `renderPikaBtn()`, `openPikaModal()`, `renderPikaList()`, `pikaDone()`, `pikaDelete()` |
+| **1-3-5** | Päivän sitoumus (`active` + `turn`) mitataan: 1 iso (sammakko tai est ≥3), 3 keskikokoista (est 1–2.5), 5 pientä (est 0.5). Mittari jonopaneelin ylälaidassa ja aamuvelhon vaiheessa 4 | `dayBudget()`, `renderDay135()`, `DAY135_LIMITS`; aamu.html `day135Counts()`, `renderDay135()` |
+
+Opit:
+- **`fe(0)` oli aiemmin saavuttamaton** — 0 palautti `'0'`. Nyt `'⚡'`. Turvallista koska `est` alkoi ennen 0.5:stä; `totalQueueEst()` on kuollutta koodia eikä `fe`ä käytetä summiin.
+- **`||1` on ansa nolla-arviolle.** `t.est||1` promotoi pikatehtävän hiljaa yhden pomodoron tehtäväksi. Kaikki osumat piti vaihtaa muotoon `t.est==null?1:t.est` — `saveEditModal`, `openEditModal`, areenakortin meta, matriisin pipit, Tehdyt-lista sekä swipe.html:n muokkaus. Myös `renderSummary` ja AI-vienti korjattiin: valmis pikatehtävä olisi kasvattanut arviosummaa yhdellä pomodorolla ja näyttänyt arviotarkkuudessa osumalta (`|0−1| ≤ 1`) — nyt ne ohitetaan ja `accPct`:n nimittäjä on `estimatedDone`, ei `done.length`.
+- **`wizReset()` nollaa `est`-globaalin** → `addTask`in loppuun sijoitettu `if(est===0)` ei laukea koskaan. Lippu on luettava ennen resetiä.
+- **`--q1`/`--q2` ovat täyttövärejä.** `--q2` (`#2d5a3d`) antaa tummalla well-paneelilla vain 2,3:1. Yhtä väriä ei voi jakaa teemojen kesken: `--q2-bright` (`#4a8a4a`) on 4,3:1 tummalla mutta 2,6:1 vaalealla. Siksi omat tokenit `--budget-ok`/`--budget-over` per teema (ks. DESIGN.md The Quadrant-Color Rule).
+- **Desktopilla `#hdr-timer` on `position:static` gridissä** — parkkirivi kasvattaisi yläpalkkia ja siirtäisi lavastetta ajastimen käynnistyessä. Ratkaisu: `position:relative` + parkkirivi `position:absolute` ajastimen alle. Mobiilissa (fixed-widget) rivi saa pinota normaalisti, 45px → 80px.
+- **Popup-tarkistus kannatti taas** (vrt. "Toistuva bugiluokka"): `swipe.html` olisi swaipannut pikatehtäviä jonoon ja sen `t.est=parseFloat(...)||1` olisi tuhonnut pika-tilan muokattaessa; `aamu.html` olisi aikatauluttanut ne slotteihin. Molemmat suodattavat nyt `est===0`:n.
+- **Headless: regeneroi testisivu jokaisen lähdemuutoksen jälkeen.** Vanhasta `index.html`-kopiosta generoitu testisivu näytti korjatun kontrastin yhä rikkinäisenä — pikselimittaus antoi täsmälleen saman arvon ennen ja jälkeen, mikä paljasti syyn.
+- **`--window-size` ei ohjaa `innerWidth`ia `--dump-dom`-ajossa:** Chrome raportoi 500 vaikka ikkuna on 390, ja `--screenshot` maalaa 390px kuvan 500px-taitosta → widget näyttää valuvan reunan yli vaikka `scrollWidth===innerWidth`. Mittaa `getBoundingClientRect`illa ja kaappaa raportoidulla leveydellä.
 
 ### Aamusuunnittelun aktivointi (2026-07-29) — valmis
 

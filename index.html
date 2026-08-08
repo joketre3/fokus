@@ -76,6 +76,10 @@
   --ink-on-art:#fff;
   --pomo-hi:#e8623a;
   --q2-bright:#4a8a4a;
+  /* 1-3-5 -budjettimittari: teksti tummalla well-paneelilla.
+     --q2 (#2d5a3d) on tayttovari, kontrasti vain 2.3:1 — omat tokenit. */
+  --budget-ok:#63a463;
+  --budget-over:#ec6b45;
 
   /* M1 — game feel */
   --ease-out:      cubic-bezier(.22,.61,.36,1);   /* saapuminen */
@@ -656,6 +660,9 @@ html[data-theme="aurinko"] {
   --etch-ink:rgba(45,36,23,.55); --etch-shadow:0 1px 0 rgba(255,255,255,.65);
   --rail-ink:rgba(45,36,23,.82);
   --room-grid:rgba(90,60,20,.07);
+  /* 1-3-5 -mittari vaalealla paneelilla: tummat sävyt (ks. :root) */
+  --budget-ok:#2d5a3d;
+  --budget-over:#8c2f14;
   --chip-shadow:inset 0 1px 0 rgba(255,255,255,.8), 0 2px 0 rgba(120,80,30,.2), 0 3px 8px rgba(120,80,30,.12);
   --chip-shadow-dn:inset 0 1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(120,80,30,.2);
 }
@@ -1637,6 +1644,11 @@ html[data-theme="aurinko"][data-perf="lite"]{
             <span class="pile-ico" aria-hidden="true"></span>
             <span class="side-panel__count" id="turn-count">0</span>
           </div>
+          <!-- 1-3-5 paivan budjetti: 1 iso / 3 keskikokoista / 5 pienta -->
+          <div id="day135" class="day135" role="status" aria-label="Paivan 1-3-5 budjetti"></div>
+          <!-- 2 min -saanto: alle kahden minuutin tehtavat omana nippunaan -->
+          <button type="button" id="pika-btn" class="pika-btn" onclick="openPikaModal()"
+                  aria-haspopup="dialog" aria-controls="pika-modal"></button>
           <div id="turn-list" class="turn-list"></div>
           <div id="turn-empty" class="side-panel__empty" style="display:none">Jono tyhjä.<br>Lisää tehtäviä ↑-napilla.</div>
         </div>
@@ -2897,7 +2909,169 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
   .hdr-timer__time{font-size:.92rem}
   .hdr-timer__btn{font-size:.72rem;padding:.18rem .38rem}
 }
+/* ── Keskeytysparkki — pikakirjaus ajastimen alla ─────── */
+/* Nakyy vain tyovaiheessa: hairio kirjataan ylos ilman etta pomodoro katkeaa. */
+.hdr-timer__park{
+  display:none;
+  align-items:center;
+  gap:.35rem;
+  padding-top:.35rem;
+  border-top:1px solid rgba(255,255,255,.1);
+}
+.hdr-timer--parking .hdr-timer__park{display:flex}
+.hdr-timer__park-input{
+  flex:1;
+  min-width:0;
+  width:9.5rem;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:6px;
+  color:rgba(255,255,255,.95);
+  font-family:'DM Sans',sans-serif;
+  font-size:.72rem;
+  font-weight:300;
+  padding:.26rem .45rem;
+  outline:none;
+  transition:border-color .15s,background .15s;
+}
+.hdr-timer__park-input::placeholder{color:rgba(255,255,255,.45)}
+.hdr-timer__park-input:focus{
+  border-color:rgba(232,200,115,.55);
+  background:rgba(255,255,255,.12);
+}
+.hdr-timer__park-count{
+  font-size:.6rem;
+  letter-spacing:.06em;
+  color:rgba(232,200,115,.85);
+  flex-shrink:0;
+  min-width:1.1rem;
+  text-align:right;
+}
+
 /* ── /Lohko F ───────────────────────────────────────────────── */
+
+/* ── Lohko G: 1-3-5 paivan budjetti + pikatehtavat ────────── */
+
+/* 1-3-5 -mittari jonopaneelin ylalaidassa: 1 iso / 3 keski / 5 pienta */
+.day135{
+  display:flex;
+  align-items:center;
+  gap:.55rem;
+  padding:.05rem .1rem .5rem;
+  margin-bottom:.4rem;
+  border-bottom:1px solid var(--engrave-dim);
+  font-size:var(--text-xs);
+  font-weight:300;
+  color:var(--muted);
+  flex-shrink:0;
+  flex-wrap:wrap;
+}
+.day135__slot{display:flex;align-items:center;gap:.22rem;line-height:1;white-space:nowrap}
+.day135__ico{font-size:.8rem;line-height:1}
+.day135__n{font-weight:500;color:var(--ink);font-variant-numeric:tabular-nums}
+.day135__slot.full .day135__n{color:var(--budget-ok)}
+.day135__slot.over .day135__n{color:var(--budget-over);font-weight:600}
+
+/* Pika-nappi (2 min -saanto) — jonopaneelin ylalaidassa */
+.pika-btn{
+  display:none;
+  align-items:center;
+  gap:.35rem;
+  width:100%;
+  margin-bottom:.4rem;
+  padding:.4rem .55rem;
+  border:1px dashed var(--engrave);
+  border-radius:var(--r-md);
+  background:transparent;
+  color:var(--muted);
+  font-family:'DM Sans',sans-serif;
+  font-size:var(--text-xs);
+  font-weight:300;
+  cursor:pointer;
+  text-align:left;
+  transition:border-color .15s,color .15s,background .15s;
+  flex-shrink:0;
+}
+.pika-btn.on{display:flex}
+.pika-btn:hover{border-color:var(--accent);color:var(--ink);background:var(--surface-xs)}
+.pika-btn__n{font-weight:600;color:var(--accent);font-variant-numeric:tabular-nums}
+
+/* Pika-merkki kortin arviopaikalla */
+.pika-chip{
+  display:inline-flex;align-items:center;gap:.15rem;
+  font-size:.62rem;font-weight:500;letter-spacing:.04em;
+  color:var(--accent);
+  border:1px solid var(--engrave);
+  border-radius:3px;
+  padding:.04rem .22rem;
+  line-height:1.3;
+  white-space:nowrap;
+}
+
+/* Pikanippu-modaali — sama kaava kuin #done-modal */
+#pika-modal-overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.4);
+  z-index:400;
+  opacity:0;pointer-events:none;
+  transition:opacity .2s;
+  backdrop-filter:blur(3px);
+  -webkit-backdrop-filter:blur(3px);
+}
+#pika-modal-overlay.ham-open{opacity:1;pointer-events:auto}
+#pika-modal{
+  position:fixed;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%) scale(.97);
+  width:min(460px,96vw);
+  max-height:85vh;
+  background:var(--surface-xs);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  box-shadow:0 12px 40px rgba(0,0,0,.2);
+  z-index:401;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  transition:transform .2s,opacity .2s;
+  opacity:0;pointer-events:none;
+}
+#pika-modal.ham-open{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto}
+#pika-modal__body{overflow-y:auto;padding:1rem 1.25rem 1.25rem;scrollbar-width:none;flex:1}
+#pika-modal__body::-webkit-scrollbar{display:none}
+.pika-lead{
+  font-size:var(--text-xs);
+  font-weight:300;
+  color:var(--muted);
+  line-height:1.5;
+  margin-bottom:.85rem;
+}
+.pika-row{
+  display:flex;align-items:center;gap:.6rem;
+  padding:.55rem .2rem;
+  border-bottom:1px solid var(--engrave-dim);
+}
+.pika-row:last-child{border-bottom:none}
+.pika-row__cb{
+  width:19px;height:19px;flex-shrink:0;margin:0;
+  cursor:pointer;accent-color:var(--q2);
+}
+.pika-row__txt{
+  flex:1;min-width:0;
+  font-size:var(--text-sm);font-weight:300;color:var(--ink);
+  line-height:1.35;
+}
+.pika-row__del{
+  background:none;border:none;cursor:pointer;
+  color:var(--subtle);font-size:1rem;line-height:1;
+  padding:.1rem .3rem;border-radius:4px;flex-shrink:0;
+}
+.pika-row__del:hover{color:var(--q1);background:var(--surface)}
+.pika-empty{
+  font-size:var(--text-sm);font-weight:300;color:var(--muted);
+  text-align:center;padding:1.4rem .5rem;line-height:1.5;
+}
+/* ── /Lohko G ─────────────────────────────────────────────── */
+
 #hand-label{
   font-size:var(--text-xs);
   font-weight:500;
@@ -4087,13 +4261,29 @@ svg[aria-hidden="true"]{pointer-events:none;}
   .hdr svg[viewBox="0 0 168 38"] { display: none !important; }
   /* Lisää tehtävä -nappi: ei marginTop desktopilla */
   #btn-add-task { margin-top: 0 !important; }
-  /* hdr-timer: irti fixed-positioinnista, gridin osaksi (osa #hdr-right -ryhmää) */
+  /* hdr-timer: irti fixed-positioinnista, gridin osaksi (osa #hdr-right -ryhmää).
+     relative (ei static): antaa sijoituskehyksen kelluvalle parkkiriville. */
   #hdr-timer {
-    position: static;
+    position: relative;
     top: auto;
     right: auto;
     max-width: none;
     flex-shrink: 0;
+  }
+  /* Keskeytysparkki kelluu ajastimen alla — ei kasvata ylapalkkia eika
+     siirra lavastetta kun ajastin kaynnistyy. */
+  #hdr-timer .hdr-timer__park{
+    position: absolute;
+    top: calc(100% + .35rem);
+    right: 0;
+    width: 15rem;
+    max-width: calc(100vw - 2rem);
+    padding: .4rem .5rem;
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: 10px;
+    background: rgba(26,26,26,.96);
+    box-shadow: 0 8px 22px rgba(0,0,0,.36);
+    z-index: 2;
   }
   /* hdr-right: tasapaino, ajastin viimeisenä */
   #hdr-right {
@@ -5030,7 +5220,7 @@ dtEl.value=todayStr;
 dtEl.addEventListener('change',save);
 
 // ── HELPERS ──
-function fe(v){if(v===.5)return'½';var w=Math.floor(v),h=v%1!==0;return h?(w>0?w+'½':'½'):String(w)}
+function fe(v){if(v===0)return'⚡';if(v===.5)return'½';var w=Math.floor(v),h=v%1!==0;return h?(w>0?w+'½':'½'):String(w)}
 
 // ── SVG ICONS ──
 
@@ -5320,6 +5510,215 @@ function totalQueueEst(){
     var t=tasks.find(function(t){return t.id===id});
     return sum+(t?t.est||1:0);
   },0);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   TAVAT: 2 min -saanto, 1-3-5 paivan budjetti, keskeytysparkki
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── 2 min -saanto ─────────────────────────────────────────────
+   est===0 = pikatehtava: alle kahden minuutin homma jota ei
+   kannata jonottaa. Ne eivat kulje areenan, kaden eivatka
+   1-3-5-budjetin lapi, vaan kootaan omaksi nipukseen. */
+function isQuick(t){ return !!t && t.est===0; }
+
+function quickTasks(inbox){
+  var src = inbox || tasks.filter(function(t){return !t.done&&!t.scheduled_hidden;});
+  return src.filter(function(t){ return isQuick(t)&&!t.done&&!t.waiting; });
+}
+
+/* Arvio-slidereiden yhteinen paivitys: luku + yksikkoselite */
+function setEstUI(evId, unitId, v){
+  var ev=document.getElementById(evId);
+  if(ev) ev.textContent=fe(v);
+  var u=document.getElementById(unitId);
+  if(u) u.textContent = (v===0) ? 'alle 2 min — tee heti' : '× '+Math.round(WORK/60)+' min';
+}
+
+function renderPikaBtn(inbox){
+  var btn=document.getElementById('pika-btn');
+  if(!btn) return;
+  var q=quickTasks(inbox);
+  btn.classList.toggle('on', q.length>0);
+  if(!q.length){ btn.textContent=''; return; }
+  btn.textContent='';
+  var ico=document.createElement('span'); ico.textContent='⚡'; btn.appendChild(ico);
+  var n=document.createElement('span'); n.className='pika-btn__n'; n.textContent=String(q.length); btn.appendChild(n);
+  var lbl=document.createElement('span');
+  lbl.textContent=(q.length===1?'pikatehtävä':'pikatehtävää')+' — hoida nipussa';
+  btn.appendChild(lbl);
+  btn.setAttribute('aria-label', q.length+' pikatehtävää. Avaa pikanippu.');
+}
+
+function openPikaModal(){
+  renderPikaList();
+  document.getElementById('pika-modal-overlay').classList.add('ham-open');
+  document.getElementById('pika-modal').classList.add('ham-open');
+  _trapOn('pika-modal');
+  document.addEventListener('keydown', pikaEscHandler);
+}
+
+function closePikaModal(){
+  _trapOff('pika-modal');
+  document.getElementById('pika-modal-overlay').classList.remove('ham-open');
+  document.getElementById('pika-modal').classList.remove('ham-open');
+  document.removeEventListener('keydown', pikaEscHandler);
+}
+
+function pikaEscHandler(e){ if(e.key==='Escape') closePikaModal(); }
+
+function renderPikaList(){
+  var body=document.getElementById('pika-modal__body');
+  if(!body) return;
+  body.textContent='';
+  var q=quickTasks(null);
+
+  var lead=document.createElement('p');
+  lead.className='pika-lead';
+  lead.textContent='Alle kahden minuutin tehtävät. Älä anna niiden kasautua — ruksaa läpi nyt.';
+  body.appendChild(lead);
+
+  if(!q.length){
+    var em=document.createElement('div');
+    em.className='pika-empty';
+    em.textContent='Ei pikatehtäviä. Hyvin menee!';
+    body.appendChild(em);
+    return;
+  }
+
+  q.forEach(function(t){
+    var row=document.createElement('div'); row.className='pika-row';
+    var cb=document.createElement('input');
+    cb.type='checkbox'; cb.className='pika-row__cb';
+    cb.setAttribute('aria-label','Merkitse tehdyksi: '+t.text);
+    cb.addEventListener('change', function(){ pikaDone(t.id); });
+    row.appendChild(cb);
+    var tx=document.createElement('span'); tx.className='pika-row__txt'; tx.textContent=t.text;
+    row.appendChild(tx);
+    var del=document.createElement('button');
+    del.type='button'; del.className='pika-row__del'; del.textContent='×';
+    del.title='Poista'; del.setAttribute('aria-label','Poista: '+t.text);
+    del.addEventListener('click', function(){ pikaDelete(t.id); });
+    row.appendChild(del);
+    body.appendChild(row);
+  });
+}
+
+function pikaDone(id){
+  var t=tasks.find(function(x){return x.id===id;});
+  if(!t) return;
+  t.done=true;
+  t.doneAt=new Date().toISOString();
+  t.pomos=t.pomos||0;
+  // Pikatehtava ei kuulu jonoon, mutta siivotaan varmuuden vuoksi
+  if(active===id) active=null;
+  var ti=turn.indexOf(id); if(ti>=0) turn.splice(ti,1);
+  save(); render();
+  setTimeout(renderPikaList, 180);
+}
+
+function pikaDelete(id){
+  var i=tasks.findIndex(function(x){return x.id===id;});
+  if(i<0) return;
+  tasks.splice(i,1);
+  var ti=turn.indexOf(id); if(ti>=0) turn.splice(ti,1);
+  if(active===id) active=null;
+  save(); render();
+  renderPikaList();
+}
+
+/* ── 1-3-5 paivan budjetti ─────────────────────────────────────
+   Paivan sitoumus = areenan kortti + jono. Iso 1, keski 3, pieni 5.
+   Pikatehtavat ja aamusuunnittelukortti eivat kuulu budjettiin. */
+var DAY135_LIMITS={iso:1,keski:3,pieni:5};
+
+function dayBudget(){
+  var ids=(active!==null?[active]:[]).concat(Array.isArray(turn)?turn:[]);
+  var out={iso:0,keski:0,pieni:0};
+  ids.forEach(function(id){
+    var t=tasks.find(function(x){return x.id===id;});
+    if(!t||t.done) return;
+    if(isQuick(t)) return;
+    if(t.tags&&t.tags.indexOf('aamusuunnittelu')>=0) return;
+    var e=(t.est==null?1:t.est);
+    if(t.frog||e>=3) out.iso++;
+    else if(e>=1) out.keski++;
+    else out.pieni++;
+  });
+  return out;
+}
+
+function renderDay135(){
+  var host=document.getElementById('day135');
+  if(!host) return;
+  var b=dayBudget();
+  host.textContent='';
+  [['iso','🐸','iso'],['keski','◆','keskikokoista'],['pieni','·','pientä']].forEach(function(row){
+    var key=row[0], max=DAY135_LIMITS[key], n=b[key];
+    var slot=document.createElement('span');
+    slot.className='day135__slot'+(n>max?' over':(n===max?' full':''));
+    var ico=document.createElement('span'); ico.className='day135__ico'; ico.textContent=row[1];
+    slot.appendChild(ico);
+    var num=document.createElement('span'); num.className='day135__n'; num.textContent=n+'/'+max;
+    slot.appendChild(num);
+    host.appendChild(slot);
+  });
+  var over=(b.iso>DAY135_LIMITS.iso)||(b.keski>DAY135_LIMITS.keski)||(b.pieni>DAY135_LIMITS.pieni);
+  host.setAttribute('title', over
+    ? 'Päivä on ylibuukattu. 1-3-5: yksi iso, kolme keskikokoista, viisi pientä.'
+    : '1-3-5: yksi iso, kolme keskikokoista, viisi pientä tehtävää päivässä.');
+}
+
+/* ── Keskeytysparkki ───────────────────────────────────────────
+   Ajastimen saantoteksti lupaa "merkitse se ylos ja jatka".
+   Tama on se toiminto: hairio kirjataan tehtavaksi ilman etta
+   pomodoro katkeaa tai fokus siirtyy pois aktiivisesta kortista. */
+var _parkCount=0;
+
+function parkInterrupt(){
+  var inp=document.getElementById('park-input');
+  if(!inp) return;
+  var txt=(inp.value||'').trim();
+  if(!txt) return;
+  tasks.push({
+    id:nid++, text:txt, verbi:'', kuvaus:txt,
+    lisatiedot:null, linkki:null,
+    quad:'q3',                 // kiireinen, ei tarkea — kunnes luokitellaan
+    done:false, pomos:0, est:.5,
+    important:false, urgent:true,
+    frog:false, waiting:false,
+    tags:['keskeytys'], projectId:null,
+    schedule:null, scheduled_hidden:false,
+    chainId:null, chainPosition:null, chainTotal:null, isChained:false,
+    needsReview:true           // nostaa kortin luokittelujonoon
+  });
+  _parkCount++;
+  inp.value='';
+  save(); render();
+  updParkCount();
+  notify('⚡ Merkitty. Jatka.');
+  a11yAnnounce('Häiriö merkitty ylös: '+txt+'. Pomodoro jatkuu.');
+  // render() ei koske hdr-timeriin, mutta varmistetaan fokus kenttaan
+  var again=document.getElementById('park-input');
+  if(again) again.focus();
+}
+
+function updParkCount(){
+  var c=document.getElementById('park-count');
+  if(c) c.textContent=_parkCount>0?String(_parkCount):'';
+}
+
+/* Parkkirivi nakyy vain kun pomodoro on kaynnissa tyovaiheessa. */
+function updParkRow(){
+  var wrap=document.getElementById('hdr-timer');
+  if(!wrap) return;
+  var show=!!tmr&&phase==='work';
+  wrap.classList.toggle('hdr-timer--parking', show);
+  if(!show){
+    var inp=document.getElementById('park-input');
+    if(inp&&document.activeElement===inp) inp.blur();
+  }
 }
 
 function getActive(){return active?tasks.find(function(t){return t.id===active})||null:null}
@@ -5751,9 +6150,9 @@ function openEditModal(id){
   // Arvio-slider
   var esl=document.getElementById('edit-esl');
   var ev=document.getElementById('edit-ev');
-  var estVal=t.est||1;
+  var estVal=(t.est==null?1:t.est);
   esl.value=estVal;
-  ev.textContent=fe(estVal);
+  setEstUI('edit-ev','edit-esl-unit',estVal);
 
   // Projektinapit
   var pb=document.getElementById('edit-proj-btns');
@@ -5828,7 +6227,15 @@ function saveEditModal(){
   else if(t.important&&!t.urgent)t.quad='q2';
   else if(!t.important&&t.urgent)t.quad='q3';
   else t.quad='q4';
-  t.est=parseFloat(document.getElementById('edit-esl').value)||1;
+  var _e=parseFloat(document.getElementById('edit-esl').value);
+  t.est=isNaN(_e)?1:_e;
+  // 2 min -saanto: pikatehtava ei kuulu jonoon vaan omaan nippuunsa
+  if(isQuick(t)){
+    if(active===t.id){ active=(turn.length?turn.shift():null); }
+    var _qi=turn.indexOf(t.id); if(_qi>=0) turn.splice(_qi,1);
+    t.frog=false;
+    notify('⚡ Siirretty pikatehtäviin — tee se heti.');
+  }
   // Sammakko
   var wantFrog=document.getElementById('edit-frog').classList.contains('on');
   if(wantFrog&&!t.frog){tasks.forEach(function(x){x.frog=false;});}
@@ -5905,8 +6312,8 @@ async function runAnalysis(){
   document.getElementById('ai-loading').style.display='block';
 
   var QL2={q1:'TEE HETI (tärkeä + kiireinen)',q2:'AIKATAULUTA (tärkeä, ei kiireinen)',q3:'DELEGOI (kiireinen, ei tärkeä)',q4:'POISTA/MYÖHEMMIN (ei tärkeä, ei kiireinen)'};
-  var taskList=inbox.map(function(t){
-    return {id:t.id,text:t.text,quad:t.quad,quadLabel:QL2[t.quad]||t.quad,est:t.est||1,frog:!!t.frog};
+  var taskList=inbox.filter(function(t){return !isQuick(t);}).map(function(t){
+    return {id:t.id,text:t.text,quad:t.quad,quadLabel:QL2[t.quad]||t.quad,est:(t.est==null?1:t.est),frog:!!t.frog};
   });
 
   var profileCtx=buildProfileContext();
@@ -6501,7 +6908,7 @@ function wizReset(){  _splitAsChain=true;
   var fi=document.getElementById('f-important');if(fi)fi.classList.remove('on');
   var fu=document.getElementById('f-urgent');if(fu)fu.classList.remove('on');
   var esl=document.getElementById('esl');if(esl)esl.value=1;
-  var ev=document.getElementById('ev');if(ev)ev.textContent='1';
+  setEstUI('ev','esl-unit',1);
   var extra=document.getElementById('extra-row');if(extra)extra.style.display='none';
   var tagrow=document.getElementById('new-tag-row');if(tagrow)tagrow.style.display='none';
   var jaHint=document.getElementById('ja-hint');if(jaHint)jaHint.style.display='none';
@@ -6842,11 +7249,15 @@ function addTask(){
   else if(!newImportant&&newUrgent)q='q3';
   tasks.push({id:nid++,text:txt,verbi:newVerbi,kuvaus:kuvaus,lisatiedot:lisatiedot||null,linkki:linkki||null,quad:q,done:false,pomos:0,est:est,important:newImportant,urgent:newUrgent,tags:newTags.slice(),projectId:newProjectId||null,schedule:newSchedule||null,scheduled_hidden:!!newSchedule,chainId:null,chainPosition:null,chainTotal:null,isChained:false});
   _newTaskId=nid-1;
+  // wizReset() nollaa est:n → lippu on luettava ennen sita
+  var _wasQuick=(est===0);
   document.getElementById('ni-lisatiedot').value='';
   document.getElementById('ni-linkki').value='';
   clearNewSchedule();
   wizReset();
   save();render();
+  // 2 min -saanto: alle kahden minuutin tehtava ei mene jonoon
+  if(_wasQuick) notify('⚡ Alle 2 min — tee se heti, älä jonoon.');
 }
 
 function setFlag(id,flag){
@@ -7159,6 +7570,8 @@ function toggleTimer(){
   // Fokustila: sivupaneelit + käsi piiloon ajastimen ajaksi
   document.body.classList.add('focus-mode');
   if(_eisePeekOpen)closeEisePeek();
+  // Uusi fokusrupeama → hairiolaskuri nollille
+  _parkCount=0; updParkCount();
   startTmr();
   render();
   var act=getActive();
@@ -7462,7 +7875,7 @@ function updClock(){
   if(ruleEl){
     if(phase==='work'){
       var left=4-pomoDone;
-      ruleEl.innerHTML='<strong>'+left+' pomodoroa</strong> pitkään taukoon. Älä keskeytä — jos häiriö tulee, merkitse se ylös ja jatka.';
+      ruleEl.innerHTML='<strong>'+left+' pomodoroa</strong> pitkään taukoon. Älä keskeytä — jos häiriö tulee, kirjaa se ajastimen kenttään ja jatka.';
     } else if(phase==='sbrk'){
       ruleEl.innerHTML='<strong>Lyhyt tauko.</strong> Nouse ylös, juo vettä. Älä avaa sähköpostia.';
     } else if(phase==='lbrk'){
@@ -7474,6 +7887,8 @@ function updClock(){
 
   // Update info section
   updInfo();
+  // Keskeytysparkki nakyviin vain tyovaiheessa
+  updParkRow();
 }
 
 function updInfo(){
@@ -7674,7 +8089,7 @@ function renderArenaCard(t, container, anyFrog, mode){
   card.className='tcg-card '+modeClass+' tcg-card--'+rar+' tcg-card--'+(t.quad||'q4')+(t.frog?' tcg-card--frog':'')+(t.frog?' tcg-card--holo':'')+(t.handForced?' tcg-card--star':'');
   card.setAttribute('tabindex','0');
   card.style.setProperty('--qc',qc);
-  var _albl=(t.frog?'Sammakko. ':'')+t.text+(q?', '+q:'')+(t.est?' — '+fe(t.est)+' pomodoro':'');
+  var _albl=(t.frog?'Sammakko. ':'')+t.text+(q?', '+q:'')+(isQuick(t)?' — pikatehtävä, alle 2 minuuttia':(t.est?' — '+fe(t.est)+' pomodoro':''));
   card.setAttribute('aria-label',_albl);
   card.dataset.taskId=t.id;
 
@@ -7744,7 +8159,7 @@ function renderArenaCard(t, container, anyFrog, mode){
   var meta=document.createElement('div');
   meta.className='tcg-card__meta-tcg';
   var tom=document.createElement('span');
-  tom.textContent=(t.est||1)+' pom';
+  tom.textContent=isQuick(t)?'⚡ alle 2 min':((t.est==null?1:t.est)+' pom');
   meta.appendChild(tom);
   if(t.projectId){
     var pj=projects.find(function(p){return p.id===t.projectId;});
@@ -7994,7 +8409,7 @@ function _attachSidePanelRails(){
 function buildHandQueue(inbox){
   // Pakotetut tehtävät — käyttäjä on nostanut käteen Q-logiikan ohi
   var forced=inbox.filter(function(t){
-    return t.handForced&&!t.done&&!t.waiting&&t.id!==active&&turn.indexOf(t.id)<0;
+    return t.handForced&&!t.done&&!t.waiting&&!isQuick(t)&&t.id!==active&&turn.indexOf(t.id)<0;
   });
   // Jos pakotettuja on yli 7, näytetään vain 7 ja ilmoitetaan
   if(forced.length>7){
@@ -8009,7 +8424,7 @@ function buildHandQueue(inbox){
   var slots=7-forced.length;
   if(slots<=0) return forced;
   var cands=inbox.filter(function(t){
-    return !t.done&&!t.waiting&&t.id!==active&&turn.indexOf(t.id)<0
+    return !t.done&&!t.waiting&&!isQuick(t)&&t.id!==active&&turn.indexOf(t.id)<0
       &&!t.handForced
       &&(t.quad==='q1'||t.quad==='q2');
   });
@@ -8098,7 +8513,7 @@ function renderTurnPanel(inbox){
   if(!listEl)return;
 
   var turnIds=Array.isArray(turn)?turn:[];
-  var turnTasks=turnIds.map(function(id){return inbox.find(function(t){return t.id===id&&!t.done});}).filter(Boolean);
+  var turnTasks=turnIds.map(function(id){return inbox.find(function(t){return t.id===id&&!t.done});}).filter(Boolean).filter(function(t){return !isQuick(t);});
 
   // FLIP First: tallenna nykyiset rivipaikat + tunnista lähtevät rivit ennen tyhjennystä
   // Portti: litessa/rm:ssa animaatio olisi nakymaton (.01ms) — ala maksa layout-lukuja;
@@ -8458,6 +8873,8 @@ function render(){
   renderWaitingPanel(inbox);
   renderHandBar(inbox); // Vaihe 5B TCG
   updateEiseHandleCounts();
+  renderDay135();       // 1-3-5 paivan budjetti
+  renderPikaBtn(inbox); // 2 min -saannon nippu
 
   // MATRIX
   ['q1','q2','q3','q4'].forEach(function(q){
@@ -8520,7 +8937,9 @@ function render(){
       var nm=document.createElement('span');nm.className='qtin';nm.textContent=t.text;
       // Waiting indicator in matrix
       if(t.waiting){var wi=document.createElement('span');wi.style.cssText='font-size:.6rem;color:#3a6b8a;flex-shrink:0';wi.appendChild(svgHourglass(10));nm.appendChild(wi);}
-      var ps=mkPips(t.est||1,t.pomos||0,true);
+      var ps;
+      if(isQuick(t)){ ps=document.createElement('span'); ps.className='pika-chip'; ps.textContent='⚡ 2min'; }
+      else { ps=mkPips(t.est==null?1:t.est,t.pomos||0,true); }
       var db=document.createElement('button');db.className='qdnb';db.textContent='Tehty';
       db.onclick=(function(i){return function(){markDone(i)}})(t.id);
       item.appendChild(handle);item.appendChild(qb);item.appendChild(nm);item.appendChild(ps);item.appendChild(db);
@@ -8538,7 +8957,7 @@ function render(){
     var tw=document.createElement('div');tw.className='tact-wrap';
     var ac=document.createElement('div');ac.className='tact';
     if(t.quad){var bg=document.createElement('span');bg.className='qbdg '+t.quad;bg.textContent=QL[t.quad];ac.appendChild(bg)}
-    var st=document.createElement('span');st.className='pstat';st.textContent=(t.pomos||0)+'/'+fe(t.est||1)+' 🍅';ac.appendChild(st);
+    var st=document.createElement('span');st.className='pstat';st.textContent=isQuick(t)?'⚡ pika':((t.pomos||0)+'/'+fe(t.est==null?1:t.est)+' 🍅');ac.appendChild(st);
     // data-attribuutit + delegointi: openDoneModal kloonaa nämä innerHTML:llä,
     // eivätkä onclick-propertyt selviä serialisoinnista
     var rb=document.createElement('button');rb.className='rbtn';rb.textContent='Palauta';rb.setAttribute('data-done-act','restore');rb.setAttribute('data-done-id',t.id);ac.appendChild(rb);
@@ -8733,18 +9152,21 @@ function renderSummary(){
   // Per-quadrant pomodoro totals
   var qPomos={q1:0,q2:0,q3:0,q4:0};
   var totalEst=0,totalDone=0,accurate=0;
+  var estimatedDone=0;
   done.forEach(function(t){
     var q=t.quad||'q4';
     qPomos[q]+=(t.pomos||0);
-    totalEst+=(t.est||1);
     totalDone+=(t.pomos||0);
+    if(isQuick(t))return; // pikatehtavalla ei ole pomodoro-arviota
+    estimatedDone++;
+    totalEst+=(t.est==null?1:t.est);
     // "accurate" = within 1 pomodoro of estimate
-    if(Math.abs((t.pomos||0)-(t.est||1))<=1)accurate++;
+    if(Math.abs((t.pomos||0)-(t.est==null?1:t.est))<=1)accurate++;
   });
 
   var unfinished=tasks.filter(function(t){return!t.done});
   var totalPomosDone=qPomos.q1+qPomos.q2+qPomos.q3+qPomos.q4;
-  var accPct=done.length>0?Math.round(accurate/done.length*100):0;
+  var accPct=estimatedDone>0?Math.round(accurate/estimatedDone*100):0;
 
   var html='';
 
@@ -10797,11 +11219,11 @@ function closeChainView(){
       <!-- Arvio -->
       <div style="display:flex;align-items:center;gap:.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:.45rem .85rem">
         <span style="font-size:var(--text-xs);color:var(--muted);font-weight:300">🍅 Arvio</span>
-        <button onclick="var s=document.getElementById('esl');s.value=Math.max(.5,parseFloat(s.value)-.5);est=parseFloat(s.value);document.getElementById('ev').textContent=fe(est)" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:.85rem;padding:0 .1rem;line-height:1;font-family:'DM Sans',sans-serif">‹</button>
-        <input type="range" class="eslider" id="esl" min="0.5" max="8" step="0.5" value="1" oninput="est=parseFloat(this.value);document.getElementById('ev').textContent=fe(est)">
-        <button onclick="var s=document.getElementById('esl');s.value=Math.min(8,parseFloat(s.value)+.5);est=parseFloat(s.value);document.getElementById('ev').textContent=fe(est)" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:.85rem;padding:0 .1rem;line-height:1;font-family:'DM Sans',sans-serif">›</button>
+        <button onclick="var s=document.getElementById('esl');s.value=Math.max(0,parseFloat(s.value)-.5);est=parseFloat(s.value);setEstUI('ev','esl-unit',est)" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:.85rem;padding:0 .1rem;line-height:1;font-family:'DM Sans',sans-serif" aria-label="Vähennä arviota">‹</button>
+        <input type="range" class="eslider" id="esl" min="0" max="8" step="0.5" value="1" oninput="est=parseFloat(this.value);setEstUI('ev','esl-unit',est)">
+        <button onclick="var s=document.getElementById('esl');s.value=Math.min(8,parseFloat(s.value)+.5);est=parseFloat(s.value);setEstUI('ev','esl-unit',est)" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:.85rem;padding:0 .1rem;line-height:1;font-family:'DM Sans',sans-serif" aria-label="Lisää arviota">›</button>
         <span class="eval" id="ev" style="font-size:var(--text-sm);font-weight:500;color:var(--pomo);min-width:1.8rem">1</span>
-        <span style="font-size:var(--text-xs);color:var(--muted);font-weight:300;white-space:nowrap">× 25 min</span>
+        <span id="esl-unit" style="font-size:var(--text-xs);color:var(--muted);font-weight:300;white-space:nowrap">× 25 min</span>
       </div>
       </div>
       <!-- Projektinapit (yhteinen) -->
@@ -10856,11 +11278,11 @@ function closeChainView(){
     <!-- Arvio -->
     <div style="display:flex;align-items:center;gap:.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:.45rem .85rem">
       <span style="font-size:var(--text-xs);color:var(--muted);font-weight:300">🍅 Arvio</span>
-      <button onclick="var s=document.getElementById('edit-esl');s.value=Math.max(.5,parseFloat(s.value)-.5);document.getElementById('edit-ev').textContent=fe(parseFloat(s.value))" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:.85rem;padding:0 .1rem;line-height:1;font-family:'DM Sans',sans-serif">‹</button>
-      <input type="range" class="eslider" id="edit-esl" min="0.5" max="8" step="0.5" value="1" oninput="document.getElementById('edit-ev').textContent=fe(parseFloat(this.value))" style="flex:1">
-      <button onclick="var s=document.getElementById('edit-esl');s.value=Math.min(8,parseFloat(s.value)+.5);document.getElementById('edit-ev').textContent=fe(parseFloat(s.value))" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:.85rem;padding:0 .1rem;line-height:1;font-family:'DM Sans',sans-serif">›</button>
+      <button onclick="var s=document.getElementById('edit-esl');s.value=Math.max(0,parseFloat(s.value)-.5);setEstUI('edit-ev','edit-esl-unit',parseFloat(s.value))" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:.85rem;padding:0 .1rem;line-height:1;font-family:'DM Sans',sans-serif" aria-label="Vähennä arviota">‹</button>
+      <input type="range" class="eslider" id="edit-esl" min="0" max="8" step="0.5" value="1" oninput="setEstUI('edit-ev','edit-esl-unit',parseFloat(this.value))" style="flex:1">
+      <button onclick="var s=document.getElementById('edit-esl');s.value=Math.min(8,parseFloat(s.value)+.5);setEstUI('edit-ev','edit-esl-unit',parseFloat(s.value))" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:.85rem;padding:0 .1rem;line-height:1;font-family:'DM Sans',sans-serif" aria-label="Lisää arviota">›</button>
       <span id="edit-ev" style="font-size:var(--text-sm);font-weight:500;color:var(--pomo);min-width:1.8rem">1</span>
-      <span style="font-size:var(--text-xs);color:var(--muted);font-weight:300;white-space:nowrap">× 25 min</span>
+      <span id="edit-esl-unit" style="font-size:var(--text-xs);color:var(--muted);font-weight:300;white-space:nowrap">× 25 min</span>
     </div>
     <!-- Projektit -->
     <div id="edit-proj-btns" style="display:flex;gap:.3rem;flex-wrap:wrap"></div>
@@ -11041,6 +11463,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
   wrap.appendChild(expandedRow);
 
+  // ── KESKEYTYSPARKKI ── (nakyy vain tyovaiheessa, updParkRow ohjaa)
+  var parkRow = document.createElement('div');
+  parkRow.className = 'hdr-timer__park';
+
+  var parkInput = document.createElement('input');
+  parkInput.type = 'text';
+  parkInput.id = 'park-input';
+  parkInput.className = 'hdr-timer__park-input';
+  parkInput.placeholder = 'Merkitse häiriö ylös…';
+  parkInput.setAttribute('aria-label', 'Merkitse häiriö ylös — tehtävä kirjataan jonoon, pomodoro jatkuu');
+  parkInput.autocomplete = 'off';
+  parkInput.addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){ e.preventDefault(); parkInterrupt(); }
+    else if(e.key === 'Escape'){ e.preventDefault(); parkInput.value=''; parkInput.blur(); }
+  });
+  parkRow.appendChild(parkInput);
+
+  var parkCount = document.createElement('span');
+  parkCount.id = 'park-count';
+  parkCount.className = 'hdr-timer__park-count';
+  parkCount.title = 'Tälle istunnolle kirjatut häiriöt';
+  parkRow.appendChild(parkCount);
+
+  wrap.appendChild(parkRow);
+
   // ── SYNC: peilaa #pb:n tilan hdr-timer:iin ──
   function syncHdr() {
     var mt=document.getElementById('ttime'), mp=document.getElementById('tphase');
@@ -11176,6 +11623,16 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <!-- Tehdyt-modaali (avautuu hampurilaisesta) -->
+<!-- Pikanippu — 2 min -saannon tehtavat (est 0) -->
+<div id="pika-modal-overlay" onclick="closePikaModal()"></div>
+<div id="pika-modal" role="dialog" aria-modal="true" aria-label="Pikatehtavat">
+  <div class="modal-hdr">
+    <span class="modal-hdr__title">Pikatehtävät</span>
+    <button class="modal-hdr__close" onclick="closePikaModal()" aria-label="Sulje">×</button>
+  </div>
+  <div id="pika-modal__body"></div>
+</div>
+
 <div id="done-modal-overlay" onclick="closeDoneModal()"></div>
 <div id="done-modal" role="dialog" aria-modal="true" aria-label="Tehdyt tehtävät">
   <div class="modal-hdr">

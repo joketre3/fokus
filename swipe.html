@@ -224,7 +224,9 @@ var QL={q1:'TEE HETI',q2:'AIKATAULUTA',q3:'DELEGOI',q4:'POISTA'};
 var QC={q1:'Tärkeä + kiireinen',q2:'Tärkeä, ei kiireinen',q3:'Kiireinen, ei tärkeä',q4:'Ei tärkeä, ei kiireinen'};
 var tasks=[],queue=[],active=null,turn=[],idx=0,total=0,budgetMin=0;
 var POMO_MIN=(function(){try{var s=JSON.parse(localStorage.getItem('fap_timer_settings')||'{}');return(s.work>=5&&s.work<=90)?s.work:25;}catch(e){return 25;}}());
-function fe(v){if(v===0.5)return'½';if(v%1!==0)return Math.floor(v)+'½';return String(v);}
+function fe(v){if(v===0)return'⚡';if(v===0.5)return'½';if(v%1!==0)return Math.floor(v)+'½';return String(v);}
+// 2 min -saanto: est 0 = pikatehtava, ei kuulu tehtavajonoon
+function isQuick(t){ return !!t && t.est===0; }
 
 document.querySelectorAll('.time-opt').forEach(function(b){
   b.addEventListener('click',function(){
@@ -265,7 +267,7 @@ function readData(){
 function loadData(){
   var d=readData();
   if(!d){tasks=[];queue=[];active=null;turn=[];total=0;return;}
-  tasks=JSON.parse(JSON.stringify(d.tasks)).filter(function(t){return !t.done&&!t.scheduled_hidden});
+  tasks=JSON.parse(JSON.stringify(d.tasks)).filter(function(t){return !t.done&&!t.scheduled_hidden&&!isQuick(t)});
   // Migraatio: vanha queue[] → active+turn
   if(d.active!==undefined){
     active=d.active;
@@ -396,8 +398,9 @@ function openEditCard(id){
   document.getElementById('edit-name').value=t.text;
   document.getElementById('edit-important').checked=!!t.important;
   document.getElementById('edit-urgent').checked=!!t.urgent;
-  document.getElementById('edit-est').value=t.est||1;
-  document.getElementById('edit-est-val').textContent=fe(t.est||1);
+  var _oe=(t.est==null?1:t.est);
+  document.getElementById('edit-est').value=_oe;
+  document.getElementById('edit-est-val').textContent=fe(_oe);
   document.getElementById('edit-notes').value=t.lisatiedot||'';
   document.getElementById('edit-link').value=t.linkki||'';
   document.getElementById('edit-id').value=id;
@@ -413,7 +416,8 @@ function saveEditCard(){
   if(vm){t.verbi=vm[1];t.kuvaus=vm[2];}else{t.verbi=t.text;t.kuvaus='';}
   t.important=document.getElementById('edit-important').checked;
   t.urgent=document.getElementById('edit-urgent').checked;
-  t.est=parseFloat(document.getElementById('edit-est').value)||1;
+  var _se=parseFloat(document.getElementById('edit-est').value);
+  t.est=isNaN(_se)?1:_se;
   t.lisatiedot=document.getElementById('edit-notes').value.trim()||null;
   t.linkki=document.getElementById('edit-link').value.trim()||null;
   if(t.important&&t.urgent)t.quad='q1';
