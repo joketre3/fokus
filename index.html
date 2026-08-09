@@ -7276,9 +7276,16 @@ function requestNotifPermission(){
   }
 }
 
+// Työpöytäilmoitus on EHDOSTA RIIPPUMATTA sivuvaikutus: se ei saa koskaan
+// keskeyttää kutsujaansa. `new Notification()` heittää TypeErrorin mm.
+// Chrome for Androidilla ("Illegal constructor" — siellä on pakko käyttää
+// ServiceWorkerRegistrationia) vaikka permission olisi 'granted'. Ilman
+// tätä try/catchia heitto jätti onPhaseEnd():n kesken ennen startTmr():ää,
+// jolloin ajastin jäi seisomaan näyttöön 00:01 eikä tauko käynnistynyt.
 function pushNotif(title, body){
   if(!('Notification' in window)) return;
-  if(Notification.permission==='granted'){
+  if(Notification.permission!=='granted') return;
+  try{
     var n=new Notification(title,{
       body:body,
       icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 48"><rect x="12" y="2" width="6" height="44" rx="3" fill="%237a4a1e"/><polygon points="15,2 34,20 4,20" fill="%232d5a3d"/><polygon points="15,14 38,42 2,42" fill="%233a7050"/></svg>',
@@ -7288,6 +7295,10 @@ function pushNotif(title, body){
     setTimeout(function(){n.close()},6000);
     // Tuo välilehti etualalle klikkauksella
     n.onclick=function(){window.focus();n.close()};
+  }catch(e){
+    // Alusta ei tue konstruktoria (Chrome for Android) tai ilmoitus estettiin.
+    // Ajastin jatkaa normaalisti — toast ja ruudunlukijakuulutus hoitavat viestin.
+    console.warn('Työpöytäilmoitus ei onnistunut:', e && e.message);
   }
 }
 function keepAwake(){
@@ -7323,33 +7334,38 @@ function onPhaseEnd(){
     if(act){act.pomos=(act.pomos||0)+1;save();}
     pomoDone++;totalPomos++;
     soundBird();
-    if(pomoDone>=4){
-      pomoDone=0;
-      phase='lbrk';tleft=LBRK;
+    // Järjestys on tarkoituksellinen: tila + ajastin ensin, ilmoitukset vasta
+    // perään. tick() on jo tappanut intervallin ennen tätä kutsua, joten mikä
+    // tahansa heitto ennen startTmr():ää jättäisi ajastimen seisomaan.
+    var isLong=pomoDone>=4;
+    if(isLong){pomoDone=0;phase='lbrk';tleft=LBRK;}
+    else{phase='sbrk';tleft=SBRK;}
+    startTmr();
+    if(isLong){
       var lmin=Math.round(LBRK/60);
       pushNotif('🎉 Neljä pomodoroa!','Ansaittu '+lmin+' min pitkä tauko. Poistu ruudulta.');
       notify('🎉 Neljä pomodoroa! Ansaittu '+lmin+' min pitkä tauko.');
       a11yAnnounce('Neljä pomodoroa valmis. Pitkä tauko '+lmin+' minuuttia alkaa.');
     } else {
-      phase='sbrk';tleft=SBRK;
       var actName=act?act.text:'';
       var smin=Math.round(SBRK/60);
       pushNotif('🍅 Pomodoro valmis!', (actName?'"'+actName+'" valmis. ':'')+' '+smin+' min tauko.');
       notify('🍅 Pomodoro valmis! ' + smin + ' min tauko.');
       a11yAnnounce('Pomodoro valmis. Tauko '+smin+' minuuttia alkaa.');
     }
-    startTmr();
     openEisePeek(true);
   } else if(phase==='sbrk'||phase==='lbrk'){
+    // Sama järjestys: näkyvä tila päivitetään ennen ilmoituksia. Tässä
+    // haarassa ajastin jää tarkoituksella seisomaan — käyttäjä painaa ▶.
     phase='work';tleft=WORK;startAt=null;
+    if(tmr){clearInterval(tmr);tmr=null;}
+    setClockIcon(false);
+    updClock();render();
     closeEisePeek();
     soundWater();
     pushNotif('⏰ Tauko ohi','Paina ▶ aloittaaksesi seuraavan pomodoran.');
     notify('⏰ Tauko ohi — paina ▶ aloittaaksesi seuraavan pomodoran.');
     a11yAnnounce('Tauko ohi. Voit aloittaa seuraavan pomodoran.');
-    if(tmr){clearInterval(tmr);tmr=null;}
-    setClockIcon(false);
-    updClock();render();
   }
 }
 

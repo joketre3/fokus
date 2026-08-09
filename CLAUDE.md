@@ -558,3 +558,33 @@ Ks. `tests/README.md`. PR-läpikäynti ja merge-prosessi:
 - Kontrastisondi: `color-mix()` resolvoituu muotoon `color(srgb …)`, ja
   gradienttitaustalla oleva elementti raportoituu vääränä positiivisena →
   sondi merkitsee ne `img`-lipulla.
+
+### Ajastimen vaiheenvaihto — ilmoituskerros ei saa katkaista sitä (2026-08-09)
+
+**Vika (löytyi manuaalitestissä M3, oli `main`issa, ei missään PR:ssä):**
+näyttö jähmettyi 00:01:een, tauko ei käynnistynyt; ▶ käynnisti tauon.
+
+`pushNotif`illa ei ollut `try/catch`ia. `new Notification()` heittää
+`TypeError`in mm. Chrome for Androidilla (*Illegal constructor*) **vaikka
+`permission` on `'granted'`**. `tick()` tappaa intervallin ENNEN
+`onPhaseEnd()`-kutsua, joten heitto keskellä `onPhaseEnd`ia jätti `startTmr()`:n
+ajamatta → ajastin kuoli tilassa jossa `phase` oli jo vaihtunut.
+
+Korjaus: `pushNotif` kokonaan try/catchiin + `onPhaseEnd` järjestetty niin että
+**tila ja ajastin asetetaan ennen ilmoituksia** molemmissa haaroissa.
+
+Opit:
+- **Selaimen ilmoitus-API on sivuvaikutus, ei ohjausvirtaa.** `Notification`,
+  `AudioContext` ja `navigator.vibrate` voivat kaikki heittää alustakohtaisesti.
+  Kääri ne, tai aja ne vasta kun tila on jo kirjoitettu.
+- **`permission==='granted'` ei tarkoita että konstruktori toimii.** Androidin
+  Chrome vaatii `ServiceWorkerRegistration.showNotification()`in.
+- **Headless ei löydä tätä koskaan:** `Notification.permission` on siellä
+  `'denied'`, joten haara ei aja. `tests/suites/phase_end.js` pakottaa
+  konstruktorin heittämään — näin alustakohtaiset heitot saa testattavaksi.
+- **Oire "pysähtyy 1 sekunti jäljellä" tarkoittaa poikkeusta, ei ajastinlogiikkaa.**
+  Näyttö jää viimeiseen maalattuun kehykseen; `tleft` on jo 0. Etsi heittoa
+  siltä polulta joka olisi maalannut seuraavan kehyksen.
+- **Headless-teemasiemennys vaatii `fap_theme`in.** Pelkkä `data-theme`-attribuutti
+  ei riitä: `initTheme` ylikirjoittaa sen `localStorage`n oletuksella. Tämä
+  pilasi ensimmäisen aurinkokontrastimittauksen (raportoitu 92, oikea 185).

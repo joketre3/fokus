@@ -21,7 +21,7 @@ from seed import seed_js                        # noqa: E402
 
 TARGETS = {"index": "index.html", "aamu": "aamu.html", "swipe": "swipe.html"}
 # Suitet, jotka mittaavat asettuneita CSS-siirtymiä, tarvitsevat pidemmän budjetin.
-SLOW = {"timer_break"}
+SLOW = {"timer_break", "phase_end"}
 
 
 def load(path):
@@ -60,7 +60,7 @@ def main(argv):
         print(f"\n### {name}  [{page}]")
         out_page = os.path.join(out, f"page_{name}.html")
         delay = 1200 if name in SLOW else 2500
-        budget = 20000 if name in SLOW else 12000
+        budget = 26000 if name in SLOW else 12000
         build(src, out_page, seed_js(), body, delay=delay)
         res, err, _ = run(out_page, budget=budget)
         if res is None:

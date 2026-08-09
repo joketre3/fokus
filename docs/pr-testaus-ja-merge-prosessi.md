@@ -24,6 +24,85 @@ koodi valuisi kuukausia taaksepäin.
 
 ---
 
+## 1b. Manuaalitestien tulokset (2026-08-09)
+
+Jaakko ajoi listan. **9 läpi, 3 vikaa, 3 ohitettu.** Kaksi vioista osui samaan
+juurisyyhyn, joka ei ollut missään PR:ssä vaan `main`issa.
+
+| Testi | Tulos |
+|---|---|
+| M1, M2 | ✅ Firebase-polut kunnossa |
+| **M3, M4** | 🔴 **Ajastin jää seisomaan vaiheen vaihtuessa** — juurisyy löydetty ja korjattu, ks. alla |
+| M5 | ⏭ ohitettu (esti M3) |
+| M6, M7, M9, M10, M11, M12 | ✅ Aurinkoteema kunnossa |
+| M8 | ⏭ ohitettu |
+| **M13** | 🔴 Keskeytysparkki toimii, mutta placeholder näkymätön auringossa |
+| M14 | ✅ |
+| M15 | ⏭ ohitettu (vaatii Jaakon koneen) |
+
+### 🔴 KORJATTU — ajastin jää seisomaan vaiheen vaihtuessa (`main`, ei mikään PR)
+
+**Oire:** näyttö jähmettyy 00:01:een, tauko ei käynnisty. ▶ käynnistää tauon.
+Sama tauon lopussa. Matriisi ei aukea.
+
+**Juurisyy:** `pushNotif()`illa ei ollut `try/catch`ia. `new Notification()`
+heittää `TypeError`in mm. Chrome for Androidilla (*"Illegal constructor"* — siellä
+on pakko käyttää `ServiceWorkerRegistration.showNotification()`) **vaikka
+`permission` olisi `'granted'`**. `tick()` on jo tappanut intervallin ennen
+`onPhaseEnd()`-kutsua, joten heitto keskellä `onPhaseEnd`ia jätti `startTmr()`:n
+ajamatta:
+
+```js
+phase='sbrk'; tleft=SBRK;   // tila ehti vaihtua
+pushNotif(...);             // ← heittää
+notify(...);                // ei aja
+startTmr();                 // ← EI AJA → ajastin kuollut
+openEisePeek(true);         // ei aja → ei matriisia
+```
+
+Siksi ▶ käynnisti tauon: `phase` oli jo `'sbrk'`, joten `toggleTimer` meni
+käynnistyshaaraan eikä nollannut sitä.
+
+**Miksi automaattitestit eivät löytäneet tätä:** headless-Chromessa
+`Notification.permission` on `'denied'`, joten koko haara ei aja koskaan.
+Uusi suite `tests/suites/phase_end.js` **pakottaa konstruktorin heittämään**
+juuri niin kuin oikea laite tekee. Kontrolli ajettu: kaatuu korjaamattomaan
+`main`iin (4/9), läpäisee korjatun (9/9).
+
+**Korjaus** (tässä haarassa, `index.html`):
+1. `pushNotif` kokonaan `try/catch`iin — ilmoitus on sivuvaikutus, se ei saa
+   koskaan keskeyttää kutsujaansa.
+2. `onPhaseEnd` järjestetty uudelleen: **tila ja ajastin ensin, ilmoitukset
+   vasta perään** molemmissa haaroissa. Puolustus syvyydessä — mikä tahansa
+   tuleva heitto ilmoituskerroksessa ei enää tapa ajastinta.
+
+**Tämä muuttaa PR #7:n tilanteen:** M3/M4/M5 eivät voineet mennä läpi millään
+haaralla, koska tauko ei koskaan alkanut automaattisesti. PR #7:n oma logiikka
+on kunnossa (20/20), mutta **se on testattava uudelleen tämän korjauksen
+päällä.**
+
+### 🔴 PR #8 — keskeytysparkin placeholder näkymätön auringossa
+
+Mitattu merge-puusta 390 px leveydellä:
+
+| Teema | Kentän tausta | Placeholderin väri | Kontrasti |
+|---|---|---|---|
+| usva | `rgb(64,64,64)` | `rgba(255,255,255,.45)` | 3,51:1 |
+| **aurinko** | `rgb(221,221,221)` | `rgba(255,255,255,.45)` | **1,15:1** |
+
+Mobiilissa parkkirivi on normaalissa virrassa eikä saa desktopin
+`background: rgba(26,26,26,.96)`-laattaa, joten se perii vaalean pinnan —
+valkoinen placeholder katoaa. Kirjoitettu teksti on kunnossa (11,26:1).
+
+**Korjaus:** tokenisoi placeholder ja kentän pinta sen sijaan että ne ovat
+kovakoodattua valkoista. Vähimmillään mobiilisääntö joka antaa parkkiriville
+saman tumman laatan kuin desktopilla, tai placeholder `var(--muted)`iin.
+
+**Sivulöydös samasta mittauksesta:** `#hdr-timer`in oma teksti on auringossa
+**2,84:1** (`rgb(45,36,23)` taustalla `rgb(114,106,90)`). PR #6:n muistiinpanot
+tunnistavat tämän (*"`#hdr-timer` on tumma widgetti kaikissa teemoissa, joten
+`var(--ink)` on siellä väärin"*), mutta korjaus ei kata mobiilileveyttä.
+
 ## 2. Löydetyt bugit
 
 ### 🔴 BLOKKAA MERGEN — PR #8: pikatehtäväksi muutettu sammakko jää sammakoksi
@@ -175,9 +254,17 @@ Lisäksi ajettu erikseen:
 
   | Teema | main | PR #6 | merge |
   |---|---|---|---|
-  | aurinko | 92 osumaa | **62** | 64 |
+  | aurinko | 185 osumaa | **102** | 103 |
   | usva | 72 | **52** | 52 |
   | havu | 72 | **52** | 52 |
+
+  ⚠️ **Korjattu 2026-08-09.** Ensimmäinen aurinkomittaus (92 → 62) oli väärä:
+  siemen asetti vain `data-theme`-attribuutin, jonka sovelluksen `initTheme`
+  ylikirjoitti `localStorage`n oletuksella `usva`. Osa "aurinko"-ajoista mittasi
+  siis usvaa. Siemen asettaa nyt myös `fap_theme`in. Suunta ei muutu — PR #6:n
+  parannus on itse asiassa selvästi suurempi kuin ensin raportoin (−83, ei −30) —
+  mutta aurinko jää yhä kaksi kertaa usvaa heikommaksi, mikä vastaa PR #6:n omaa
+  merkintää tietoisesti jätetystä ~50 `--accent`-osumasta.
 
   Merge-puun 2 lisäosumaa aurinkoteemassa ovat PR #8:n uusi pikanappi, ja
   molemmat ovat gradienttitaustalla → sondin tiedossa oleva väärä positiivi.
