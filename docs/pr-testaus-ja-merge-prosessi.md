@@ -33,10 +33,10 @@ juurisyyhyn, joka ei ollut missään PR:ssä vaan `main`issa.
 |---|---|
 | M1, M2 | ✅ Firebase-polut kunnossa |
 | **M3, M4** | 🔴 **Ajastin jää seisomaan vaiheen vaihtuessa** — juurisyy löydetty ja korjattu, ks. alla |
-| M5 | ⏭ ohitettu (esti M3) |
+| M5 | 🔴 matriisi aukesi itsestään — PR #7 puuttui |
 | M6, M7, M9, M10, M11, M12 | ✅ Aurinkoteema kunnossa |
-| M8 | ⏭ ohitettu |
-| **M13** | 🔴 Keskeytysparkki toimii, mutta placeholder näkymätön auringossa |
+| M8 | ⏭ testin kuvaus oli väärä, korjattu — ks. alla |
+| **M13** | 🔴 kierros 1 → ✅ kierros 2 (placeholder korjaantui) |
 | M14 | ✅ |
 | M15 | ⏭ ohitettu (vaatii Jaakon koneen) |
 
@@ -80,6 +80,62 @@ juuri niin kuin oikea laite tekee. Kontrolli ajettu: kaatuu korjaamattomaan
 haaralla, koska tauko ei koskaan alkanut automaattisesti. PR #7:n oma logiikka
 on kunnossa (20/20), mutta **se on testattava uudelleen tämän korjauksen
 päällä.**
+
+### Kierros 2 (2026-08-09) — oire vaihtui, PR #7 puuttui puusta
+
+Ajastinkorjauksen jälkeen M3:n oire muuttui: vaiheen vaihto toimii, mutta
+**matriisi aukeaa itsestään tauon alkaessa** ja **jono/odottavat eivät palaa
+tauon jälkeen**. Nämä ovat tarkalleen ne kaksi asiaa jotka PR #7 korjaa —
+`openEisePeek(true)` on olemassa vain `main`issa. Jaakon puussa oli siis PR #8
+ja PR #6 (M6–M14 menivät läpi) mutta ei PR #7:ää.
+
+Todennettu mittaamalla, ilmoituskonstruktori heittämään pakotettuna:
+
+| | merge ilman ajastinkorjausta | merge + ajastinkorjaus |
+|---|---|---|
+| Tauko käynnistyy itsestään | ❌ | ✅ |
+| Matriisi ei aukea itsestään | ✅ | ✅ |
+| Taukobanneri näkyvissä | ❌ | ✅ |
+| Fokustila vapautuu tauon jälkeen | ❌ | ✅ |
+| **Yhteensä** | **3/8** | **8/8** |
+
+**Kumpikin korjaus tarvitaan.** PR #7 yksin ei riitä (ajastin kuolee ennen kuin
+sen logiikka pääsee ajoon); ajastinkorjaus yksin ei riitä (auto-peek ja jumiin
+jäävä fokustila ovat yhä tallella). M3, M4 ja M5 menevät läpi vasta molempien
+kanssa.
+
+### ⚠️ Konflikti: ajastinkorjaus × PR #7 (`onPhaseEnd`)
+
+Molemmat muokkaavat `onPhaseEnd`ia → merge konfliktoi (3 hunkia).
+**Ratkaisu — yhdistä molempien tarkoitus:**
+
+```js
+  if(phase==='work'){
+    …
+    var isLong=pomoDone>=4;
+    if(isLong){pomoDone=0;phase='lbrk';tleft=LBRK;}
+    else{phase='sbrk';tleft=SBRK;}
+    startTmr();
+    _syncTimerUI();          // PR #7 — EI openEisePeek(true)
+    if(isLong){ …ilmoitukset… } else { …ilmoitukset… }
+  } else if(phase==='sbrk'||phase==='lbrk'){
+    phase='work';tleft=WORK;startAt=null;
+    if(tmr){clearInterval(tmr);tmr=null;}
+    setClockIcon(false);
+    _syncTimerUI();          // PR #7 — fokustila pois
+    updClock();render();
+    soundWater();
+    …ilmoitukset…            // oma korjaus: ilmoitukset viimeisenä
+  }
+```
+
+Kaksi asiaa jotka on helppo ratkaista väärin:
+- **`openEisePeek(true)` pudotetaan** — se on PR #7:n koko pointti.
+- **`closeEisePeek()` EI palaa** tauon loppuun. PR #7 poisti sen tarkoituksella,
+  jottei käyttäjän itse avaamaa matriisia suljeta hänen aliaan.
+
+Todennettu: koko suite täydellä puulla **143/144** (ainoa jäljellä oleva on
+PR #8:n sammakkobugi alla).
 
 ### 🔴 PR #8 — keskeytysparkin placeholder näkymätön auringossa
 
@@ -305,7 +361,7 @@ Näistä 2 on ollut **CLAUDE.md:ssä testaamattomana livenä 2026-07-28 alkaen.*
 - [ ] **M6** Aurinko + Lisää tehtävä: verbinapit, kvadranttivalitsin,
       arviovalitsin ja placeholderit luettavia; **uusi pikanappi luettava**
 - [ ] **M7** Aurinko + välilehdet: tekstit ja laskurimerkit näkyvissä
-- [ ] **M8** Aurinko + verbi-popover (▾): vaalea paneeli, tumma teksti
+- [ ] **M8** Aurinko + verbi-popover (▾): **Lisää tehtävä → Pilko tehtävä** → osatehtävien verbinappien ▾-nuoli. Odotettu: vaalea paneeli, tumma teksti. *(Kierroksella 1 kuvaus oli väärä — popover ei ole tehtävälistassa vaan pilkkomisnäkymässä, `#verb-pop` / `openVerbPop()`.)*
 - [ ] **M9** Aurinko + Ketju-paneeli: otsikko ja × näkyvissä
 - [ ] **M10** Aurinko + ajastin-popup (↗): kellonumerot tummia vaalealla
 - [ ] **M11** Usva & havu yleissilmäys: ennallaan, tyhjät tilat ja ×-napit

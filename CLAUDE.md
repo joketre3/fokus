@@ -588,3 +588,26 @@ Opit:
 - **Headless-teemasiemennys vaatii `fap_theme`in.** Pelkkä `data-theme`-attribuutti
   ei riitä: `initTheme` ylikirjoittaa sen `localStorage`n oletuksella. Tämä
   pilasi ensimmäisen aurinkokontrastimittauksen (raportoitu 92, oikea 185).
+
+### PR #7 + ajastinkorjaus: molemmat tarvitaan (2026-08-09)
+
+Manuaalitestin M3 oire vaihtui korjauskierrosten välillä, mikä paljasti kaksi
+eri vikaa samassa polussa:
+
+1. `pushNotif`-heitto tappoi vaiheenvaihdon (ks. edellinen osio) — ajastin ei
+   koskaan päässyt tauolle asti.
+2. Kun se korjattiin, alta paljastui `main`in alkuperäinen käytös: matriisi
+   aukeaa itsestään (`openEisePeek(true)`) ja `focus-mode` jää päälle tauon
+   jälkeen. Nämä ovat PR #7:n korjauskohteet.
+
+Mitattu: merge ilman ajastinkorjausta 3/8, merge + korjaus 8/8.
+
+- **Korjauksen jälkeen paljastuva uusi oire ei ole regressio** — se on vika joka
+  oli edellisen takana. Vertaa oiretta edelliseen, älä oleta samaa juurisyytä.
+- `onPhaseEnd` konfliktoi PR #7:n kanssa (3 hunkia). Yhdistettäessä:
+  `openEisePeek(true)` pudotetaan, `closeEisePeek()` EI palaa tauon loppuun
+  (PR #7 poisti sen tarkoituksella), `_syncTimerUI()` heti `startTmr()`:n
+  perään ja ilmoitukset viimeiseksi.
+- **Testattavan puun tunnistaminen on osa raportin lukemista.** "Matriisi
+  aukesi itsestään" kertoi yksiselitteisesti että PR #7 puuttui — yhden
+  funktiokutsun `grep -c` haaroittain vahvisti sen sekunneissa.
