@@ -2,13 +2,33 @@
 <html lang="fi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline' https://www.gstatic.com https://apis.google.com; connect-src https://api.anthropic.com https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://www.gstatic.com https://identitytoolkit.googleapis.com https://accounts.google.com; font-src https://fonts.gstatic.com; style-src 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; frame-src https://accounts.google.com https://fokus-a-priori.firebaseapp.com">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" id="meta-theme-color" content="#071009">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fokus">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png" sizes="192x192">
 <title>Fokus A Priori</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&family=Cinzel:wght@600;700&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
+  /* ── Mobiilin turva-alueet ja korkeus ──────────────
+     env() palauttaa 0px ilman viewport-fit=cover, joten nämä ovat
+     turvallisia myös työpöydällä. --mnav-h on alanavigaation korkeus
+     ilman turva-aluetta; --mnav-total on se mitä sisältö väistää.      */
+  --safe-t:env(safe-area-inset-top,0px);
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-l:env(safe-area-inset-left,0px);
+  --safe-r:env(safe-area-inset-right,0px);
+  --mnav-h:56px;
+  --mnav-total:calc(var(--mnav-h) + var(--safe-b));
+  --tap:44px;
+
   /* ── Usvametsä — 3 core colors ─────────────────── */
   /* 60% PINTA  — tumma metsänvihreä lasi             */
   --ink:rgba(255,255,255,.95);
@@ -733,7 +753,7 @@ html[data-theme="aurinko"] .card.needs-review{border-color:rgba(196,160,50,.40)!
 /* Header divider */
 html[data-theme="aurinko"] .hdr{border-bottom-color:rgba(180,130,70,.30)!important}
 /* Vaihe 6: yläpalkin varjo lämpimänä ruskeana desktopilla (tumma rgba liian kova vaalealla) */
-@media (min-width: 900px){
+@media (min-width: 900px) and (min-height: 501px){
   html[data-theme="aurinko"] .hdr{box-shadow:0 1px 0 var(--engrave-dim), 0 2px 0 rgba(120,80,30,.22)}
 }
 /* Vaihe 5: jonopino — vaalea kortti aurinko-teemassa */
@@ -842,7 +862,7 @@ html[data-theme="aurinko"][data-perf="lite"]{
   --surface-strong:rgba(245,235,210,.98);
 }
 /* Nopea tila: pöytäpinta ilman kohinatekstuuria — tasainen huopa + vinjetti (vain desktop-pöytä) */
-@media (min-width:900px){
+@media (min-width:900px) and (min-height:501px){
   html[data-perf="lite"] .wrap{
     background: radial-gradient(ellipse 130% 130% at 50% 50%, transparent 52%, var(--vignette) 100%), var(--table-felt) !important;
   }
@@ -854,7 +874,7 @@ html[data-theme="aurinko"][data-perf="lite"]{
 <script type="module">
   // 1. TÄRKEÄT IMPORTIT (Tässä on mukana Google-työkalut)
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
   import { initializeFirestore, persistentLocalCache, onSnapshot, doc, getDoc, setDoc, collection, getDocs, deleteDoc, query, where, collectionGroup } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   const firebaseConfig = {
@@ -1000,7 +1020,10 @@ html[data-theme="aurinko"][data-perf="lite"]{
 
   // ── Paikallisen datan tyhjennys (tilinvaihto / uloskirjautuminen) ──
   function _clearLocalAppData() {
-    const keep = /^(fap_theme|fap_perf|fap_onboarded|fap_timer_settings)$/;
+    // fap_device_id/-label ovat laitteen tunniste jaetussa istunnossa,
+    // eivät käyttäjädataa — id:n vaihtuminen tekisi laitteesta uuden
+    // osallistujan ja jättäisi vanhan "eläväksi" kahdeksi minuutiksi.
+    const keep = /^(fap_theme|fap_perf|fap_onboarded|fap_timer_settings|fap_device_id|fap_device_label)$/;
     const drop = [];
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
@@ -1077,6 +1100,63 @@ html[data-theme="aurinko"][data-perf="lite"]{
   };
   window._flushFsSave = _flushFsSave;
 
+  // aamu.html ja swipe.html kirjoittavat vain localStorageen ja delegoivat
+  // pilvitallennuksen window.openerille — niissä ei ole Firebase-SDK:ta.
+  // Mobiilissa ne avautuvat samaan välilehteen, jolloin openeria ei ole ja
+  // muutos jäisi vain laitteelle. Kun palataan, verrataan paikallista
+  // leimaa viimeksi pilveen kirjoitettuun ja työnnetään tarvittaessa.
+  window._pushLocalIfNewer = function() {
+    if (!window.currentUser) return false;
+    const wsId = localStorage.getItem('fap_active_ws') || 'work';
+    let ts = 0;
+    try { ts = (JSON.parse(localStorage.getItem('eis_v5_' + wsId) || '{}').updatedAt) || 0; }
+    catch(e) { return false; }
+    if (ts <= _lastFsWriteTs) return false;
+    console.log('☁️ Paikallinen data uudempi kuin pilvessä (' + ts + ' > ' + _lastFsWriteTs + ') → työnnetään');
+    window._scheduleFsSave();
+    return true;
+  };
+
+  // ── Firestore: jaettu istunto ──────────────────────────────────
+  // users/{uid}/session/live on pieni dokumentti joka kertoo MISSÄ
+  // TILASSA ajastin on — ei sitä paljonko aikaa on jäljellä. Aika
+  // tallennetaan määräaikana (endsAt), joten tikitys ei aiheuta yhtään
+  // kirjoitusta ja taustavälilehden throttlaus ei voi ajautua eteen.
+  // Kirjoituksia tulee vain siirtymissä: ~20–40 päivässä.
+  let _sessionUnsub = null;
+  let _lastSessionWriteTs = 0;
+
+  function _sessionRef() {
+    return doc(db, 'users', window.currentUser.uid, 'session', 'live');
+  }
+
+  window._sessionPush = function(state) {
+    if (!window.currentUser) return;
+    const payload = Object.assign({}, state, {updatedAt: Date.now()});
+    _lastSessionWriteTs = payload.updatedAt;
+    setDoc(_sessionRef(), payload, {merge: true})['catch'](function(e) {
+      console.warn('⚠️ Istunnon kirjoitus epäonnistui:', e.message);
+    });
+  };
+
+  window._sessionSubscribe = function() {
+    if (_sessionUnsub) { _sessionUnsub(); _sessionUnsub = null; }
+    if (!window.currentUser) return;
+    _sessionUnsub = onSnapshot(_sessionRef(), function(snap) {
+      if (!snap.exists()) return;
+      const d = snap.data();
+      // Oma echo — sama vertailu kuin työtiladokumentissa.
+      if (d.updatedAt && d.updatedAt === _lastSessionWriteTs) return;
+      if (typeof window._applyRemoteSession === 'function') window._applyRemoteSession(d);
+    }, function(err) {
+      console.warn('⚠️ Istunnon kuuntelu epäonnistui:', err.message);
+    });
+  };
+
+  window._sessionUnsubscribe = function() {
+    if (_sessionUnsub) { _sessionUnsub(); _sessionUnsub = null; }
+  };
+
   // ── Firestore: timer-asetukset ─────────────────────────────────
   window._saveTimerToFs = async function(work, sbrk, lbrk) {
     if (!window.currentUser) return;
@@ -1104,6 +1184,39 @@ html[data-theme="aurinko"][data-perf="lite"]{
   // ── Auth (Tarkistus & Datan lataus) ────────────────────────────
   function initAuth() {
     const auth = window._firebaseAuth;
+
+    // Redirect-kirjautumisen paluu. Ajettava ENNEN onAuthStateChangedia:
+    // muuten paluun virhe jää huomaamatta ja chip jää "syncing"-tilaan.
+    // Onnistuneesta paluusta ei tarvitse tehdä mitään — onAuthStateChanged
+    // laukeaa joka tapauksessa ja hoitaa datan latauksen.
+    getRedirectResult(auth).then(function(result) {
+      if (result && result.user) {
+        console.log('✅ Redirect-kirjautuminen onnistui:', result.user.uid);
+        _clearAuthPending();
+        return;
+      }
+      // Palasimme redirectistä ilman käyttäjää JA ilman virhettä: authDomain
+      // on eri origin kuin sovellus, ja selain on osioinut sen tallennuksen,
+      // joten paluutila katosi matkalla. Tämä epäonnistuu hiljaa — ilman
+      // omaa lippua käyttäjä näkisi vain sen ettei mitään tapahtunut.
+      if (_authPending()) {
+        _clearAuthPending();
+        console.warn('⚠️ Redirect palasi ilman käyttäjää — authDomainin paluutila katosi');
+        window._authState.sync = 'idle';
+        window._renderAuthUi();
+        if (typeof window.notify === 'function') {
+          window.notify('Kirjautuminen ei palautunut — yritä uudelleen');
+        }
+      }
+    }).catch(function(error) {
+      _clearAuthPending();
+      console.error('❌ Redirect-kirjautuminen epäonnistui:', error.code, error.message);
+      window._authState.sync = 'idle';
+      window._renderAuthUi();
+      if (typeof window.notify === 'function') {
+        window.notify(_AUTH_ERR[error.code] || 'Kirjautuminen epäonnistui');
+      }
+    });
 
     onAuthStateChanged(auth, async function(user) {
       // Päivitetään auth-UI (tilachip + tilimodaali + hampurilaisrivi)
@@ -1154,6 +1267,11 @@ html[data-theme="aurinko"][data-perf="lite"]{
         const fsTs = (fsData && fsData.updatedAt) || 0;
         const localTs = (localData && localData.updatedAt) || 0;
 
+        // Onko paikallinen data tämän tilin omaa? fap_data_uid asetetaan vasta
+        // kirjautuessa, joten sen puuttuminen tarkoittaa dataa joka syntyi
+        // kirjautumattomana eikä ole koskaan kuulunut tälle tilille.
+        const localIsOwned = prevUid === user.uid;
+
         if (fsHas && localHas) {
           // Aikaleimavertailu on mielekäs VAIN jos paikallinen data on saman
           // käyttäjän aiemmin synkattua dataa. Omistajaton paikallinen data
@@ -1168,6 +1286,8 @@ html[data-theme="aurinko"][data-perf="lite"]{
             if (!sameOwner) {
               console.log('🛟 Omistajaton paikallinen data (' + localData.tasks.length + ' tehtävää) → talteen ennen pilviversion käyttöä');
               _stashLocalBackup(wsId, localData);
+              // Ei hiljaista korvausta: kerro käyttäjälle mitä tapahtui.
+              if (typeof window.notify === 'function') window.notify('Tilin tehtävät korvasivat paikalliset');
             }
             console.log('☁️ Firestore voittaa → localStorageen (' + fsData.tasks.length + ' tehtävää)');
             localStorage.setItem(lsKey, JSON.stringify(fsData));
@@ -1176,6 +1296,9 @@ html[data-theme="aurinko"][data-perf="lite"]{
           console.log('☁️ Data ladattu Firestoresta (' + fsData.tasks.length + ' tehtävää)');
           localStorage.setItem(lsKey, JSON.stringify(fsData));
         } else if (localHas) {
+          // Tilillä ei ole dataa → paikallinen työ nostetaan pilveen.
+          // Tämä on ensikirjautumisen migraatio eikä hävitä mitään, joten
+          // se tehdään myös silloin kun paikallinen data ei ole "omaa".
           console.log('📦 Migraatio/palautus: localStorage → Firestore');
           await saveToFirestore(user.uid, wsId, localData);
         }
@@ -1189,10 +1312,14 @@ html[data-theme="aurinko"][data-perf="lite"]{
 
         startFsListener(user.uid, wsId);
         _markAuthResolved();
+        // Jaettu istunto (mobiilihaara): puhelin ja työpöytä samassa kellossa
+        if (typeof window._sessionSubscribe === 'function') window._sessionSubscribe();
 
       } else {
         window.currentUser = null;
         if (_fsSnapshotUnsub) { _fsSnapshotUnsub(); _fsSnapshotUnsub = null; }
+        window._sessionUnsubscribe();
+        if (typeof window._clearRemoteSession === 'function') window._clearRemoteSession();
         console.log('Odotetaan kirjautumista...');
         _markAuthResolved();
       }
@@ -1206,28 +1333,76 @@ html[data-theme="aurinko"][data-perf="lite"]{
     'auth/popup-closed-by-user': 'Kirjautuminen peruttu',
     'auth/cancelled-popup-request': 'Kirjautuminen peruttu',
     'auth/network-request-failed': 'Ei verkkoyhteyttä',
-    'auth/unauthorized-domain': 'Verkkotunnus ei ole sallittu'
+    'auth/unauthorized-domain': 'Verkkotunnus ei ole sallittu',
+    // iOS Safari osioi kolmannen osapuolen tallennuksen → paluutila katoaa.
+    'auth/missing-initial-state': 'Salli evästeet ja yritä uudelleen',
+    'auth/web-storage-unsupported': 'Selain estää tallennuksen'
   };
+
+  // ── Popup ensin, myös mobiilissa ────────────────────────────────
+  // Sovellus ajetaan joketre3.github.io:sta mutta authDomain on
+  // fokus-a-priori.firebaseapp.com. signInWithRedirect tallettaa paluutilan
+  // AUTHDOMAININ tallennukseen, jonka nykyselaimet osioivat kolmannen
+  // osapuolen kontekstina — paluu Googlelta ei löydä tilaa ja kirjautuminen
+  // epäonnistuu hiljaa. Näin kävi puhelimella sekä selaimessa että
+  // aloitusnäytön sovelluksessa.
+  //
+  // Popup ei kärsi samasta: se palauttaa tunnisteen postMessagella eikä
+  // nojaa säilyneeseen tilaan. Siksi popup on ensisijainen kaikkialla, ja
+  // redirect vain varareittinä jos popup on oikeasti estetty.
+  //
+  // Pysyvä ratkaisu on saada authDomain samaan originiin (Firebase Hosting).
+  const _AUTH_REDIRECT_ERR = [
+    'auth/popup-blocked',
+    'auth/operation-not-supported-in-this-environment'
+  ];
+
+  // Redirect epäonnistuu hiljaa: ilman lippua paluu ilman käyttäjää ei
+  // erotu siitä ettei kirjautumista koskaan yritetty.
+  function _markAuthPending(){ try{ sessionStorage.setItem('fap_auth_pending','1'); }catch(e){} }
+  function _authPending(){ try{ return sessionStorage.getItem('fap_auth_pending')==='1'; }catch(e){ return false; } }
+  function _clearAuthPending(){ try{ sessionStorage.removeItem('fap_auth_pending'); }catch(e){} }
+
+  function _newGoogleProvider() {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({prompt: 'select_account'});
+    return provider;
+  }
+
+  function _authRedirectFallback(auth, why) {
+    console.warn('⚠️ Popup ei onnistunut (' + why + ') → redirect');
+    _markAuthPending();
+    signInWithRedirect(auth, _newGoogleProvider()).catch(function(e){
+      _clearAuthPending(); _authFailed(e);
+    });
+  }
 
   window.kirjauduGooglella = function() {
     const auth = window._firebaseAuth;
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({prompt: 'select_account'});
     window._authState.sync = 'syncing';
     window._renderAuthUi();
-    signInWithPopup(auth, provider)
+
+    signInWithPopup(auth, _newGoogleProvider())
       .then((result) => {
         console.log("✅ Google-popup onnistui!", result.user.uid);
       }).catch((error) => {
-        console.error("❌ Virhe Google-kirjautumisessa:", error.message);
-        // Popup-virhe ei laukaise onAuthStateChangedia → tila on palautettava käsin.
-        window._authState.sync = 'idle';
-        window._renderAuthUi();
-        if (typeof window.notify === 'function') {
-          window.notify(_AUTH_ERR[error.code] || 'Kirjautuminen epäonnistui');
+        if (_AUTH_REDIRECT_ERR.indexOf(error.code) >= 0) {
+          _authRedirectFallback(auth, error.code);
+          return;
         }
+        _authFailed(error);
       });
   };
+
+  // Popup-/redirect-virhe ei laukaise onAuthStateChangedia → tila käsin.
+  function _authFailed(error) {
+    console.error("❌ Virhe Google-kirjautumisessa:", error.code, error.message);
+    window._authState.sync = 'idle';
+    window._renderAuthUi();
+    if (typeof window.notify === 'function') {
+      window.notify(_AUTH_ERR[error.code] || 'Kirjautuminen epäonnistui');
+    }
+  }
 
   window.kirjauduUlos = function() {
     // Vireillä oleva tallennus peruttava — muuten se kirjoittaisi juuri
@@ -1254,7 +1429,9 @@ html[data-theme="aurinko"][data-perf="lite"]{
   initAuth();
 </script>
 </head>
-<body>
+<!-- mtab-fokus on mobiilin oletusvälilehti. Luokka on merkkauksessa eikä
+     JS:ssä, jotta ensimmäinen maalaus osuu heti oikeaan tilaan. -->
+<body class="mtab-fokus view-inbox">
 <!-- Vaihe 9.6: Custom verbi-ikonien SVG sprite -->
 <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
 <defs>
@@ -1666,9 +1843,19 @@ html[data-theme="aurinko"][data-perf="lite"]{
         </div>
       </div>
 
-    <!-- ── Vaihe 5A TCG: Tehtäväkäsi-baari (desktop) ── -->
-    <div id="hand-bar" aria-label="Tehtäväkäsi">
-      <div id="hand-bar-cards"></div>
+    <!-- ── Vaihe 5A TCG: Tehtäväkäsi-baari ──
+         Työpöydällä viuhka joka avautuu hoverilla, mobiilissa hylly joka
+         lepää huulena ja nousee huulta napauttamalla. #hand-lip on vain
+         mobiilin kuori (CSS piilottaa sen työpöydällä) — se ei kuulu
+         #hand-bar-cardsiin, jonka renderHandBar tyhjentää joka renderissä. -->
+    <div id="hand-bar">
+      <div id="hand-bar-cards" role="group" aria-label="Tehtäväkäsi"></div>
+      <button type="button" id="hand-lip" aria-expanded="false" aria-controls="hand-bar-cards">
+        <span class="hand-lip__pill">
+          <span>Käsi</span>
+          <span class="hand-lip__count" id="hand-lip-count">0</span>
+        </span>
+      </button>
     </div>
     <button id="hand-toggle" onclick="toggleHandBar()" aria-label="Näytä/piilota tehtäväkäsi">
       <span class="htog-fan"><b></b><b></b><b></b></span>
@@ -1743,6 +1930,63 @@ html[data-theme="aurinko"][data-perf="lite"]{
     <div id="proj-list"></div>
     <div id="proj-empty" style="text-align:center;padding:3rem 1rem;color:var(--faint);font-size:var(--text-base);font-style:italic">Ei projekteja. Luo ensimmäinen projekti.</div>
   </div>
+
+  <!-- ── OHJAIN ──────────────────────────────────────────────────────
+       Sama sisältö kuin popoutTimer()-ikkunassa, mutta lähde on jaettu
+       istunto eikä window.opener. Napit kutsuvat samoja paikallisia
+       funktioita — työtila synkkaa, joten työpöytä poimii muutokset
+       omalla onSnapshotillaan. Erillistä komentoprotokollaa ei ole. -->
+  <div class="view" id="v-remote">
+    <div class="rmt-owner" id="rmt-owner"></div>
+    <div class="rmt-clock">
+      <svg class="rmt-ring" viewBox="0 0 80 80" id="rmt-ringbtn" role="button" tabindex="0"
+           aria-label="Käynnistä tai pysäytä pomodoro">
+        <circle cx="40" cy="40" r="34" fill="none" stroke="var(--subtle)" stroke-width="4"/>
+        <circle id="rmt-ring-prog" cx="40" cy="40" r="34" fill="none" stroke="var(--pomo)" stroke-width="4"
+                stroke-dasharray="213.6" stroke-dashoffset="0" stroke-linecap="round"
+                transform="rotate(-90 40 40)" style="transition:stroke-dashoffset .8s linear"/>
+      </svg>
+      <div class="rmt-time" id="rmt-time">25:00</div>
+      <div class="rmt-phase" id="rmt-phase"></div>
+      <div class="rmt-dots" id="rmt-dots" aria-hidden="true"></div>
+    </div>
+    <div class="rmt-task" id="rmt-task"></div>
+    <div class="rmt-btns">
+      <button type="button" class="pbtn" id="rmt-toggle">▶ Aloita</button>
+      <button type="button" class="pbtn" id="rmt-done">✓ Tehty</button>
+      <button type="button" class="pbtn" id="rmt-wait">⏳ Odottaa</button>
+      <button type="button" class="pbtn" id="rmt-next">→ Seuraava</button>
+    </div>
+    <div class="rmt-qtitle">Jono</div>
+    <div id="rmt-queue"></div>
+  </div>
+
+  <!-- ── MOBIILIN ALANAVIGAATIO ──────────────────────────────────────
+       Vain <900px. Peukalon ulottuvilla oleva korvaaja kahdelle 40px
+       napille jotka olivat ruudun vasemmassa alakulmassa. -->
+  <nav id="mnav" aria-label="Päänavigaatio">
+    <button type="button" class="mnav__btn" id="mnav-fokus" onclick="setMobileTab('fokus')">
+      <span class="mnav__ico" aria-hidden="true">◎</span><span class="mnav__lbl">Fokus</span>
+    </button>
+    <button type="button" class="mnav__btn" id="mnav-jono" onclick="setMobileTab('jono')">
+      <span class="mnav__ico" aria-hidden="true">≡</span><span class="mnav__lbl">Jono</span>
+      <span class="mnav__badge" id="mnav-jono-count" hidden></span>
+    </button>
+    <button type="button" class="mnav__btn mnav__btn--add" id="mnav-add"
+            onclick="wizIsOpen()?wizReset():wizStart()" aria-label="Lisää tehtävä">
+      <span class="mnav__plus" aria-hidden="true">+</span>
+    </button>
+    <button type="button" class="mnav__btn" id="mnav-matriisi" onclick="setMobileTab('matriisi')">
+      <span class="mnav__ico" aria-hidden="true">▦</span><span class="mnav__lbl">Matriisi</span>
+    </button>
+    <button type="button" class="mnav__btn" id="mnav-pakka" onclick="openInventory()">
+      <span class="mnav__ico" aria-hidden="true">▤</span><span class="mnav__lbl">Pakka</span>
+    </button>
+    <!-- Ohjain ilmestyy vain kun toinen laite on elossa (body.has-remote). -->
+    <button type="button" class="mnav__btn" id="mnav-ohjain" onclick="setMobileTab('ohjain')">
+      <span class="mnav__ico" aria-hidden="true">◈</span><span class="mnav__lbl">Ohjain</span>
+    </button>
+  </nav>
 </div>
 
 <style>
@@ -4248,7 +4492,7 @@ select:focus-visible{
 svg[aria-hidden="true"]{pointer-events:none;}
 
 /* ── VAIHE 1: TCG Desktop Layout (min-width: 900px) ────────────── */
-@media (min-width: 900px) {
+@media (min-width: 900px) and (min-height: 501px) {
   html, body {
     height: 100vh;
     overflow: hidden;
@@ -4651,7 +4895,7 @@ svg[aria-hidden="true"]{pointer-events:none;}
 /* Yhtenäinen näkymä: kahva keskitetyksi. Kahva on #arenan stacking-kontekstissa
    (z:10) eikä voi nousta paneelien (z:40) päälle → pidetään paneelivyöhykkeiden
    välissä. Oma media-lohko, koska globaali sääntö on desktop-blokin JÄLKEEN. */
-@media (min-width: 900px){
+@media (min-width: 900px) and (min-height: 501px){
   #eise-handle{
     left:50%; right:auto; transform:translateX(-50%);
     /* Väistetään KISKOT, ei koko paneelileveyttä: paneeli on auki vain hoverissa ja
@@ -4684,7 +4928,7 @@ svg[aria-hidden="true"]{pointer-events:none;}
    #eise-peek.on -säännön JÄLKEEN — @media ei nosta spesifisyyttä, joten
    lähdejärjestys ratkaisee. translateX(-50%) kuuluu MOLEMPIIN transformeihin:
    erillinen translateY ylikirjoittaisi keskityksen. */
-@media (min-width: 900px){
+@media (min-width: 900px) and (min-height: 501px){
   #eise-peek{
     left:50%; right:auto;
     width:100%; max-width:min(720px, calc(100% - 2 * var(--rail-w) - 2rem));
@@ -4815,6 +5059,468 @@ svg[aria-hidden="true"]{pointer-events:none;}
 .verb-pop button:hover{border-color:var(--accent);color:var(--ink)}
 .verb-pop button.on{border-color:var(--accent);background:var(--accent-dim);color:var(--ink)}
 @media (max-width:600px){.split-cols,.split-cols.split-3{grid-template-columns:1fr}}
+</style>
+
+<style id="mobile-shell">
+/* ══ MOBIILIRUNKO (<900px) ═══════════════════════════════════════════
+   Työpöytä on grid "topbar / stage" ≥900px. Alle sen sovellus oli tähän
+   asti pelkkä pystyyn valuva dokumentti, jossa areenakortti jäi taitteen
+   alle ja koko navigaatio oli kaksi 40px nappia alakulmassa.
+
+   Tämä lohko on TARKOITUKSELLA viimeisenä lähteessä: se voittaa
+   tasapisteissä vanhemmat max-width:768/640/600 -paikkaukset ilman
+   !important-viidakkoa. Työpöytä (≥900px) ei näe tästä mitään.
+
+   Katvealue 769–899px oli aiemmin ei-kenenkään-maata: mobiilipaikkaukset
+   loppuivat 768:aan mutta työpöytägrid alkoi vasta 900:sta. Siksi raja
+   on tässä 899.98px eikä 768px.                                        */
+
+/* Alanavigaatio on olemassa vain mobiilissa. */
+#mnav{display:none}
+/* Ohjain on mobiilinäkymä eikä koskaan esillä työpöydällä. */
+#v-remote{display:none}
+/* Käden huuli on mobiilin kuori: työpöydällä viuhka avautuu hoverilla. */
+#hand-lip{display:none}
+
+/* ── OHJAIN ──────────────────────────────────────────────────────── */
+.rmt-owner{
+  display:flex;align-items:center;justify-content:center;gap:.4rem;
+  font-size:var(--text-xs);font-weight:500;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--accent);
+  background:var(--accent-dim);
+  border:1px solid rgba(196,154,58,.4);
+  border-radius:var(--r-md);
+  padding:.5rem .75rem;margin-bottom:1rem;
+}
+.rmt-clock{display:flex;flex-direction:column;align-items:center;gap:.35rem}
+.rmt-ring{width:132px;height:132px;cursor:pointer;display:block}
+.rmt-time{font-family:'DM Serif Display',serif;font-size:2.6rem;line-height:1;letter-spacing:-.02em;color:var(--ink)}
+.rmt-phase{font-size:var(--text-xs);font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);min-height:1em}
+.rmt-dots{display:flex;gap:5px}
+.rmt-dots span{width:8px;height:8px;border-radius:var(--r-full);background:var(--subtle)}
+.rmt-dots span.done{background:var(--pomo)}
+.rmt-dots span.active{background:var(--accent);box-shadow:0 0 6px rgba(196,154,58,.6)}
+.rmt-task{
+  text-align:center;font-size:var(--text-base);color:var(--ink);font-weight:300;
+  margin:1rem 0;min-height:1.4em;
+}
+.rmt-btns{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1.25rem}
+.rmt-btns .pbtn{min-height:var(--tap)}
+.rmt-qtitle{
+  font-size:var(--text-xs);font-weight:500;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:.5rem;
+}
+.rmt-qi{
+  display:flex;align-items:center;gap:.5rem;
+  padding:.55rem .65rem;margin-bottom:.35rem;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);
+}
+.rmt-qi-dot{width:8px;height:8px;border-radius:var(--r-full);flex-shrink:0}
+.rmt-qi-name{flex:1;font-size:var(--text-sm);font-weight:300;color:var(--ink)}
+.rmt-qi-name.cur{font-weight:500;color:var(--accent)}
+.rmt-qi-rm{
+  background:none;border:none;cursor:pointer;color:var(--muted);
+  font-size:1.1rem;line-height:1;min-width:var(--tap);min-height:var(--tap);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.rmt-empty{font-size:var(--text-xs);color:var(--subtle);font-style:italic;padding:.5rem 0}
+
+@media (max-width:899.98px), (max-height:500px){
+
+  /* ── Sovelluskehys: yksi ruudullinen, sivu ei vierry ───────────── */
+  html,body{height:100%;overflow:hidden}
+  body{padding:0}
+  /* Vanha globaali käsiviuhkan pehmuste (rivi ~2805) ei koske mobiilia. */
+  body,body.hand-open,body.hand-hidden{padding-bottom:0}
+
+  .wrap{
+    max-width:none;
+    margin:0;
+    height:100vh;
+    height:100dvh;              /* dvh kutistuu iOS:n osoitepalkin mukana */
+    display:grid;
+    grid-template-rows:auto 1fr auto;
+    grid-template-columns:100%;
+    padding:var(--safe-t) var(--safe-r) 0 var(--safe-l);
+    background:var(--table-felt-deep,var(--room-bg));
+  }
+
+  /* Näkymät jaetaan riveille eksplisiittisesti. Vain yksi .view on
+     kerrallaan näkyvissä, joten ne voivat kaikki jakaa rivin 2 —
+     järjestykseen luottaminen hajoaisi heti kun sv() vaihtaa näkymää. */
+  .hdr{grid-row:1;grid-column:1}
+  #main-content-area,#v-matrix,#v-done,#v-projects{
+    grid-row:2;
+    /* grid-column on pakko kertoa: pelkkä grid-row jättää sijoituksen
+       automaattiselle algoritmille, joka työntää seuraavat näkymät
+       implisiittisiin SARAKKEISIIN — matriisi päätyi x=500 eli ruudun
+       ulkopuolelle vaikka sen display oli block. */
+    grid-column:1;
+    min-height:0;               /* ilman tätä grid-rivi ei anna vierittää */
+    overflow-y:auto;
+    overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+    padding:.75rem .75rem 1rem;
+  }
+  #mnav{grid-row:3;grid-column:1}
+
+  /* ── Yläpalkki kutistuu 52px:iin ───────────────────────────────── */
+  .hdr{
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    flex-wrap:nowrap;
+    gap:.55rem;
+    min-height:52px;
+    /* vasemmalla ☰ (44px), oikealla ajastinchip — molemmat fixed */
+    padding:.35rem 10.5rem .35rem 4rem;
+    margin-bottom:0;
+    border-bottom:1px solid var(--border);
+  }
+  .hdr>div:first-child{display:flex;align-items:center;min-width:0}
+  .hdr svg{width:88px;height:20px;margin-bottom:0!important;flex-shrink:0}
+  /* Iso "+ Lisää tehtävä" ja päivämäärä siirtyvät pois yläpalkista:
+     lisäys on alanavigaation +, ja päivämäärä on aina kuluva päivä. */
+  #btn-add-task,#dt{display:none}
+  #hdr-right{gap:.35rem;flex-wrap:nowrap}
+  /* Tilachip pelkkänä pisteenä — väri kertoo tilan, teksti veisi
+     yläpalkista tilan jonka ajastin tarvitsee. Koko tila on yhä
+     luettavissa chippiä napauttamalla ja hampurilaisvalikosta. */
+  #auth-chip-label{display:none}
+  #auth-chip{min-width:34px;min-height:34px;justify-content:center;padding:.3rem}
+
+  /* ☰ yläpalkin vasempaan reunaan, kosketuskokoisena */
+  #ham-btn{
+    top:calc(var(--safe-t) + .45rem);
+    bottom:auto;
+    left:calc(var(--safe-l) + .6rem);
+    width:var(--tap);height:var(--tap);
+  }
+  /* Pakka on alanavigaatiossa — kelluva 📦-nappi olisi päällekkäinen. */
+  #inv-btn{display:none}
+
+  /* Ajastinchip yläpalkin oikeaan reunaan */
+  #hdr-timer{
+    top:calc(var(--safe-t) + .45rem);
+    right:calc(var(--safe-r) + .6rem);
+  }
+
+  /* ── Työpöydän lavasteet pois ──────────────────────────────────── */
+  /* PAKKA-palkki ja kiskot ovat 900px+ -metaforia. Käsi EI ole lavaste
+     vaan TCG-mallin ydinkäsite — se saa oman mobiilikuorensa alempana.
+     #hand-toggle pysyy piilossa: kolmas kelluva nappi alakulmassa oli
+     juuri se ongelma jonka alanavigaatio ratkaisi. */
+  #hand-toggle,#deck-rail,.table-ledge,.side-panel__tab{display:none!important}
+  /* Matriisi on nyt oma välilehtensä — kahva veisi 48px kortin päältä. */
+  #eise-handle,#eise-peek{display:none!important}
+  #arena{padding-top:0}
+
+  /* ── Välilehtien sisältö ───────────────────────────────────────── */
+  /* Sivupaneelit piiloon oletuksena (Fokus), esiin Jono-välilehdellä.
+     Vanha sääntö piilotti nämä vasta <600px, mikä jätti 600–899px
+     rikkinäiseen välitilaan. */
+  .side-panel--left,.side-panel--right{display:none}
+  /* Matriisi / Tehty / Projektit: areena ja paneelit kokonaan pois tieltä. */
+  body:not(.view-inbox) #arena,
+  body:not(.view-inbox) .side-panel--left,
+  body:not(.view-inbox) .side-panel--right{display:none!important}
+  body.mtab-jono.view-inbox .side-panel--left,
+  body.mtab-jono.view-inbox .side-panel--right{
+    display:flex;
+    width:100%;
+    height:auto;                /* muuten paneeli venyy ja jättää tyhjää */
+    margin:0 0 .85rem;
+    transform:none;
+    visibility:visible;
+  }
+  body.mtab-jono #arena{display:none}
+  body.mtab-jono .side-panel__body{width:100%;max-height:none}
+  /* Aktiivinen näkymä luetaan alanavigaatiosta — ☰ on mobiilissa vain
+     44px nappi, johon teksti ei mahdu. */
+  .ham-view-label{display:none!important}
+
+  /* Ohjain on mobiilinäkymä; välilehti ilmestyy vain kun toinen laite
+     on elossa, jolloin navigaatio kasvaa viidestä kuuteen. */
+  #v-remote{grid-row:2;grid-column:1;min-height:0;overflow-y:auto;padding:.75rem .75rem 1rem}
+  #v-remote.on{display:block}
+  #mnav-ohjain{display:none}
+  body.has-remote #mnav{grid-template-columns:repeat(6,1fr)}
+  body.has-remote #mnav-ohjain{display:flex}
+
+  /* Kvadrantin oletus-min-width on auto, jolloin pitkä sana leventää
+     sarakkeen yli ruudukon ja oikea palsta leikkautuu. */
+  #v-matrix .quad{min-width:0}
+}
+
+/* Kapea ruutu: matriisi pinoon. 2×2 vaatii ~700px ollakseen luettava, ja
+   rivi-/sarakeotsikot (Kiireinen / Tärkeä) ovat merkityksellisiä vain
+   ruudukkomuodossa — kvadranttien omat otsikot kertovat saman. */
+@media (max-width:599.98px){
+  #v-matrix .mgrid{grid-template-columns:1fr;grid-template-rows:none;gap:.7rem}
+  #v-matrix .mgrid>div:first-child,
+  #v-matrix .clbl,
+  #v-matrix .rlbl{display:none}
+  #v-matrix .quad{min-height:0}
+}
+
+@media (max-width:899.98px), (max-height:500px){
+
+  /* ── Alanavigaatio ─────────────────────────────────────────────── */
+  #mnav{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    align-items:stretch;
+    height:calc(var(--mnav-h) + var(--safe-b));
+    padding-bottom:var(--safe-b);
+    background:
+      linear-gradient(0deg,var(--well-bg,rgba(0,0,0,.35)),var(--well-bg,rgba(0,0,0,.35))),
+      var(--table-felt-deep,var(--room-bg));
+    box-shadow:0 -1px 0 var(--engrave-dim,var(--border)),0 -8px 24px rgba(0,0,0,.35);
+  }
+  .mnav__btn{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:.12rem;
+    min-height:var(--tap);
+    border:none;background:none;
+    color:var(--muted);
+    font-family:'DM Sans',sans-serif;
+    cursor:pointer;
+    position:relative;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .mnav__ico{font-size:1.15rem;line-height:1}
+  .mnav__lbl{font-size:.62rem;letter-spacing:.04em}
+  .mnav__btn[aria-current="page"]{color:var(--accent)}
+  .mnav__btn[aria-current="page"]::before{
+    content:'';position:absolute;top:0;left:22%;right:22%;height:2px;
+    background:var(--accent);border-radius:0 0 2px 2px;
+  }
+  .mnav__btn:active{background:rgba(255,255,255,.06)}
+  /* Lisäysnappi: kullattu, mutta ei ympyrä joka rikkoisi rivin rytmin */
+  .mnav__btn--add .mnav__plus{
+    display:flex;align-items:center;justify-content:center;
+    width:40px;height:40px;border-radius:var(--r-md);
+    border:1.5px solid var(--gold,var(--accent));
+    color:var(--gold-hi,var(--accent));
+    font-size:1.4rem;line-height:1;
+    background:linear-gradient(160deg,var(--plate-top),var(--plate-bot));
+    box-shadow:var(--chip-shadow);
+  }
+  .mnav__btn--add:active .mnav__plus{transform:translateY(1px);box-shadow:var(--chip-shadow-dn)}
+  .mnav__badge{
+    position:absolute;top:5px;right:calc(50% - 20px);
+    min-width:16px;height:16px;padding:0 4px;
+    border-radius:8px;
+    background:var(--accent);color:#1a1c18;
+    font-size:.6rem;font-weight:600;line-height:16px;text-align:center;
+  }
+
+  /* ── Kelluvat kerrokset väistävät alanavigaatiota ──────────────── */
+  .notif{bottom:calc(var(--mnav-total) + 1rem)}
+  #ham-sheet{padding-bottom:calc(2rem + var(--safe-b));max-height:78dvh}
+  #inv-modal{padding-bottom:var(--safe-b)}
+
+  /* ══ KENTTÄTILA ═══════════════════════════════════════════════════
+     3D-huone (seinä, lattia, valopooli, heittovarjo, taustaecho) on
+     työpöydän lavaste: se olettaa leveän areenan ja on mobiilin
+     raskain efekti. Kortti jää, huone lähtee. */
+  #arena-room{display:none!important}
+  #arena{perspective:none}
+
+  .tcg-card.tcg-card--arena-size{
+    /* Ei kallistusta eikä nostoa — kortti makaa ruudulla. Inline-style
+       ei ole tässä pelissä: staattinen transform kuuluu sääntöön. */
+    transform:none;
+    margin:0 auto;              /* kortti oli vasempaan reunaan sidottu */
+    max-width:min(320px,88vw);
+    will-change:auto;
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,.10),
+      inset 0 0 0 3px rgba(0,0,0,.35),
+      0 6px 18px rgba(0,0,0,.45);
+  }
+  .tcg-card.tcg-card--arena-size:hover{transform:none}
+
+  /* Kortin toimintonapit kosketuskokoon. */
+  .tcg-card__actions-tcg{gap:.4rem;padding:.5rem}
+  .tcg-card__actions-tcg button{min-height:var(--tap);font-size:.8rem}
+
+  /* Areenan otsikkorivi on mobiilissa turha koriste — kortti on ainoa
+     asia ruudulla, eikä sitä tarvitse nimetä. */
+  #arena-label{display:none}
+
+  /* Eleen suuntapalaute. Vihje on #arenan pseudo-elementissä eikä kortin
+     sisällä, koska render() luo kortin uudelleen jokaisella muutoksella. */
+  #arena{position:relative}
+  #arena[data-swipe]::before{
+    content:attr(data-swipe-label);
+    position:absolute;top:50%;left:50%;
+    transform:translate(-50%,-50%);
+    z-index:4;pointer-events:none;
+    font-family:'DM Sans',sans-serif;
+    font-size:.78rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;
+    padding:.5rem .9rem;border-radius:var(--r-md);
+    background:rgba(10,16,12,.82);
+    border:1px solid var(--border);
+    color:var(--ink);
+  }
+  #arena[data-swipe="done"]::before{content:'✓ Tehty';border-color:var(--q2);color:#9fc89f}
+  #arena[data-swipe="wait"]::before{content:'⏳ Odottaa';border-color:var(--wait);color:#8fb6cf}
+  #arena[data-swipe="next"]::before{content:'→ Seuraava';border-color:var(--accent);color:var(--accent)}
+  #arena[data-swipe=""]::before{content:none}
+
+  /* ══ TEHTÄVÄKÄSI ══════════════════════════════════════════════════
+     Käsi = mitä voisit pelata seuraavaksi (buildHandQueue: q1/q2 jotka
+     eivät ole areenalla eivätkä jonossa). Se kuuluu Fokus-välilehdelle,
+     mutta ei saa kilpailla areenakortin kanssa — siksi se lepää
+     huulena ja nousee vasta napautuksesta.
+
+     Datapolku on jo elossa: renderHandBar() täyttää #hand-bar-cardsin
+     joka renderissä myös mobiilissa. Tässä on pelkkä kuori.           */
+  #hand-bar{
+    /* Globaali sääntö on bottom:0 — se peittäisi alanavigaation. */
+    bottom:var(--mnav-total);
+    left:0;right:0;
+    height:calc(var(--hand-card-h,182px) + .5rem);
+    overflow:hidden;            /* rajausikkuna: kortit eivät vuoda navin yli */
+    pointer-events:none;
+    z-index:55;                 /* alanavigaation (auto) päällä, modaalien alla */
+  }
+  #hand-bar-cards{
+    position:absolute;left:0;right:0;bottom:0;
+    height:var(--hand-card-h,182px);
+    /* Vaakavieritys viuhkan sijaan: viisi 130px korttia -12px limityksellä
+       vie 554px eikä mahdu 390px ruudulle. Työpöydällä limityksen voi
+       tehdä koska :hover nostaa kortin esiin — kosketuksella hoveria ei
+       ole, joten valinta tapahtuisi lukukelvottomista siivuista. */
+    display:flex;
+    justify-content:flex-start;
+    align-items:flex-end;
+    gap:0;
+    overflow-x:auto;
+    overflow-y:hidden;
+    scroll-snap-type:x proximity;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior-x:contain;
+    padding:0 .75rem;
+    scrollbar-width:none;
+    pointer-events:auto;
+    transform:translateY(calc(100% - var(--hand-peek-h,36px)));
+  }
+  #hand-bar-cards::-webkit-scrollbar{display:none}
+  #hand-bar.hand-bar--open #hand-bar-cards{transform:translateY(0)}
+
+  /* Kortit: työpöydän limitys säilyy, kierrot eivät — vinot kortit
+     vaakavierityksessä näyttävät rikkinäisiltä, eivät viuhkalta. */
+  #hand-bar-cards .tcg-card--hand{
+    scroll-snap-align:center;
+    flex:none;
+  }
+  #hand-bar-cards .tcg-card--hand:nth-child(1),
+  #hand-bar-cards .tcg-card--hand:nth-child(2),
+  #hand-bar-cards .tcg-card--hand:nth-child(3),
+  #hand-bar-cards .tcg-card--hand:nth-child(4),
+  #hand-bar-cards .tcg-card--hand:nth-child(5){transform:none}
+
+  /* Hover-silta on 64px näkymätön alue kortin ALLA. Kosketuksella se
+     ulottuisi alanavigaation päälle ja kaappaisi napautukset. */
+  .tcg-card--hand::after{content:none}
+
+  /* Huuli on oma napautuskohteensa: sitä painamalla hylly aukeaa.
+     Kortit ovat sen alla ja saavat napautuksen vasta auki-tilassa. */
+  #hand-lip{
+    position:absolute;left:0;right:0;bottom:0;
+    height:var(--hand-peek-h,36px);
+    z-index:2;
+    pointer-events:auto;
+    display:flex;align-items:center;justify-content:center;
+    /* Läpinäkyvä: kortit kuultavat huulen läpi, pilleri on ainoa maali.
+       Ilman tätä nappia peek-alueen napautus osuisi korttiin ja
+       nostaisi sen areenalle vahingossa. */
+    background:none;border:none;padding:0;
+    -webkit-tap-highlight-color:transparent;
+    cursor:pointer;
+  }
+  #hand-bar.hand-bar--open #hand-lip{display:none}
+  .hand-lip__pill{
+    display:inline-flex;align-items:center;gap:.4rem;
+    padding:.2rem .6rem;border-radius:10px;
+    background:var(--well-bg,rgba(0,0,0,.55));
+    box-shadow:0 1px 0 var(--engrave-dim,var(--border)),0 2px 10px rgba(0,0,0,.4);
+    font-family:'DM Sans',sans-serif;
+    font-size:.6rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--muted);
+  }
+  .hand-lip__count{
+    min-width:16px;height:16px;padding:0 4px;border-radius:8px;
+    background:var(--accent);color:#1a1c18;
+    font-size:.6rem;font-weight:600;line-height:16px;text-align:center;
+  }
+  #hand-lip:active .hand-lip__pill{transform:translateY(1px)}
+  /* Käsi tyhjänä: ei huulta eikä hyllyä — ei tyhjää laatikkoa. */
+  #hand-bar.hand-bar--empty{display:none}
+
+  /* Ajastin käynnissä: käsi pois kokonaan. body.focus-mode asetetaan jo
+     toggleTimerissä ja poistetaan stopAllissa — CSS oli vain
+     työpöytälohkossa, joten mobiili saa piilotuksen ilman uutta tilaa.
+     visibility:hidden eikä pelkkä transform, jotta kortit poistuvat
+     tab-järjestyksestä (WCAG 2.4.3/2.4.7). */
+  body.focus-mode #hand-bar{
+    visibility:hidden;
+    pointer-events:none;
+    transition:visibility 0s linear var(--dur-panel,300ms);
+  }
+  body.focus-mode #hand-bar-cards{transform:translateY(100%)}
+
+  /* Käsi kuuluu vain Fokus-välilehdelle. */
+  body:not(.view-inbox) #hand-bar,
+  body.mtab-jono #hand-bar{display:none}
+
+  /* Sisältörivi väistää huulta, ettei areenakortin alareuna jää sen alle. */
+  body.mtab-fokus.view-inbox #main-content-area{
+    padding-bottom:calc(var(--hand-peek-h,36px) + 1rem);
+  }
+}
+
+/* Näppäimistöllä hyllyyn tabattaessa kortti olisi 80 % ruudun alapuolella.
+   Sivupaneeleissa tämä on hoidettu :focus-withinillä, kädessä ei ollut. */
+@media (max-width:899.98px), (max-height:500px){
+  #hand-bar:focus-within #hand-bar-cards{transform:translateY(0)}
+  #hand-bar:focus-within #hand-lip{display:none}
+}
+
+/* ── Vaakapuhelin: korkeutta on alle 500px ──────────────────────────
+   Käytettävää korkeutta jää ~210–260px. 5:7-kortti siinä korkeudessa on
+   ~150–185px leveä eli lukukelvoton. Ratkaisu ei ole kutistaa korttia
+   vaan pudottaa siitä se osa joka ei kanna tietoa: iso kuvitus. Kortti
+   muuttuu automaattikorkuiseksi ja mahtuu kokonaan ruudulle.           */
+@media (orientation:landscape) and (max-height:500px){
+  .hdr{min-height:44px;padding-top:.2rem;padding-bottom:.2rem}
+  #mnav{height:calc(46px + var(--safe-b))}
+  .mnav__lbl{display:none}
+  .mnav__btn--add .mnav__plus{width:34px;height:34px;font-size:1.2rem}
+  /* Käsi on pystyasennon ominaisuus: vaakana areenakortin jälkeen jää
+     ~9px, joten 182px hylly peittäisi juuri sen kortin jota katsot. */
+  #hand-bar{display:none}
+  body.mtab-fokus.view-inbox #main-content-area{padding-bottom:0}
+  #main-content-area,#v-matrix,#v-done,#v-projects{padding:.5rem .75rem}
+
+  /* Ajastinchip mahtuu 44px yläpalkkiin vasta kutistettuna. */
+  #hdr-timer{padding:.25rem .45rem;border-radius:11px}
+  .hdr-timer__ring-wrap,.hdr-timer__ring-svg{width:24px;height:24px}
+  .hdr-timer__time{font-size:.85rem}
+
+  .tcg-card.tcg-card--arena-size{
+    aspect-ratio:auto;
+    height:auto;
+    max-width:min(460px,72vw);
+  }
+  /* Kuvitus pois — kvadranttitausta (.tcg-card__qart) jää, joten kortin
+     väri-identiteetti säilyy. */
+  .tcg-card--arena-size .tcg-card__art{display:none}
+  .tcg-card--arena-size .tcg-card__body{padding-top:.5rem}
+}
 </style>
 
 <!-- Vaihe 6c: Ajastinasetukset -->
@@ -5263,6 +5969,90 @@ var newTags=[],newProjectId=null;
 var projects=[],pnid=1;
 var tmr=null,tleft=25*60,phase='idle',startAt=null,startTleft=25*60;
 var pomoDone=0;
+
+// ── JAETTU ISTUNTO ──────────────────────────────────────────────────
+// Puhelin ja työpöytä ovat sama istunto: ajastimen tila elää
+// Firestoressa määräaikana (endsAt), ja kumpi tahansa laite ohjaa sitä.
+// Kirjautumattomana kaikki tämä on no-op ja sovellus toimii kuten ennen.
+var _sessionOwner=null;      // laitteen id joka viimeksi ohjasi ajastinta
+var _sessionOwnerLabel='';
+var _sessionSeenTs=0;        // milloin toisen laitteen tila viimeksi nähtiin
+var _applyingRemote=false;   // estää kaiun: etätila ei saa kirjoittaa takaisin
+
+function _deviceId(){
+  var id=localStorage.getItem('fap_device_id');
+  if(!id){
+    id=(Date.now().toString(36)+Math.random().toString(36).slice(2,8));
+    localStorage.setItem('fap_device_id',id);
+  }
+  return id;
+}
+function _deviceLabel(){
+  var saved=localStorage.getItem('fap_device_label');
+  if(saved)return saved;
+  return _isMobileLayout()?'Puhelin':'Työpöytä';
+}
+
+// Toinen laite katsotaan eläväksi kahden minuutin ajan viimeisestä
+// viestistä — sen jälkeen Ohjain-välilehti katoaa itsestään.
+function _remoteDeviceLive(){
+  return !!_sessionOwner && _sessionOwner!==_deviceId()
+      && (Date.now()-_sessionSeenTs)<120000;
+}
+// Seuraaja ei sitouta vaiheenvaihtoa: muuten pomos ja pomoDone
+// kasvaisivat kahdesti kun molemmat laitteet laskevat nollaan.
+function _isSessionFollower(){
+  return !!window.currentUser && !!_sessionOwner && _sessionOwner!==_deviceId();
+}
+
+function _pushSession(){
+  if(_applyingRemote)return;
+  if(typeof window._sessionPush!=='function')return;
+  _sessionOwner=_deviceId();
+  _sessionOwnerLabel=_deviceLabel();
+  window._sessionPush({
+    wsId:getActiveWsId(),
+    phase:phase,
+    running:!!tmr,
+    endsAt:tmr?(Date.now()+tleft*1000):null,
+    remaining:tleft,
+    pomoDone:pomoDone,
+    owner:_sessionOwner,
+    ownerLabel:_sessionOwnerLabel
+  });
+}
+
+window._applyRemoteSession=function(d){
+  if(!d)return;
+  // Eri työtila → ei kuulu tähän näkymään.
+  if(d.wsId&&d.wsId!==getActiveWsId())return;
+  if(d.owner===_deviceId())return;
+  _applyingRemote=true;
+  try{
+    _sessionOwner=d.owner||null;
+    _sessionOwnerLabel=d.ownerLabel||'';
+    _sessionSeenTs=Date.now();
+    phase=d.phase||'idle';
+    pomoDone=d.pomoDone||0;
+    if(d.running&&d.endsAt){
+      // Aika luetaan määräajasta, ei lähetetystä jäljellä-arvosta:
+      // viive verkossa ei kerry kelloon.
+      tleft=Math.max(0,Math.round((d.endsAt-Date.now())/1000));
+      startAt=Date.now();startTleft=tleft;
+      if(!tmr){tmr=setInterval(tick,250);setClockIcon(true);keepAwake();_requestWakeLock();}
+    }else{
+      tleft=(typeof d.remaining==='number')?d.remaining:WORK;
+      if(tmr){clearInterval(tmr);tmr=null;}
+      startAt=null;setClockIcon(false);stopKeepAwake();
+    }
+    updClock();render();
+  }finally{_applyingRemote=false;}
+};
+
+window._clearRemoteSession=function(){
+  _sessionOwner=null;_sessionOwnerLabel='';_sessionSeenTs=0;
+  render();
+};
 var totalPomos=0; // total today
 var collapsedProjects={}; // persist collapse state across renders
 
@@ -5850,6 +6640,9 @@ function toggleFrog(id){
 }
 
 function popoutTimer(){
+  // Mobiilissa erillinen ikkuna avautuisi välilehdeksi, joka menettää
+  // window.opener-yhteyden — ja sama sisältö on jo Ohjain-näkymässä.
+  if(_isMobileLayout()){setMobileTab('ohjain');return;}
   var popup=window.open('','FokusTimer','width=320,height=520,resizable=yes,scrollbars=no');
   if(!popup){notify('Salli ponnahdusikkunat selaimessa');return;}
 
@@ -5985,6 +6778,7 @@ function popoutTimer(){
 function resetCycle(){
   pomoDone=0;
   save();updClock();
+  _pushSession();
   notify('Kierros nollattu — aloitetaan alusta.');
 }
 
@@ -6783,15 +7577,187 @@ function sv(n){
   var m={inbox:'Tehtävälista',matrix:'Matriisi',done:'Tehty',projects:'Projektit'};
   document.querySelectorAll('.tab').forEach(function(t){if(t.textContent.trim().startsWith(m[n]))t.classList.add('on')});
   _curView=n;
+  // Areena ja sivupaneelit ovat #main-content-arean sisällä eivätkä siis
+  // .view-elementtejä — sv() ei piilota niitä. Mobiilissa ne jäisivät
+  // matriisin/tehtyjen päälle (areena on positioitu, .view ei), joten
+  // näkymä on kerrottava myös bodylle jotta CSS voi piilottaa ne.
+  document.body.classList.remove('view-inbox','view-matrix','view-done','view-projects');
+  document.body.classList.add('view-'+n);
   _updateHamViewLabel();
+  _syncMnav();
   render();
 }
 function _updateHamViewLabel(){
   var label=document.getElementById('ham-view-label');
-  var names={inbox:'',matrix:'Matriisi',done:'Tehty',projects:'Projektit'};
+  var names={inbox:'',matrix:'Matriisi',done:'Tehty',projects:'Projektit',remote:'Ohjain'};
   var name=names[_curView]||'';
   if(label){label.textContent=name;label.hidden=!name;}
 }
+
+// Yksi totuuden lähde sille milloin mobiilirunko on käytössä. Pidettävä
+// synkassa mobile-shell-lohkon media-ehdon kanssa: leveä mutta matala
+// ruutu (vaakapuhelin 932×430) saa mobiilirungon, ei työpöytägridiä.
+function _isMobileLayout(){
+  return !matchMedia('(min-width:900px) and (min-height:501px)').matches;
+}
+
+// ── MOBIILIN ALANAVIGAATIO ──────────────────────────────────────────
+// Välilehdet eivät ole uusia näkymiä vaan olemassa olevan DOM:n
+// näyttämistä eri tavalla: Fokus = areena, Jono = molemmat sivupaneelit
+// pinossa. Siksi tämä ei tarvitse omaa render-funktiota — renderTurnPanel
+// ja renderWaiting piirtävät saman sisällön kuin työpöydällä.
+var _mtab='fokus';
+
+var MTAB_VIEW={fokus:'inbox',jono:'inbox',matriisi:'matrix',ohjain:'remote'};
+
+function setMobileTab(name){
+  _mtab=name;
+  document.body.classList.remove('mtab-fokus','mtab-jono','mtab-matriisi','mtab-ohjain');
+  document.body.classList.add('mtab-'+name);
+  // sv() kutsuu renderin ja _syncMnavin — ei tuplakutsua tässä.
+  sv(MTAB_VIEW[name]||'inbox');
+}
+
+function _syncMnav(){
+  var nav=document.getElementById('mnav');
+  if(!nav)return;
+  // Ohjain-välilehti ilmestyy itsestään kun toinen laite on elossa, ja
+  // pysyy niin kauan kuin näkymä on auki. Se toimii myös yksin: silloin
+  // se on iso kello joka ohjaa tätä laitetta ("Tämä laite ohjaa").
+  document.body.classList.toggle('has-remote',_remoteDeviceLive()||_curView==='remote');
+
+  // Tehty/Projektit avataan hampurilaisvalikosta: silloin mikään
+  // välilehti ei ole aktiivinen eikä yhtään aria-currentia aseteta.
+  var act=_curView==='matrix'?'matriisi':
+          (_curView==='remote'?'ohjain':
+          (_curView==='inbox'?_mtab:null));
+  ['fokus','jono','matriisi','ohjain'].forEach(function(k){
+    var b=document.getElementById('mnav-'+k);
+    if(!b)return;
+    if(k===act)b.setAttribute('aria-current','page');
+    else b.removeAttribute('aria-current');
+  });
+  var badge=document.getElementById('mnav-jono-count');
+  if(badge){
+    var n=(active!=null?1:0)+(turn?turn.length:0);
+    badge.textContent=n>99?'99+':String(n);
+    badge.hidden=n===0;
+  }
+}
+
+// ── OHJAIN-NÄKYMÄ ───────────────────────────────────────────────────
+// Portti popoutTimer()-ikkunan synkkarungosta. Ero: lähde on jaettu
+// istunto eikä window.opener, ja napit kutsuvat samoja paikallisia
+// funktioita — työtilan synkka viestii muutoksen toiselle laitteelle.
+// Kaikki tekstinsyöttö textContentilla: innerHTML + emojit + lainaukset
+// hajoaa mobiili-Edgessä.
+var RMT_QC={q1:'--q1',q2:'--q2',q3:'--q3',q4:'--q4'};
+var RMT_PHASE={work:'Työ',sbrk:'Tauko',lbrk:'Pitkä tauko'};
+var RMT_CIRC=213.6;
+
+// Kello päivittyy 4× sekunnissa. Se osa on eroteltu täydestä renderistä,
+// jottei jonolistaa rakenneta uudelleen joka tikillä — se tappaisi
+// ×-nappien fokuksen ja olisi turhaa työtä.
+function _rmtClock(){
+  if(_curView!=='remote')return;
+  var t=document.getElementById('rmt-time');
+  if(!t)return;
+  var m=Math.floor(tleft/60),s=tleft%60;
+  t.textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  document.getElementById('rmt-phase').textContent=RMT_PHASE[phase]||'';
+
+  var total=phase==='sbrk'?SBRK:(phase==='lbrk'?LBRK:WORK);
+  var prog=phase==='idle'?0:Math.min(1,Math.max(0,(total-tleft)/total));
+  var ring=document.getElementById('rmt-ring-prog');
+  ring.style.strokeDashoffset=String(RMT_CIRC*(1-prog));
+  ring.style.stroke=phase==='sbrk'?'var(--brk)':(phase==='lbrk'?'var(--lbrk)':'var(--pomo)');
+
+  var dots=document.getElementById('rmt-dots');
+  dots.textContent='';
+  for(var i=0;i<4;i++){
+    var d=document.createElement('span');
+    if(i<pomoDone)d.className='done';
+    else if(phase==='work'&&i===pomoDone)d.className='active';
+    dots.appendChild(d);
+  }
+  var tg=document.getElementById('rmt-toggle');
+  if(tg)tg.textContent=tmr?'■ Pysäytä':'▶ Aloita';
+}
+
+function renderRemoteView(){
+  var v=document.getElementById('v-remote');
+  if(!v||_curView!=='remote')return;
+
+  var own=document.getElementById('rmt-owner');
+  if(own)own.textContent=_remoteDeviceLive()
+    ? ('Ohjaa: '+(_sessionOwnerLabel||'toinen laite'))
+    : 'Tämä laite ohjaa';
+
+  _rmtClock();
+
+  var act=getActive();
+  document.getElementById('rmt-task').textContent=act?act.text:'Ei aktiivista tehtävää';
+
+  function show(id,on){
+    var b=document.getElementById(id);
+    if(b)b.style.display=on?'':'none';
+  }
+  show('rmt-done',active!=null);
+  show('rmt-wait',active!=null);
+  show('rmt-next',active!=null&&turn.length>0);
+
+  var q=document.getElementById('rmt-queue');
+  q.textContent='';
+  var ids=(active!=null?[active]:[]).concat(turn||[]);
+  if(ids.length===0){
+    var e=document.createElement('div');
+    e.className='rmt-empty';
+    e.textContent='Jono on tyhjä.';
+    q.appendChild(e);
+    return;
+  }
+  ids.slice(0,8).forEach(function(id,idx){
+    var t=tasks.find(function(u){return u.id===id});
+    if(!t)return;
+    var row=document.createElement('div');row.className='rmt-qi';
+    var dot=document.createElement('div');dot.className='rmt-qi-dot';
+    dot.style.background='var('+(RMT_QC[t.quad]||'--q4')+')';
+    var nm=document.createElement('span');
+    nm.className='rmt-qi-name'+(idx===0?' cur':'');
+    nm.textContent=(idx===0?'▶ ':'')+(t.frog?'🐸 ':'')+t.text;
+    var rm=document.createElement('button');
+    rm.type='button';rm.className='rmt-qi-rm';rm.textContent='×';
+    rm.setAttribute('aria-label','Palauta listalle: '+t.text);
+    rm.addEventListener('click',function(){returnFromQueue(id);});
+    row.appendChild(dot);row.appendChild(nm);row.appendChild(rm);
+    q.appendChild(row);
+  });
+  if(ids.length>8){
+    var more=document.createElement('div');
+    more.className='rmt-empty';
+    more.textContent='+'+(ids.length-8)+' lisää';
+    q.appendChild(more);
+  }
+}
+
+// Napit kytketään kertaalleen: renderRemoteView ei luo niitä uudelleen.
+(function(){
+  function on(id,fn){
+    var b=document.getElementById(id);
+    if(b)b.addEventListener('click',fn);
+  }
+  on('rmt-toggle',function(){toggleTimer();});
+  on('rmt-done',function(){doneActive();});
+  on('rmt-wait',function(){waitActive();});
+  on('rmt-next',function(){doNext();});
+  var ring=document.getElementById('rmt-ringbtn');
+  if(ring){
+    ring.addEventListener('click',function(){toggleTimer();});
+    ring.addEventListener('keydown',function(e){
+      if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleTimer();}
+    });
+  }
+})();
 
 // ── TASKS ──
 // ── VERBI-STATE ──
@@ -7653,6 +8619,11 @@ function toggleTimer(){
     if(bar){ bar.classList.remove('hand-bar--open'); }
     if(_handHideTimer){ clearTimeout(_handHideTimer); _handHideTimer=null; }
   }
+  // Mobiilissa hylly suljetaan tilan kautta, ei pelkällä luokalla:
+  // body.focus-mode -sääntö (1,1,0) häviäisi auki-säännölle (2,1,0), ja
+  // localStorageen jäisi auki-tila jota ruudulla ei näy.
+  // (eise-kahvan piilotus ja focus-mode hoituvat _syncTimerUI():ssä alempana.)
+  if(_handBarOpen) setHandBarOpen(false);
   if(_eisePeekOpen)closeEisePeek();
   // Uusi fokusrupeama → hairiolaskuri nollille
   _parkCount=0; updParkCount();
@@ -7672,10 +8643,12 @@ function startTmr(){
   setClockIcon(true);
   // Hiljainen äänisolmu — pitää välilehden hereillä
   keepAwake();
+  _requestWakeLock();
   requestNotifPermission();
   soundClick();
   tmr=setInterval(tick,250);
   updClock();render();
+  _pushSession();
 }
 
 // ── SOUNDS ──
@@ -7813,7 +8786,51 @@ function keepAwake(){
 }
 function stopKeepAwake(){
   try{if(_audioNode){_audioNode.stop();_audioNode=null;}}catch(e){/* ääni ei-kriittinen */}
+  _releaseWakeLock();
 }
+
+// ── NÄYTÖN WAKE LOCK ────────────────────────────────────────────────
+// Hiljainen äänisolmu pitää välilehden hereillä mutta ei estä ruutua
+// sammumasta. Puhelimessa pomodoro on juuri se hetki jolloin ruudun
+// pitää pysyä päällä. Ei tuettu kaikkialla → koko lohko on best-effort.
+var _wakeLock=null;
+function _requestWakeLock(){
+  try{
+    if(!navigator.wakeLock||_wakeLock)return;
+    navigator.wakeLock.request('screen').then(function(wl){
+      _wakeLock=wl;
+      wl.addEventListener('release',function(){_wakeLock=null;});
+    })['catch'](function(){/* esim. akunsäästötila — ei kriittinen */});
+  }catch(e){/* ei tuettu */}
+}
+function _releaseWakeLock(){
+  try{if(_wakeLock){_wakeLock.release();_wakeLock=null;}}catch(e){}
+}
+// Wake lock katoaa kun välilehti menee taustalle — pyydetään takaisin.
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='visible'&&tmr)_requestWakeLock();
+});
+
+// ── PALUU POPUPISTA ─────────────────────────────────────────────────
+// Mobiilissa aamu.html ja swipe.html avautuvat samaan välilehteen ja
+// kirjoittavat vain localStorageen. Kun tänne palataan, luetaan tuorein
+// data ja varmistetaan että se päätyy myös pilveen.
+function _resyncFromLocal(){
+  var lsTs=0;
+  try{
+    lsTs=(JSON.parse(localStorage.getItem(wsStorageKey())||'{}').updatedAt)||0;
+  }catch(e){return;}
+  // Vain jos levyllä on tuoreempaa kuin muistissa — muuten load()
+  // pyyhkisi juuri tehdyn muutoksen.
+  if(lsTs>(window._loadedTs||0))load();
+  if(window._pushLocalIfNewer)window._pushLocalIfNewer();
+}
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='visible')_resyncFromLocal();
+});
+// pageshow laukeaa myös selaimen back-forward-välimuistista, jolloin
+// visibilitychange voi jäädä tulematta.
+window.addEventListener('pageshow',function(){_resyncFromLocal();});
 
 function tick(){
   if(!startAt)return;
@@ -7828,6 +8845,15 @@ function tick(){
 }
 
 function onPhaseEnd(){
+  // Jaetussa istunnossa vain omistaja sitouttaa vaiheenvaihdon. Ilman
+  // tätä molemmat laitteet laskisivat nollaan ja kasvattaisivat pomos-
+  // ja pomoDone-lukemat kahdesti. Seuraaja jää odottamaan omistajan
+  // snapshotia, joka saapuu käytännössä välittömästi.
+  if(_isSessionFollower()){
+    if(tmr){clearInterval(tmr);tmr=null;}
+    startAt=null;updClock();
+    return;
+  }
   if(phase==='work'){
     var act=getActive();
     if(act){act.pomos=(act.pomos||0)+1;save();}
@@ -7867,6 +8893,7 @@ function onPhaseEnd(){
     pushNotif('⏰ Tauko ohi','Paina ▶ aloittaaksesi seuraavan pomodoran.');
     notify('⏰ Tauko ohi — paina ▶ aloittaaksesi seuraavan pomodoran.');
     a11yAnnounce('Tauko ohi. Voit aloittaa seuraavan pomodoran.');
+    _pushSession();
   }
 }
 
@@ -7895,6 +8922,7 @@ function stopAll(){
   document.getElementById('btnDn').style.display='none';
   var wt=document.getElementById('btnWt');if(wt)wt.style.display='none';
   updClock();render();
+  _pushSession();
 }
 
 function setClockIcon(running){
@@ -7908,6 +8936,7 @@ function setClockIcon(running){
 
 // ── CLOCK UPDATE ──
 function updClock(){
+  _rmtClock();
   var m=Math.floor(tleft/60).toString().padStart(2,'0');
   var s=(tleft%60).toString().padStart(2,'0');
 
@@ -8418,28 +9447,28 @@ var _handBarVisible = true;
 var _handBarOpen = false;
 var _handHideTimer = null;
 
-function toggleHandBar(){
-  // Vain mobiililla (desktopilla hover hoitaa)
-  if(window.innerWidth >= 900) return;
+function setHandBarOpen(open){
+  // Vain mobiililla — työpöydällä hover hoitaa avaamisen.
+  // Vartio on _isMobileLayout eikä innerWidth>=900, jotta vaakapuhelin
+  // (932×430) ei putoa työpöytähaaralle.
+  if(!_isMobileLayout()) return;
   var bar = document.getElementById('hand-bar');
   if(!bar) return;
-  _handBarOpen = !_handBarOpen;
-  if(_handBarOpen){
-    bar.classList.add('hand-bar--open');
-    bar.classList.remove('hand-bar--hidden');
-    document.body.classList.remove('hand-hidden','body-hand-hidden');
-    document.body.classList.add('hand-open');
-  } else {
-    bar.classList.remove('hand-bar--open');
-    document.body.classList.remove('hand-open');
-  }
+  _handBarOpen = !!open;
+  bar.classList.toggle('hand-bar--open', _handBarOpen);
+  document.body.classList.toggle('hand-open', _handBarOpen);
+  if(_handBarOpen) bar.classList.remove('hand-bar--hidden');
+  var lip = document.getElementById('hand-lip');
+  if(lip) lip.setAttribute('aria-expanded', _handBarOpen ? 'true' : 'false');
   try{ localStorage.setItem('fap_hand_open', _handBarOpen ? '1' : '0'); }catch(e){/* UI-tila ei-kriittinen */}
 }
+
+function toggleHandBar(){ setHandBarOpen(!_handBarOpen); }
 
 function initHandBarState(){
   try{
     var bar = document.getElementById('hand-bar');
-    var isDesktop = window.innerWidth >= 900;
+    var isDesktop = !_isMobileLayout();
     if(isDesktop){
       // Desktop: peek oletuksena, hover hoitaa avaamisen
       if(bar){ bar.classList.remove('hand-bar--hidden','hand-bar--open'); }
@@ -8504,6 +9533,61 @@ function _attachSidePanelRails(){
       });
     })(panels[i]);
   }
+}
+
+// ── Käsi mobiilissa: huuli → hylly ─────────────────────────────────
+// Työpöydällä viuhka avautuu hoverilla; kosketuksella hoveria ei ole,
+// joten käsi lepää 36px huulena alanavigaation yläpuolella ja nousee
+// huulta napauttamalla. Huuli on oma nappinsa korttien PÄÄLLÄ — ilman
+// sitä peek-alueen napautus osuisi korttiin ja nostaisi sen areenalle.
+function _attachHandMobile(){
+  var bar=document.getElementById('hand-bar');
+  var lip=document.getElementById('hand-lip');
+  var cards=document.getElementById('hand-bar-cards');
+  if(!bar||!lip||!cards)return;
+
+  lip.addEventListener('click',function(){ setHandBarOpen(true); });
+
+  // Pyyhkäisy ylös huulella avaa — nopeampi kuin tähtääminen pilleriin.
+  var lipY=null;
+  lip.addEventListener('touchstart',function(e){
+    if(e.touches.length===1)lipY=e.touches[0].clientY;
+  },{passive:true});
+  lip.addEventListener('touchend',function(e){
+    if(lipY===null)return;
+    var dy=e.changedTouches[0].clientY-lipY; lipY=null;
+    if(dy<-30) setHandBarOpen(true);
+  });
+
+  // Auki-tilassa alaspyyhkäisy sulkee. Suuntalukitus, ettei vaakavieritys
+  // (korttien selaus) sulje hyllyä vahingossa.
+  var sx=0,sy=0,dir='';
+  cards.addEventListener('touchstart',function(e){
+    if(e.touches.length!==1)return;
+    sx=e.touches[0].clientX;sy=e.touches[0].clientY;dir='';
+  },{passive:true});
+  cards.addEventListener('touchmove',function(e){
+    if(dir||e.touches.length!==1)return;
+    var dx=e.touches[0].clientX-sx,dy=e.touches[0].clientY-sy;
+    if(Math.abs(dx)<10&&Math.abs(dy)<10)return;
+    dir=Math.abs(dy)>Math.abs(dx)?'y':'x';
+  },{passive:true});
+  cards.addEventListener('touchend',function(e){
+    if(dir!=='y')return;
+    if(e.changedTouches[0].clientY-sy>40) setHandBarOpen(false);
+  });
+
+  // Ulkoklikkaus sulkee. Capture-vaihe kuten eiseOpenMoveMenussa; huulen
+  // oma klikkaus ei laukaise tätä, koska _handBarOpen on silloin vielä false.
+  document.addEventListener('click',function(e){
+    if(!_handBarOpen)return;
+    if(bar.contains(e.target))return;
+    setHandBarOpen(false);
+  },true);
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&_handBarOpen) setHandBarOpen(false);
+  });
 }
 // ── /Vaihe 5A TCG ──────────────────────────────────────────────────
 
@@ -8587,7 +9671,14 @@ function promoteToHand(id){
     // Ei areenaa — nosta suoraan areenalle
     active=id;
   }
-  notify(hadActive?'🎴 Kortti siirretty jonon perään':'🎴 Kortti nostettu areenalle');
+  var _msg=hadActive?'Kortti siirretty jonon perään':'Kortti nostettu areenalle';
+  notify('🎴 '+_msg);
+  // notify() on visuaalinen: ruudunlukija tarvitsee oman kuulutuksensa.
+  var _t=tasks.find(function(u){return u.id===id;});
+  a11yAnnounce(_msg+(_t?': '+_t.text:''));
+  // Mobiilissa valinta päättää hyllyn tehtävän — jätettynä auki se
+  // peittäisi juuri sen kortin jonka käyttäjä nosti areenalle.
+  if(_handBarOpen) setHandBarOpen(false);
   save();  // persistoi heti — animaatio ei saa olla tallennuksen ehto
   // Vaihe 10: animoi lähdekortti ulos, kohde sisään
   var srcEl=document.querySelector('[data-task-id="'+id+'"]');
@@ -8847,6 +9938,11 @@ function renderHandBar(inbox){
   var handTasks = buildHandQueue(inbox).slice(0, 5);
 
   var lbl = document.getElementById('hand-toggle-label');
+  var bar = document.getElementById('hand-bar');
+  var lipCount = document.getElementById('hand-lip-count');
+  // Tyhjä käsi: mobiilissa koko hylly pois, ettei jää tyhjää huulta.
+  if(bar) bar.classList.toggle('hand-bar--empty', handTasks.length === 0);
+  if(lipCount) lipCount.textContent = String(handTasks.length);
   if(handTasks.length === 0){
     if(lbl) lbl.textContent = 'Käsi';
     return;
@@ -8857,6 +9953,8 @@ function renderHandBar(inbox){
     var card = renderArenaCard(t, null, anyFrog, 'hand');
     if(_prevHandIds.indexOf(t.id)<0) card.classList.add('card-arriving'); // uusi käteen → fade-in
     card.title = active===null ? 'Nosta areenalle' : 'Siirrä jonon perään';
+    // Klikattava kortti on nappi, ei pelkkä fokusoitava div.
+    card.setAttribute('role','button');
     card.onclick = (function(tid){ return function(e){
       if(e.target.closest('button')) return;
       promoteToHand(tid);
@@ -8884,6 +9982,7 @@ document.addEventListener('DOMContentLoaded', function(){
   setTimeout(_updatePbPlaceholder, 100);
   initHandBarState();
   _attachHandHoverDesktop();
+  _attachHandMobile();
   _attachSidePanelRails();
   initSolidius();
 });
@@ -9074,6 +10173,8 @@ function render(){
   _syncCastShadow();
   _syncDeckRail();
   _syncHdrBottom();
+  _syncMnav();
+  renderRemoteView();
 }
 
 // PAKKA-palkin kvadranttiluvut: tekemättömät tehtävät kvadranteittain.
@@ -9908,6 +11009,13 @@ renderWsSwitcher();
 // Yhteinen avaaja: jo auki oleva ikkuna nostetaan eteen uuden sijaan, ja
 // selaimen estämä popup kerrotaan käyttäjälle — muuten klikkaus katoaa tyhjään.
 function _openPopup(url,name,features,winKey){
+  // Mobiilissa window.open avaa välilehden, ei ikkunaa: kokoparametrit
+  // ohitetaan, paluu on hankalaa ja iOS voi katkaista opener-yhteyden.
+  // Navigoidaan samassa välilehdessä ja annetaan kohteelle paluunappi.
+  if(_isMobileLayout()){
+    location.href=url+(url.indexOf('?')<0?'?':'&')+'back=1';
+    return null;
+  }
   try{
     var existing=window[winKey];
     if(existing&&!existing.closed){existing.focus();return existing;}
@@ -9986,9 +11094,14 @@ window.addEventListener('focus', function(){
   var oldSig = tasks.length + '_' + (active||'') + '_' + turn.join(',');
   if(newSig !== oldSig){ load(); render(); }
 });
+// Selaimen käyttöliittymän väri standalone-tilassa (PWA:n statusbar).
+// Vastaa --room-bg:tä eli huoneen taustaa huovan ympärillä.
+var THEME_META_COLOR={usva:'#071009',havu:'#010402',aurinko:'#d8c6a4'};
 function setTheme(t){
   document.documentElement.setAttribute('data-theme',t);
   localStorage.setItem('fap_theme',t);
+  var mtc=document.getElementById('meta-theme-color');
+  if(mtc&&THEME_META_COLOR[t])mtc.setAttribute('content',THEME_META_COLOR[t]);
   // Update active button indicator
   ['havu','usva','aurinko'].forEach(function(id){
     var btn=document.getElementById('tbtn-'+id);
@@ -10037,11 +11150,16 @@ function togglePerfMode(){
   if(!arena)return;
   var MAX=8;
   var rmq=matchMedia('(prefers-reduced-motion:reduce)');
+  // Tilt on hiiriefekti. Kosketuksella pointermove tulee vasta sormen
+  // ollessa kortilla, jolloin kortti nytkähtää jokaisesta pyyhkäisystä ja
+  // taistelee eleiden kanssa — ja mobiilissa koko 3D-huone on piilotettu.
+  var hoverq=matchMedia('(hover:hover) and (pointer:fine)');
   var PROPS=['--ry','--rx','--px','--py','--sx','--sy'];
   function arenaCard(){return arena.querySelector('.tcg-card--arena-size');}
   function castShadow(){return arena.querySelector('.arena-room__castshadow');}
   arena.addEventListener('pointermove',function(e){
     if(rmq.matches)return;
+    if(!hoverq.matches)return;
     if(document.documentElement.getAttribute('data-perf')==='lite')return;
     var card=arenaCard();
     if(!card)return;
@@ -10063,6 +11181,80 @@ function togglePerfMode(){
     var sh=castShadow();
     if(sh){sh.style.removeProperty('--px');sh.style.removeProperty('--shs');}
   });
+})();
+
+// ── Areenakortin kosketuseleet (mobiili) ────────────────────────────
+// Oikealle = tehty, vasemmalle = odottaa, ylös = seuraava.
+// Sama kaava kuin swipe.html:ssä: touchstart passive, touchmove
+// non-passive (preventDefault estää sivun kumiefektin), suuntalukitus.
+// Delegointi #arenaan, koska render() poistaa kortin ja luo sen uudelleen.
+// Eleet ovat oikopolku — samat toiminnot ovat yhä kortin napeissa.
+(function(){
+  var arena=document.getElementById('arena');
+  if(!arena)return;
+  var THRESH=80;        // px ennen kuin ele laukeaa
+  var LOCK=12;          // px ennen kuin suunta lukitaan
+  var card=null,x0=0,y0=0,dx=0,dy=0,dir='';
+
+  function reset(animate){
+    if(!card)return;
+    var c=card;card=null;dir='';dx=dy=0;
+    arena.removeAttribute('data-swipe');
+    c.style.transition=animate?'transform .18s ease-out,opacity .18s ease-out':'';
+    c.style.transform='';
+    c.style.opacity='';
+    if(animate)setTimeout(function(){c.style.transition='';},200);
+  }
+
+  arena.addEventListener('touchstart',function(e){
+    if(!_isMobileLayout())return;
+    if(e.touches.length!==1)return;
+    // Napit ja linkit hoitavat oman toimintonsa — ele ei saa varastaa niitä.
+    if(e.target.closest('button,a,input,textarea,select'))return;
+    var c=e.target.closest('.tcg-card--arena-size');
+    // Vain aktiivinen kortti: jonokortilla ei ole doneActivea.
+    if(!c||active==null)return;
+    card=c;x0=e.touches[0].clientX;y0=e.touches[0].clientY;dx=dy=0;dir='';
+    card.style.transition='none';
+  },{passive:true});
+
+  arena.addEventListener('touchmove',function(e){
+    if(!card||e.touches.length!==1)return;
+    dx=e.touches[0].clientX-x0;
+    dy=e.touches[0].clientY-y0;
+    if(!dir){
+      if(Math.abs(dx)<LOCK&&Math.abs(dy)<LOCK)return;
+      // Alas pyyhkäisy jätetään selaimelle (vieritys) — ylös on ele.
+      if(Math.abs(dy)>Math.abs(dx)&&dy>0){reset(false);return;}
+      dir=Math.abs(dx)>Math.abs(dy)?'x':'y';
+    }
+    e.preventDefault();
+    if(dir==='x'){
+      card.style.transform='translateX('+dx.toFixed(0)+'px) rotate('+(dx*.04).toFixed(2)+'deg)';
+      arena.setAttribute('data-swipe',dx>LOCK?'done':(dx<-LOCK?'wait':''));
+    }else{
+      var up=Math.min(0,dy);
+      card.style.transform='translateY('+up.toFixed(0)+'px)';
+      arena.setAttribute('data-swipe',up<-LOCK?'next':'');
+    }
+    card.style.opacity=String(Math.max(.45,1-Math.max(Math.abs(dx),Math.abs(dy))/(THRESH*3)));
+  },{passive:false});
+
+  function end(){
+    if(!card)return;
+    var fired=null;
+    if(dir==='x'&&dx>THRESH)fired='done';
+    else if(dir==='x'&&dx<-THRESH)fired='wait';
+    else if(dir==='y'&&dy<-THRESH)fired='next';
+    reset(true);
+    if(!fired)return;
+    // Toiminnot kutsuvat save()n ja render()n itse.
+    if(fired==='done')doneActive();
+    else if(fired==='wait')waitActive();
+    else if(turn.length>0)doNext();
+  }
+  arena.addEventListener('touchend',end);
+  arena.addEventListener('touchcancel',function(){reset(true);});
 })();
 
 // ── ICS KALENTERI ──────────────────────────────────────
@@ -12317,6 +13509,32 @@ function invEscHandler(e){
     <button onclick="fetchPresetByEnteredCode()" class="badd" style="font-size:var(--text-sm);padding:.55rem">Hae pohja</button>
   </div>
 </div>
+
+<!-- ── SERVICE WORKER ─────────────────────────────────────────────
+     Rekisteröinti vain https:ssä. file://-käyttö on tietoinen
+     arkkitehtuurirajoite, eikä service worker toimi siellä lainkaan —
+     vartioimaton register() heittäisi konsoliin joka avauksella.        -->
+<script>
+(function(){
+  if(location.protocol!=='https:'||!('serviceWorker' in navigator))return;
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js').then(function(reg){
+      // Uusi versio asennettu vanhan ollessa käytössä → kerrotaan kerran.
+      reg.addEventListener('updatefound',function(){
+        var nw=reg.installing;
+        if(!nw)return;
+        nw.addEventListener('statechange',function(){
+          if(nw.state==='installed'&&navigator.serviceWorker.controller){
+            if(typeof window.notify==='function')window.notify('Päivitys ladattu — avaa uudelleen');
+          }
+        });
+      });
+    })['catch'](function(e){
+      console.warn('Service workerin rekisteröinti epäonnistui:',e&&e.message);
+    });
+  });
+})();
+</script>
 
 </body>
 </html>

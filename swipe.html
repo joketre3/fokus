@@ -2,14 +2,16 @@
 <html lang="fi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline'; connect-src https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://www.gstatic.com; font-src https://fonts.gstatic.com; style-src 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:">
+<meta name="theme-color" content="#071009">
+<link rel="apple-touch-icon" href="icon-180.png">
 <title>Fokus — Selaa tehtäviä</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{--ink:#1a1c18;--paper:#f2f0e8;--warm:#b8a882;--accent:#c49a3a;--muted:#6b7060;--light:#dddbd0;--pomo:#a84c28;--q1:#a84c28;--q2:#2d5a3d;--q3:#7a6a50;--q4:#9a9a8e}
-body{background:var(--paper);font-family:'DM Sans',sans-serif;color:var(--ink);min-height:100vh;display:flex;flex-direction:column;overflow:hidden;user-select:none}
+body{background:var(--paper);font-family:'DM Sans',sans-serif;color:var(--ink);min-height:100vh;min-height:100dvh;height:100dvh;padding-bottom:env(safe-area-inset-bottom,0px);display:flex;flex-direction:column;overflow:hidden;user-select:none}
 #setup{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;gap:1.5rem;text-align:center}
 #setup h2{font-family:'DM Serif Display',serif;font-size:1.5rem;font-style:italic}
 #setup p{font-size:.82rem;color:var(--muted);font-weight:300;line-height:1.6;max-width:280px}
@@ -24,9 +26,9 @@ body{background:var(--paper);font-family:'DM Sans',sans-serif;color:var(--ink);m
 .skip-setup{font-size:.72rem;color:var(--muted);background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline;text-underline-offset:2px}
 #main{flex:1;display:none;flex-direction:row;overflow:hidden}
 #swipe-area{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.hdr{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.25rem .6rem;border-bottom:1px solid var(--light);flex-shrink:0}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:calc(.85rem + env(safe-area-inset-top,0px)) 1.25rem .6rem;border-bottom:1px solid var(--light);flex-shrink:0}
 .hdr-logo{font-family:'DM Serif Display',serif;font-size:1rem;font-style:italic;color:var(--accent)}
-.hdr-back{font-size:.72rem;color:var(--muted);font-weight:300;background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif}
+.hdr-back{font-size:.72rem;color:var(--muted);font-weight:300;background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;min-height:44px;padding:0 .5rem;margin-left:-.5rem}
 .hdr-count{font-size:.7rem;color:var(--muted);font-weight:300}
 .progress{height:3px;background:var(--light);flex-shrink:0}
 .progress-fill{height:100%;background:var(--accent);transition:width .3s ease}
@@ -124,6 +126,25 @@ html[data-theme="aurinko"] .done-btn:hover{background:#c4681e;color:white}
 html[data-theme="aurinko"] .chip.inq{color:#c4681e;background:rgba(196,104,30,.10)}
 html[data-theme="aurinko"] .tint.yes{background:rgba(196,104,30,.08)}
 
+/* ── Mobiili ────────────────────────────────────────────────────────
+   Kaksipalstainen asettelu (selausalue + 190px jonopaneeli) jättää
+   puhelimessa kortille ~200px leveyttä. Kapealla ruudulla pinotaan:
+   kortti saa koko leveyden ja jono jää matalaksi vyöksi alle. */
+@media(max-width:699.98px){
+  #main{flex-direction:column}
+  #swipe-area{flex:1;min-height:0}
+  #queue-panel{
+    width:100%;
+    max-height:32dvh;
+    border-left:none;
+    border-top:1px solid var(--light);
+  }
+  html[data-theme="havu"] #queue-panel{border-top-color:#1a3525}
+  .qp-hdr{padding:.6rem .9rem .5rem}
+  /* Toimintonapit kosketuskokoon. */
+  .act-btn{min-width:56px;min-height:56px}
+}
+
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;}
 }
@@ -157,7 +178,7 @@ html[data-theme="aurinko"] .tint.yes{background:rgba(196,104,30,.08)}
 <div id="main">
   <div id="swipe-area">
     <div class="hdr">
-      <button class="hdr-back" onclick="window.close()">← Sulje</button>
+      <button class="hdr-back" id="hdrBack" onclick="goBackToApp()">← Sulje</button>
       <span class="hdr-logo">Fokus</span>
       <div style="display:flex;align-items:center;gap:.5rem">
         <span class="hdr-count" id="counter">—</span>
@@ -555,6 +576,24 @@ function notify(msg){var e=document.getElementById('nt');e.textContent=msg;e.cla
 (function(){
   var t=localStorage.getItem('fap_theme')||'usva';
   document.documentElement.setAttribute('data-theme',t);
+})();
+
+// ── PALUU PÄÄSOVELLUKSEEN ─────────────────────────────
+// Mobiilissa selaus avataan samaan välilehteen (?back=1), koska
+// window.open avaisi siellä välilehden jolta opener-delegointi ei toimi.
+// window.close() ei voi sulkea välilehteä jota se ei itse avannut, joten
+// paluu on tehtävä historian kautta.
+function goBackToApp(){
+  if(window.opener&&!window.opener.closed){window.close();return;}
+  if(history.length>1) history.back();
+  else location.href='index.html';
+}
+(function(){
+  try{
+    var sameTab=new URLSearchParams(location.search).get('back')==='1'||!window.opener;
+    var b=document.getElementById('hdrBack');
+    if(b&&sameTab)b.textContent='← Takaisin';
+  }catch(e){/* nappi jää oletustekstiin */}
 })();
 
 </script>

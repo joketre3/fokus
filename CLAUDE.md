@@ -54,6 +54,9 @@ Testit: `python3 tests/run.py` (ks. `tests/README.md`). Ei lintteriä, ei CI:tä
 | `mockup-fut-kortti.html` | FUT-korttityylin mockup (referenssi) |
 | `mockup-arena-syvyys.html` | Areenan syvyyskokeilu (varhainen, korvattu `mockup-arena-3d-plus`illa) |
 | `mockup-eise-placement.html` | Eisenhower-peekin sijoitteluvaihtoehdot |
+| `manifest.json` | PWA-manifesti — asennettava sovellus, standalone-tila |
+| `sw.js` | Service worker — navigointi verkosta ensin, muu välimuistista (offline) |
+| `icon-192.png`, `icon-512.png`, `icon-180.png` | Sovellusikonit (512 myös maskable) |
 | `dev-seed.html`, `testdata.html` | Testidatan siemennys localStorageen (kehitystyökaluja) |
 
 Pääsovellus avaa `swipe.html` ja `aamu.html` popup-ikkunoina (`window.open`). Timer aukeaa JS:llä generoituna popuppina. Kaikki ikkunat jakavat datan `localStorage`n kautta.
@@ -151,8 +154,10 @@ Kaikki tehtävädata `localStorage`-avaimessa `eis_v5_<wsId>` (oletus: `eis_v5_w
 - `fap_perf` — `'1'` kun Nopea tila päällä (asettaa `html[data-perf="lite"]`)
 - `fap_data_uid` — paikallisen datan omistaja; eri uid kirjautuessa → data tyhjennetään
 - `fap_onboarded` — onboarding nähty
+- `fap_device_id` — laitteen tunniste jaetussa istunnossa (kumpi laite ohjaa ajastinta)
+- `fap_device_label` — laitteen nimi Ohjain-näkymässä (oletus UA:sta: Puhelin / Työpöytä)
 
-`_clearLocalAppData()` pyyhkii kaiken `eis_v5*` + `fap_*` paitsi `fap_theme`, `fap_perf`, `fap_onboarded`, `fap_timer_settings` (laiteasetuksia, ei käyttäjädataa).
+`_clearLocalAppData()` pyyhkii kaiken `eis_v5*` + `fap_*` paitsi `fap_theme`, `fap_perf`, `fap_onboarded`, `fap_timer_settings`, `fap_device_id`, `fap_device_label` (laiteasetuksia, ei käyttäjädataa).
 
 ## Tehtävien verbi-formaatti
 
@@ -199,7 +204,7 @@ CSS custom properties: `--ink`, `--surface-xs`, `--surface`, `--surface-md`, `--
 
 **Sammakko (Frog):** Tärkein tehtävä päivässä. Aina ensimmäisenä jonossa. Renderöidään 🐸:llä kaikkialla.
 
-**Käsi (Hand):** TCG-inspired käsikorttipalkki desktopilla — top 5 jonotehtävää kortteina. Toggle: `window._useCardUI`.
+**Käsi (Hand):** TCG-inspired käsikortit — **ei jono vaan ehdokasjoukko**: `buildHandQueue` valitsee tähtikortit (`handForced`) ja niiden jälkeen q1/q2-tehtävät jotka **eivät** ole areenalla eivätkä jonossa, järjestyksessä q1+sammakko → q1 → q2+sammakko → q2. `renderHandBar` näyttää niistä 5. Napautus → `promoteToHand`: areenalle jos areena on tyhjä, muuten jonon perään. Työpöydällä viuhka joka avautuu hoverilla, mobiilissa hylly joka lepää huulena (ks. The Hand Rule, DESIGN.md §9). Toggle: `window._useCardUI`.
 
 **Areena:** Pääfokusialue, näyttää aktiivisen (jonon kärki) tehtävän isona korttina.
 
@@ -556,6 +561,96 @@ Lisäksi kevyt varmistus: ICS-lataus koko päivän muistutuksena → tiedostossa
 
 **Toistuva bugiluokka tässä koodikannassa:** popupit (`aamu.html`, `swipe.html`) jäävät jälkeen `index.html`:n suojauksista. Modernization-vaiheen 2 try/catch, `scheduled_hidden`-suodatus ja kenttäsynkka puuttuivat kaikki. Kun index.html saa datansuojauksen, tarkista popupit samalla.
 
+### Mobiili + jaettu istunto (2026-07-30) — käytössä, osin testattu laitteella
+
+Mobiili oli jäänyt paikkaustasolle: kaikki 2026 tehty työ on `min-width:900px` -lohkossa. **Mobiili on yhä toissijainen — mutta kehittyvä haara, ei paikkaustaso.** Työpöytä on paikka jossa päivä suunnitellaan, puhelin se laite joka on mukana kun päivä tapahtuu (PRODUCT.md § Users). Käytännön seuraus: uusi ominaisuus rakennetaan yhä ensin työpöydälle, mutta mobiilille tehdään sen oma kenttätilaversio eikä kutistettua pöytää.
+
+**Mitatut lähtöviat** (headless-sondi, ei arvioita):
+
+| Vika | Todiste |
+|---|---|
+| Katvealue 769–899px | mobiilipaikkaukset loppuivat 768:aan, työpöytägrid alkoi 900:sta |
+| Vaakapuhelimessa areenakortti taitteen alla | 844×390: viewport 303px, kortti `y=355`, dokumentti 994px = 3,3 ruutua vieritystä |
+| 932×430 sai täyden työpöytägridin | kortista näkyi yläkolmannes, käsiviuhka peitti loput |
+| Sivupaneelit piiloutuivat vasta <600px | 600–899px ne pinoutuivat pystyyn ilman gridiä |
+| Navigaatio = 2 × 40px nappia alavasemmalla | alle 44px minimin, ei safe-areaa → iOS-kotipalkin alla |
+| Kirjautuminen ei onnistunut puhelimella | **koko synkka oli tavoittamattomissa**. Alkuperäinen diagnoosi (popup-esto) osoittautui vääräksi — todellinen syy oli cross-domain authDomain, ks. jälkikorjaus 1 |
+
+| Vaihe | Mitä |
+|---|---|
+| 0 | Kirjautuminen: popup ensisijainen kaikkialla, redirect varareittinä (ks. jälkikorjaus 1). `manifest.json`, `sw.js`, ikonit 192/512/180. `viewport-fit=cover`, `--safe-*`, `--mnav-h`, `--tap`. `theme-color` seuraa teemaa |
+| 1 | `.wrap` mobiilissa grid `auto 1fr auto`, `100dvh`. `#mnav` (Fokus·Jono·+·Matriisi·Pakka). `setMobileTab()` näyttää olemassa olevaa DOM:ia — ei uutta renderiä. Käsiviuhka, PAKKA-palkki, kiskot ja eise-kahva pois. Matriisi pinoon <600px |
+| 2 | Arena-room pois, kortti keskitetty ilman kallistusta, napit 44px. Eleet: oikea=tehty, vasen=odottaa, ylös=seuraava. Vaakapuhelimessa kortista pudotetaan kuvitus → automaattikorkeus |
+| 3 | `users/{uid}/session/live`: jaettu ajastin **määräaikana** (`endsAt`). Vaiheenvaihdon johtajuus `owner`-kentällä. Wake Lock |
+| 4 | `#v-remote` — portti `popoutTimer()`-rungosta, lähde jaettu istunto. Välilehti ilmestyy kun toinen laite on elossa (5→6 saraketta) |
+| 5 | Popupit samaan välilehteen (`?back=1`) + paluunappi. `swipe.html` pinoon <700px. `_resyncFromLocal()` paluun yhteydessä |
+| 6 | **Tehtäväkäsi mobiiliin**: `#hand-bar` pois lavastekiellosta. Hylly lepää 36px huulena (`#hand-lip`) alanavigaation yläpuolella ja nousee huulta napauttamalla. Vaakavieritys viuhkan sijaan. Vain Fokus-välilehdellä, vain pystyasennossa |
+
+**Opit:**
+- **`grid-row` ilman `grid-column`ia on ansa.** Sijoitus jää automaattiselle algoritmille, joka työntää seuraavat itemit implisiittisiin **sarakkeisiin**: `#v-matrix` päätyi `x=500` eli ruudun ulkopuolelle, vaikka `display` oli `block` ja sisältö renderöity. Aina molemmat.
+- **Areena ja sivupaneelit eivät ole `.view`-elementtejä** vaan `#main-content-arean` sisällä → `sv()` ei piilota niitä. Areena on positioitu, `.view` ei, joten areena maalautui matriisin päälle. Ratkaisu: `body.view-<n>` -luokka `sv()`:ssä.
+- **Työpöydän breakpoint tarvitsee korkeusehdon.** `(min-width:900px)` yksin antaa vaakapuhelimelle (932×430) koko pöydän. Nyt `and (min-height:501px)` kaikissa viidessä desktop-lohkossa, ja mobiililohko vastaavasti `, (max-height:500px)`. `_isMobileLayout()` pitää JS:n samassa ehdossa — pidä ne synkassa.
+- **5:7-kortti ei mahdu vaakapuhelimeen.** ~230px korkeudessa se olisi 165px leveä eli lukukelvoton. Kutistaminen ei ole ratkaisu: pudota kortista se osa joka ei kanna tietoa (`.tcg-card__art`) ja anna `aspect-ratio:auto`. Kvadranttitausta jää → väri-identiteetti säilyy.
+- **Ajastin pilveen määräaikana, ei jäljellä olevana aikana.** `endsAt` tarkoittaa ettei tikitys aiheuta yhtään kirjoitusta, verkkoviive ei kerry kelloon eikä taustathrottlaus voi ajautua eteen. Kirjoituksia ~20–40/vrk.
+- **Jaettu ajastin tarvitsee johtajuuden.** Ilman sitä molemmat laitteet laskevat nollaan ja `onPhaseEnd` kasvattaa `pomos`/`pomoDone` kahdesti. Vain `owner === oma laite` sitouttaa; seuraaja odottaa snapshotia.
+- **Popupeilla ei ole Firebase-SDK:ta.** CLAUDE.md:n "aamu.html Firebase sync ✅" tarkoitti opener-delegointia, ei SDK:ta. Samassa välilehdessä `window.opener` puuttuu → pilvipush jäisi tekemättä. `_resyncFromLocal()` (`visibilitychange` + `pageshow`) lataa levyltä ja työntää pilveen jos leima on tuoreempi.
+- **`window.close()` ei sulje välilehteä jota se ei avannut** — samassa välilehdessä paluu on `history.back()`, fallback `location.href`.
+- **Areenan hehkuanimaatio antaa ~16 % pikselikohinaa.** Regressiovertailu on tehtävä animaatiot jäädytettynä (`*,*::before,*::after{animation:none!important;transition:none!important}`), muuten diffi on lukukelvoton. Jäädytettynä 1440×900 ja 1920×1080 antoivat **0,0000 %** jokaisessa vaiheessa. Portti on skriptinä: `scratchpad/regress.sh` (seedaus + jäädytys + `pngdiff.py`, joka on riippuvuudeton PNG-lukija — PIL:iä ei ole).
+- **`pkill -f "chrome-linux/chrome"` tappaa oman kutsuvan shellinsä** (komentorivi täsmää kuvioon) → exit 144. Käytä `pkill -f "[c]hrome-linux/chrome"`.
+- **`--dump-dom` ei näe `location.href`-navigointia** — se palaa ensimmäisen latauksen DOM:illa. Samaan välilehteen navigointia ei voi todentaa näin; testaa määränpääsivu suoraan.
+- **Firebase-SDK ei lataudu hiekkalaatikossa** (ei pääsyä `gstatic.com`iin) → `window._firebaseApp` on `undefined` ja kaikki `window._*`-moduulifunktiot puuttuvat. Firestore-riippuvainen koodi on testattava tyngillä (`window._sessionPush=...`). Sivutuote: kuvakaappaukset todistavat että sovellus toimii ilman Firebasea.
+- Ikonit voi renderöidä ilman PIL:iä: inline-SVG HTML-kääreessä + `--screenshot` halutulla `--window-size`illa, `file://`-URL (http-palvelin kuolee shellin mukana).
+- **Iframe kiertää headlessin 500px-minimileveyden.** `--window-size=390,844` antaa silti `innerWidth` 500; `<iframe width="390">` isomman ikkunan sisällä antaa todellisen 390px viewportin. Kaikki kapean ruudun mittaukset on tehtävä näin.
+- **Virtuaaliaika EI aja CSS-siirtymiä.** `getComputedStyle(el).transform` jää alkuarvoon vaikka luokka on vaihdettu — ja niin jää myös inline-tyylillä asetettu arvo, koska sekin siirtyy. Oire näyttää tasan siltä kuin CSS-sääntö ei osuisi. Injektoi `*,*::before,*::after{transition:none!important}` ennen tilamittauksia. (Tämä maksoi kolme sondia käsihyllyä tehdessä.)
+- **Käden peek-kaista tarvitsee oman napautuskohteen.** Ilman `#hand-lip`-nappia korttien päällä peek-alueen napautus osuu korttiin ja `promoteToHand` nostaa sen areenalle vahingossa — käyttäjä yritti vain avata hyllyn.
+- `body.focus-mode #hand-bar-cards` (1,1,0) häviää `#hand-bar.hand-bar--open #hand-bar-cards` -säännölle (2,1,0). Ajastimen käynnistyessä hylly on suljettava **tilan kautta** (`setHandBarOpen(false)`), ei luokkaa lisäämällä — muuten localStorageen jää auki-tila jota ruudulla ei näy.
+- **Kirjautuminen ei ole yhdistämistä vaan tilin tuomista.** `fap_data_uid` puuttuu kun paikallinen data on syntynyt kirjautumattomana → se ei ole koskaan kuulunut tälle tilille, ja aikaleimavertailu pilvidataan on merkityksetön (leimat mittaavat eri datajoukkoja). Tuore paikallinen data voitti tilin oikeat tehtävät ja työnsi ne pilveen. Nyt: `prevUid !== user.uid` ja molemmilla dataa → tili voittaa, paikallinen talteen `<lsKey>__prelogin`-avaimeen. Tyhjä tili + paikallista työtä on yhä migraatio ylöspäin.
+- **Redirect-kirjautuminen ei toimi kun authDomain on eri origin.** `signInWithRedirect` tallettaa paluutilan authDomainin tallennukseen, jonka selaimet osioivat → paluu Googlelta ei löydä tilaa ja epäonnistuu **hiljaa** (ei virhettä, ei käyttäjää). Popup toimii, koska se palauttaa tunnisteen `postMessage`illa. Popup on siksi ensisijainen myös mobiilissa. Pysyvä korjaus: authDomain samaan originiin (Firebase Hosting). Hiljainen tapaus on tehty näkyväksi `sessionStorage`-lipulla.
+- **Ominaisuus voi olla valmis mutta tavoittamaton.** Mobiilikäsi oli jo koodattu (`toggleHandBar`, `initHandBarState`, `fap_hand_open`), ja `renderHandBar` täytti kortit myös puhelimessa — vain `display:none` esti kaiken. Sama kuvio kuin aamusuunnittelussa 2026-07-29 (velho oli olemassa, `window.open`-kutsua ei). **Ennen kuin rakennat mobiiliversion jostakin, tarkista onko se jo olemassa nukkumassa.**
+
+#### Käden kuollut koodi — todennettu 2026-07-30, ei siivottu
+
+Käsihyllyn yhteydessä kartoitettu. Jätetty tarkoituksella koskematta (oma
+siivouksensa), mutta **älä oleta näiden toimivan** ja poista ne kun siivoat.
+Rivinumerot vanhenevat — hae nimellä.
+
+| Tunniste | Tila |
+|---|---|
+| `#hand-cards`, `#hand-label`, `#hand-empty`, `#hand-bar-empty` | Pelkkää CSS:ää, ei DOM-elementtiä eikä JS-viittausta. Jäänne TCG:tä edeltävästä vaakavieritys-kädestä |
+| `.card-new--hand` (+ sen `→ Nosta` -tooltip), `.card-new__star-mark` | CSS-lohkoja joita mikään ei lisää. Korvattu `.tcg-card--hand`illa |
+| `hand-bar--hidden` | CSS on olemassa (2 sääntöä) ja luokkaa *poistetaan* neljässä paikassa ja *tarkistetaan* yhdessä — mutta **sitä ei lisätä missään**. Ajastimen piilotus tehdään `body.focus-mode`illa |
+| `body-hand-hidden` | Vain poistetaan, ei koskaan lisätä, ei CSS:ää |
+| `body.hand-hidden` | CSS olemassa, mutta luokkaa ei koskaan lisätä |
+| `body.hand-open` | `setHandBarOpen` asettaa sen, mutta molemmat CSS-vaikutukset ovat kuolleita: `body.hand-open{padding-bottom}` on ylikirjoitettu nollaksi kummassakin media-lohkossa, ja `body.hand-open #hand-toggle` osoittaa piilotettuun nappiin. Tilapeili, ei tyyliä |
+| `_handBarVisible` | Julistetaan `true`, ei lueta koskaan |
+| `#hand-toggle` + `#hand-toggle-label` + `toggleHandBar()` | Nappi on `display:none` **kummassakin** media-lohkossa (työpöytä ja mobiili kattavat koko leveysalueen), joten se ei ole koskaan näkyvissä. `toggleHandBar` on siis tavoittamaton: mobiilihylly kutsuu `setHandBarOpen`ia suoraan. `renderHandBar` päivittää yhä `#hand-toggle-label`in tekstin — kirjoitus näkymättömään |
+
+Elossa ovat vain: `#hand-bar`, `#hand-bar-cards`, `#hand-lip`, `.tcg-card--hand`,
+`hand-bar--open`, `buildHandQueue`, `renderHandBar`, `promoteToHand`,
+`setHandBarOpen`, `initHandBarState`, `_attachHandHoverDesktop`, `_attachHandMobile`.
+
+**Testitila oikealla laitteella (2026-07-30):**
+
+| # | Testi | Tila |
+|---|---|---|
+| 1 | Mobiilinäkymä ja toiminnot | ✅ Jaakko: "kaikki toimii" (ennen käsihyllyä) |
+| 2 | Kirjautuminen puhelimella | ✅ toimii popup-korjauksen jälkeen |
+| 3 | Lisää aloitusnäyttöön / offline | ⬜ testaamatta |
+| 4 | Ajastin: ruutu ei sammu, kello oikeassa lukituksen jälkeen | ⬜ testaamatta |
+| 5 | Eleet kortilla (oikea/vasen/ylös) | ⬜ testaamatta laitteella (headless-TouchEventit läpi) |
+| 6 | Aamusuunnittelu → ← Takaisin, muutokset näkyvät koneella | ⬜ testaamatta |
+| 7 | Kone auki samaan aikaan: Ohjain-välilehti, ei kaksinkertaista pomo-laskuria | ⬜ testaamatta — vaatii kaksi laitetta |
+| 8 | Käsihylly: huuli → kortin napautus → jonon perään | ⬜ testaamatta laitteella |
+
+Palautus: `git revert` vaiheittain tai koko haara.
+
+**Jälkikorjaukset oikean laitteen testauksen jälkeen:**
+
+1. **Popup ensisijaiseksi myös mobiiliin.** Vaiheessa 0 valitsin redirectin mobiilin ensisijaiseksi reitiksi. Se oli väärin tälle hosting-asetelmalle: sovellus ajetaan `joketre3.github.io`-originista mutta `authDomain` on `fokus-a-priori.firebaseapp.com`, ja `signInWithRedirect` tallettaa paluutilan authDomainin tallennukseen, jonka selaimet osioivat. Kirjautuminen kävi Googlessa ja palasi hiljaa kirjautumattomana — sekä selaimessa että aloitusnäytön sovelluksessa. Popup ei nojaa säilyneeseen tilaan (`postMessage`), joten se on ensisijainen kaikkialla. `popup-closed-by-user` ja `cancelled-popup-request` **eivät** enää putoa redirectiin: ne tarkoittavat että käyttäjä perui.
+2. **Kirjautuessa tilin tiedot voittavat vieraan paikallisen datan.** Ks. Opit-kohta "Kirjautuminen ei ole yhdistämistä".
+
+**⚠ Avoin:** Firestore-säännöt `users/{uid}/{document=**}` pitäisi kattaa uuden `session/live` -dokumentin, mutta sitä ei ole varmistettu konsolista. Oire jos ei kata: konsolissa `⚠️ Istunnon kirjoitus epäonnistui: Missing or insufficient permissions`, eikä Ohjain-välilehti koskaan ilmesty.
+
 ### Impeccable-jono — kaikki komennot ajettu
 
 `harden`, `audit`, `polish`, `optimize`, `document` tehty (critique-score 16/20, snapshot `.impeccable/critique/2026-06-11T10-44-50Z__index-html.md`). Tulokset DESIGN.md:ssä ja `.impeccable/design.json`issa. Jäljellä vain deltan seuranta detektorilla — ks. baseline-rivi Bash-työkaluissa.
@@ -574,7 +669,8 @@ Komponentit `index.html`:ssä (etsi nimellä, rivinumerot vanhenevat): `.tcg-car
 - Projekti: `fokus-a-priori`
 - Auth domain: `fokus-a-priori.firebaseapp.com`
 - Firestore workspace-data: `users/{uid}/workspaces/{wsId}`
-- Firestore timer-asetukset: `users/{uid}/timerSettings/default`
+- Firestore timer-asetukset: `users/{uid}/settings/timer`
+- Firestore jaettu istunto: `users/{uid}/session/live` — ajastimen tila `endsAt`-mallilla, kirjoitus vain siirtymissä
 
 ## AI-analyysi
 
@@ -597,8 +693,8 @@ Firebase-integraatiosuunnitelma: `docs/firebase-integraatio-suunnitelma.md`
 | | Nyt | Tavoite |
 |---|---|---|
 | `index.html` | Firebase Auth + Firestore ✅ | — |
-| `aamu.html` | Firebase sync ✅ | — |
-| `swipe.html` | Firebase sync ✅ | — |
+| `aamu.html` | Synkka opener-delegoinnilla ⚠ | Ei omaa Firebase-SDK:ta. Samassa välilehdessä (mobiili) `_resyncFromLocal()` hoitaa pushin paluun yhteydessä |
+| `swipe.html` | Synkka opener-delegoinnilla ⚠ | Sama |
 | Maksut | Ei mitään ❌ | Stripe + Vercel functions |
 | Freemium-rajat | Ei enforcea ❌ | 30 tehtävää / 1 työtila ilmaisella |
 
@@ -619,7 +715,9 @@ Fokuksen etu: ohjattu aamurutiini metodologiana (ei vain näkymänä), selkeämp
 
 ### Seuraavat askeleet prioriteettijärjestyksessä
 
-- [x] Firebase-integraatio `aamu.html` ja `swipe.html`:ään ✅
+- [x] Firebase-integraatio `aamu.html` ja `swipe.html`:ään ✅ (opener-delegointi, ei omaa SDK:ta)
+- [ ] **Firebase Hosting** — `authDomain` samaan originiin kuin sovellus. Poistaa koko cross-domain-kirjautumisongelmaluokan (ks. mobiiliosion jälkikorjaus 1) ja tekee `signInWithRedirect`istä toimivan varareitin. Projekti on jo olemassa: `firebase init hosting` + `firebase deploy`. Vaihtaa osoitteen → käyttäjän päätös
+- [ ] Firestore-sääntöjen varmistus `session/live`-dokumentille
 - [ ] Stripe + Vercel-funktiot (checkout, webhook, portal)
 - [ ] Freemium-rajojen enforkointi Firestoresta
 - [ ] Email-kirjautuminen Google-kirjautumisen rinnalle

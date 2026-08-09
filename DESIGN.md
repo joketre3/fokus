@@ -240,6 +240,7 @@ Järjestelmä on **litteä lepotilassa, nostettu vuorovaikutuksessa**. Pintojen 
 - **PAKKA-palkki (.table-ledge, ≥900px):** Alareunan vaakakisko. "PAKKA" + neljä kvadranttiväristä lukua (tekemättömät tehtävät kvadranteittain). Klikkaus nostaa tehtäväpakan; sulku ×:stä, Escistä tai yläpalkkia klikkaamalla. Korvaa 📦-napin desktopilla — mobiilissa nappi säilyy. Ks. The Ledge Rule ja The Deck Rule (§8).
 - **Sivupaneelien kiskot (.side-panel__tab, ≥900px):** ODOTTAVAT (vasen) ja TEHTÄVÄJONO (oikea) lepäävät pystykiskoina areenan reunoilla; hover/`:focus-within` tai kiskon klikkaus avaa paneelin. Kiskon badge näyttää tehtävämäärän. Esc sulkee. Ks. The Rail Rule (§8).
 - **Inventory (.inv-cat-item):** Vasemman sivupaneelin kategorianavigointi. Aktiivinen tila: `background: var(--surface-strong)`, `font-weight: 500` — ei side-tab-reunaa.
+- **Alanavigaatio (#mnav, mobiili):** Mobiilin ensisijainen navigaatio: **Fokus · Jono · + · Matriisi · Pakka**, ja kuudentena **Ohjain** kun toinen laite on elossa. Grid-rivi `.wrap`in pohjalla, ei `position: fixed` — iOS:n liikkuva osoitepalkki rikkoo fixedin. Aktiivinen välilehti: `aria-current="page"` → kulta-tekstiväri + 2px kultapalkki yläreunaan. Kosketuskohteet ≥44px. Ks. The Shell Rule ja The Tab Rule (§8).
 
 ### Signature Component: TCG-areennakortti
 
@@ -328,7 +329,44 @@ Desktopilla (≥900px) pöytä on **yhtenäinen**: 3D-areena täyttää koko sta
 
 **The Deck Rule.** Pakka (`#inv-modal`) nousee PAKKA-palkista samalla liu'ulla kuin kiskot (`var(--dur-panel) var(--ease-out)`) ja peittää palkin. Se pysähtyy **yläpalkin alle**: `top:var(--hdr-b)`, jonka `_syncHdrBottom()` mittaa `.hdr`in alareunasta — yläpalkki jää aina näkyviin ja sen klikkaus sulkee pakan. Palkin kvadranttiluvut käyttävät taustana `color-mix(var(--qN) 78%, black)`: sävy säilyy, mutta valkoinen teksti yltää ≥4,7:1 kaikissa teemoissa (puhdas `--q4` jäisi ~2,6:1).
 
-## 9. Do's and Don'ts
+## 9. Mobiili (<900px)
+
+Työpöytä on **pöytä**: full-bleed areena, kiskot, käsiviuhka, pöydän kehys. Mobiili ei ole kutistettu pöytä vaan **kenttätila** — yksi kortti kerrallaan peukalon ulottuvilla.
+
+### Breakpoint-sopimus
+
+| Ehto | Mitä |
+|---|---|
+| `(min-width:900px) and (min-height:501px)` | Työpöytälayout. **Korkeusehto on pakollinen:** 932×430 (vaakapuhelin) on leveä muttei mahduta pöytää |
+| `(max-width:899.98px), (max-height:500px)` | Mobiilirunko. Pilkku eikä `and`: myös leveä mutta matala ruutu |
+| `(max-width:599.98px)` | Matriisi pinoon (2×2 vaatii ~700px) |
+| `(orientation:landscape) and (max-height:500px)` | Vaakapuhelimen tiivistykset |
+| `_isMobileLayout()` | JS-vastine — **pidä synkassa mobiililohkon ehdon kanssa** |
+
+### Tokenit
+
+| Token | Arvo | Käyttö |
+|---|---|---|
+| `--safe-t/-b/-l/-r` | `env(safe-area-inset-*, 0px)` | iOS-lovi ja kotipalkki. Palauttaa 0px ilman `viewport-fit=cover`, joten turvallinen myös työpöydällä |
+| `--mnav-h` | `56px` | Alanavigaation korkeus ilman turva-aluetta |
+| `--mnav-total` | `calc(var(--mnav-h) + var(--safe-b))` | Se mitä kelluva sisältö väistää |
+| `--tap` | `44px` | Kosketuskohteen minimi |
+
+### Named Rules
+
+**The Shell Rule.** Mobiilissa `.wrap` on kolmirivinen grid `auto 1fr auto` korkeudella `100dvh` (fallback `100vh`): yläpalkki, vierittyvä sisältö, alanavigaatio. Sivu itse ei vieryy koskaan (`html,body{overflow:hidden}`) — vieritys tapahtuu keskirivin sisällä, joka tarvitsee `min-height:0`. Kaikki näkymät (`#main-content-area`, `#v-matrix`, `#v-done`, `#v-projects`, `#v-remote`) jakavat rivin 2 ja tarvitsevat **sekä `grid-row:2` että `grid-column:1`** — pelkkä rivi jättää sijoituksen automaattiselle algoritmille, joka työntää seuraavat näkymät implisiittisiin sarakkeisiin ruudun ulkopuolelle.
+
+**The Tab Rule.** Mobiilivälilehti ei ole uusi näkymä vaan olemassa olevan DOM:in näyttämistä eri tavalla: `setMobileTab()` asettaa `body.mtab-<nimi>`, ja CSS päättää mikä näkyy (Jono = molemmat sivupaneelit pinossa). Uusia render-funktioita ei kirjoiteta — `renderTurnPanel` ja `renderWaiting` piirtävät saman sisällön kuin työpöydällä. Areena ja sivupaneelit eivät ole `.view`-elementtejä, joten `sv()` ei piilota niitä: näkymä on kerrottava myös bodylle (`body.view-<n>`), muuten positioitu areena maalautuu matriisin päälle.
+
+**The Field Rule.** Kenttätilassa kortti on ainoa asia ruudulla: 3D-huone (`#arena-room`), heittovarjo, taustaecho ja kallistus pois — ne ovat työpöytämetaforia ja mobiilin raskaimmat efektit. Tilt-käsittelijä kuuluu `(hover:hover) and (pointer:fine)` -vartion taakse, koska kosketuksella se taistelee eleiden kanssa. Vaakapuhelimessa 5:7-korttia ei kutisteta vaan siitä pudotetaan kuvitus (`.tcg-card__art`) ja annetaan `aspect-ratio:auto` — kvadranttitausta jää, joten väri-identiteetti säilyy.
+
+**The Gesture Rule.** Eleet ovat oikopolku, eivät ainoa tapa — samat toiminnot ovat aina myös napeissa. Kaava on `swipe.html`:n: `touchstart` passive, `touchmove` non-passive, suuntalukitus 12px, kynnys 80px. Oikea = tehty, vasen = odottaa, ylös = seuraava; **alas jätetään selaimelle** (vieritys). Kuuntelijat delegoidaan `#arena`an, koska `render()` luo kortin uudelleen, ja suuntapalaute elää `#arena[data-swipe]::before` -pseudossa samasta syystä. Napista alkava ele ei laukea (`e.target.closest('button,a,input,textarea,select')`).
+
+**The Hand Rule.** Käsi on TCG-mallin ydinkäsite, ei lavaste — se vastaa kysymykseen "mitä pelaan seuraavaksi" (`buildHandQueue`: q1/q2 jotka eivät ole areenalla eivätkä jonossa). Mobiilissa se lepää **36px huulena** alanavigaation yläpuolella ja nousee huulta napauttamalla, jolloin Fokus-välilehden "yksi kortti kerrallaan" säilyy. Huuli on **oma nappinsa korttien päällä** (`#hand-lip`): ilman sitä peek-alueen napautus osuisi korttiin ja nostaisi sen areenalle, vaikka käyttäjä yritti vain avata hyllyn. Kortit vieritetään vaakasuunnassa, ei viuhkana — viisi 130px korttia vie 554px eikä mahdu 390px ruudulle, ja työpöydän limitys on siedettävä vain koska `:hover` nostaa kortin esiin. Käsi on **pystyasennon ominaisuus**: vaakana areenakortin jälkeen jää ~9px. Toiminto on identtinen työpöydän kanssa (`promoteToHand`) — laitteiden välillä ei saa olla opeteltavaa eroa.
+
+**The Session Rule.** Jaettu ajastin tallennetaan **määräaikana** (`endsAt`), ei jäljellä olevana aikana: tikitys ei aiheuta kirjoituksia, verkkoviive ei kerry kelloon eikä taustathrottlaus voi ajautua eteen. Vain `owner === oma laite` sitouttaa vaiheenvaihdon — muuten `pomos` kasvaa kahdesti. Kirjautumattomana koko mekanismi on no-op.
+
+## 10. Do's and Don'ts
 
 ### Do
 
