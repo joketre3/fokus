@@ -6,6 +6,33 @@ tekemättömistä testilistoista. Automaattiset testit on **ajettu** (ks.
 
 ---
 
+## 0. Testattava haara
+
+`claude/pr-code-tests-review-4yqozp` sisältää nyt **kaiken**: PR #8 + PR #7 +
+PR #6 mergettynä, ajastinkorjauksen ja PR #8:n sammakkobugin korjauksen.
+Konfliktit (CLAUDE.md ×3, `index.html` ×2 sisältäen `onPhaseEnd`in) on
+ratkaistu alla kuvatulla tavalla.
+
+**Tämä on se haara joka avataan Pagesissa testattavaksi.** Aiemmin haarassa oli
+vain testit ja ajastinkorjaus — ei yhtään PR:ää — mikä johti siihen että
+matriisi aukesi yhä itsestään.
+
+Tarkistus että olet oikeassa puussa:
+```bash
+grep -c 'openEisePeek(true)' index.html   # 0
+grep -c '_syncTimerUI'       index.html   # 6
+grep -c 'parkInterrupt'      index.html   # 2
+grep -c -- '--faint:'        index.html   # 6
+```
+
+Tila: koko suite **144/144**, M3/M4/M5-sondi **8/8**.
+
+Yksittäiset PR:t #6, #7 ja #8 ovat yhä auki. Jos haluat mergetä ne erikseen
+main-haaraan, osion 3 järjestys ja konfliktiratkaisut pätevät edelleen — tämä
+haara on niiden yhdistetty lopputulos, ei korvaaja.
+
+---
+
 ## 1. Yhteenveto: avoimet PR:t
 
 | PR | Otsikko | Kanta | Merge mainiin | Automaattitestit | Suositus |

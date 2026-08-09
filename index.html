@@ -6296,7 +6296,10 @@ function saveEditModal(){
   // Sammakko
   var wantFrog=document.getElementById('edit-frog').classList.contains('on');
   if(wantFrog&&!t.frog){tasks.forEach(function(x){x.frog=false;});}
-  t.frog=wantFrog;
+  // Pikatehtävä ei voi olla sammakko: se on suodatettu pois areenalta, kädestä
+  // ja jonosta, joten 🐸 jäisi näkymättömiin pikanippuun. Tämä rivi ajetaan
+  // isQuick-haaran JÄLKEEN, joten ehto on toistettava tässä.
+  t.frog=wantFrog&&!isQuick(t);
   // Projekti
   var pb=document.getElementById('edit-proj-btns');
   var activeBtn=pb.querySelector('button.active');
