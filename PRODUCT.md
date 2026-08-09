@@ -9,7 +9,11 @@ product
 Suomalaiset tietotyöläiset jotka hallitsevat tehtävälistoja työssä.
 Ensisijainen käyttäjä: sosiaaliohjaaja julkisessa sote-organisaatiossa —
 keskeytyksiä, palavereita, kirjausmonia, deadlinejä.
-Käytetään pöytäkoneella tai kannettavalla selaimessa. Mobiili toissijainen.
+Käytetään ensisijaisesti pöytäkoneella tai kannettavalla selaimessa.
+Mobiili on toissijainen mutta kehittyvä haara: se ei ole kutistettu
+työpöytä vaan oma kenttätilansa, ja nykyisellään jo käyttökelpoinen
+päivittäiseen työhön. Työpöytä pysyy paikkana jossa päivä suunnitellaan;
+puhelin on se laite joka on mukana kun päivä tapahtuu.
 
 ## Product Purpose
 

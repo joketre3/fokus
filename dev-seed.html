@@ -1,31 +1,133 @@
 <!DOCTYPE html>
-<!-- Kehitystyökalu: kylvää localStorageen demodataa headless-screenshotteja varten.
-     Käyttö: avaa sama origin (localhost:8901) samalla chrome-profiililla ennen index.html:ää. -->
+<!-- Kehitystyökalu: kylvää localStorageen demodataa.
+     Käyttö: avaa tämä samasta originista kuin index.html (mikä tahansa
+     isäntä käy — localhost, GitHub Pages, esikatselu), paina nappia ja
+     avaa sovellus. Data menee VAIN selaimeen; jos olet kirjautunut,
+     seuraava tallennus työntää sen myös pilveen — älä siis kylvä
+     kirjautuneena ellet tarkoita sitä.
+
+     Datajoukko on valittu niin että jokainen mobiilinäkymä saa sisältöä:
+     areena + jono, odottava, tehtyjä, kaikki neljä kvadranttia, sammakko,
+     sekä vapaita q1/q2-tehtäviä joita korttiselaus (swipe.html) tarvitsee. -->
 <html lang="fi">
-<head><meta charset="UTF-8"><title>seed</title></head>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Fokus — kylvä testidata</title>
+<style>
+  body{font-family:system-ui,sans-serif;background:#0d1f14;color:#eee;
+       margin:0;padding:2rem 1.25rem;line-height:1.55}
+  h1{font-size:1.15rem;margin:0 0 .35rem}
+  p{font-size:.9rem;color:#b9c7bd;margin:.5rem 0}
+  code{background:#16301f;padding:.1rem .3rem;border-radius:4px}
+  button,a.btn{display:block;width:100%;box-sizing:border-box;text-align:center;
+       font:600 1rem system-ui;min-height:52px;margin-top:1rem;
+       border-radius:10px;border:1.5px solid #c49a3a;
+       background:#16301f;color:#e8c873;text-decoration:none;
+       padding:.9rem;cursor:pointer}
+  a.btn{background:#c49a3a;color:#0d1f14;border-color:#c49a3a}
+  #out{margin-top:1rem;font-size:.85rem;color:#9fc89f;min-height:1.4em}
+  .warn{color:#e0b070;font-size:.82rem}
+</style>
+</head>
 <body>
+<h1>Kylvä testidata</h1>
+<p>Kirjoittaa <code>eis_v5_work</code>-avaimeen demotehtävät tämän originin
+selaintallennukseen. <span class="warn">Korvaa kyseisen työtilan nykyisen
+sisällön.</span></p>
+
+<button id="seedBtn" type="button">Kylvä 12 tehtävää</button>
+<div id="out"></div>
+<a class="btn" href="index.html">Avaa Fokus →</a>
+
 <script>
-var today = new Date().toISOString().slice(0,10);
-var state = {
-  nid: 6,
-  active: 1,
-  turn: [2,3,4,5],
-  pomoDone: 0, totalPomos: 0,
-  date: today,
-  pnid: 2,
-  projects: [{id:1, name:'Työ', color:'#c49a3a'}],
-  tasks: [
-    {id:1, text:'Soita hammaslääkärille', verbi:'Soita', quad:'q1', done:false, pomos:0, est:3, important:true,  urgent:true,  tags:[], projectId:1, frog:true,  needsReview:false, chainId:null, chainPosition:null, chainTotal:null, isChained:false},
-    {id:2, text:'Tee veroilmoitus',        verbi:'Tee',   quad:'q1', done:false, pomos:0, est:4, important:true,  urgent:true,  tags:[], projectId:null, frog:false, needsReview:false, chainId:null, chainPosition:null, chainTotal:null, isChained:false},
-    {id:3, text:'Sovi kehityskeskustelu',  verbi:'Sovi',  quad:'q2', done:false, pomos:0, est:2, important:true,  urgent:false, tags:[], projectId:1, frog:false, needsReview:false, chainId:null, chainPosition:null, chainTotal:null, isChained:false},
-    {id:4, text:'Tarkista sähköpostit',    verbi:'Tarkista', quad:'q3', done:false, pomos:0, est:1, important:false, urgent:true,  tags:[], projectId:null, frog:false, needsReview:false, chainId:null, chainPosition:null, chainTotal:null, isChained:false},
-    {id:5, text:'Kirjaa kuitit',           verbi:'Kirjaa', quad:'q4', done:false, pomos:0, est:1, important:false, urgent:false, tags:[], projectId:null, frog:false, needsReview:false, chainId:null, chainPosition:null, chainTotal:null, isChained:false}
-  ]
-};
-localStorage.setItem('fap_onboarded','1');
-localStorage.setItem('fap_active_ws','work');
-localStorage.setItem('eis_v5_work', JSON.stringify(state));
-document.body.textContent = 'seeded: ' + today;
+// Paikallinen päivämäärä: toISOString() siirtäisi päivän UTC+2/+3:ssa
+// keskiyön jälkeen edelliselle.
+function localDate(){
+  var d=new Date(),p=function(n){return String(n).padStart(2,'0')};
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());
+}
+
+// Täydet kentät, jotta mikään renderöijä ei osu undefinediin.
+function task(o){
+  return Object.assign({
+    id:0, text:'', verbi:'', kuvaus:'',
+    quad:'q4', important:false, urgent:false,
+    est:1, done:false, frog:false, waiting:false,
+    schedule:null, scheduled_hidden:false,
+    projectId:null, pomos:0, doneAt:null,
+    chainId:null, chainPosition:null, chainTotal:null, isChained:false,
+    tags:[], lisatiedot:null, linkki:null
+  }, o);
+}
+
+function seed(){
+  var yesterday=new Date(Date.now()-864e5).toISOString();
+  var t=[
+    // — Areena ja jono —
+    task({id:1, verbi:'Soita', kuvaus:'Virtaselle takaisin', text:'Soita Virtaselle takaisin',
+          quad:'q1', important:true, urgent:true, est:1, frog:true, projectId:1,
+          lisatiedot:'Ennen klo 15. Kysy kuntoutuspäätöksestä.'}),
+    task({id:2, verbi:'Kirjaa', kuvaus:'asiakaskäynti Lifecareen', text:'Kirjaa asiakaskäynti Lifecareen',
+          quad:'q1', important:true, urgent:true, est:2, projectId:1}),
+    task({id:3, verbi:'Tee', kuvaus:'kuukausiraportti', text:'Tee kuukausiraportti',
+          quad:'q2', important:true, est:4, projectId:2}),
+
+    // — Vapaita q1/q2: näkyvät korttiselauksessa ja pakassa —
+    task({id:4, verbi:'Sovi', kuvaus:'kehityskeskustelu esihenkilön kanssa', text:'Sovi kehityskeskustelu esihenkilön kanssa',
+          quad:'q2', important:true, est:0.5,
+          linkki:'https://www.luvn.fi'}),
+    task({id:5, verbi:'Selvitä', kuvaus:'kuntoutustuen hakuprosessi', text:'Selvitä kuntoutustuen hakuprosessi',
+          quad:'q2', important:true, est:3, projectId:2}),
+    task({id:6, verbi:'Varaa', kuvaus:'kokoushuone torstaille', text:'Varaa kokoushuone torstaille',
+          quad:'q2', important:true, est:0.5}),
+    task({id:7, verbi:'Vie', kuvaus:'raportti esihenkilölle', text:'Vie raportti esihenkilölle',
+          quad:'q1', important:true, urgent:true, est:0.5}),
+
+    // — Odottavat: ODOTTAVAT-paneeli Jono-välilehdellä —
+    task({id:8, verbi:'Selvitä', kuvaus:'laskun tila taloushallinnosta', text:'Selvitä laskun tila taloushallinnosta',
+          quad:'q3', urgent:true, est:1, waiting:true}),
+
+    // — q3 ja q4: matriisin alarivi —
+    task({id:9,  verbi:'Tarkista', kuvaus:'sähköpostit', text:'Tarkista sähköpostit',
+          quad:'q3', urgent:true, est:1}),
+    task({id:10, verbi:'Kirjaa', kuvaus:'kuitit', text:'Kirjaa kuitit',
+          quad:'q4', est:1}),
+
+    // — Tehtyjä: Tehty-näkymä ja viikkoyhteenveto —
+    task({id:11, verbi:'Soita', kuvaus:'asiakkaalle A', text:'Soita asiakkaalle A',
+          quad:'q1', important:true, urgent:true, est:1, pomos:1,
+          done:true, doneAt:yesterday}),
+    task({id:12, verbi:'Tee', kuvaus:'viikkosuunnitelma', text:'Tee viikkosuunnitelma',
+          quad:'q2', important:true, est:2, pomos:2,
+          done:true, doneAt:yesterday})
+  ];
+
+  var state={
+    tasks:t,
+    nid:13,               // aina suurimman id:n yli
+    active:1,             // sammakko areenalle
+    turn:[2,3],           // loppujono
+    pomoDone:2, totalPomos:7,
+    date:localDate(),
+    projects:[{id:1,name:'Asiakastyö',color:'#a84c28'},
+              {id:2,name:'Raportointi',color:'#2d5a3d'}],
+    pnid:3,
+    updatedAt:Date.now()
+  };
+
+  try{
+    localStorage.setItem('fap_onboarded','1');
+    localStorage.setItem('fap_active_ws','work');
+    localStorage.setItem('eis_v5_work', JSON.stringify(state));
+    document.getElementById('out').textContent=
+      '✓ Kylvetty '+t.length+' tehtävää ('+localDate()+'). Avaa Fokus alta.';
+  }catch(e){
+    document.getElementById('out').textContent='✗ Kirjoitus epäonnistui: '+e.message;
+  }
+}
+
+document.getElementById('seedBtn').addEventListener('click', seed);
 </script>
 </body>
 </html>

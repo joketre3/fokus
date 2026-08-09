@@ -2,8 +2,10 @@
 <html lang="fi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline'; connect-src https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://www.gstatic.com; font-src https://fonts.gstatic.com; style-src 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:">
+<meta name="theme-color" content="#071009">
+<link rel="apple-touch-icon" href="icon-180.png">
 <title>Fokus — Aamusuunnittelu</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap');
@@ -72,6 +74,8 @@ body{
   font-family:'DM Sans',sans-serif;
   color:var(--ink);
   min-height:100vh;
+  min-height:100dvh;   /* iOS:n liikkuva osoitepalkki */
+  padding-bottom:env(safe-area-inset-bottom,0px);
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -373,9 +377,16 @@ html[data-theme="aurinko"] .done-summary{background:#f8f8f8;border-color:#e8d8b8
 
 .logo-bar{
   width:100%;max-width:520px;
-  padding:.9rem 1.5rem .3rem;
-  display:flex;align-items:center;justify-content:space-between;
+  padding:calc(.9rem + env(safe-area-inset-top,0px)) 1.5rem .3rem;
+  display:flex;align-items:center;justify-content:space-between;gap:.6rem;
 }
+.back-btn{
+  font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:500;
+  min-height:44px;padding:.4rem .7rem;margin-left:-.7rem;
+  background:none;border:none;color:var(--muted);cursor:pointer;
+  border-radius:8px;
+}
+.back-btn:active{background:rgba(0,0,0,.06)}
 .logo{
   font-family:'DM Serif Display',serif;font-style:italic;
   font-size:.95rem;color:var(--accent);
@@ -391,6 +402,9 @@ html[data-theme="aurinko"] .done-summary{background:#f8f8f8;border-color:#e8d8b8
 <body>
 
 <div class="logo-bar">
+  <!-- Näkyy vain kun tänne on navigoitu samassa välilehdessä (?back=1),
+       eli mobiilissa. Popup-ikkunassa selaimen oma sulkeminen riittää. -->
+  <button type="button" class="back-btn" id="backBtn" hidden onclick="goBackToApp()">← Takaisin</button>
   <div class="logo">Fo🌲us</div>
   <div class="time-badge" id="timeBadge"></div>
 </div>
@@ -1049,6 +1063,22 @@ function setStep(n){
     if(i<n) sn.textContent='✓'; else sn.textContent=String(i);
   }
 }
+
+// ── PALUU PÄÄSOVELLUKSEEN ─────────────────────────────
+// Mobiilissa velho avataan samaan välilehteen (?back=1), koska
+// window.open avaisi siellä välilehden jolta opener-delegointi ei toimi.
+// Silloin tarvitaan oma paluunappi — popup-ikkunassa ei.
+function goBackToApp(){
+  if(history.length>1) history.back();
+  else location.href='index.html';
+}
+(function(){
+  try{
+    var sameTab=new URLSearchParams(location.search).get('back')==='1'||!window.opener;
+    var b=document.getElementById('backBtn');
+    if(b&&sameTab)b.hidden=false;
+  }catch(e){/* URLSearchParams puuttuu — nappi jää piiloon */}
+})();
 
 // ── UTILS ─────────────────────────────────────────────
 function fe(v){ if(v===0)return'⚡'; if(v===0.5)return'½'; if(v%1!==0)return Math.floor(v)+'½'; return String(v); }
