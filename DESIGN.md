@@ -286,6 +286,7 @@ Desktopilla (≥900px) pöytä on **yhtenäinen**: 3D-areena täyttää koko sta
 | `--rail-ink` | valk. .72 | ruskea .82 | kiskotekstin väri (ei `--subtle`) |
 | `--room-grid` | valk. .028 | ruskea .07 | lattiaruudukon viivat |
 | `--room-bg` | `#071009` (havu `#010402`) | `#d8c6a4` | huone huovan ympärillä |
+| `--budget-ok` / `--budget-over` | `#63a463` / `#ec6b45` | `#2d5a3d` / `#8c2f14` | 1-3-5-mittarin tila (ei `--q1`/`--q2`) |
 
 ### Named Rules
 
@@ -298,6 +299,8 @@ Desktopilla (≥900px) pöytä on **yhtenäinen**: 3D-areena täyttää koko sta
 **The Well Rule.** Upotukset tehdään aina inset-box-shadow'lla + `--well-bg`-täytöllä, ei koskaan bordereilla. Alahuulen kiilto (`inset 0 -1px 0`) myy syvyyden.
 
 **The Chip Rule.** Nappien paino = `box-shadow: var(--chip-shadow)` + `:active { transform:translateY(1px) }`. Ei background-muutoksia — teemojen `!important`-säännöt omistavat background-kerroksen.
+
+**The Quadrant-Color Rule.** `--q1`…`--q4` ovat **täyttövärejä**, eivät tekstivärejä. Tummalla well-paneelilla `--q2` (`#2d5a3d`) antaa vain 2,3:1 kontrastin. Kvadranttisävyistä informaatiota kantava teksti tarvitsee oman teemakohtaisen tokenin — 1-3-5-mittari käyttää `--budget-ok`/`--budget-over` (≥4,9:1 kaikissa kolmessa teemassa). Sama koskee badgen taustaa: siihen tarvitaan `color-mix(in srgb, var(--qN) 78%, black)`.
 
 **The Slot Rule.** Areenaslotti on `#arena::after`-pseudo (`z-index:-1`, `isolation:isolate`) — `render()` tyhjentää areenan DOM-lapset, pseudot selviävät.
 
