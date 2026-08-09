@@ -140,7 +140,23 @@ Palette on johdettu metsästä, ei brändipyörästä. Värit koodaavat tehtävi
 - **Pintakerrostumat** (rgba(30,55,40,.35–.65)): Usvametsässä neljä pintatasoa xs/sm/md/strong — translucent dark-green pints taustakuvan päällä. Luo syvyyden ilman varjoja.
 - **Aurinkoteeman muste** (#2d2417): Lämpimän ruskea muste vaalealla taustalla. Ei kylmä musta.
 
+### Tekstitokenien portaat
+
+Kolme tasoa, ja **vain nämä** kelpaavat `color:`-arvoiksi:
+
+| Token | Usva | Havu | Aurinko | Käyttö |
+|---|---|---|---|---|
+| `--ink` | valk. .95 | valk. .97 | `#2d2417` | ensisijainen teksti |
+| `--muted` | valk. .72 | valk. .72 | `#5f5334` | toissijainen teksti, labelit |
+| `--faint` | valk. .55 | valk. .52 | ruskea .62 | tertiäärinen: tyhjät tilat, ×-napit, vihjeet |
+
+`--subtle` (valk. .2 / .08, aurinko hiekka .22) **ei ole tekstitokeni** — se on rajoja ja koristetta varten, kontrasti 1,05–3,6:1. Sama koskee `--etch-ink`iä: se on letterpress-koriste, ja informaatiota kantava kaiverrusteksti käyttää `--rail-ink`iä.
+
 ### Named Rules
+
+**The Theme Scope Rule.** Komponenttisäännöt kirjoitetaan tokeneilla perussääntöihin. Kovakoodattuja väriliteraaleja saa esiintyä **vain** `html[data-theme="…"]`-rajatussa lohkossa. Teematon `!important`-sääntö, jonka arvo on väriliteraali, on aina bugi jossain teemassa — ja se kasvattaa vastalohkoa toisaalla, kunnes jokainen uusi komponentti syntyy rikkinäisenä. Pysyvästi tummat pinnat (TCG-kortin `--plate-*`, `#hdr-timer`) ovat poikkeus: niiden muste on oma tokeninsa (`--tcg-plate-ink*`), ei teeman `--ink`.
+
+**The Text Token Rule.** `color:`-arvo on aina `--ink`, `--muted`, `--faint`, `--accent` tai semanttinen tilaväri. Ei `--subtle`ä, ei `--accent-dim`iä, ei `--etch-ink`iä — ne ovat tausta- ja rajatokeneita, ja `var(--accent-dim, var(--accent))` -tyylinen fallback ei laukea koskaan, koska tokeni on määritelty.
 
 **The One Accent Rule.** Kultainen (#c49a3a) esiintyy korkeintaan 10% mistä tahansa näkymästä. Sen harvinaisuus on pointti — kaikki muut elementit saavat huomion sen kautta.
 
@@ -283,9 +299,10 @@ Desktopilla (≥900px) pöytä on **yhtenäinen**: 3D-areena täyttää koko sta
 | `--panel-w` / `--rail-w` | 340px / 44px | sama | sivupaneelin auki-/lepoleveys |
 | `--ledge-h` | 38px | sama | pöydän kehyksen korkeus |
 | `--dur-panel` | 300ms | sama | paneeliliu'un kesto |
-| `--rail-ink` | valk. .72 | ruskea .82 | kiskotekstin väri (ei `--subtle`) |
+| `--rail-ink` | valk. .72 | ruskea .82 | kiskotekstin JA sivupaneelin otsikon väri (ei `--subtle`, ei `--etch-ink`) |
 | `--room-grid` | valk. .028 | ruskea .07 | lattiaruudukon viivat |
 | `--room-bg` | `#071009` (havu `#010402`) | `#d8c6a4` | huone huovan ympärillä |
+| `--budget-ok` / `--budget-over` | `#63a463` / `#ec6b45` | `#2d5a3d` / `#8c2f14` | 1-3-5-mittarin tila (ei `--q1`/`--q2`) |
 
 ### Named Rules
 
@@ -298,6 +315,8 @@ Desktopilla (≥900px) pöytä on **yhtenäinen**: 3D-areena täyttää koko sta
 **The Well Rule.** Upotukset tehdään aina inset-box-shadow'lla + `--well-bg`-täytöllä, ei koskaan bordereilla. Alahuulen kiilto (`inset 0 -1px 0`) myy syvyyden.
 
 **The Chip Rule.** Nappien paino = `box-shadow: var(--chip-shadow)` + `:active { transform:translateY(1px) }`. Ei background-muutoksia — teemojen `!important`-säännöt omistavat background-kerroksen.
+
+**The Quadrant-Color Rule.** `--q1`…`--q4` ovat **täyttövärejä**, eivät tekstivärejä. Tummalla well-paneelilla `--q2` (`#2d5a3d`) antaa vain 2,3:1 kontrastin. Kvadranttisävyistä informaatiota kantava teksti tarvitsee oman teemakohtaisen tokenin — 1-3-5-mittari käyttää `--budget-ok`/`--budget-over` (≥4,9:1 kaikissa kolmessa teemassa). Sama koskee badgen taustaa: siihen tarvitaan `color-mix(in srgb, var(--qN) 78%, black)`.
 
 **The Slot Rule.** Areenaslotti on `#arena::after`-pseudo (`z-index:-1`, `isolation:isolate`) — `render()` tyhjentää areenan DOM-lapset, pseudot selviävät.
 

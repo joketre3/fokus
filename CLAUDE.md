@@ -6,8 +6,11 @@ Impeccable-analyysi tehty 2026-06-07. Raportti: `docs/impeccable-kritiikki.md`.
 PRODUCT.md luotu 2026-06-10. P0 valmis.
 
 **P0 ✅ valmis (2026-06-10):** Aurinko-teema kerma → puhdas valkoinen; aamu.html usva-synkronointi; --muted .55 → .72
+*(Aurinkoteeman värinäkyvyys korjattu rakenteellisesti 2026-08-07 — ks. oma osio alempana.)*
 
 **P1 ✅ valmis (2026-06-11):** text-xs tokenoitu; SVG-ajastinvärit → var(--pomo); reduced-motion aamu+swipe; empty states dashed-border
+
+**Tuottavuustavat ✅ valmis (2026-08-08):** 2 min -sääntö (pikakortit), 1-3-5 päivän budjetti, keskeytysparkki — ks. oma osio alempana
 
 **P2 ✅ valmis (2026-06-11) — Eisenhower-peek + navigaatio:**
 - Eisenhower-matriisi yhdistetty: vanha full-screen modaali poistettu → uusi `#eise-peek` areenan yläreunassa
@@ -16,7 +19,7 @@ PRODUCT.md luotu 2026-06-10. P0 valmis.
 - Drag-and-drop kvadrantista toiseen + klikkauspohjainen siirtovalikko (mobiili)
 - ↑-nappi suoraan matriisista jonoon; indikaattorit: 🐸 sammakko, ⌛ odottava, 🍅 jonossa
 - Timer käynnistyessä: handle piiloutuu automaattisesti; pysähtyessä: tulee takaisin
-- Tauon alkaessa (sbrk/lbrk): peek aukeaa automaattisesti tarjolle
+- ~~Tauon alkaessa (sbrk/lbrk): peek aukeaa automaattisesti tarjolle~~ **poistettu 2026-08-04** — matriisi ei aukea automaattisesti missään tilanteessa, vain kahvasta tai hampurilaisvalikosta. Tauon kehotus näkyy `#break-banner`issa
 - Ham-btn näkymätunnus: näyttää "Matriisi" / "Tehty" / "Projektit" kun ei olla Tehtävälistalla
 - Toimii sekä desktopilla että mobiililla (CSS siirretty globaaliksi)
 - **Desktop-käytös muuttunut 2026-07-27:** kahva ja peek ovat 720px keskitettyjä (eivät areenan levyisiä), peek on opaakki, peittää käden ja sulkeutuu ulkoklikkauksesta — ks. Yhtenäinen näkymä -osio
@@ -32,7 +35,7 @@ python3 -m http.server 8080
 # http://localhost:8080
 ```
 
-Ei testejä, ei lintteriä, ei CI:tä.
+Testit: `python3 tests/run.py` (ks. `tests/README.md`). Ei lintteriä, ei CI:tä.
 
 ## File structure
 
@@ -188,7 +191,9 @@ ICS-kalenteri aktivoituu automaattisesti verbeille: Sovi, Aikatauluta, Varaa (--
 - `havu` — Havumetsä: syvä tumma metsä
 - `aurinko` — Aurinko: lämmin vaalea/terracotta
 
-CSS custom properties: `--ink`, `--surface-xs`, `--surface`, `--surface-md`, `--surface-strong`, `--border`, `--subtle`, `--accent`, `--accent-dim`, `--muted`. Q2-värit ja logo-SVG:t pysyvät vihreinä.
+CSS custom properties: `--ink`, `--surface-xs`, `--surface`, `--surface-md`, `--surface-strong`, `--border`, `--subtle`, `--accent`, `--accent-dim`, `--muted`, `--faint`. Q2-värit ja logo-SVG:t pysyvät vihreinä.
+
+**Tekstivärit ovat `--ink` / `--muted` / `--faint` — vain nämä kolme.** `--subtle` (rajat, koriste), `--accent-dim` (taustasävy) ja `--etch-ink` (letterpress-koriste) EIVÄT ole tekstitokeneita; aurinkoteemassa niiden kontrasti on 1,1–3,2:1. Pysyvästi tummilla pinnoilla (TCG-kortin plate, `#hdr-timer`) muste on `--tcg-plate-ink*` tai eksplisiittinen valkoinen, ei teeman `--ink`. Ks. DESIGN.md §2 **The Text Token Rule** ja **The Theme Scope Rule**.
 
 ## Keskeiset käsitteet
 
@@ -386,6 +391,90 @@ Suunnitelmat: `~/.claude/plans/yhten-inen-n-kym-areena-taustana-sparkling-taco.m
 - **Osumatestaus:** `document.elementFromPoint` ei kelpaa maalausjärjestyksen todentamiseen, jos elementillä on `pointer-events:none` (esim. `.notif`, `.table-ledge`) — se ohitetaan aina. Päättele z-järjestys stacking-konteksteista.
 - Regressiovertailun baseline: `git show HEAD:index.html` → sama seed-generaattori molemmille → pikselidiffi. 700 px 0,02 % ja 390 px 0,03 % = kohinataso.
 
+### Tuottavuustavat: 2 min, 1-3-5, keskeytysparkki (2026-08-08) — valmis
+
+Kolme tapaa integroitu. Pomodoro, sammakko ja tehtävien pilkkominen olivat jo
+valmiina; 5 sekunnin sääntö jätettiin tietoisesti pois (sotii PRODUCT.md:n
+"rauhallinen varmuus" -periaatetta, eikä aloituskynnys ole Fokuksen ongelma —
+keskeytykset ovat).
+
+| Tapa | Mitä | Missä |
+|---|---|---|
+| **Keskeytysparkki** | Ajastimen sääntöteksti lupasi jo "merkitse se ylös ja jatka" ilman toteutusta. Nyt `#hdr-timer`iin ilmestyy työvaiheessa kenttä: Enter luo tehtävän (`quad:'q3'`, `est:.5`, `tags:['keskeytys']`, `needsReview:true`) ilman että pomodoro katkeaa | `parkInterrupt()`, `updParkRow()`, `updParkCount()`, `_parkCount` |
+| **2 min -sääntö** | `est===0` = pikatehtävä. Liukusäätimen minimi 0.5 → 0 (lisäys- ja muokkausmodaalissa). Pikatehtävät eivät mene areenalle, käteen, jonoon, aamuvelhoon eivätkä swipe-pakkaan — ne kootaan `#pika-modal`iin ruksattavaksi | `isQuick()`, `quickTasks()`, `renderPikaBtn()`, `openPikaModal()`, `renderPikaList()`, `pikaDone()`, `pikaDelete()` |
+| **1-3-5** | Päivän sitoumus (`active` + `turn`) mitataan: 1 iso (sammakko tai est ≥3), 3 keskikokoista (est 1–2.5), 5 pientä (est 0.5). Mittari jonopaneelin ylälaidassa ja aamuvelhon vaiheessa 4 | `dayBudget()`, `renderDay135()`, `DAY135_LIMITS`; aamu.html `day135Counts()`, `renderDay135()` |
+
+Opit:
+- **`fe(0)` oli aiemmin saavuttamaton** — 0 palautti `'0'`. Nyt `'⚡'`. Turvallista koska `est` alkoi ennen 0.5:stä; `totalQueueEst()` on kuollutta koodia eikä `fe`ä käytetä summiin.
+- **`||1` on ansa nolla-arviolle.** `t.est||1` promotoi pikatehtävän hiljaa yhden pomodoron tehtäväksi. Kaikki osumat piti vaihtaa muotoon `t.est==null?1:t.est` — `saveEditModal`, `openEditModal`, areenakortin meta, matriisin pipit, Tehdyt-lista sekä swipe.html:n muokkaus. Myös `renderSummary` ja AI-vienti korjattiin: valmis pikatehtävä olisi kasvattanut arviosummaa yhdellä pomodorolla ja näyttänyt arviotarkkuudessa osumalta (`|0−1| ≤ 1`) — nyt ne ohitetaan ja `accPct`:n nimittäjä on `estimatedDone`, ei `done.length`.
+- **`wizReset()` nollaa `est`-globaalin** → `addTask`in loppuun sijoitettu `if(est===0)` ei laukea koskaan. Lippu on luettava ennen resetiä.
+- **`--q1`/`--q2` ovat täyttövärejä.** `--q2` (`#2d5a3d`) antaa tummalla well-paneelilla vain 2,3:1. Yhtä väriä ei voi jakaa teemojen kesken: `--q2-bright` (`#4a8a4a`) on 4,3:1 tummalla mutta 2,6:1 vaalealla. Siksi omat tokenit `--budget-ok`/`--budget-over` per teema (ks. DESIGN.md The Quadrant-Color Rule).
+- **Desktopilla `#hdr-timer` on `position:static` gridissä** — parkkirivi kasvattaisi yläpalkkia ja siirtäisi lavastetta ajastimen käynnistyessä. Ratkaisu: `position:relative` + parkkirivi `position:absolute` ajastimen alle. Mobiilissa (fixed-widget) rivi saa pinota normaalisti, 45px → 80px.
+- **Popup-tarkistus kannatti taas** (vrt. "Toistuva bugiluokka"): `swipe.html` olisi swaipannut pikatehtäviä jonoon ja sen `t.est=parseFloat(...)||1` olisi tuhonnut pika-tilan muokattaessa; `aamu.html` olisi aikatauluttanut ne slotteihin. Molemmat suodattavat nyt `est===0`:n.
+- **Headless: regeneroi testisivu jokaisen lähdemuutoksen jälkeen.** Vanhasta `index.html`-kopiosta generoitu testisivu näytti korjatun kontrastin yhä rikkinäisenä — pikselimittaus antoi täsmälleen saman arvon ennen ja jälkeen, mikä paljasti syyn.
+- **`--window-size` ei ohjaa `innerWidth`ia `--dump-dom`-ajossa:** Chrome raportoi 500 vaikka ikkuna on 390, ja `--screenshot` maalaa 390px kuvan 500px-taitosta → widget näyttää valuvan reunan yli vaikka `scrollWidth===innerWidth`. Mittaa `getBoundingClientRect`illa ja kaappaa raportoidulla leveydellä.
+
+### Fokustila + taukokehotus (2026-08-04) — valmis
+
+**Vika:** sivupaneelit ja käsi jäivät piiloon tauon jälkeenkin. `focus-mode` lisättiin `toggleTimer`issä ja poistettiin vain `stopAll`:ssa, jonne `onPhaseEnd` ei koskaan mene. Tauon päätyttyä `tmr` on `null` → ▶ meni käynnistyshaaraan eikä luokkaa poistettu koskaan. Ainoa kiertotie oli aloittaa pomodoro ja keskeyttää se heti.
+
+| Osa | Mitä |
+|---|---|
+| `_syncTimerUI()` | Ajastintilan ainoa totuuden lähde, kutsutaan neljästä siirtymästä (`toggleTimer`, `onPhaseEnd` ×2, `stopAll`). `focus-mode` = `!!tmr` (työ JA tauko), `eise-handle--hidden` = `phase==='work' && tmr`, `body.on-break` + `#break-banner` = tauko |
+| Auto-peek poistettu | `openEisePeek(true)` `onPhaseEnd`ista pois — matriisi ei aukea automaattisesti missään. Samalla pois parillinen `closeEisePeek()` tauon lopusta: se olisi sulkenut käyttäjän itse avaaman matriisin. `isAuto`-parametri poistettu tarpeettomana |
+| `#break-banner` | Taukokehotus areenassa. Desktopilla absoluuttinen PAKKA-palkin yläpuolella, mobiilissa virrassa kortin yläpuolella |
+| `.eise-peek-sub--break` | Sama kehotus peekin otsikkorivillä, jos matriisi avataan käsin kesken tauon |
+
+Opit:
+- **Tilaluokka ilman poistopolkua on aikapommi:** `classList.add` yhdessä funktiossa ja `remove` toisessa kestää vain niin kauan kuin kaikki polut kulkevat molempien kautta. `onPhaseEnd` oli kolmas polku joka ei kulkenut. Yksi `_sync*()`-funktio joka JOHTAA luokat tilamuuttujista (`phase`, `tmr`) ei voi jäädä epäsynkroniin.
+- **Virtual-time EI aja viivästettyjä CSS-siirtymiä.** `.tcg-left`illa on `transition-delay:250ms`, `#hand-bar-cards`illa ei → headless-mittaus väitti paneelien jäävän piiloon while `focus-mode` oli jo pois. Sama ajo Playwrightilla reaaliajassa antoi oikean tuloksen. Ristiriitainen tulos samassa CSS-säännössä olevien elementtien välillä = mittausvirhe, ei bugi.
+- **Peek peittää tauolla koko areenan** (mitattu: 99–912 px 900 px ikkunassa) → mikään areenaan sijoitettu banneri ei näkynyt sen alta. Mittaa peittävyys ennen kuin sijoitat elementtejä areenaan.
+- `.notif`-toast (`bottom: --ledge-h + 3rem`, 40 px korkea) törmää areenan alalaidan elementteihin 6 px:llä → `body.on-break .notif` nostaa sen 5rem:iin. Toast ilmestyy juuri kun taukoteksti pitäisi lukea.
+- Mobiilissa absoluuttinen `bottom` areenassa peittää kortin toimintonapit — banneri virtaan (`position:relative`) alle 900 px:ssä.
+
+### Aurinkoteeman värinäkyvyys (2026-08-07) — valmis, ei vielä testattu selaimessa
+
+**Vika:** vaaleassa teemassa laaja joukko käyttöliittymää oli lukukelvotonta — valkoista tekstiä valkoisella tai tummaa tummalla.
+
+**Juurisyy oli rakenteellinen, ei yksittäisiä värejä.** `index.html`:n rivit 436–580 (`/* GLASS MIXIN */`) olivat **teematon** lohko, jossa oli kovakoodattuja tumman teeman literaaleja lähes kauttaaltaan `!important`illa. Alla olevat perussäännöt olivat jo oikein tokenisoituja (`color:var(--muted)` jne.) — glass-lohko vain yliajoi ne kaikissa teemoissa. Aurinko-lohko oli kasvanut ~40 paikkauksen listaksi, joka kumosi tämän komponentti kerrallaan; **jokainen komponentti jota listalla ei ollut, oli rikki** — ja jokainen myöhemmin lisätty komponentti syntyi rikkinäisenä.
+
+| Vaihe | Mitä |
+|---|---|
+| 1 | 82 sääntöä prefiksoitu `html:not([data-theme="aurinko"])`:lla → aurinko putoaa tokenisoituihin perussääntöihin |
+| 2 | Turhaksi jääneet aurinko-paikkaukset pois (6 kpl); liian heikot alfat (`.pstat` .50, `.clbl/.rlbl` .45, `.drag-handle` .20) → tokeneiksi |
+| 3 | Uusi `--faint` tertiääriselle tekstille; 28 × `color:var(--subtle)` → `var(--faint)` |
+| 4 | Aurinko-lohkosta puuttuneet `--accent-dim`, `--frog-deep`, `--q2-bright`, `--pomo-hi` |
+| 5 | Kovakoodatut tummat pinnat: `.verb-pop`, `#chain-view-panel`, 3 arviosliderin kääre, ketjurivit, ajastin-popupin kello |
+
+Opit:
+- **Teematon `!important`-sääntö väriliteraalilla on aina bugi jossain teemassa.** Se ei näy heti, koska vastalohko paikkaa oireet — mutta paikkauslista ei voi koskaan olla täydellinen. Ks. DESIGN.md **The Theme Scope Rule**.
+- **`button{color:…}` ei saa prefiksiä.** Spesifisyys nousisi 0-0-1 → 0-1-2 ja voittaisi `.pbtn`/`.badd`/`.vbtn` (0-1-0) → tummat teemat regressoituisivat. Tokenisoi arvo sen sijaan. `html:not([data-theme="x"])` lisää 0-1-1, koska `:not()`in spesifisyys on sen argumentin spesifisyys.
+- **`var(--tokeni, var(--fallback))` ei laukea koskaan, jos tokeni on määritelty.** `.ham-theme-btn--active{color:var(--accent-dim,var(--accent))}` maalasi tekstin 12 % taustasävyllä *kaikissa* teemoissa — fallback oli kirjoitettu ikään kuin `--accent-dim` puuttuisi.
+- **Sama tokeni voi olla oikein vaalealla ja väärin tummalla.** `--muted`in tummentaminen (#7a6a4a → #5f5334) korjasi huoneen taustalla lepäävät labelit mutta huononsi areenakortin ikoneita, jotka ovat **pysyvästi tummalla** plate-pinnalla. Ne tarvitsevat kortin oman `--tcg-plate-ink-dim`in. Sama koskee `#hdr-timer`iä: se on tumma widgetti kaikissa teemoissa, joten `var(--ink)` on siellä väärin.
+- Kvadranttivärit valkoisen tekstin taustana tarvitsevat `color-mix(in srgb, var(--qN) 78%, black)` — puhdas `--q4` antaa 2,9:1. Kaava oli jo PAKKA-palkissa; nyt myös `.qbdg`issä ja JS-badgessa.
+
+**Jäljellä tietoisesti:** ~50 osumaa on `--accent` `#c4681e` tekstivärinä vaalealla = 3,4–3,9:1. Se on DESIGN.md:ssä lukittu brändiväri (terracotta), joten sitä ei muutettu — erillinen suunnittelupäätös. Nykyisellään se täyttää AA:n isolle tekstille ja UI-komponenteille (3:1), muttei pienelle leipätekstille.
+
+**Todentamistyökalut (`/tmp/.../scratchpad`, eivät repossa):**
+- `seed.py` — injektoi `localStorage`-siemenen + kovakoodatun `data-theme`n; **jäädyttää animaatiot** (`*,*::before,*::after{animation:none;transition:none}` + `.notif{display:none}`). Ilman jäädytystä kahden identtisen ajon pikselidiffi oli **22 %** (deal-in, echo, toast); jäädytettynä **0,000 %**.
+- `probe.py` — kontrastisondi: `getComputedStyle`illa jokaisen tekstisolmun väri + efektiivinen tausta (alfa-komposiitti ylöspäin), WCAG-suhde, tulos `data-probe`-attribuuttiin ja ulos `--dump-dom`ista.
+- **Sondin ansat:** (1) `file://` vaatii **absoluuttisen** polun — suhteellinen `file://base/x.html` tulkitsee `base`n hostiksi ja epäonnistuu hiljaa. (2) `color-mix()` resolvoituu Chromessa muotoon `color(srgb r g b)`, ei `rgb()` — pelkkä `rgba?\(` -regex ohittaa sen, kävelee vanhempaan ja tuottaa **vääriä positiivisia**. (3) Elementti `display:none`-vanhemman sisällä palauttaa itse `display:block` → modaalit tulevat mittaukseen mukaan avaamatta niitä; **hyödyllistä tässä**, mutta muista se lukiessasi tuloksia. (4) `background-image` (gradientti) ei näy `backgroundColor`issa → korttiselkänapit yms. raportoituvat vääränä positiivisena; sondi tulostaa `img`-lipun sitä varten.
+- **Kuvakaappaus ei todenna tätä työtä.** Desktop- ja mobiilinäkymä näyttävät vain areenan; rikkinäiset komponentit (välilehdet, `.qb`, syötteet, verbinapit) ovat modaaleissa ja listanäkymässä eivätkä näy kuvassa lainkaan. Aurinkoteeman pikselidiffi oli vaiheen 1 jälkeen 0,000 % vaikka 14 vikaa korjaantui. Käytä sondia, kuvaa vain regressiosuojana.
+
+**⚠ TESTAAMATTA SELAIMESSA** — mittaus on staattinen; interaktiiviset tilat (`:hover`, `:focus`, avatut modaalit, ajastin-popup) on käytävä läpi käsin. Palautus: `git revert e6a7633 5070edb`.
+
+| # | Testi | Odotettu |
+|---|---|---|
+| 1 | Aurinko + Lisää tehtävä | Verbinapit (Soita/Sovi/…), kvadranttivalitsin, arviovalitsin ja placeholderit luettavia; valittu verbi terracottana |
+| 2 | Aurinko + välilehdet | Välilehtien tekstit ja laskurimerkit näkyvissä |
+| 3 | Aurinko + verbi-popover (▾) | Vaalea paneeli, tumma teksti |
+| 4 | Aurinko + Ketju-paneeli | Vaalea paneeli; otsikko ja × näkyvissä |
+| 5 | Aurinko + ajastin-popup (↗) | Kellonumerot tummia vaalealla; jonolista luettava |
+| 6 | Usva & havu yleissilmäys | Ennallaan; tyhjät tilat, ×-napit ja vetokahvat aiempaa selvemmin näkyvissä (`--faint`) |
+| 7 | Nopea tila (aurinko-lite) | Ei mudanväristä; pinnat opaakkeja |
+
+Impeccable-detektoria **ei ajettu** — `~/.agents/skills/impeccable/scripts/detect.mjs` on Jaakon koneella, ei tässä ympäristössä. Aja delta paikallisesti ennen julkaisua.
+
 ### Aamusuunnittelun aktivointi (2026-07-29) — valmis
 
 **Vika:** `aamu.html`ää ei voinut avata mistään. `checkMorningTask()` loi aamukortin, mutta `index.html`:ssä ei ollut yhtäkään `window.open('aamu.html')`-kutsua — ei nappia, ei valikkoriviä. Velho oli siis olemassa mutta täysin tavoittamattomissa.
@@ -535,3 +624,79 @@ Fokuksen etu: ohjattu aamurutiini metodologiana (ei vain näkymänä), selkeämp
 - [ ] Freemium-rajojen enforkointi Firestoresta
 - [ ] Email-kirjautuminen Google-kirjautumisen rinnalle
 - [ ] Englanninkielinen versio
+
+### Selaintestit (2026-08-08)
+
+`tests/`-hakemisto: headless-Chrome-testipohja, ei riippuvuuksia.
+Ajo `python3 tests/run.py` (~3 min), suitet `tests/suites/*.js`.
+Ks. `tests/README.md`. PR-läpikäynti ja merge-prosessi:
+`docs/pr-testaus-ja-merge-prosessi.md`.
+
+- Aiemman "Ei testejä, ei lintteriä, ei CI:tä" -rivin tilalle: testit ovat
+  olemassa, CI:tä ei edelleenkään ole — aja käsin ennen pushia.
+- **Kontrolliajo molempiin suuntiin on osa testin kirjoittamista.** Suite joka
+  läpäisee korjatun puun mutta EI kaadu korjaamattomaan ei mittaa mitään.
+  `tests/run.py --tree <vanha-puu>` on se tarkistus.
+- **`tasks.every(...)` tyhjällä taulukolla on tosi.** `swipe.html` ei lataa
+  pakkaa ennen `startSwipe()`ia, joten suodatustestit menivät ensin läpi
+  tyhjästi. Väitä aina ensin että aineistoa on (`tasks.length>0`).
+- **Headless ei palauta `visibility`ä** tilaluokan poiston jälkeen — sama
+  `main`issa, ei siis regressio. Todenna palautussuunta luokasta.
+- `_clearLocalAppData` on moduulinäkyvyydessä → ei tavoitettavissa sivun
+  sisältä. Testattavissa vain irrottamalla funktio Nodeen.
+- Kontrastisondi: `color-mix()` resolvoituu muotoon `color(srgb …)`, ja
+  gradienttitaustalla oleva elementti raportoituu vääränä positiivisena →
+  sondi merkitsee ne `img`-lipulla.
+
+### Ajastimen vaiheenvaihto — ilmoituskerros ei saa katkaista sitä (2026-08-09)
+
+**Vika (löytyi manuaalitestissä M3, oli `main`issa, ei missään PR:ssä):**
+näyttö jähmettyi 00:01:een, tauko ei käynnistynyt; ▶ käynnisti tauon.
+
+`pushNotif`illa ei ollut `try/catch`ia. `new Notification()` heittää
+`TypeError`in mm. Chrome for Androidilla (*Illegal constructor*) **vaikka
+`permission` on `'granted'`**. `tick()` tappaa intervallin ENNEN
+`onPhaseEnd()`-kutsua, joten heitto keskellä `onPhaseEnd`ia jätti `startTmr()`:n
+ajamatta → ajastin kuoli tilassa jossa `phase` oli jo vaihtunut.
+
+Korjaus: `pushNotif` kokonaan try/catchiin + `onPhaseEnd` järjestetty niin että
+**tila ja ajastin asetetaan ennen ilmoituksia** molemmissa haaroissa.
+
+Opit:
+- **Selaimen ilmoitus-API on sivuvaikutus, ei ohjausvirtaa.** `Notification`,
+  `AudioContext` ja `navigator.vibrate` voivat kaikki heittää alustakohtaisesti.
+  Kääri ne, tai aja ne vasta kun tila on jo kirjoitettu.
+- **`permission==='granted'` ei tarkoita että konstruktori toimii.** Androidin
+  Chrome vaatii `ServiceWorkerRegistration.showNotification()`in.
+- **Headless ei löydä tätä koskaan:** `Notification.permission` on siellä
+  `'denied'`, joten haara ei aja. `tests/suites/phase_end.js` pakottaa
+  konstruktorin heittämään — näin alustakohtaiset heitot saa testattavaksi.
+- **Oire "pysähtyy 1 sekunti jäljellä" tarkoittaa poikkeusta, ei ajastinlogiikkaa.**
+  Näyttö jää viimeiseen maalattuun kehykseen; `tleft` on jo 0. Etsi heittoa
+  siltä polulta joka olisi maalannut seuraavan kehyksen.
+- **Headless-teemasiemennys vaatii `fap_theme`in.** Pelkkä `data-theme`-attribuutti
+  ei riitä: `initTheme` ylikirjoittaa sen `localStorage`n oletuksella. Tämä
+  pilasi ensimmäisen aurinkokontrastimittauksen (raportoitu 92, oikea 185).
+
+### PR #7 + ajastinkorjaus: molemmat tarvitaan (2026-08-09)
+
+Manuaalitestin M3 oire vaihtui korjauskierrosten välillä, mikä paljasti kaksi
+eri vikaa samassa polussa:
+
+1. `pushNotif`-heitto tappoi vaiheenvaihdon (ks. edellinen osio) — ajastin ei
+   koskaan päässyt tauolle asti.
+2. Kun se korjattiin, alta paljastui `main`in alkuperäinen käytös: matriisi
+   aukeaa itsestään (`openEisePeek(true)`) ja `focus-mode` jää päälle tauon
+   jälkeen. Nämä ovat PR #7:n korjauskohteet.
+
+Mitattu: merge ilman ajastinkorjausta 3/8, merge + korjaus 8/8.
+
+- **Korjauksen jälkeen paljastuva uusi oire ei ole regressio** — se on vika joka
+  oli edellisen takana. Vertaa oiretta edelliseen, älä oleta samaa juurisyytä.
+- `onPhaseEnd` konfliktoi PR #7:n kanssa (3 hunkia). Yhdistettäessä:
+  `openEisePeek(true)` pudotetaan, `closeEisePeek()` EI palaa tauon loppuun
+  (PR #7 poisti sen tarkoituksella), `_syncTimerUI()` heti `startTmr()`:n
+  perään ja ilmoitukset viimeiseksi.
+- **Testattavan puun tunnistaminen on osa raportin lukemista.** "Matriisi
+  aukesi itsestään" kertoi yksiselitteisesti että PR #7 puuttui — yhden
+  funktiokutsun `grep -c` haaroittain vahvisti sen sekunneissa.

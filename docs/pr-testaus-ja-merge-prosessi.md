@@ -1,0 +1,419 @@
+# PR-testaus ja merge-prosessi (2026-08-08)
+
+Läpikäynti kaikista avoimista PR:istä, niiden testeistä ja `.md`-tiedostojen
+tekemättömistä testilistoista. Automaattiset testit on **ajettu** (ks.
+`tests/`); manuaalilistalla on vain se, mitä headless ei pysty todentamaan.
+
+---
+
+## 0. Testattava haara
+
+`claude/pr-code-tests-review-4yqozp` sisältää nyt **kaiken**: PR #8 + PR #7 +
+PR #6 mergettynä, ajastinkorjauksen ja PR #8:n sammakkobugin korjauksen.
+Konfliktit (CLAUDE.md ×3, `index.html` ×2 sisältäen `onPhaseEnd`in) on
+ratkaistu alla kuvatulla tavalla.
+
+**Tämä on se haara joka avataan Pagesissa testattavaksi.** Aiemmin haarassa oli
+vain testit ja ajastinkorjaus — ei yhtään PR:ää — mikä johti siihen että
+matriisi aukesi yhä itsestään.
+
+Tarkistus että olet oikeassa puussa:
+```bash
+grep -c 'openEisePeek(true)' index.html   # 0
+grep -c '_syncTimerUI'       index.html   # 6
+grep -c 'parkInterrupt'      index.html   # 2
+grep -c -- '--faint:'        index.html   # 6
+```
+
+Tila: koko suite **144/144**, M3/M4/M5-sondi **8/8**.
+
+Yksittäiset PR:t #6, #7 ja #8 ovat yhä auki. Jos haluat mergetä ne erikseen
+main-haaraan, osion 3 järjestys ja konfliktiratkaisut pätevät edelleen — tämä
+haara on niiden yhdistetty lopputulos, ei korvaaja.
+
+---
+
+## 1. Yhteenveto: avoimet PR:t
+
+| PR | Otsikko | Kanta | Merge mainiin | Automaattitestit | Suositus |
+|---|---|---|---|---|---|
+| [#8](https://github.com/joketre3/fokus/pull/8) | 2 min -sääntö, 1-3-5, keskeytysparkki | ajan tasalla | **puhdas** | 55/56 | Korjaa 1 bugi → merge **ensin** |
+| [#7](https://github.com/joketre3/fokus/pull/7) | Fokustila päättyy tauon loppuessa | ajan tasalla | puhdas mainiin, **CLAUDE.md-konflikti #8:n jälkeen** | 20/20 | Merge #8:n jälkeen |
+| [#6](https://github.com/joketre3/fokus/pull/6) | Aurinkoteeman värinäkyvyys | ajan tasalla | puhdas mainiin, **1 hunk konflikti #7:n kanssa** | kontrastimittaus ✅ | Merge viimeisenä |
+| [#5](https://github.com/joketre3/fokus/pull/5) | Käsiviuhkan vaihtoehdot | 3 mergeä jäljessä | **konflikti** (1 + 3 hunkia) | — | Odota: vaatii Jaakon designvalinnan |
+| [#2](https://github.com/joketre3/fokus/pull/2) | Firebase-integraatiosuunnitelma | **orpo historia** | ei yhteistä kantaa | — | **Poimi 2 doc-tiedostoa, sulje PR** |
+| [#1](https://github.com/joketre3/fokus/pull/1) | obra/superpowers skills | **orpo historia** | ei yhteistä kantaa | — | **Sulje** |
+
+`#1` ja `#2` haarautuvat commitista `6b80127`, joka ei ole nykyisen `main`in
+esi-isä. Niiden `index.html` on 907 kt (nykyinen: 571 kt) eli edeltää
+taustakuvien poistoa ja koko yhtenäistä näkymää. **Niitä ei voi mergetä** —
+koodi valuisi kuukausia taaksepäin.
+
+---
+
+## 1b. Manuaalitestien tulokset (2026-08-09)
+
+Jaakko ajoi listan. **9 läpi, 3 vikaa, 3 ohitettu.** Kaksi vioista osui samaan
+juurisyyhyn, joka ei ollut missään PR:ssä vaan `main`issa.
+
+| Testi | Tulos |
+|---|---|
+| M1, M2 | ✅ Firebase-polut kunnossa |
+| **M3, M4** | 🔴 **Ajastin jää seisomaan vaiheen vaihtuessa** — juurisyy löydetty ja korjattu, ks. alla |
+| M5 | 🔴 matriisi aukesi itsestään — PR #7 puuttui |
+| M6, M7, M9, M10, M11, M12 | ✅ Aurinkoteema kunnossa |
+| M8 | ⏭ testin kuvaus oli väärä, korjattu — ks. alla |
+| **M13** | 🔴 kierros 1 → ✅ kierros 2 (placeholder korjaantui) |
+| M14 | ✅ |
+| M15 | ⏭ ohitettu (vaatii Jaakon koneen) |
+
+### 🔴 KORJATTU — ajastin jää seisomaan vaiheen vaihtuessa (`main`, ei mikään PR)
+
+**Oire:** näyttö jähmettyy 00:01:een, tauko ei käynnisty. ▶ käynnistää tauon.
+Sama tauon lopussa. Matriisi ei aukea.
+
+**Juurisyy:** `pushNotif()`illa ei ollut `try/catch`ia. `new Notification()`
+heittää `TypeError`in mm. Chrome for Androidilla (*"Illegal constructor"* — siellä
+on pakko käyttää `ServiceWorkerRegistration.showNotification()`) **vaikka
+`permission` olisi `'granted'`**. `tick()` on jo tappanut intervallin ennen
+`onPhaseEnd()`-kutsua, joten heitto keskellä `onPhaseEnd`ia jätti `startTmr()`:n
+ajamatta:
+
+```js
+phase='sbrk'; tleft=SBRK;   // tila ehti vaihtua
+pushNotif(...);             // ← heittää
+notify(...);                // ei aja
+startTmr();                 // ← EI AJA → ajastin kuollut
+openEisePeek(true);         // ei aja → ei matriisia
+```
+
+Siksi ▶ käynnisti tauon: `phase` oli jo `'sbrk'`, joten `toggleTimer` meni
+käynnistyshaaraan eikä nollannut sitä.
+
+**Miksi automaattitestit eivät löytäneet tätä:** headless-Chromessa
+`Notification.permission` on `'denied'`, joten koko haara ei aja koskaan.
+Uusi suite `tests/suites/phase_end.js` **pakottaa konstruktorin heittämään**
+juuri niin kuin oikea laite tekee. Kontrolli ajettu: kaatuu korjaamattomaan
+`main`iin (4/9), läpäisee korjatun (9/9).
+
+**Korjaus** (tässä haarassa, `index.html`):
+1. `pushNotif` kokonaan `try/catch`iin — ilmoitus on sivuvaikutus, se ei saa
+   koskaan keskeyttää kutsujaansa.
+2. `onPhaseEnd` järjestetty uudelleen: **tila ja ajastin ensin, ilmoitukset
+   vasta perään** molemmissa haaroissa. Puolustus syvyydessä — mikä tahansa
+   tuleva heitto ilmoituskerroksessa ei enää tapa ajastinta.
+
+**Tämä muuttaa PR #7:n tilanteen:** M3/M4/M5 eivät voineet mennä läpi millään
+haaralla, koska tauko ei koskaan alkanut automaattisesti. PR #7:n oma logiikka
+on kunnossa (20/20), mutta **se on testattava uudelleen tämän korjauksen
+päällä.**
+
+### Kierros 2 (2026-08-09) — oire vaihtui, PR #7 puuttui puusta
+
+Ajastinkorjauksen jälkeen M3:n oire muuttui: vaiheen vaihto toimii, mutta
+**matriisi aukeaa itsestään tauon alkaessa** ja **jono/odottavat eivät palaa
+tauon jälkeen**. Nämä ovat tarkalleen ne kaksi asiaa jotka PR #7 korjaa —
+`openEisePeek(true)` on olemassa vain `main`issa. Jaakon puussa oli siis PR #8
+ja PR #6 (M6–M14 menivät läpi) mutta ei PR #7:ää.
+
+Todennettu mittaamalla, ilmoituskonstruktori heittämään pakotettuna:
+
+| | merge ilman ajastinkorjausta | merge + ajastinkorjaus |
+|---|---|---|
+| Tauko käynnistyy itsestään | ❌ | ✅ |
+| Matriisi ei aukea itsestään | ✅ | ✅ |
+| Taukobanneri näkyvissä | ❌ | ✅ |
+| Fokustila vapautuu tauon jälkeen | ❌ | ✅ |
+| **Yhteensä** | **3/8** | **8/8** |
+
+**Kumpikin korjaus tarvitaan.** PR #7 yksin ei riitä (ajastin kuolee ennen kuin
+sen logiikka pääsee ajoon); ajastinkorjaus yksin ei riitä (auto-peek ja jumiin
+jäävä fokustila ovat yhä tallella). M3, M4 ja M5 menevät läpi vasta molempien
+kanssa.
+
+### ⚠️ Konflikti: ajastinkorjaus × PR #7 (`onPhaseEnd`)
+
+Molemmat muokkaavat `onPhaseEnd`ia → merge konfliktoi (3 hunkia).
+**Ratkaisu — yhdistä molempien tarkoitus:**
+
+```js
+  if(phase==='work'){
+    …
+    var isLong=pomoDone>=4;
+    if(isLong){pomoDone=0;phase='lbrk';tleft=LBRK;}
+    else{phase='sbrk';tleft=SBRK;}
+    startTmr();
+    _syncTimerUI();          // PR #7 — EI openEisePeek(true)
+    if(isLong){ …ilmoitukset… } else { …ilmoitukset… }
+  } else if(phase==='sbrk'||phase==='lbrk'){
+    phase='work';tleft=WORK;startAt=null;
+    if(tmr){clearInterval(tmr);tmr=null;}
+    setClockIcon(false);
+    _syncTimerUI();          // PR #7 — fokustila pois
+    updClock();render();
+    soundWater();
+    …ilmoitukset…            // oma korjaus: ilmoitukset viimeisenä
+  }
+```
+
+Kaksi asiaa jotka on helppo ratkaista väärin:
+- **`openEisePeek(true)` pudotetaan** — se on PR #7:n koko pointti.
+- **`closeEisePeek()` EI palaa** tauon loppuun. PR #7 poisti sen tarkoituksella,
+  jottei käyttäjän itse avaamaa matriisia suljeta hänen aliaan.
+
+Todennettu: koko suite täydellä puulla **143/144** (ainoa jäljellä oleva on
+PR #8:n sammakkobugi alla).
+
+### 🔴 PR #8 — keskeytysparkin placeholder näkymätön auringossa
+
+Mitattu merge-puusta 390 px leveydellä:
+
+| Teema | Kentän tausta | Placeholderin väri | Kontrasti |
+|---|---|---|---|
+| usva | `rgb(64,64,64)` | `rgba(255,255,255,.45)` | 3,51:1 |
+| **aurinko** | `rgb(221,221,221)` | `rgba(255,255,255,.45)` | **1,15:1** |
+
+Mobiilissa parkkirivi on normaalissa virrassa eikä saa desktopin
+`background: rgba(26,26,26,.96)`-laattaa, joten se perii vaalean pinnan —
+valkoinen placeholder katoaa. Kirjoitettu teksti on kunnossa (11,26:1).
+
+**Korjaus:** tokenisoi placeholder ja kentän pinta sen sijaan että ne ovat
+kovakoodattua valkoista. Vähimmillään mobiilisääntö joka antaa parkkiriville
+saman tumman laatan kuin desktopilla, tai placeholder `var(--muted)`iin.
+
+**Sivulöydös samasta mittauksesta:** `#hdr-timer`in oma teksti on auringossa
+**2,84:1** (`rgb(45,36,23)` taustalla `rgb(114,106,90)`). PR #6:n muistiinpanot
+tunnistavat tämän (*"`#hdr-timer` on tumma widgetti kaikissa teemoissa, joten
+`var(--ink)` on siellä väärin"*), mutta korjaus ei kata mobiilileveyttä.
+
+## 2. Löydetyt bugit
+
+### 🔴 BLOKKAA MERGEN — PR #8: pikatehtäväksi muutettu sammakko jää sammakoksi
+
+`saveEditModal()` (`index.html`, "// Sammakko" -lohko) nollaa `t.frog`in
+pika-haarassa, mutta heti perässä oleva `t.frog=wantFrog;` kirjoittaa sen
+takaisin:
+
+```js
+if(isQuick(t)){
+  ...
+  t.frog=false;              // ← tämä
+}
+var wantFrog=document.getElementById('edit-frog').classList.contains('on');
+if(wantFrog&&!t.frog){tasks.forEach(function(x){x.frog=false;});}
+t.frog=wantFrog;             // ← kumoutuu tässä
+```
+
+**Seuraus:** kun sammakko muutetaan arviolla 0 pikatehtäväksi, se poistuu
+areenalta, jonosta ja kädestä (pikatehtäviä suodatetaan kaikkialta) mutta jää
+päivän sammakoksi. Päivän tärkein tehtävä katoaa näkyvistä ja on
+tavoitettavissa vain pikanipusta — silti 🐸-merkittynä.
+
+**Korjaus** (yksi rivi, `t.frog=wantFrog;` → ):
+```js
+t.frog = wantFrog && !isQuick(t);
+```
+
+Testi on jo olemassa: `tests/suites/habits.js` → `demote: frog cleared`.
+
+### 🟡 EI BLOKKAA — PR #8: pikatehtävä voi jäädä haamuksi jonoon
+
+`promoteToHand()` (↑-nappi matriisissa) ei suodata pikatehtäviä, mutta
+`renderTurnPanel()` suodattaa. Todennettu: `turn=[2,3,7]` → lista näyttää 2
+riviä, `turn-count` näyttää 2, mutta `turn.length` on 3.
+
+Näkyvä oire on lievä (tehtävä nousee areenalle kun jono tyhjenee, ja on siellä
+näkyvissä), joten tämä voi mennä seuraavaan kierrokseen. Korjaus olisi
+`promoteToHand`in alkuun `if(isQuick(t)){ openPikaModal(); return; }`.
+
+### 🟡 EI BLOKKAA — PR #8: `.pika-btn` kontrasti aurinkoteemassa
+
+Uusi pikanappi käyttää `color:var(--muted)` tummalla well-paneelilla eikä sillä
+ole aurinko-ylikirjoitusta. Kontrastisondi antaa 2,2:1, mutta elementti on
+gradienttitaustalla → sondin tiedossa oleva väärä positiivi. **Tarkista
+silmällä** aurinkoteemassa (manuaalitesti M6).
+
+---
+
+## 3. Merge-järjestys ja konfliktien ratkaisut
+
+Testattu käytännössä: kaikki neljä järjestystä kokeiltiin, tämä on halvin.
+
+### Vaihe 1 — PR #8 (puhdas)
+```bash
+git checkout main && git pull
+git merge --no-edit origin/claude/integrointi-fokukseen-nue1ri
+```
+Ei konflikteja. **Korjaa ensin `t.frog` -bugi** (yllä) joko PR-haaralle tai
+merge-commitin päälle.
+
+### Vaihe 2 — PR #7 (1 konflikti: `CLAUDE.md`)
+```bash
+git merge --no-edit origin/claude/sidebars-hidden-break-4tx99c
+```
+Yksi hunk, molemmat puolet ovat **puhtaita lisäyksiä** samaan kohtaan
+(`### Tuottavuustavat…` vs `### Fokustila + taukokehotus…`).
+**Ratkaisu: säilytä molemmat osiot peräkkäin.**
+
+### Vaihe 3 — PR #6 (2 konfliktia: `CLAUDE.md` + `index.html`)
+```bash
+git merge --no-edit origin/claude/aurinko-theme-color-visibility-a8uezb
+```
+- `CLAUDE.md`: taas kaksi lisäystä samaan kohtaan → **säilytä molemmat.**
+- `index.html`: yksi 3-rivinen hunk, `.eise-peek-sub`.
+  **Ratkaisu: ota PR #6:n `--faint` perussääntöön ja säilytä PR #7:n
+  `--break`-muunnelma:**
+  ```css
+  .eise-peek-sub{font-size:var(--text-xs);color:var(--faint);flex:1}
+  /* Tauolla peek peittää koko areenan → taukokehotus tulee tähän */
+  .eise-peek-sub--break{color:color-mix(in srgb, var(--brk-ink,#2980b9) 50%, var(--ink));font-size:.82rem;font-weight:500}
+  ```
+
+### Vaihe 4 — validointi ennen pushia
+```bash
+python3 -c "import re;open('/tmp/chk.js','w').write('\n;\n'.join(
+  m.group(2) for m in re.finditer(r'<script([^>]*)>(.*?)</script>',
+  open('index.html').read(), re.S) if 'src=' not in m.group(1)
+  and not ('type=' in m.group(1) and 'module' in m.group(1))))"
+node --check /tmp/chk.js
+
+grep -o "^function [a-zA-Z_$][a-zA-Z0-9_$]*" index.html | sort | uniq -c | awk '$1>1'
+python3 tests/run.py
+```
+Duplikaattitarkistus on pakollinen: rinnakkaishaarojen merge on tuonut ennenkin
+saman funktion kahdesti. **Todennettu: tässä mergessä ei duplikaatteja.**
+
+### Vaihe 5 — PR #5 myöhemmin
+Vaatii rebasen `main`in päälle. Konfliktit:
+- `index.html` 1 hunk: PR #5 palauttaa `#pb{position:sticky}` +
+  `.card-new--arena/hand` -mobiilisäännöt, jotka `31f4bb8` poisti
+  **duplikaattina**. → **ota HEAD (tyhjä), älä palauta.**
+- `CLAUDE.md` 3 hunkia: lisäyksiä, säilytä molemmat puolet.
+
+PR #5 on ennen kaikkea **designvalinta** (käsiviuhka B: pidetty viuhka, yksi
+pivot). Se koskee samaa geometriaa kuin #7:n fokustila ja #8:n PAKKA-palkki, ja
+`mockup-kasi.html` on olemassa vertailua varten. **Katso mockup ensin, päätä,
+sitten rebase.**
+
+### PR #2 — poimi dokumentit, sulje PR
+`CLAUDE.md` viittaa kahteen tiedostoon joita **ei ole `main`issa**:
+```bash
+git checkout origin/claude/desktop-claude-reports-visibility-QtZMI -- \
+  docs/strategia-kooste-2026-05.md docs/firebase-integraatio-suunnitelma.md
+git commit -m "docs: palauta strategiakooste ja Firebase-suunnitelma"
+```
+Älä ota mitään muuta siitä haarasta. Sulje sen jälkeen PR #2 ja PR #1.
+
+---
+
+## 4. Testit — mikä on jo ajettu
+
+Uusi `tests/`-hakemisto. Ajo: `python3 tests/run.py` (~3 min).
+
+Kontrolli ajettu molempiin suuntiin: suite **läpäisee merge-tuloksen** ja
+**kaatuu `main`iin** (19 väitettä), eli se todella mittaa muutoksia — mukaan
+lukien PR #7:n korjaama bugi, joka näkyy `main`illa muodossa
+`body="focus-mode eise-open"` tauon jälkeen.
+
+| Suite | Väitteitä | Tulos merge-puussa |
+|---|---|---|
+| `smoke` | 6 | ✅ |
+| `timer_break` (PR #7) | 20 | ✅ |
+| `habits` (PR #8) | 56 | ⚠️ 55 — sammakkobugi |
+| `regression` (CLAUDE.md-lista) | 12 | ✅ |
+| `aamu` (PR #8) | 18 | ✅ |
+| `aamu_skip` (CLAUDE.md T5) | 7 | ✅ |
+| `swipe` (CLAUDE.md T4) | 16 | ✅ |
+
+Lisäksi ajettu erikseen:
+
+- **`_clearLocalAppData` yksikkötestinä Nodessa** (funktio on
+  moduulinäkyvyydessä, ei tavoitettavissa sivun sisältä). Todennettu:
+  `fap_theme`, `fap_perf`, `fap_onboarded`, `fap_timer_settings` säilyvät,
+  kaikki `eis_v5*` ja muut `fap_*` (ml. **`fap_apikey`**) poistuvat, eikä
+  indeksipohjaisessa iteroinnissa ole ohitusbugia.
+- **WCAG-kontrastisondi** kaikille kolmelle teemalle (PR #6:n varsinainen
+  tarkoitus). Jokaisen tekstisolmun väri + alfakompositoitu tausta:
+
+  | Teema | main | PR #6 | merge |
+  |---|---|---|---|
+  | aurinko | 185 osumaa | **102** | 103 |
+  | usva | 72 | **52** | 52 |
+  | havu | 72 | **52** | 52 |
+
+  ⚠️ **Korjattu 2026-08-09.** Ensimmäinen aurinkomittaus (92 → 62) oli väärä:
+  siemen asetti vain `data-theme`-attribuutin, jonka sovelluksen `initTheme`
+  ylikirjoitti `localStorage`n oletuksella `usva`. Osa "aurinko"-ajoista mittasi
+  siis usvaa. Siemen asettaa nyt myös `fap_theme`in. Suunta ei muutu — PR #6:n
+  parannus on itse asiassa selvästi suurempi kuin ensin raportoin (−83, ei −30) —
+  mutta aurinko jää yhä kaksi kertaa usvaa heikommaksi, mikä vastaa PR #6:n omaa
+  merkintää tietoisesti jätetystä ~50 `--accent`-osumasta.
+
+  Merge-puun 2 lisäosumaa aurinkoteemassa ovat PR #8:n uusi pikanappi, ja
+  molemmat ovat gradienttitaustalla → sondin tiedossa oleva väärä positiivi.
+  **PR #6 ei regressoi tummia teemoja — se parantaa niitäkin** (`--faint`
+  tertiäärivärinä).
+- **Syntaksitarkistus** (`node --check`) kaikille haaroille ja merge-tulokselle:
+  `index.html`, `aamu.html`, `swipe.html` — kaikki läpi.
+
+---
+
+## 5. Manuaalitestit — mitä headless EI pysty todentamaan
+
+Merkitse rasti kun testattu. Nämä ovat kaikki syitä joista on jo dokumentoitu
+todiste, eivät varmuuden vuoksi -listaa.
+
+### Firebase-riippuvaiset (ei mitenkään automatisoitavissa)
+Näistä 2 on ollut **CLAUDE.md:ssä testaamattomana livenä 2026-07-28 alkaen.**
+
+- [ ] **M1** Kirjaudu ulos → sivu latautuu uudelleen, tehtävät ja työtilat
+      tyhjenevät, teema + ajastinasetukset säilyvät, API-avain katoaa
+      *(avainten käsittely jo todennettu yksikkötestillä — jäljellä vain
+      uloskirjautumispolun laukaisu)*
+- [ ] **M2** Vaihda työtilaa kirjautuneena: muokkaa tehtävää → vaihda heti
+      työtilaa → palaa takaisin. Muutos tallessa. Toisen laitteen muutos näkyy
+      vaihdon jälkeenkin (kuuntelija kytkeytyi uudelleen)
+
+### PR #7 — fokustila
+- [ ] **M3** Käynnistä pomodoro, anna työjakson päättyä, **anna tauon päättyä
+      loppuun asti** → sivupaneelit, käsi ja PAKKA tulevat takaisin ilman että
+      ajastinta tarvitsee käynnistää ja pysäyttää
+      *(`visibility` ei palaudu headlessissa — sama ilmiö on `main`issa, joten
+      tämä on ainoa tapa nähdä se)*
+- [ ] **M4** Taukobanneri näkyy areenassa eikä peitä kortin toimintonappeja
+      mobiilissa (< 900 px), eikä hyppää desktopilla
+- [ ] **M5** Avaa matriisi kesken tauon → taukokehotus näkyy otsikkorivillä
+
+### PR #6 — aurinkoteema (PR:n oma lista, kaikki auki)
+- [ ] **M6** Aurinko + Lisää tehtävä: verbinapit, kvadranttivalitsin,
+      arviovalitsin ja placeholderit luettavia; **uusi pikanappi luettava**
+- [ ] **M7** Aurinko + välilehdet: tekstit ja laskurimerkit näkyvissä
+- [ ] **M8** Aurinko + verbi-popover (▾): **Lisää tehtävä → Pilko tehtävä** → osatehtävien verbinappien ▾-nuoli. Odotettu: vaalea paneeli, tumma teksti. *(Kierroksella 1 kuvaus oli väärä — popover ei ole tehtävälistassa vaan pilkkomisnäkymässä, `#verb-pop` / `openVerbPop()`.)*
+- [ ] **M9** Aurinko + Ketju-paneeli: otsikko ja × näkyvissä
+- [ ] **M10** Aurinko + ajastin-popup (↗): kellonumerot tummia vaalealla
+- [ ] **M11** Usva & havu yleissilmäys: ennallaan, tyhjät tilat ja ×-napit
+      aiempaa selvemmin näkyvissä
+- [ ] **M12** Nopea tila (aurinko-lite): ei mudanväristä, pinnat opaakkeja
+
+### PR #8 — tavat
+- [ ] **M13** Keskeytysparkki mobiilissa: ajastinwidget kasvaa 45 → 80 px eikä
+      valu reunan yli *(headless raportoi `innerWidth`in väärin — mittaus ei
+      kelpaa)*
+- [ ] **M14** Arviosliderin veto nollaan tuntuu luontevalta, ja "alle 2 min —
+      tee heti" -selite vaihtuu
+
+### Yleinen
+- [ ] **M15** Impeccable-detektorin delta (`detect.mjs` on vain Jaakon koneella):
+      odotus **0** eli sama 4 osumaa / 3 kategoriaa kuin baseline
+
+---
+
+## 6. Suositeltu eteneminen
+
+1. Korjaa PR #8:n sammakkobugi → `python3 tests/run.py habits` → 56/56
+2. Merge #8 → #7 → #6 yllä olevilla ratkaisuilla
+3. `node --check` + duplikaattigrep + `python3 tests/run.py` → kaikki läpi
+4. Aja manuaalilista M1–M15 selaimessa **ennen pushia** — koodi menee suoraan
+   GitHub Pagesiin
+5. Poimi PR #2:n kaksi dokumenttia, sulje PR #1 ja #2
+6. PR #5 omana kierroksenaan designvalinnan jälkeen
