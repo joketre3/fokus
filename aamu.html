@@ -110,7 +110,14 @@ html[data-theme="aurinko"] .step-num.done{background:rgba(196,104,30,.12);color:
   padding:1rem 1.5rem 2rem;
   flex:1;
 }
-.screen.active{display:flex;}
+/* display ei transitioidu, joten vaiheiden vaihto hyppäsi. @keyframes käynnistyy
+   kun elementti tulee display:none'sta näkyviin — kuusi goStepN-kutsupaikkaa
+   saavat siirtymän ilman JS-muutosta. prefers-reduced-motion nollaa tämän. */
+.screen.active{display:flex;animation:screen-in 200ms cubic-bezier(.22,.61,.36,1) both;}
+@keyframes screen-in{
+  from{opacity:0;transform:translateY(6px);}
+  to{opacity:1;transform:none;}
+}
 
 .screen-title{
   font-family:'DM Serif Display',serif;font-style:italic;
@@ -751,7 +758,15 @@ function toggleQ2(id){
     }
     selectedQ2.push(id);
   }
-  renderQ2();
+  // Päivitä vain kosketettu rivi. renderQ2() rakensi listan uudelleen
+  // innerHTML:llä, jolloin uusi node syntyi suoraan lopputilaan eivätkä
+  // .q2-task/.q2-check-transitionit päässeet koskaan ajamaan.
+  var row = document.getElementById('q2-'+id);
+  if(!row){ renderQ2(); return; }
+  var sel = selectedQ2.indexOf(id)>=0;
+  row.classList.toggle('selected', sel);
+  var chk = row.querySelector('.q2-check');
+  if(chk) chk.textContent = sel ? '✓' : '';
 }
 
 function goStep3(){
@@ -801,6 +816,7 @@ function renderFrog(){
     var isSel = selectedFrog===t.id;
     var card = document.createElement('div');
     card.className='frog-card'+(isSel?' selected':'');
+    card.id='frog-'+t.id;
     card.innerHTML=
       '<span class="frog-icon">🐸</span>'+
       '<div class="frog-icon-empty"></div>'+
@@ -816,8 +832,20 @@ function renderFrog(){
 }
 
 function selectFrog(id){
+  var prev = selectedFrog;
   selectedFrog = (selectedFrog===id) ? null : id;
-  renderFrog();
+  // Togglaa vain kosketetut kortit. renderFrog() rakensi listan uudelleen
+  // innerHTML:llä, jolloin .frog-cardin border/box-shadow-transitio ei
+  // päässyt koskaan ajamaan — valinta ilmestyi aina hyppäyksellä.
+  var prevEl = prev===null ? null : document.getElementById('frog-'+prev);
+  var nextEl = selectedFrog===null ? null : document.getElementById('frog-'+selectedFrog);
+  if(prev!==null && !prevEl){ renderFrog(); return; }   // lista ei ole ajan tasalla
+  if(selectedFrog!==null && !nextEl){ renderFrog(); return; }
+  if(prevEl) prevEl.classList.remove('selected');
+  if(nextEl) nextEl.classList.add('selected');
+  document.getElementById('frogHint').textContent =
+    selectedFrog ? 'Hyvä valinta. Sammakko menee jonoon ensimmäiseksi.' : 'Klikkaa yksi tehtävä.';
+  document.getElementById('btn3').disabled = selectedFrog===null;
 }
 
 function goStep4(){
