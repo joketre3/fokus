@@ -861,3 +861,73 @@ Opit:
 **⚠ Mobiili testaamatta.** Uusi geometria on `min-width:900px`-lohkossa eikä
 mobiili näe sitä, mutta mobiilin `nth-child`-nollaus tiivistyi yhdeksi
 `transform:none`-riviksi — tarkista hylly puhelimella.
+
+### Design/animaatioauditoinnin korkeat löydökset (2026-08-10) — valmis, laitetestaus kesken
+
+`DESIGN_AUDIT.md` (PR #9, emil-design-eng -viitekehys) auditoi kaikki kolme
+tiedostoa mutta ei muuttanut koodia. Tämä kierros toteutti **vain korkean
+vakavuuden löydökset**; keski/matala on listattu auditin *Toteutustilanne*
+-taulukossa avoimina.
+
+| Tiedosto | Mitä |
+|---|---|
+| `index.html` | `@media (hover:none)` avaa Tehdyt-modaalin `.tact`-rivin ja peekin `.qdnb`-pikakuittauksen — molemmat olivat kosketuslaitteella tavoittamattomissa. `.tcg-card--hand:hover` (ja tähtiparinsa) `@media (hover:hover) and (pointer:fine)` -vartioon |
+| `aamu.html` | `@keyframes screen-in` `.screen.active`iin; `toggleQ2` ja `selectFrog` päivittävät vain kosketetut nodet `renderQ2()`/`renderFrog()`-täysrenderin sijaan |
+| `swipe.html` | `setupDrag` Pointer Eventeille (capture, `isPrimary`, slop, velocity, ±20° rotaatioraja); `advanceStack()` korvaa pinon uudelleenrakennuksen; `#edit-panel` luokkapohjaiseksi siirtymineen |
+
+Opit:
+- **`!important` hover-säännössä ohittaa spesifisyydeltään vahvemman
+  mobiiliylikirjoituksen.** `.tcg-card--hand:hover{transform:… !important}`
+  (0-2-0) voitti `#hand-bar-cards .tcg-card--hand{transform:none}`in (1-1-0),
+  koska `!important` ratkaisee ennen spesifisyyttä. Mobiilin nollaus näytti
+  koodissa siltä kuin se hoitaisi asian — se ei hoitanut.
+- **Hover-vartio pitää lisätä myös desktop-lohkon sisällä olevaan sääntöön,
+  jos se kantaa osan geometriasta.** `#hand-bar-cards .tcg-card--hand:hover`
+  asettaa `transform-origin`in, ja sen id-selektori (1-2-0) voittaa globaalin
+  hover-säännön (0-2-0) — ilman omaa vartiota ≥900px kosketustabletti olisi
+  saanut uuden pivotin ilman siihen kuuluvaa nostoa. `min-width`-lohko ei ole
+  sama asia kuin "hiiri".
+- **`@keyframes` on oikea työkalu kun `display:none`sta tuleva elementti pitää
+  animoida.** `transition` ei aja `display`-vaihdossa, mutta animaatio
+  käynnistyy kun elementti tulee näkyviin — `aamu.html`:n kuusi `goStepN`-
+  kutsupaikkaa saivat siirtymän ilman yhtään JS-muutosta.
+- **`document`-tason vetokuuntelijat elementtiin siirtämällä vuoto katoaa
+  rakenteellisesti.** Vanha `setupDrag` lisäsi `mousemove`/`mouseup`in
+  `document`iin joka `renderStack()`-kutsulla eikä poistanut niitä. Kun
+  kuuntelijat ovat `wrap`issa, ne kuolevat noden mukana — ei tarvita
+  `removeEventListener`-kirjanpitoa. Regressiovartio suitessa on
+  `setupDrag.toString().indexOf('document.addEventListener')===-1`.
+- **Pelkkä nopeuskynnys ilman minimimatkaa on bugi.** `v = |dx| / kesto`
+  antaa 5 px:lle 5 ms:ssä arvon 1.0, eli pieninkin nykäisy laukaisisi
+  pyyhkäisyn. Tarvitaan `dist>=SWIPE_DIST || (dist>=SWIPE_FLICK_MIN && v>…)`.
+- **Pointer capture kuuluu `pointerdown`iin, ei slopin taakse.** Ensin
+  kaappasin vasta kun liike ylitti 4 px, jottei napautus veisi klikkiä
+  kortin sisällä olevalta "✎ Muokkaa" -napilta. Se teki jumitilan: jos
+  painallus jäi slopin alle ja sormi nostettiin kortin **ulkopuolella**,
+  `pointerup` ei osunut wrappiin lainkaan → `dragging` jäi `true`ksi ja
+  kortista tuli pysyvästi vetokelvoton. (Vanha koodi vältti tämän
+  `document`-tason `mouseup`illa — eli juuri sillä kuuntelijalla jonka
+  vuodon takia poistin.) Oikea ratkaisu: ohita veto kokonaan jos
+  `pointerdown` osui nappiin, ja kaappaa heti kaikissa muissa tapauksissa.
+  Slop jää päättämään vain *lasketaanko liike vedoksi*.
+- **Nodeja promotoiva animaatio perii vanhentuneen sisällön.** Kun
+  `advanceStack` nostaa varjokortin aktiiviseksi luokkaa vaihtamalla, kortin
+  haihtuvat osat (`Jonossa`-siru, 🐸) ovat siltä hetkeltä kun kortti
+  rakennettiin — `swipeFrog` nollaa muiden `frog`in ja jonopaneelin × poistaa
+  jonosta. Siksi `refreshMeta()` promotoinnin yhteydessä. Sama koskee
+  ehdollisesti rakennettuja lapsia: "✎ Muokkaa" oli `if(!shadow)`-ehdon takana,
+  joten promotoitu kortti olisi jäänyt ilman nappia — nyt se rakennetaan aina
+  ja piilotetaan varjoista CSS:llä, mikä pitää myös kortin korkeuden vakiona.
+- **`tests/run.py` on satunnaisesti epävakaa.** Ensimmäinen kontrolliajo
+  raportoi 2 kaatunutta väitettä, kaksi seuraavaa ajoa samaa puuta vasten
+  0/144. Älä tulkitse yksittäistä kaatumista regressioksi ilman toistoa.
+- **`tail`-putki kontrolliajossa piilottaa juuri sen mitä etsit.** Suitet
+  ajetaan aakkosjärjestyksessä, joten `| tail -60` leikkasi `aamu`n,
+  `habits`in ja `phase_end`in pois — loppusumma kertoi 2 kaatumista joita ei
+  näkynyt tulosteessa. Ohjaa koko tuloste tiedostoon.
+
+**⚠ Laitetestaus kesken.** Kosketuskäytös, `:hover`-jumi ja pointer capture
+eivät toistu headlessissa. Manuaalilista on suunnitelmatiedostossa; ydin:
+puhelimella Tehdyt-napit ja peekin pikakuittaus ilman hoveria, käsikortin
+napautus ei lennä 52px, swipe-flick alle 80px laukeaa, veto jatkuu sormen
+livahtaessa kortin ulkopuolelle, "✎ Muokkaa" ei aloita vetoa.

@@ -2,7 +2,32 @@
 
 **Tehty:** 2026-08-10
 **Menetelmä:** [emil-design-eng](https://animations.dev/) -viitekehys (Emil Kowalski) sovellettuna kaikkiin kolmeen tiedostoon erikseen (index.html, aamu.html, swipe.html).
-**Tila:** Vain analyysi + korjausehdotukset. **Ei koodimuutoksia tehty** — tämä PR on hyväksyttäväksi/kommentoitavaksi ennen toteutusta.
+**Tila:** **Korkean vakavuuden löydökset toteutettu 2026-08-10** (ks. Toteutustilanne alla). Keski- ja matalatason löydökset ovat yhä avoimia.
+
+## Toteutustilanne
+
+| Löydös | Tiedosto | Vakavuus | Tila |
+|---|---|---|---|
+| `.tact`/`.tact-wrap` vain hoverilla | index.html | korkea | ✅ `@media (hover:none)` avaa rivin |
+| `.qdnb` peek-pikakuittaus vain hoverilla | index.html | korkea | ✅ `@media (hover:none)` |
+| `.tcg-card--hand:hover` 52px lento mobiilissa | index.html | korkea | ✅ `@media (hover:hover) and (pointer:fine)` — myös desktop-lohkon id-selektori, joka olisi muuttanut pivotin isolla kosketustabletilla |
+| `.screen` vaihto ilman siirtymää | aamu.html | korkea | ✅ `@keyframes screen-in` — kutsupaikkoja ei koskettu |
+| `renderQ2`/`toggleQ2` innerHTML-tuho | aamu.html | korkea | ✅ togglaa vain kosketetun rivin |
+| `renderFrog`/`selectFrog` innerHTML-tuho | aamu.html | keski | ✅ tehty samalla (sama juurisyy) |
+| Kuuntelijavuoto `document`iin | swipe.html | korkea | ✅ kaikki kuuntelijat `wrap`issa |
+| Ei nopeuslaskentaa | swipe.html | korkea | ✅ `SWIPE_VELOCITY` + `SWIPE_FLICK_MIN` |
+| Ei pointer capturea | swipe.html | korkea | ✅ Pointer Events, capture `pointerdown`issa (napista alkava painallus ohitetaan) |
+| Ei multi-touch-suojaa | swipe.html | keski | ✅ tehty samalla (`e.isPrimary`) |
+| Rotaatiota ei rajattu | swipe.html | matala | ✅ tehty samalla (±20°) |
+| `cursor:grab` ei vaihdu `grabbing`iksi | swipe.html | matala | ✅ tehty samalla (`.card-wrap.dragging`) |
+| Pino rakennetaan uudelleen | swipe.html | korkea | ✅ `advanceStack()` promotoi nodet |
+| Muokkauspaneeli ilman siirtymää | swipe.html | korkea | ✅ luokkapohjainen `.on` |
+
+**Avoimet:** kaikki muut taulukoiden rivit (hover-guardit laajasti, `:active`-palaute,
+`ease-in`→`ease-out`, easing-tokenit aamuun, `will-change`-siivous,
+swipe/aamu `data-perf`-tuki, näppäinoikopolkujen animaationopeus, `renderQ1`-crossfade,
+`.pbox--arena` layout-transitiot, `.progress-fill` width→transform, tint-opacityn
+viive vedon aikana, epäonnistuneen vedon nopeampi paluu).
 
 ## Miten lukea tätä
 
