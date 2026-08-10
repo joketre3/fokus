@@ -10,7 +10,9 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-:root{--ink:#1a1c18;--paper:#f2f0e8;--warm:#b8a882;--accent:#c49a3a;--muted:#6b7060;--light:#dddbd0;--pomo:#a84c28;--q1:#a84c28;--q2:#2d5a3d;--q3:#7a6a50;--q4:#9a9a8e}
+:root{--ink:#1a1c18;--paper:#f2f0e8;--warm:#b8a882;--accent:#c49a3a;--muted:#6b7060;--light:#dddbd0;--pomo:#a84c28;--q1:#a84c28;--q2:#2d5a3d;--q3:#7a6a50;--q4:#9a9a8e;
+      /* sama saapumiskäyrä kuin index.html:n --ease-out */
+      --ease-out:cubic-bezier(.22,.61,.36,1)}
 body{background:var(--paper);font-family:'DM Sans',sans-serif;color:var(--ink);min-height:100vh;min-height:100dvh;height:100dvh;padding-bottom:env(safe-area-inset-bottom,0px);display:flex;flex-direction:column;overflow:hidden;user-select:none}
 #setup{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;gap:1.5rem;text-align:center}
 #setup h2{font-family:'DM Serif Display',serif;font-size:1.5rem;font-style:italic}
@@ -36,7 +38,11 @@ body{background:var(--paper);font-family:'DM Sans',sans-serif;color:var(--ink);m
 .hint{font-size:.65rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;opacity:.3;transition:opacity .2s}
 .hint.left{color:var(--q4)}.hint.right{color:var(--accent)}.hint.active{opacity:1}
 .stack{flex:1;display:flex;align-items:center;justify-content:center;padding:.75rem 1.25rem;position:relative;overflow:hidden}
-.card-wrap{position:absolute;width:100%;max-width:320px;transition:none;cursor:grab}
+/* touch-action:none — pointer-eventeillä ei ole vastinetta passive:false
+   -touchmoven preventDefaultille. .stack on overflow:hidden, joten
+   pystyvieritystä ei ole menetettävänä. */
+.card-wrap{position:absolute;width:100%;max-width:320px;transition:none;cursor:grab;touch-action:none}
+.card-wrap.dragging{cursor:grabbing}
 .card-wrap.animating{transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .3s ease}
 .task-card{background:white;border-radius:14px;border:1px solid var(--light);padding:1.4rem;box-shadow:0 4px 20px rgba(0,0,0,.08);min-height:200px;display:flex;flex-direction:column;gap:.8rem;position:relative;overflow:hidden}
 .task-card.q1{border-top:3px solid var(--q1)}.task-card.q2{border-top:3px solid var(--q2)}.task-card.q3{border-top:3px solid var(--q3)}.task-card.q4{border-top:3px solid var(--q4)}
@@ -52,8 +58,16 @@ body{background:var(--paper);font-family:'DM Sans',sans-serif;color:var(--ink);m
 .chip{font-size:.6rem;font-weight:500;padding:.12rem .35rem;border-radius:4px}
 .chip.frog{color:#4a6e22;background:rgba(74,110,34,.1)}.chip.inq{color:var(--accent);background:rgba(196,154,58,.1)}.chip.wait{color:#3a6b8a;background:rgba(58,107,138,.1)}
 .shadow-card{position:absolute;width:100%;max-width:320px;pointer-events:none}
+/* Pinon nousu animoituu: advanceStack vaihtaa vain luokat, ei rakenna
+   pinoa uudelleen, joten nämä transitiot pääsevät ajamaan. */
+.task-card{transition:opacity .18s var(--ease-out),transform .18s var(--ease-out)}
 .shadow-card .task-card{opacity:.4;transform:scale(.94);box-shadow:0 2px 10px rgba(0,0,0,.05)}
 .shadow-card.back2 .task-card{opacity:.18;transform:scale(.88)}
+/* Uusin syvin kortti häivähtää sisään sen sijaan että ilmestyisi */
+.card-wrap.stack-new .task-card{opacity:0}
+/* Muokkausnappi on olemassa myös varjokorteissa (kortin korkeus pysyy samana
+   promotoitaessa), mutta näkyy vasta aktiivisessa kortissa. */
+.shadow-card .edit-btn{visibility:hidden}
 .actions{display:flex;justify-content:center;align-items:flex-end;gap:1.25rem;padding:.65rem 1rem 1.1rem;flex-shrink:0}
 .act-wrap{display:flex;flex-direction:column;align-items:center;gap:.22rem}
 .act-btn{width:50px;height:50px;border-radius:50%;border:2px solid;background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.15rem;transition:transform .1s,box-shadow .1s;box-shadow:0 2px 8px rgba(0,0,0,.08)}
@@ -145,6 +159,13 @@ html[data-theme="aurinko"] .tint.yes{background:rgba(196,104,30,.08)}
   .act-btn{min-width:56px;min-height:56px}
 }
 
+/* EDIT PANEL — bottom sheet. Oli display:none↔flex ilman siirtymää; nyt
+   opacity + translateY luokkapohjaisesti (viisi kutsupaikkaa käyttävät .on). */
+#edit-panel{opacity:0;pointer-events:none;transition:opacity .2s var(--ease-out)}
+#edit-panel.on{opacity:1;pointer-events:auto}
+#edit-sheet{transform:translateY(100%);transition:transform .25s var(--ease-out)}
+#edit-panel.on #edit-sheet{transform:none}
+
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;}
 }
@@ -215,8 +236,8 @@ html[data-theme="aurinko"] .tint.yes{background:rgba(196,104,30,.08)}
 <div class="nt" id="nt"></div>
 
 <!-- EDIT PANEL -->
-<div id="edit-panel" style="display:none;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:100;align-items:flex-end;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
-  <div style="background:#f2f0e8;border-radius:14px 14px 0 0;padding:1.5rem;width:100%;max-width:480px;display:flex;flex-direction:column;gap:.85rem">
+<div id="edit-panel" style="display:flex;position:fixed;inset:0;background:rgba(26,28,24,.45);z-index:100;align-items:flex-end;justify-content:center" onclick="if(event.target===this)closeEditCard()">
+  <div id="edit-sheet" style="background:#f2f0e8;border-radius:14px 14px 0 0;padding:1.5rem;width:100%;max-width:480px;display:flex;flex-direction:column;gap:.85rem">
     <input type="hidden" id="edit-id">
     <div style="font-family:'DM Serif Display',serif;font-size:1rem;font-style:italic;color:#1a1c18">Muokkaa tehtävää</div>
     <input id="edit-name" type="text" aria-label="Tehtävän nimi" style="width:100%;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:300;padding:.6rem .85rem;border-radius:8px;border:1.5px solid #dddbd0;outline:none;color:#1a1c18;background:white">
@@ -235,7 +256,7 @@ html[data-theme="aurinko"] .tint.yes{background:rgba(196,104,30,.08)}
     <input id="edit-link" type="url" aria-label="Linkki" placeholder="🔗 Linkki (https://...)" style="width:100%;box-sizing:border-box;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:300;padding:.55rem .85rem;border-radius:8px;border:1.5px solid #dddbd0;outline:none;color:#1a1c18;background:white">
     <div style="display:flex;gap:.5rem">
       <button onclick="saveEditCard()" style="font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;padding:.6rem 1.2rem;border-radius:8px;border:none;background:var(--accent);color:white;cursor:pointer;flex:1">Tallenna</button>
-      <button onclick="document.getElementById('edit-panel').style.display='none'" style="font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:400;padding:.6rem .9rem;border-radius:8px;border:1.5px solid #dddbd0;color:#6b7060;background:white;cursor:pointer">Peruuta</button>
+      <button onclick="closeEditCard()" style="font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:400;padding:.6rem .9rem;border-radius:8px;border:1.5px solid #dddbd0;color:#6b7060;background:white;cursor:pointer">Peruuta</button>
     </div>
   </div>
 </div>
@@ -366,10 +387,54 @@ function renderStack(){
   if(idx+1<tasks.length)stack.appendChild(buildCard(tasks[idx+1],1));
   var wrap=buildCard(tasks[idx],0);wrap.id='active-card';stack.appendChild(wrap);
   setupDrag(wrap);
+  updateStackChrome();
+}
+
+/* Laskuri, edistymispalkki ja sammakkonapin himmennys — renderStack ja
+   advanceStack jakavat nämä. */
+function updateStackChrome(){
   var anyFrog=tasks.some(function(t){return t.frog});
-  var fb=document.getElementById('frogBtn');if(fb)fb.style.opacity=(anyFrog&&!tasks[idx].frog)?'0.35':'1';
+  var fb=document.getElementById('frogBtn');
+  if(fb&&tasks[idx])fb.style.opacity=(anyFrog&&!tasks[idx].frog)?'0.35':'1';
   document.getElementById('counter').textContent=(tasks.length-idx)+' tehtävää';
   document.getElementById('prog').style.width=(total>0?Math.round(idx/total*100):0)+'%';
+}
+
+/* Etene pinossa ILMAN uudelleenrakennusta: lentänyt kortti pois, jäljellä
+   olevat promotoidaan luokkia vaihtamalla (transitio ajaa), uusi syvin
+   kortti pinon pohjalle. renderStack() teki stack.innerHTML='' jolloin
+   taustakortin nousu oli aina hyppäys. */
+function advanceStack(){
+  var stack=document.getElementById('stack');
+  idx++;
+  if(idx>=tasks.length){stack.innerHTML='';showDone();return;}
+
+  var flown=document.getElementById('active-card');
+  if(flown)stack.removeChild(flown);
+
+  // Jäljellä DOM-järjestyksessä: [back2?, shadow?] — syvin ensin.
+  var rest=Array.prototype.slice.call(stack.children);
+  if(rest.length===0){renderStack();return;}   // pino ei ollut odotetussa tilassa
+
+  var next=rest[rest.length-1];                // lähin kortti nousee aktiiviseksi
+  next.classList.remove('shadow-card','back2');
+  next.id='active-card';
+  refreshMeta(next,tasks[idx]);
+  setupDrag(next);
+  if(rest.length>1){
+    rest[rest.length-2].classList.remove('back2');
+    refreshMeta(rest[rest.length-2],tasks[idx+1]);
+  }
+
+  if(idx+2<tasks.length){
+    var deep=buildCard(tasks[idx+2],2);
+    deep.classList.add('stack-new');
+    stack.insertBefore(deep,stack.firstChild);
+    // Pakota layout ennen luokan poistoa, muuten opacity-siirtymä ei aja
+    void deep.offsetWidth;
+    deep.classList.remove('stack-new');
+  }
+  updateStackChrome();
 }
 
 function buildCard(t,shadow){
@@ -383,12 +448,7 @@ function buildCard(t,shadow){
   var crit=document.createElement('div');crit.className='q-criteria';crit.textContent=QC[t.quad||'q4'];
   hdr.appendChild(badge);hdr.appendChild(crit);card.appendChild(hdr);
   var name=document.createElement('div');name.className='task-name';name.textContent=t.text;card.appendChild(name);
-  var meta=document.createElement('div');meta.className='meta';
-  var pi=document.createElement('div');pi.className='meta-item';pi.textContent='🍅 '+fe(t.est||1)+' pomodoro'+((t.est||1)>1?'a':'');meta.appendChild(pi);
-  if(queue.indexOf(t.id)>=0){var c=document.createElement('span');c.className='chip inq';c.textContent='Jonossa';meta.appendChild(c);}
-  if(t.frog){var c2=document.createElement('span');c2.className='chip frog';c2.textContent='🐸';meta.appendChild(c2);}
-  if(t.waiting){var c3=document.createElement('span');c3.className='chip wait';c3.textContent='⏳';meta.appendChild(c3);}
-  card.appendChild(meta);
+  card.appendChild(buildMeta(t));
   // Tags row
   if(t.tags&&t.tags.length){
     var tagsRow=document.createElement('div');
@@ -402,16 +462,36 @@ function buildCard(t,shadow){
     card.appendChild(tagsRow);
   }
 
-  // Edit button (only on active card)
-  if(!shadow){
-    var editBtn=document.createElement('button');
-    editBtn.style.cssText='font-family:\'DM Sans\',sans-serif;font-size:.65rem;font-weight:400;padding:.2rem .55rem;border-radius:4px;border:1px solid var(--light);color:var(--muted);background:white;cursor:pointer;margin-top:.35rem;align-self:flex-start';
-    editBtn.textContent='✎ Muokkaa';
-    editBtn.onclick=function(e){e.stopPropagation();openEditCard(t.id);};
-    card.appendChild(editBtn);
-  }
+  // Muokkausnappi rakennetaan AINA. Se piilotetaan varjokorteista CSS:llä
+  // (.shadow-card .edit-btn{visibility:hidden}), jottei kortin korkeus muutu
+  // kun advanceStack promotoi varjokortin aktiiviseksi pelkkää luokkaa
+  // vaihtamalla — ja jottei promotoitu kortti jäisi ilman nappia.
+  var editBtn=document.createElement('button');
+  editBtn.className='edit-btn';
+  editBtn.style.cssText='font-family:\'DM Sans\',sans-serif;font-size:.65rem;font-weight:400;padding:.2rem .55rem;border-radius:4px;border:1px solid var(--light);color:var(--muted);background:white;cursor:pointer;margin-top:.35rem;align-self:flex-start';
+  editBtn.textContent='✎ Muokkaa';
+  editBtn.onclick=function(e){e.stopPropagation();openEditCard(t.id);};
+  card.appendChild(editBtn);
 
   wrap.appendChild(card);return wrap;
+}
+
+/* Meta-rivi on kortin ainoa haihtuva osa: "Jonossa" ja 🐸 voivat muuttua
+   sillä välin kun kortti odottaa varjona (swipeFrog nollaa muiden frogin,
+   jonopaneelin × poistaa jonosta). advanceStack päivittää sen promotoidessa. */
+function buildMeta(t){
+  var meta=document.createElement('div');meta.className='meta';
+  var pi=document.createElement('div');pi.className='meta-item';pi.textContent='🍅 '+fe(t.est||1)+' pomodoro'+((t.est||1)>1?'a':'');meta.appendChild(pi);
+  if(queue.indexOf(t.id)>=0){var c=document.createElement('span');c.className='chip inq';c.textContent='Jonossa';meta.appendChild(c);}
+  if(t.frog){var c2=document.createElement('span');c2.className='chip frog';c2.textContent='🐸';meta.appendChild(c2);}
+  if(t.waiting){var c3=document.createElement('span');c3.className='chip wait';c3.textContent='⏳';meta.appendChild(c3);}
+  return meta;
+}
+
+function refreshMeta(wrap,t){
+  if(!wrap||!t)return;
+  var card=wrap.querySelector('.task-card'), old=wrap.querySelector('.meta');
+  if(card&&old)card.replaceChild(buildMeta(t),old);
 }
 
 function openEditCard(id){
@@ -425,7 +505,11 @@ function openEditCard(id){
   document.getElementById('edit-notes').value=t.lisatiedot||'';
   document.getElementById('edit-link').value=t.linkki||'';
   document.getElementById('edit-id').value=id;
-  document.getElementById('edit-panel').style.display='flex';
+  document.getElementById('edit-panel').classList.add('on');
+}
+
+function closeEditCard(){
+  document.getElementById('edit-panel').classList.remove('on');
 }
 
 function saveEditCard(){
@@ -446,7 +530,7 @@ function saveEditCard(){
   else if(!t.important&&t.urgent)t.quad='q3';
   else t.quad='q4';
   saveQueue();
-  document.getElementById('edit-panel').style.display='none';
+  closeEditCard();
   renderStack();renderQueuePanel();
   notify('Muutokset tallennettu ✓');
 }
@@ -527,35 +611,76 @@ function animateCard(dir){
   wrap.classList.add('animating');
   wrap.style.transform='translateX('+(dir==='right'?window.innerWidth*1.2:-window.innerWidth*1.2)+'px) rotate('+(dir==='right'?16:-16)+'deg)';
   wrap.style.opacity='0';
-  setTimeout(function(){idx++;renderStack();renderQueuePanel();},300);
+  setTimeout(function(){advanceStack();renderQueuePanel();},300);
 }
 
+/* Vedon laukaisukynnykset. Pelkkä matka ei riitä: nopea lyhyt flick on yhtä
+   selvä aikomus kuin hidas pitkä veto. SWIPE_FLICK_MIN on välttämätön —
+   ilman sitä 5 px 5 ms:ssä antaisi nopeudeksi 1.0 ja pieninkin nykäisy
+   laukaisisi pyyhkäisyn. */
+var SWIPE_DIST=80, SWIPE_VELOCITY=0.11, SWIPE_FLICK_MIN=28, DRAG_SLOP=4;
+
+/* Kaikki kuuntelijat ovat wrapissa — ne kuolevat noden mukana. Aiemmin
+   mousemove/mouseup rekisteröitiin documentiin joka renderStack-kutsulla
+   eikä niitä poistettu koskaan: jokainen selattu kortti jätti kaksi
+   pysyvää kuuntelijaa. */
 function setupDrag(wrap){
-  var startX=0,curX=0,dragging=false;
+  var startX=0,curX=0,startT=0,dragging=false,moved=false,pid=null;
   var tyes=wrap.querySelector('.tint.yes'),tno=wrap.querySelector('.tint.no');
-  function onStart(e){dragging=true;startX=e.touches?e.touches[0].clientX:e.clientX;wrap.style.transition='none';wrap.classList.remove('animating');}
+  var hintL=document.getElementById('hintLeft'),hintR=document.getElementById('hintRight');
+
+  function clearHints(){hintL.classList.remove('active');hintR.classList.remove('active');}
+
+  function onDown(e){
+    if(dragging||!e.isPrimary)return;                       // multi-touch: toinen sormi ei resetoi vetopistettä
+    if(e.target.closest&&e.target.closest('button'))return; // "✎ Muokkaa" ei saa hukkua vetoon
+    dragging=true;moved=false;pid=e.pointerId;curX=0;
+    startX=e.clientX;startT=e.timeStamp||performance.now();
+    // Kaappaa heti, ei vasta liikkeen alkaessa: muuten sormen nosto kortin
+    // ULKOPUOLELLA (kun liike jäi slopin alle) ei koskaan osu tähän wrappiin,
+    // pointerup jää tulematta ja dragging jumittuu true'ksi — kortista tulee
+    // pysyvästi vetokelvoton. Nappiklikkaus ei kärsi, koska napista alkava
+    // painallus palasi jo yllä.
+    try{wrap.setPointerCapture(pid);}catch(_){}
+    wrap.style.transition='none';wrap.classList.remove('animating');
+  }
+
   function onMove(e){
-    if(!dragging)return;e.preventDefault();
-    curX=(e.touches?e.touches[0].clientX:e.clientX)-startX;
-    wrap.style.transform='translateX('+curX+'px) rotate('+(curX*0.07)+'deg)';
+    if(!dragging||e.pointerId!==pid)return;
+    var dx=e.clientX-startX;
+    if(!moved){
+      if(Math.abs(dx)<=DRAG_SLOP)return;                    // slop: pieni tärähdys ei ole veto
+      moved=true;wrap.classList.add('dragging');
+    }
+    curX=dx;
+    var rot=Math.max(-20,Math.min(20,curX*0.07));           // pehmeä yläraja, ei loputonta kiertoa
+    wrap.style.transform='translateX('+curX+'px) rotate('+rot+'deg)';
     var f=Math.min(Math.abs(curX)/100,1);
-    if(curX>15){tyes.style.opacity=f*.55;tno.style.opacity=0;document.getElementById('hintRight').classList.add('active');document.getElementById('hintLeft').classList.remove('active');}
-    else if(curX<-15){tno.style.opacity=f*.55;tyes.style.opacity=0;document.getElementById('hintLeft').classList.add('active');document.getElementById('hintRight').classList.remove('active');}
-    else{tyes.style.opacity=0;tno.style.opacity=0;document.getElementById('hintLeft').classList.remove('active');document.getElementById('hintRight').classList.remove('active');}
+    if(curX>15){tyes.style.opacity=f*.55;tno.style.opacity=0;hintR.classList.add('active');hintL.classList.remove('active');}
+    else if(curX<-15){tno.style.opacity=f*.55;tyes.style.opacity=0;hintL.classList.add('active');hintR.classList.remove('active');}
+    else{tyes.style.opacity=0;tno.style.opacity=0;clearHints();}
   }
-  function onEnd(){
-    if(!dragging)return;dragging=false;
-    document.getElementById('hintLeft').classList.remove('active');document.getElementById('hintRight').classList.remove('active');
-    if(curX>80)swipeRight();else if(curX<-80)swipeLeft();
+
+  function onUp(e){
+    if(!dragging||(e&&e.pointerId!==pid))return;
+    dragging=false;wrap.classList.remove('dragging');
+    if(pid!==null){try{wrap.releasePointerCapture(pid);}catch(_){}}
+    clearHints();
+    if(!moved){curX=0;pid=null;return;}                     // pelkkä napautus: ei mitään palautettavaa
+    var elapsed=Math.max(1,((e&&e.timeStamp)||performance.now())-startT);
+    var v=Math.abs(curX)/elapsed;
+    var dist=Math.abs(curX);
+    var fired=dist>=SWIPE_DIST||(dist>=SWIPE_FLICK_MIN&&v>SWIPE_VELOCITY);
+    if(fired&&curX>0)swipeRight();
+    else if(fired)swipeLeft();
     else{wrap.classList.add('animating');wrap.style.transform='';wrap.style.opacity='1';tyes.style.opacity=0;tno.style.opacity=0;}
-    curX=0;
+    curX=0;pid=null;
   }
-  wrap.addEventListener('touchstart',onStart,{passive:true});
-  wrap.addEventListener('touchmove',onMove,{passive:false});
-  wrap.addEventListener('touchend',onEnd);
-  wrap.addEventListener('mousedown',onStart);
-  document.addEventListener('mousemove',onMove);
-  document.addEventListener('mouseup',onEnd);
+
+  wrap.addEventListener('pointerdown',onDown);
+  wrap.addEventListener('pointermove',onMove);
+  wrap.addEventListener('pointerup',onUp);
+  wrap.addEventListener('pointercancel',onUp);
 }
 
 document.addEventListener('keydown',function(e){
@@ -564,7 +689,7 @@ document.addEventListener('keydown',function(e){
   var tag=(e.target&&e.target.tagName)||'';
   if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||(e.target&&e.target.isContentEditable))return;
   var ep=document.getElementById('edit-panel');
-  if(ep&&ep.style.display==='flex')return;
+  if(ep&&ep.classList.contains('on'))return;
   if(e.key==='ArrowRight'||e.key==='d')swipeRight();
   else if(e.key==='ArrowLeft'||e.key==='a')swipeLeft();
   else if(e.key==='f')swipeFrog();
