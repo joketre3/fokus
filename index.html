@@ -277,6 +277,12 @@ input[type=date]{font-family:'DM Sans',sans-serif;font-size:var(--text-sm);color
 .card:hover .tact-wrap,.card.needs-review .tact-wrap{grid-template-rows:1fr}
 .tact{overflow:hidden;min-height:0;display:flex;gap:.3rem;align-items:center;flex-wrap:wrap;justify-content:flex-end;width:100%;opacity:0;transition:opacity .15s ease}
 .card:hover .tact,.card.needs-review .tact{opacity:1}
+/* Kosketuslaitteella hoveria ei ole → Palauta/× jäisivät tavoittamattomiin.
+   Rivi on auki levossa; lista on korkeampi mutta napit ovat olemassa. */
+@media (hover:none){
+  .tact-wrap{grid-template-rows:1fr}
+  .tact{opacity:1}
+}
 .tact .qb.on{opacity:1}
 .qb{font-family:'DM Sans',sans-serif;font-size:var(--text-xs);font-weight:500;padding:.2rem .45rem;border-radius:var(--r-sm);border:1.5px solid;cursor:pointer;background:var(--surface);white-space:nowrap}
 .qb.q1{border-color:var(--q1);color:var(--q1)} .qb.q1.on{background:var(--q1);color:white}
@@ -392,6 +398,8 @@ input[type=date]{font-family:'DM Sans',sans-serif;font-size:var(--text-sm);color
 .qbtn::after,.qqb::after,.infobtn::after{content:'';position:absolute;inset:-10px;}
 .qdnb{font-size:var(--text-xs);padding:.12rem .38rem;border-radius:var(--r-sm);border:1px solid var(--accent);color:var(--accent);background:var(--surface);cursor:pointer;opacity:0;font-family:'DM Sans',sans-serif}
 .qti:hover .qdnb{opacity:1} .qdnb:hover{background:var(--accent);color:white}
+/* Peek on mobiilin Matriisi-välilehti — pikakuittaus ei saa piiloutua hoverin taakse */
+@media (hover:none){ .qdnb{opacity:1} }
 .qemp{font-size:var(--text-sm);color:var(--faint);font-style:italic}
 
 /* EISENHOWER MODAL (Vaihe 9) */
@@ -3004,21 +3012,29 @@ body.hand-open #hand-toggle{bottom:calc(var(--hand-card-h,182px) + 12px);}
   left:-8px;right:-8px;
   height:64px;
 }
-.tcg-card--hand:hover{
-  /* Pivot takaisin kortin tyveen: desktopilla origo on --fan-r:n päässä,
-     jolloin pelkkä translateY nostaisi kortin kaarta pitkin sivuun. */
-  transform-origin:bottom center;
-  transform:translateY(-52px) scale(1.1) rotate(0deg) !important;
-  box-shadow:0 16px 36px rgba(0,0,0,.45),
-             0 0 24px color-mix(in srgb,var(--accent) 30%,transparent);
-  z-index:20;
+/* Nosto on hiiren ele. Kosketuksella :hover laukeaa napautuksesta ja jää
+   jumiin: transform on !important, joten mobiilin
+   `#hand-bar-cards .tcg-card--hand{transform:none}` (spesifisyys 1-1-0) ei
+   kumoa sitä, ja kortti lentää 52px juuri ennen promoteToHand-siirtoa. */
+@media (hover:hover) and (pointer:fine){
+  .tcg-card--hand:hover{
+    /* Pivot takaisin kortin tyveen: desktopilla origo on --fan-r:n päässä,
+       jolloin pelkkä translateY nostaisi kortin kaarta pitkin sivuun. */
+    transform-origin:bottom center;
+    transform:translateY(-52px) scale(1.1) rotate(0deg) !important;
+    box-shadow:0 16px 36px rgba(0,0,0,.45),
+               0 0 24px color-mix(in srgb,var(--accent) 30%,transparent);
+    z-index:20;
+  }
 }
 /* Tähtikortti (handForced) kultakehys */
 .tcg-card--hand.tcg-card--star{
   box-shadow:0 0 0 2px rgba(196,154,58,.7),0 6px 18px rgba(0,0,0,.35),0 0 16px rgba(196,154,58,.25);
 }
-.tcg-card--hand.tcg-card--star:hover{
-  box-shadow:0 16px 36px rgba(0,0,0,.45),0 0 0 2px var(--accent),0 0 28px rgba(196,154,58,.4);
+@media (hover:hover) and (pointer:fine){
+  .tcg-card--hand.tcg-card--star:hover{
+    box-shadow:0 16px 36px rgba(0,0,0,.45),0 0 0 2px var(--accent),0 0 28px rgba(196,154,58,.4);
+  }
 }
 /* Käsikortin sisältö: pienempi fontti, bust ~50% */
 .tcg-card--hand .tcg-card__title{
@@ -4736,10 +4752,15 @@ svg[aria-hidden="true"]{pointer-events:none;}
     filter: brightness(calc(1 - var(--ia, 0) * .05));
     transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
   }
-  /* Hover: pivot kortin tyveen (transform tulee globaalista !important-säännöstä) */
-  #hand-bar-cards .tcg-card--hand:hover {
-    transform-origin: bottom center;
-    filter: brightness(1.06);
+  /* Hover: pivot kortin tyveen (transform tulee globaalista !important-säännöstä).
+     Sama hover-vartio kuin globaalilla säännöllä: tämän id-selektorin
+     transform-origin voittaa globaalin, joten ilman vartiota iso kosketustabletti
+     (≥900px) saisi uuden pivotin ilman siihen kuuluvaa nostoa. */
+  @media (hover:hover) and (pointer:fine){
+    #hand-bar-cards .tcg-card--hand:hover {
+      transform-origin: bottom center;
+      filter: brightness(1.06);
+    }
   }
   /* Ajastin käynnissä: kortit täysin piilossa */
   #hand-bar.hand-bar--hidden #hand-bar-cards {
