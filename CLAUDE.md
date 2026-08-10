@@ -664,7 +664,7 @@ Komponentit `index.html`:ssä (etsi nimellä, rivinumerot vanhenevat): `.tcg-car
 **`renderArenaCard` mode:** `'arena'` = täysi kortti; `'hand'` = kompakti `.tcg-card--hand` ilman stats/footer/jatkokortti
 **`#hand-toggle` on `#hand-bar`:n ULKOPUOLELLA DOM:issa** — position:fixed toimii oikein vain näin
 **`#hand-bar-cards` on desktopilla `position:fixed`** — overlay viewportin alareunassa, hover avaa, 5s mouseleave sulkee. `#hand-bar` pysyy gridin pohjarivissä (182px) pitäen areenan paikallaan.
-**Viuhkan tilat desktopilla:** peek (oletus, ~36px näkyvissä) → `hand-bar--open` (täysin auki) → `hand-bar--hidden` (ajastin käynnissä, `translateY(100%)`)
+**Viuhkan tilat desktopilla:** lepo (`--hand-rest-t`, 99px näkyvissä) → `hand-bar--open` (`--hand-open-t`, 134px) → `hand-bar--hidden` (ajastin käynnissä, `translateY(100%)`). Geometria uusittu 2026-08-10 — ks. **Pidetty viuhka** alempana.
 
 ## Firebase
 
@@ -800,3 +800,64 @@ Mitattu: merge ilman ajastinkorjausta 3/8, merge + korjaus 8/8.
 - **Testattavan puun tunnistaminen on osa raportin lukemista.** "Matriisi
   aukesi itsestään" kertoi yksiselitteisesti että PR #7 puuttui — yhden
   funktiokutsun `grep -c` haaroittain vahvisti sen sekunneissa.
+
+### Pidetty viuhka + palkin koordinaatistot (2026-08-10) — valmis, mobiili testaamatta
+
+Käsiviuhka oli viisi käsin viritettyä `nth-child`-rotaatiota, joilla
+`transform-origin:bottom center` — jokainen kortti kiertyi omasta tyvestään,
+joten pohjat eivät konvergoineet mihinkään. Levossa näkyi ~50px pelkkää
+taidetta: ei verbiä, ei nimeä. Suunta valittiin PR #5:n mockupista
+(`mockup-kasi.html`, vaihtoehto **B — pidetty viuhka**); PR:n oma
+`index.html`-osuus hylättiin vanhentuneena (base heinäkuulta, `#hand-lip` ja
+`hand-bar--open` olivat sen jälkeen refaktoroineet rakenteen).
+
+| Osa | Mitä |
+|---|---|
+| Tokenit | `--hand-rest-t:60px`, `--hand-open-t:24px`, `--fan-r:836px`, `--fan-step:5.5deg`, `--fan-step-open:9deg`. `--hand-peek-h` on nyt **vain mobiilin** huuli — desktop-ylikirjoitus (`calc(36px + --ledge-h)`) poistettu kuolleena |
+| Geometria | Yksi kaava: kortit `position:absolute` keskelle päällekkäin, `transform-origin:50% var(--fan-r)`, `rotate(calc(var(--i) * var(--fan-step)))`. Kaari syntyy geometriasta, ei erillisistä translateY-arvoista. Viisi `nth-child`-sääntöä poistettu |
+| `--i` / `--ia` | `renderHandBar` asettaa etumerkillisen indeksin keskeltä (`idx - (n-1)/2`) ja sen itseisarvon. Toimii millä tahansa korttimäärällä |
+| Kääre | `translateY(var(--hand-rest-t)) rotate(-1.2deg)`; auki-tilassa `--hand-open-t` + `--fan-step:var(--fan-step-open)` |
+| `--ledge-total` | Uusi tokeni `calc(var(--ledge-h) + .75rem)` — palkin laatikon korkeus `.wrap`-koordinaatistossa |
+
+Mitattu 1625×875: lepo 50px → **99px** näkyvissä (taide + verbisiru), auki
+108px → **134px**, väli areenakortin nappeihin +12px → **+35px**.
+
+Opit:
+- **Rekisteröimätön custom property ei invalidoi siitä laskettua transformia.**
+  `--fan-step` vaihtui 5.5deg → 9deg auki-tilassa, mutta korttien
+  `rotate(calc(var(--i) * var(--fan-step)))` jäi jumiin vanhaan matriisiin —
+  `getComputedStyle` näytti uuden `--fan-step`in ja vanhan `transform`in
+  yhtä aikaa. Korjaus: `@property{syntax:'<angle>'|'<number>'}` kaikille
+  kolmelle. Sivuhyöty: tyypitetty arvo interpoloituu, joten viuhka
+  levittäytyy sulavasti. **Mockupissa vika ei näkynyt**, koska se vaihtaa
+  arvon `<html>`-elementillä (juuri invalidoi koko puun), ei kääreellä —
+  mockupista siirretty sääntö voi siis rikkoutua pelkästä selektorin
+  vaihdosta, vaikka arvot ovat identtiset.
+- **`--ledge-h` ja `--ledge-total` eivät ole sama luku eri nimellä, vaan kaksi
+  koordinaatistoa.** `.wrap` ylittää viewportin .75rem, joten palkin alin
+  .75rem jää ruudun alle. `position:fixed` -elementti (`.notif`) väistää
+  **`--ledge-h`:ta** (38px viewportin pohjasta) ja oli jo oikein;
+  `.wrap`in sisällä absoluuttinen (`#break-banner` `#arena`ssa, jonka pohja on
+  `.wrap`in pohja) väistää **`--ledge-total`ia** ja oli 12px liian alhaalla.
+  Mittaa kumpi koordinaatisto on kyseessä ennen kuin "korjaat" — kolmesta
+  epäillystä osumasta vain yksi oli oikeasti rikki, yksi oli pelkkä käsin
+  toistettu ilmaisu ja yksi oli jo oikein.
+- **Hover tarvitsee oman `transform-origin`in kun lepo-origo on kaukana.**
+  Globaali hover-sääntö nostaa kortin `translateY(-52px) … !important`illa;
+  `--fan-r`:n päässä olevalla origolla se olisi kaartanut kortin sivuun.
+  `transform-origin:bottom center` hoverissa palauttaa pivotin tyveen.
+- **Kontrolliajo paljasti että 4 kaatuvaa väitettä oli ennestään rikki
+  `main`issa.** `git archive HEAD | tar -x -C /tmp/base-tree` +
+  `python3 tests/run.py --tree /tmp/base-tree` antoi identtiset 4 failia →
+  delta 0. Ilman tätä ne olisi luettu tämän muutoksen regressioiksi.
+- `tests/harness.py` osoitti kovakoodattuun `/opt/pw-browsers/chromium-1194/…`
+  -polkuun jota tällä koneella ei ole. Nyt ketju
+  `CHROME_BIN` → `shutil.which("google-chrome")` → vanha polku viimeisenä.
+- **CSP:n `frame-src` estää oman sivun mittaamisen iframessa.** CLAUDE.md:n
+  mobiilikikka (iframe isomman ikkunan sisällä kiertää headlessin 500px-
+  minimileveyden) ei toimi `index.html`:llä — `contentDocument` on `null`.
+  Mobiilin kapean näkymän mittaus vaatii oikean kapean ikkunan.
+
+**⚠ Mobiili testaamatta.** Uusi geometria on `min-width:900px`-lohkossa eikä
+mobiili näe sitä, mutta mobiilin `nth-child`-nollaus tiivistyi yhdeksi
+`transform:none`-riviksi — tarkista hylly puhelimella.

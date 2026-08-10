@@ -16,6 +16,13 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&family=Cinzel:wght@600;700&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+/* Viuhkan geometria-arvot on rekisteröitävä tyypitettyinä. Rekisteröimätön
+   custom property ei invalidoi siitä laskettua transformia: --fan-step vaihtui
+   5.5deg → 9deg, mutta korttien rotate() jäi vanhaan arvoon. Tyypitettynä
+   arvo myös interpoloituu, joten viuhka levittäytyy sulavasti. */
+@property --fan-step{syntax:'<angle>';inherits:true;initial-value:5.5deg}
+@property --i{syntax:'<number>';inherits:false;initial-value:0}
+@property --ia{syntax:'<number>';inherits:false;initial-value:0}
 :root{
   /* ── Mobiilin turva-alueet ja korkeus ──────────────
      env() palauttaa 0px ilman viewport-fit=cover, joten nämä ovat
@@ -81,9 +88,25 @@
   /* Viuhka-käsi */
   --hand-card-w:130px;
   --hand-card-h:182px;
-  --hand-peek-h:36px;
-  /* Pöydän kehys (desktop) */
+  --hand-peek-h:36px;        /* vain mobiili — desktop käyttää --hand-rest-t:tä */
+  /* Viuhkan geometria (desktop). Kortit ladotaan keskelle päällekkäin ja
+     leviävät yhdestä pivotista --fan-r:n päässä kortin yläreunasta alaspäin;
+     pohjat konvergoivat kuten pidetyssä kädessä. Kaari (uloimmat kortit
+     alempana) syntyy geometriasta, ei erillisistä translateY-arvoista.
+     Näkyvä osa PAKKA-palkin yläpuolella = 156px - translateY, riippumaton
+     ikkunan korkeudesta. */
+  --hand-rest-t:60px;        /* → 96px näkyvissä: taide + verbisiru */
+  --hand-open-t:24px;        /* → 132px; areenakortin napit jäävät vapaiksi */
+  --fan-r:836px;             /* pivot kortin yläreunasta (kortin keskiö 745px) */
+  --fan-step:5.5deg;         /* 745px * 5.5deg ≈ 72px vaakajako */
+  --fan-step-open:9deg;      /* auki ≈ 117px jako, uloin kortti ±18deg */
+  /* Pöydän kehys (desktop). --ledge-h on palkin NÄKYVÄ korkeus viewportin
+     pohjasta; --ledge-total on sen laatikon korkeus .wrap-koordinaatistossa
+     (.wrap ylittää viewportin .75rem, joten palkin alin .75rem jää ruudun alle).
+     Viewporttiin ankkuroitu (position:fixed, esim. .notif) väistää --ledge-h:ta;
+     .wrapin sisällä absoluuttinen väistää --ledge-totalia. */
   --ledge-h:38px;
+  --ledge-total:calc(var(--ledge-h) + .75rem);
   --frog:#6b8a30;
   --frog-deep:#3d7a52;
   /* TCG-metallit ja levyteksti — neutraaleja, eivät seuraa --accentia */
@@ -2972,12 +2995,8 @@ body.hand-open #hand-toggle{bottom:calc(var(--hand-card-h,182px) + 12px);}
   /* Ei arena-glowia */
   box-shadow:0 6px 18px rgba(0,0,0,.35);
 }
-/* Viuhka-rotaatiot */
-.tcg-card--hand:nth-child(1){transform:rotate(-8deg) translateY(8px);}
-.tcg-card--hand:nth-child(2){transform:rotate(-3deg) translateY(2px);}
-.tcg-card--hand:nth-child(3){transform:rotate(1deg) translateY(0);}
-.tcg-card--hand:nth-child(4){transform:rotate(6deg) translateY(5px);}
-.tcg-card--hand:nth-child(5){transform:rotate(11deg) translateY(11px);}
+/* Viuhka-rotaatiot: desktopin geometria on yksi kaava (--i / --ia per kortti)
+   min-width:900px -lohkossa. Mobiili pitää kortit suorina. */
 .tcg-card--hand::after{
   content:'';
   position:absolute;
@@ -2986,6 +3005,9 @@ body.hand-open #hand-toggle{bottom:calc(var(--hand-card-h,182px) + 12px);}
   height:64px;
 }
 .tcg-card--hand:hover{
+  /* Pivot takaisin kortin tyveen: desktopilla origo on --fan-r:n päässä,
+     jolloin pelkkä translateY nostaisi kortin kaarta pitkin sivuun. */
+  transform-origin:bottom center;
   transform:translateY(-52px) scale(1.1) rotate(0deg) !important;
   box-shadow:0 16px 36px rgba(0,0,0,.45),
              0 0 24px color-mix(in srgb,var(--accent) 30%,transparent);
@@ -3947,11 +3969,13 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
   text-align:center; padding:0 1rem; margin:.25rem 0 .5rem;
 }
 /* Desktopilla areenan alalaita on vapaa (käsi piilossa fokustilassa) → banneri
-   sinne, jottei keskitetty kortti hyppää. PAKKA-palkin (--ledge-h) yläpuolelle. */
+   sinne, jottei keskitetty kortti hyppää. Banneri on absoluuttinen #arenassa,
+   jonka pohja on .wrapin pohja — siis palkin LAATIKON (--ledge-total) yläpuolelle,
+   ei näkyvän reunan. --ledge-h jätti väliksi 12px aiotun 24px sijaan. */
 @media (min-width:900px){
   #break-banner{
     position:absolute; left:0; right:0;
-    bottom:calc(var(--ledge-h) + 1.5rem);
+    bottom:calc(var(--ledge-total) + 1.5rem);
     margin:0;
   }
 }
@@ -4595,7 +4619,7 @@ svg[aria-hidden="true"]{pointer-events:none;}
        kehyksen yli. */
     position: absolute;
     left: 0; right: 0; bottom: 0;
-    height: calc(var(--ledge-h) + .75rem);
+    height: var(--ledge-total);
     z-index: 65;
     pointer-events: auto;
     border: none;
@@ -4659,8 +4683,8 @@ svg[aria-hidden="true"]{pointer-events:none;}
     top: 0; bottom: .75rem; left: .75rem; right: .75rem;
     z-index: 60;
     height: auto;
-    /* Peek mitataan huovan pohjasta: kehys peittää alimmat --ledge-h pikseliä */
-    --hand-peek-h: calc(36px + var(--ledge-h));
+    /* Peek-arvoa ei enää käytetä desktopilla: viuhkan lepokorkeus tulee
+       --hand-rest-t:stä. --hand-peek-h on vain mobiilihyllyn huuli. */
     overflow: hidden;
     border-radius: 0 0 var(--r-lg) var(--r-lg);
     background: transparent;
@@ -4672,18 +4696,18 @@ svg[aria-hidden="true"]{pointer-events:none;}
   #hand-toggle {
     display: none;
   }
-  /* Kortit: position:fixed overlay, peek oletuksena */
+  /* Kortit: position:fixed overlay, peek oletuksena.
+     Kääre on kokonainen "käsi": pieni kallistus antaa sille otteen tunnun. */
   #hand-bar-cards {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
     height: var(--hand-card-h, 182px);
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
+    display: block;
     overflow: visible;
-    transform: translateY(calc(100% - var(--hand-peek-h, 36px)));
+    transform-origin: 50% 100%;
+    transform: translateY(var(--hand-rest-t)) rotate(-1.2deg);
     transition: transform 300ms cubic-bezier(.22,.61,.36,1);
     /* pointer-events korteille, ei kontainerille: laatikko on koko huovan
        levyinen ja tukkisi paneelien alaosan. :hover propagoituu lapsen kautta. */
@@ -4694,7 +4718,28 @@ svg[aria-hidden="true"]{pointer-events:none;}
      taakse (vain "N pom" -rivi), joten viuhka tulee kehyksen ALTA eikä kellu
      sen yläpuolella. Nosto ei myöskään peitä areenakorttia turhan korkealta. */
   #hand-bar.hand-bar--open #hand-bar-cards {
-    transform: translateY(0);
+    transform: translateY(var(--hand-open-t)) rotate(-1.2deg);
+    --fan-step: var(--fan-step-open);
+  }
+  /* Pidetty viuhka: kortit ladotaan keskelle päällekkäin ja leviävät yhdestä
+     pivotista --fan-r:n päässä. Pohjat konvergoivat, kuten oikeassa kädessä. */
+  #hand-bar-cards .tcg-card--hand {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    margin: 0;
+    margin-left: calc(var(--hand-card-w, 130px) / -2);
+    width: var(--hand-card-w, 130px);
+    transform-origin: 50% var(--fan-r);
+    transform: rotate(calc(var(--i, 0) * var(--fan-step)));
+    /* Syvyys: keskikortti kirkkain */
+    filter: brightness(calc(1 - var(--ia, 0) * .05));
+    transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+  }
+  /* Hover: pivot kortin tyveen (transform tulee globaalista !important-säännöstä) */
+  #hand-bar-cards .tcg-card--hand:hover {
+    transform-origin: bottom center;
+    filter: brightness(1.06);
   }
   /* Ajastin käynnissä: kortit täysin piilossa */
   #hand-bar.hand-bar--hidden #hand-bar-cards {
@@ -5416,12 +5461,8 @@ svg[aria-hidden="true"]{pointer-events:none;}
   #hand-bar-cards .tcg-card--hand{
     scroll-snap-align:center;
     flex:none;
+    transform:none;
   }
-  #hand-bar-cards .tcg-card--hand:nth-child(1),
-  #hand-bar-cards .tcg-card--hand:nth-child(2),
-  #hand-bar-cards .tcg-card--hand:nth-child(3),
-  #hand-bar-cards .tcg-card--hand:nth-child(4),
-  #hand-bar-cards .tcg-card--hand:nth-child(5){transform:none}
 
   /* Hover-silta on 64px näkymätön alue kortin ALLA. Kosketuksella se
      ulottuisi alanavigaation päälle ja kaappaisi napautukset. */
@@ -9949,8 +9990,14 @@ function renderHandBar(inbox){
   }
   if(lbl) lbl.textContent = handTasks.length+'';
 
-  handTasks.forEach(function(t){
+  // Viuhkan indeksit: --i on etumerkillinen keskeltä (−2…2), --ia sen itseisarvo.
+  // Kaava toimii millä tahansa korttimäärällä; parillisella keskikohta on välissä.
+  var mid = (handTasks.length - 1) / 2;
+  handTasks.forEach(function(t, idx){
     var card = renderArenaCard(t, null, anyFrog, 'hand');
+    var i = idx - mid;
+    card.style.setProperty('--i', i);
+    card.style.setProperty('--ia', Math.abs(i));
     if(_prevHandIds.indexOf(t.id)<0) card.classList.add('card-arriving'); // uusi käteen → fade-in
     card.title = active===null ? 'Nosta areenalle' : 'Siirrä jonon perään';
     // Klikattava kortti on nappi, ei pelkkä fokusoitava div.
