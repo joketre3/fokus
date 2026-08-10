@@ -51,3 +51,43 @@
       }
       ok('TZ offset is UTC+2/+3 (test is meaningful)', Math.abs(new Date('2026-07-28T00:00:00').getTimezoneOffset())>=120,
          'offsetMin='+new Date('2026-07-28T00:00:00').getTimezoneOffset());
+
+      // ===== Design audit: touch reachability + hover guards =====
+      // Headless reports hover:hover/pointer:fine, so these media blocks never
+      // MATCH here — assert the rules exist in the cascade instead. Without
+      // them the Done-modal buttons and the peek quick-done are unreachable on
+      // touch, and the 52px hand-card lift fires on tap.
+      function cssRules(){
+        var out=[];
+        Array.prototype.forEach.call(document.styleSheets,function(ss){
+          var rules; try{rules=ss.cssRules;}catch(_){return;}
+          (function walk(list,media){
+            Array.prototype.forEach.call(list||[],function(r){
+              if(r.type===CSSRule.MEDIA_RULE)walk(r.cssRules,(media?media+' && ':'')+r.conditionText);
+              else if(r.selectorText)out.push({sel:r.selectorText,media:media||'',css:r.cssText});
+            });
+          })(rules,'');
+        });
+        return out;
+      }
+      var R=cssRules();
+      function has(selRe,mediaRe){
+        return R.some(function(r){return selRe.test(r.sel)&&mediaRe.test(r.media);});
+      }
+      ok('DA .tact-wrap opened under (hover:none)', has(/\.tact-wrap/,/hover:\s*none/),
+         R.filter(function(r){return /\.tact-wrap/.test(r.sel);}).map(function(r){return '['+r.media+']';}).join(' '));
+      ok('DA .tact opened under (hover:none)', has(/^\.tact$/,/hover:\s*none/));
+      ok('DA .qdnb revealed under (hover:none)', has(/\.qdnb/,/hover:\s*none/),
+         R.filter(function(r){return /\.qdnb/.test(r.sel);}).map(function(r){return '['+r.media+']';}).join(' '));
+      // The 52px lift must ONLY exist behind a fine-pointer hover guard.
+      var lifts=R.filter(function(r){return /\.tcg-card--hand:hover/.test(r.sel)&&/translateY\(-52px\)/.test(r.css);});
+      ok('DA hand-card 52px lift exists', lifts.length>0, 'rules='+lifts.length);
+      ok('DA hand-card lift is behind (hover:hover) and (pointer:fine)',
+         lifts.length>0&&lifts.every(function(r){return /hover:\s*hover/.test(r.media)&&/pointer:\s*fine/.test(r.media);}),
+         lifts.map(function(r){return '['+r.media+']';}).join(' '));
+      // The desktop rule that moves transform-origin must carry the same guard,
+      // otherwise a >=900px touch tablet gets a new pivot with no lift.
+      var origins=R.filter(function(r){return /#hand-bar-cards\s+\.tcg-card--hand:hover/.test(r.sel)&&/transform-origin/.test(r.css);});
+      ok('DA desktop hand-hover transform-origin is guarded too',
+         origins.length===0||origins.every(function(r){return /hover:\s*hover/.test(r.media)&&/pointer:\s*fine/.test(r.media);}),
+         origins.map(function(r){return '['+r.media+']';}).join(' '));
