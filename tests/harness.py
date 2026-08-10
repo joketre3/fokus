@@ -4,7 +4,8 @@ Injects a localStorage seed + a test script, runs Chrome --dump-dom,
 and reads results back out of a data-probe attribute."""
 import re, sys, os, json, subprocess, html as htmlmod, tempfile
 
-CHROME = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
+import os, shutil
+CHROME = os.environ.get("CHROME_BIN") or shutil.which("google-chrome") or "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
 
 def build(src_path, out_path, seed_js, test_js, theme="usva", delay=2500):
     doc = open(src_path, encoding="utf-8").read()
