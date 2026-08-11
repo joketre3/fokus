@@ -226,6 +226,28 @@ että tärkein tieto on kortin **oikeassa laidassa**, pino kertoo jonon koostumu
 ilman hoveria. Nykyisellään reunoista lukee vain kvadranttivärin — se on jo
 merkityksellistä, mutta ei koko potentiaali.
 
+### Hover on liuku, ei nosto — `z-index` ei animoidu
+
+Ensimmäinen toteutus nosti hoveratun kortin `z-index:60`:een eli areenakortin yli.
+Se **näytti siltä että kortti ilmestyy tyhjästä**, ja syy on mekaaninen:
+`z-index` ei ole animoituva ominaisuus. Kortti vaihtoi kerrosta ensimmäisellä
+framella samalla kun `transform` vasta aloitti 300 ms liukunsa — koko kortti
+välähti näkyviin ennen kuin liike alkoi.
+
+Oikea malli on fyysinen: kortti on pinossa, ja sen näkee **vetämällä sen esiin
+sivusuunnassa**. `z-index`iin ei kosketa lainkaan; hoverattu kortti pysyy
+lepokerroksessaan (`20 − qi`) ja liukuu `--lane-peek-x`:n verran oikealle. Se ei
+siis voi koskaan mennä edessään olevan kortin päälle — se tulee sen takaa.
+
+**Mitoitus ei ole täysi paljastus.** Kortin vasen alanurkka saa jäädä edellisen
+taakse, koska siihen ei jatkossa sijoiteta tärkeää tietoa. Täysi paljastus vaatisi
+178px kortille 0 (areenakortin takana); oletus on 120px, jolloin kortti 0 näyttää
+~73 % ja kauimmaiset tulevat kokonaan esiin. Matka on liu'ulla — se on
+korttisuunnittelun kanssa yhdessä viritettävä luku, ei vakio.
+
+Tästä seuraa myös että `#break-banner` riittää `z:40`:llä (areenakortin 30 yli),
+ei 70 — hoverattu kortti ei enää nouse minnekään.
+
 ### 1. DOM ja render-polku
 
 `<div id="queue-lane" aria-hidden="true">` **`#arena`n lapseksi**, ja

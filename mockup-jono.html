@@ -265,8 +265,12 @@ html[data-theme="aurinko"] {
    mikä lukisi varjona eikä etäisyytenä. */
 :root{
   --lane-card-w:150px;      /* rata-kortti: kädeen (130) ja areenaan (300) väliin */
-  --lane-peek-x:104px;      /* kuinka kauas hoverattu kortti vedetään pinosta ulos */
-  --lane-peek-y:14px;       /* ja kuinka paljon ylös */
+  --lane-peek-x:120px;      /* kuinka kauas hoverattu kortti liukuu pinosta ulos.
+                               EI mitoitettu täyteen paljastukseen: kortin vasen
+                               alanurkka saa jäädä edellisen taakse, koska siihen
+                               ei jatkossa sijoiteta tärkeää tietoa. Täysi
+                               paljastus vaatisi 178px kortille 0. */
+  --lane-peek-y:10px;       /* pieni nosto: kortti tulee esiin, ei nouse ilmaan */
   --lane-max:4;             /* näkyvien korttien määrä; media-kyselyt laskevat */
   --room-haze:#071009;      /* usva: huoneen oma väri */
   --lane-ghost:rgba(196,154,58,.55);
@@ -728,7 +732,7 @@ body{
   width:100%;max-width:300px;flex:0 0 auto;
   z-index:30;             /* radan lepokorttien (20-) yli, hoverin (60) alle */
 }
-#break-banner{z-index:70}  /* hoverattu ratakortti ei saa peittää taukokehotusta */
+#break-banner{z-index:40}  /* areenakortin (30) yli — z:5 jäisi nyt sen taakse */
 
 /* ── Sivupaneelit kiskoina — konteksti radalle ──
    Rata elää kiskojen VÄLISSÄ. Ilman kiskoja mockup valehtelisi
@@ -888,11 +892,22 @@ body{
    ja kierto pois, jotta teksti on puhdas.
    .lane-card--peek on sama tila luokkana: sita tarvitaan kuvakaappauksiin
    ja katselmointiin (?peek=N), koska headlessissa ei ole osoitinta. */
+/* Hover: kortti liukuu ULOS edessa olevan kortin takaa. Se ei koskaan
+   mene minkaan paalle.
+
+   z-indexiin EI kosketa. Aiempi versio nosti hoveratun kortin z:60:een eli
+   areenakortin (30) yli, ja silloin se ei tullut mistaan — se ILMESTYI
+   eteen, koska liike tapahtui z-akselilla eika lattialla. Fyysinen malli on
+   toinen: kortti on pinossa, ja sen naet vetamalla sen esiin sivusuunnassa.
+
+   Siksi --lane-peek-x on mitoitettava niin, etta kortti tulee KOKONAAN
+   esiin: pahin tapaus on kortti 0, joka lepaa areenakortin takana ja
+   tarvitsee ~178px. Kauempana olevat tarvitsevat vahemman (kortti 3 ~111px),
+   joten yhteinen matka jattaa niille vain ilmaa. Kun kortti on kokonaan
+   irti edellisesta, paallekkaisyytta ei ole eika z-jarjestyksella ole enaa
+   merkitysta — juuri siksi tama on kestavampi kuin z-indexin saataminen. */
 .lane-card:hover,
 .lane-card--peek{
-  /* Kortti vedetaan ULOS pinosta, ei pelkastaan suurenneta paikallaan:
-     negatiivisella --lane-gapilla se lepaa areenakortin alla, jolloin
-     scale(1) kasvattaisi sen yha kortin taakse. */
   transform:
     translate(
       calc(var(--lane-gap) + var(--qi) * var(--lane-x)
@@ -903,7 +918,6 @@ body{
     scale(1) rotate(0deg);
   filter:brightness(1.06);
   box-shadow:0 18px 40px rgba(0,0,0,.55);
-  z-index:60;             /* areenakortin (30) YLI — vain hoverattu, ei koko pino */
 }
 .lane-card:hover::after,
 .lane-card--peek::after{opacity:0}
@@ -1423,7 +1437,9 @@ body.focus-mode #hand-bar-cards{transform:translateY(100%)}
   <div class="crow"><label for="s-scale">Kutistus/askel</label><output id="o-scale"></output><input type="range" id="s-scale" min="0" max=".22" step=".005"></div>
   <div class="crow"><label for="s-haze">Ilmakehä/askel</label><output id="o-haze"></output><input type="range" id="s-haze" min="0" max=".3" step=".01"></div>
   <div class="crow"><label for="s-fade">Tummennus/askel</label><output id="o-fade"></output><input type="range" id="s-fade" min="0" max=".15" step=".005"></div>
-  <div class="crow"><label for="s-cw">Kortin leveys</label><output id="o-cw"></output><input type="range" id="s-cw" min="100" max="220" step="2"></div>
+  <div class="crow"><label for="s-cw">Kortin leveys</label><output id="o-cw"></output><input type="range" id="s-cw" min="100" max="260" step="2"></div>
+  <div class="crow"><label for="s-px">Hover: liu'un matka</label><output id="o-px"></output><input type="range" id="s-px" min="0" max="320" step="4"></div>
+  <div class="crow"><label for="s-py">Hover: nosto</label><output id="o-py"></output><input type="range" id="s-py" min="0" max="60" step="2"></div>
 
   <h2>Tokenit index.html:ään</h2>
   <pre id="c-out"></pre>
@@ -1467,13 +1483,13 @@ const ICONS  = {soita:'soita',sovi:'sovi',kirjaa:'kirjaa',tee:'tee',
    Nämä ovat lähtökohtia, eivät totuuksia. Liu'ut ovat tässä juuri
    siksi, että lopulliset luvut syntyvät katsomalla eivätkä laskemalla. */
 const PRESETS = {
-  v1:{gap:186, x:104, y:17, curve:0,  tilt:0,   scale:.115, haze:.10, fade:.03, cw:150},
-  v2:{gap:-26, x:50,  y:5,  curve:2,  tilt:.5,  scale:.10,  haze:.13, fade:.04, cw:214},
-  v3:{gap:40,  x:34,  y:26, curve:26, tilt:1.5, scale:.11,  haze:.12, fade:.03, cw:150}
+  v1:{gap:186, x:104, y:17, curve:0,  tilt:0,   scale:.115, haze:.10, fade:.03, cw:150, px:56,  py:10},
+  v2:{gap:-26, x:50,  y:5,  curve:2,  tilt:.5,  scale:.10,  haze:.13, fade:.04, cw:214, px:120, py:10},
+  v3:{gap:40,  x:34,  y:26, curve:26, tilt:1.5, scale:.11,  haze:.12, fade:.03, cw:150, px:110, py:10}
 };
-const KEYS = ['gap','x','y','curve','tilt','scale','haze','fade','cw'];
+const KEYS = ['gap','x','y','curve','tilt','scale','haze','fade','cw','px','py'];
 const UNIT = {gap:'px', x:'px', y:'px', curve:'px', tilt:'deg',
-              scale:'', haze:'', fade:'', cw:'px'};
+              scale:'', haze:'', fade:'', cw:'px', px:'px', py:'px'};
 
 /* ── Tila ───────────────────────────────────────────────────── */
 let variant = 'v1';
@@ -1698,6 +1714,8 @@ function applyVals(){
   lane.style.setProperty('--lane-haze',  vals.haze);
   lane.style.setProperty('--lane-fade',  vals.fade);
   lane.style.setProperty('--lane-card-w',vals.cw + 'px');
+  lane.style.setProperty('--lane-peek-x', vals.px + 'px');
+  lane.style.setProperty('--lane-peek-y', vals.py + 'px');
   KEYS.forEach(k => {
     const s = $('s-' + k), o = $('o-' + k);
     if(s) s.value = vals[k];
@@ -1712,7 +1730,9 @@ function applyVals(){
     '--lane-scale:'  + vals.scale + ';\n' +
     '--lane-haze:'   + vals.haze  + ';\n' +
     '--lane-fade:'   + vals.fade  + ';\n' +
-    '--lane-card-w:' + vals.cw    + 'px;';
+    '--lane-card-w:' + vals.cw    + 'px;\n' +
+    '--lane-peek-x:' + vals.px    + 'px;\n' +
+    '--lane-peek-y:' + vals.py    + 'px;';
 }
 
 /* ── Ohjaimet ───────────────────────────────────────────────── */
