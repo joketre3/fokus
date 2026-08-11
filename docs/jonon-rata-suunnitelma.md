@@ -8,7 +8,7 @@ Haara: `claude/task-queue-visibility-ymx47m`
 |---|---|
 | **A — `mockup-jono.html`** | ✅ valmis |
 | **B — index.html** | ✅ **toteutettu haarassa** — V2-geometria, ei mergeä mainiin |
-| C — koherenssikorjaukset | ⬜ ei aloitettu |
+| **C — koherenssikorjaukset** | ✅ tehty + `tests/suites/hand_order.js` |
 
 Rata on nyt testattavissa oikeassa sovelluksessa omalla datalla. Geometria on
 V2 (reunojen pino, luettavuus hoverista). Tokenit ovat `:root`issa, joten
