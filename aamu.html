@@ -529,7 +529,7 @@ html[data-theme="aurinko"] .done-summary{background:#f8f8f8;border-color:#e8d8b8
     <div class="done-title">Päivä suunniteltu.</div>
     <div class="done-sub" id="doneSubText"></div>
     <div class="done-summary" id="doneSummary"></div>
-    <button class="btn-main" style="margin-top:.5rem" onclick="window.close()">Sulje ja siirry Fokukseen</button>
+    <button class="btn-main" id="doneBackBtn" style="margin-top:.5rem" onclick="goBackToApp()">Sulje ja siirry Fokukseen</button>
   </div>
 </div>
 
@@ -1492,7 +1492,7 @@ function renderDone(){
 function skipToEnd(){
   // Ohitus: Q1-tarkistuksen kvadranttimuutokset tallennetaan, sammakko ei.
   saveData(false);
-  window.close();
+  goBackToApp();
 }
 
 // ── STEPPER UI ────────────────────────────────────────
@@ -1511,15 +1511,34 @@ function setStep(n){
 // Mobiilissa velho avataan samaan välilehteen (?back=1), koska
 // window.open avaisi siellä välilehden jolta opener-delegointi ei toimi.
 // Silloin tarvitaan oma paluunappi — popup-ikkunassa ei.
+//
+// Ei haarauteta window.openerin olemassaolon perusteella: opener voi olla
+// olemassa vaikka ikkuna ei sulkeudu (iOS, noopener) ja toisin päin.
+// Luotettava tapa on yrittaa sulkea ja varmistaa viiveella.
+var _backTimer=null;
 function goBackToApp(){
-  if(history.length>1) history.back();
-  else location.href='index.html';
+  // Tuo paaikkuna eteen ennen sulkemista — paluu tarkoittaa etta Fokus on
+  // edessa, ei etta popup vain katoaa jonnekin taakse.
+  try{ if(window.opener&&!window.opener.closed) window.opener.focus(); }catch(e){}
+  try{ window.close(); }catch(e){}
+  // window.closed ei ole luotettavasti tosi synkronisesti → varmistus viiveella.
+  clearTimeout(_backTimer);
+  _backTimer=setTimeout(function(){
+    if(history.length>1) history.back();
+    else location.href='index.html';
+  },150);
 }
+// bfcachesta palautuva sivu ei saa navigoida itsestaan eteenpain-napin jalkeen
+window.addEventListener('pagehide',function(){ clearTimeout(_backTimer); });
 (function(){
   try{
     var sameTab=new URLSearchParams(location.search).get('back')==='1'||!window.opener;
+    if(!sameTab) return;
     var b=document.getElementById('backBtn');
-    if(b&&sameTab)b.hidden=false;
+    if(b)b.hidden=false;
+    // Samassa valilehdessa mitaan ei suljeta — nappi ei saa luvata sita
+    var d=document.getElementById('doneBackBtn');
+    if(d)d.textContent='Takaisin Fokukseen →';
   }catch(e){/* URLSearchParams puuttuu — nappi jää piiloon */}
 })();
 

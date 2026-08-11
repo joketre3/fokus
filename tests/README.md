@@ -30,6 +30,8 @@ tehtävä näkyväksi — muokkaa **molempia** kopioita tai tarkistus kaatuu.
 | `edit_modal` | index | Muokkausmodaalin tilanapit (tehty/odottaa/palautukset) |
 | `edit_modal_aamu` | aamu | Jaettu muokkausmodaali velhon vaiheissa 1–2 |
 | `edit_modal_swipe` | swipe | Jaettu muokkausmodaali korttiselauksessa |
+| `popup_back` | swipe | Paluu pääsovellukseen (close + varmistus historian kautta) |
+| `popup_back_aamu` | aamu | Sama velhon näytölle 5 ja «Ohita aamusuunnittelu» |
 | `regression` | index | Tehdyt-modaali (palauta/poista), ICS-päivämäärä |
 | `aamu` | aamu | Pikatehtävien suodatus, 1-3-5-mittari |
 | `aamu_skip` | aamu | Ohitus ei pyyhi eilistä sammakkoa |

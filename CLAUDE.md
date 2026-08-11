@@ -817,6 +817,42 @@ Opit:
 ovat oikea kosketuskäyttö, popupin paluu samassa välilehdessä (`?back=1`) ja
 Firestore-synkka.
 
+### Popupien paluunapit (2026-08-11) — valmis, laitteella testaamatta
+
+**Vika (Jaakon havainto):** swipen lopun «Sulje ja siirry ajastimeen» ei tehnyt
+mitään. Nappi oli `onclick="window.close()"`, ja selain sulkee vain ikkunan
+jonka skripti itse avasi. No-op kolmessa tilanteessa: mobiilissa aina
+(`_openPopup` navigoi samaan välilehteen `?back=1`), sivun ollessa avattu
+suoraan osoiterivistä, ja kun `window.opener` on katkennut (iOS, `noopener`).
+
+Asia oli jo tiedossa — `swipe.html`:n kommentti sanoo sen sanatarkasti ja
+`goBackToApp()` hoiti kaikki tapaukset — mutta **neljä nappia ei koskaan
+päätynyt kutsumaan sitä**: swipen done-nappi, aamun näytön 5 nappi,
+`skipToEnd()` ja aamun oma `goBackToApp` (josta puuttui popup-haara kokonaan).
+
+| Osa | Mitä |
+|---|---|
+| `goBackToApp()` | Ei enää haaraudu `window.openerin` perusteella: fokusoi openerin, yrittää `close()`, ja varmistaa 150 ms:n kuluttua `history.back()`illa (tai `location.href='index.html'`). `pagehide` peruu ajastimen |
+| Nappien tekstit | Samassa välilehdessä «Sulje ja siirry ajastimeen» → «Siirry ajastimeen →» (aamussa «Takaisin Fokukseen →») — mitään ei suljeta, joten nappi ei saa luvata sitä |
+
+Opit:
+- **`window.opener` ei kerro voiko ikkunan sulkea.** Opener voi olla olemassa
+  vaikka `close()` on no-op ja toisin päin. Oikea muoto on yritä–varmista, ei
+  haarauta etukäteen.
+- **Kommentti oikeasta ratkaisusta ei ole ratkaisu.** Korjaus oli kirjoitettu
+  ja dokumentoitu funktioon jota kolme neljästä kutsupaikasta ei käyttänyt.
+  `grep -n "window.close()"` löysi ne sekunneissa — kannattaa ajaa aina kun
+  yksi ilmentymä korjataan.
+- **Testattavissa headlessissa enemmän kuin luulisi:** `window.close`,
+  `window.opener` ja `history.back` ovat kaikki stubattavissa sivun sisältä,
+  joten «close on no-op → paluu historian kautta» on todennettavissa ilman
+  oikeaa navigointia. Fallback vaatii asynkronisen suiten (150 ms viive).
+- Testien on peruttava `_backTimer` klikkauksen jälkeen (`clearTimeout`), tai
+  testiajo navigoi itsensä pois kesken mittauksen.
+
+**⚠ Laitteella testaamatta:** oikea `history.back()`-paluu puhelimella ja
+popupin sulkeutuminen työpöydällä.
+
 ### Selaintestit (2026-08-08)
 
 `tests/`-hakemisto: headless-Chrome-testipohja, ei riippuvuuksia.

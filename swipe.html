@@ -201,7 +201,7 @@ html[data-theme="aurinko"] .tint.yes{background:rgba(196,104,30,.08)}
       <div style="font-size:2rem">🌲</div>
       <h2>Kaikki selattu</h2>
       <p id="done-msg">Jono on valmis.</p>
-      <button class="done-btn" onclick="window.close()">Sulje ja siirry ajastimeen</button>
+      <button class="done-btn" id="doneBackBtn" onclick="goBackToApp()">Sulje ja siirry ajastimeen</button>
     </div>
   </div>
   <div id="queue-panel">
@@ -888,17 +888,35 @@ function notify(msg){var e=document.getElementById('nt');e.textContent=msg;e.cla
 // window.open avaisi siellä välilehden jolta opener-delegointi ei toimi.
 // window.close() ei voi sulkea välilehteä jota se ei itse avannut, joten
 // paluu on tehtävä historian kautta.
+//
+// Ei haarauteta window.openerin olemassaolon perusteella: opener voi olla
+// olemassa vaikka ikkuna ei sulkeudu (iOS, noopener) ja toisin päin.
+// Luotettava tapa on yrittaa sulkea ja varmistaa viiveella.
+var _backTimer=null;
 function goBackToApp(){
-  if(window.opener&&!window.opener.closed){window.close();return;}
-  if(history.length>1) history.back();
-  else location.href='index.html';
+  // Tuo paaikkuna eteen ennen sulkemista — paluu tarkoittaa etta Fokus on
+  // edessa, ei etta popup vain katoaa jonnekin taakse.
+  try{ if(window.opener&&!window.opener.closed) window.opener.focus(); }catch(e){}
+  try{ window.close(); }catch(e){}
+  // window.closed ei ole luotettavasti tosi synkronisesti → varmistus viiveella.
+  clearTimeout(_backTimer);
+  _backTimer=setTimeout(function(){
+    if(history.length>1) history.back();
+    else location.href='index.html';
+  },150);
 }
+// bfcachesta palautuva sivu ei saa navigoida itsestaan eteenpain-napin jalkeen
+window.addEventListener('pagehide',function(){ clearTimeout(_backTimer); });
 (function(){
   try{
     var sameTab=new URLSearchParams(location.search).get('back')==='1'||!window.opener;
+    if(!sameTab) return;
     var b=document.getElementById('hdrBack');
-    if(b&&sameTab)b.textContent='← Takaisin';
-  }catch(e){/* nappi jää oletustekstiin */}
+    if(b)b.textContent='← Takaisin';
+    // Samassa valilehdessa mitaan ei suljeta — nappi ei saa luvata sita
+    var d=document.getElementById('doneBackBtn');
+    if(d)d.textContent='Siirry ajastimeen →';
+  }catch(e){/* napit jaavat oletusteksteihin */}
 })();
 
 </script>
