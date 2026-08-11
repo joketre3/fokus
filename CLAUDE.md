@@ -12,6 +12,8 @@ PRODUCT.md luotu 2026-06-10. P0 valmis.
 
 **Tuottavuustavat ✅ valmis (2026-08-08):** 2 min -sääntö (pikakortit), 1-3-5 päivän budjetti, keskeytysparkki — ks. oma osio alempana
 
+**Tehtäväjonon rata 🔶 haarassa (2026-08-11):** jono saa fyysisen paikan areenan lattialla. Haara `claude/task-queue-visibility-ymx47m`, PR #10, **ei mergeä mainiin** — ks. oma osio alempana. Kerrosskaala `#arena`n sisällä muuttui (areenakortti z:3→9, banneri z:5→12).
+
 **P2 ✅ valmis (2026-06-11) — Eisenhower-peek + navigaatio:**
 - Eisenhower-matriisi yhdistetty: vanha full-screen modaali poistettu → uusi `#eise-peek` areenan yläreunassa
 - Handle (48px, koko areenan leveys, mini 2×2-matriisi kvadranttiväreillä, tehtävämäärät per kvadrantti)
@@ -54,6 +56,7 @@ Testit: `python3 tests/run.py` (ks. `tests/README.md`). Ei lintteriä, ei CI:tä
 | `mockup-fut-kortti.html` | FUT-korttityylin mockup (referenssi) |
 | `mockup-arena-syvyys.html` | Areenan syvyyskokeilu (varhainen, korvattu `mockup-arena-3d-plus`illa) |
 | `mockup-eise-placement.html` | Eisenhower-peekin sijoitteluvaihtoehdot |
+| `mockup-jono.html` | Tehtäväjonon rata areenan lattialla — 3 varianttia + elävät geometrialiu'ut (`?v=v2`) |
 | `manifest.json` | PWA-manifesti — asennettava sovellus, standalone-tila |
 | `sw.js` | Service worker — navigointi verkosta ensin, muu välimuistista (offline) |
 | `icon-192.png`, `icon-512.png`, `icon-180.png` | Sovellusikonit (512 myös maskable) |
@@ -728,7 +731,7 @@ Fokuksen etu: ohjattu aamurutiini metodologiana (ei vain näkymänä), selkeämp
 ### Selaintestit (2026-08-08)
 
 `tests/`-hakemisto: headless-Chrome-testipohja, ei riippuvuuksia.
-Ajo `python3 tests/run.py` (~3 min), suitet `tests/suites/*.js`.
+Ajo `python3 tests/run.py` (~3 min), suitet `tests/suites/*.js` (9 kpl, 150 väitettä).
 Ks. `tests/README.md`. PR-läpikäynti ja merge-prosessi:
 `docs/pr-testaus-ja-merge-prosessi.md`.
 
@@ -861,3 +864,148 @@ Opit:
 **⚠ Mobiili testaamatta.** Uusi geometria on `min-width:900px`-lohkossa eikä
 mobiili näe sitä, mutta mobiilin `nth-child`-nollaus tiivistyi yhdeksi
 `transform:none`-riviksi — tarkista hylly puhelimella.
+
+### Tehtäväjonon rata areenan lattialla (2026-08-11) — haarassa, ei mergeä mainiin
+
+Haara `claude/task-queue-visibility-ymx47m`, PR #10. **Ei mergeä** — tämä on
+testiversio jota ajetaan omalla datalla.
+
+**Vika:** käsiviuhka lepää areenakortin alapuolella, joten käsikortin napautus
+*näyttää* kortin lyömiseltä areenalle. `promoteToHand` tekee kuitenkin
+`turn.push(id)` aina kun areena on varattu, ja kortti katoaa 44px kiskon taakse.
+Ainoa palaute oli toast ja hover-`title`.
+
+**Juurisyy on metaforakuilu, ei kosmetiikka.** Kuudesta vyöhykkeestä neljä on
+fyysisiä paikkoja pöydällä — pakka, käsi, areena, tehdyt — ja kaksi on
+tekstilistoja laatikossa: **tehtäväjono** ja **odottavat**. Ne kaksi jotka eivät
+puhu korttikieltä ovat täsmälleen ne joita uusi käyttäjä ei löydä.
+
+| Osa | Mitä |
+|---|---|
+| `mockup-jono.html` | Vaiheen 1 hyväksyntäportti. 3 varianttia, 3 teemaa, lite, jonon pituus 0–8, ajastintila, **9 elävää geometrialiukua** + "Kopioi tokenit". URL-parametrit `?v=v2&t=aurinko&n=5&lite=1&focus=1&peek=1&ctl=0` |
+| `index.html` rata | `#queue-lane` + `renderQueueLane()` + `renderArenaCard`in `'lane'`-moodi. Lukee saman `turn`-taulukon kuin `renderTurnPanel` — ei uutta datamallia |
+| Ennakkokorostus | Käsikortin hover/fokus → `body[data-hand-target]`: jono tyhjä → `#arena-slot-hint`, muuten radan häntä + kiskon badge |
+| Koherenssikorjaukset | `HAND_MAX`, `buildHandQueue`in ämpärilajittelu — ks. oma kohta alempana |
+
+**Valittu muoto (V2):** rata ei ole rivi luettavia kortteja vaan **pino oikeita
+reunoja**. Kortit *eivät ole luettavia levossa* — rata kertoo jonon
+**koostumuksen** (kvadranttivärit reunoina), ja luettavuus tulee hoverista.
+Jatkosuunta: kortin visuaalinen hierarkia siirretään niin, että tärkein tieto on
+kortin **oikeassa laidassa** ja vasen alanurkka jää tyhjäksi.
+
+#### Kerrosskaala `#arena`n sisällä — muuttui, älä käytä mockupin arvoja
+
+| z | Elementti |
+|---|---|
+| auto (0) | `#arena-room` (oma stacking-konteksti `perspective`in takia) |
+| 1 | `.lane-shadow` |
+| 2 | `.lane-ghost`, `#arena-slot-hint` |
+| 3 | `#arena-label`, `#arena-empty` |
+| 4 | `.lane-more` |
+| **5–8** | **`.lane-card`** (`--qz = 8 − qi`) |
+| **9** | `.tcg-card--arena-size` — **oli 3** |
+| 10 | `#eise-handle` |
+| **12** | `#break-banner` — **oli 5** |
+| 20 | `#eise-peek` |
+
+`--lane-max` on siksi enintään **4**: viides kortti saisi `--qz:4` ja törmäisi
+`.lane-more`en, kuudes `#arena-label`iin. Mockup käytti arvoja rata 20 /
+areenakortti 30 / hover 60 — **ne olisivat nostaneet areenakortin Eisenhower-
+matriisin peekin (z:20) päälle.** DESIGN.md §6 -taulukko on päivittämättä.
+
+**Opit:**
+- **`#queue-lane` on `z-index:auto` TARKOITUKSELLA.** Positioitu elementti ei luo
+  stacking-kontekstia ilman `z-index`iä. Jos rata olisi oma konteksti (esim.
+  `z:2`) ja areenakortti `z:3`, radan sisäinen `z-index` ei kilpailisi kortin
+  kanssa **koskaan** — yhtäkään yksittäistä ratakorttia ei voisi järjestää
+  suhteessa siihen. Ja jos koko rata nostetaan kortin yli (`:has()`), myös
+  **hoveraamattomat** kortit peittävät aktiivisen tehtävän.
+- **`z-index` ei ole animoituva → sen nostaminen hoverissa näyttää siltä että
+  elementti ilmestyy tyhjästä.** Kerros vaihtuu ensimmäisellä framella samalla
+  kun `transform` vasta aloittaa 300 ms liukunsa. Radan hover on siksi puhdas
+  **liuku**: `z-index`iin ei kosketa, kortti pysyy lepokerroksessaan ja vetäytyy
+  `--lane-peek-x`:n verran oikealle. Silloin se ei *rakenteellisesti voi* mennä
+  edessään olevan päälle — se ei ole sääntö vaan geometrian seuraus.
+- **`--card-base` on mitattava kahdesti.** Renderin aikainen mittaus jäi **14px
+  pieleen** (204 vs. oikea 190): kortin lopullinen korkeus asettuu vasta kun
+  fontit ja koko lavaste ovat paikoillaan. Heittovarjolla virhe ei näkynyt
+  (varjo on epämääräinen läikkä), mutta rata seisoo samalla viivalla ja 14px
+  kuilu lukee kelluntana. Nyt `requestAnimationFrame(_syncCastShadow)` renderin
+  perään + `document.fonts.ready`-uusinta. Tämä tarkensi myös heittovarjoa.
+- **Ilmakehä on `--room-haze` (huoneen oma väri peitteenä), ei `brightness()`.**
+  Kortin plate on tumma **kaikissa** teemoissa, joten pelkkä tummennus olisi
+  lukenut varjona vaaleassa huoneessa. Tokenina se tummuu usvassa ja havussa ja
+  vaalenee auringossa: sama sääntö, oikea suunta molempiin.
+- **Kortti tarvitsee oman kääreen (`.lane-card`).** `.tcg-card--hand::after` on
+  jo varattu hoverin osumakentälle, joten ilmakehäpeite ei mahdu kortille
+  itselleen. Kääre pitää myös transformin erillään kortin omista tyyleistä.
+- **Ratakorteilla ei ollut hoveria lainkaan** ennen kuin `.lane-card` sai
+  `pointer-events:auto` erikseen — `#queue-lane` on `none`, ja se peri lapsille.
+- **Kortin `z-index` ei saa tulla JS:stä inline-tyylinä** jos `:hover` haluaa
+  ylikirjoittaa sen (inline > pseudoluokka ilman `!important`). Käytä
+  `--qz`-tokenia ja `z-index:var(--qz)`.
+- **`+N`-siru on ankkuroitava viimeisen kortin OIKEAAN reunaan.** Vasempaan
+  ankkuroituna se katoaa areenakortin taakse heti kun `--lane-gap` on
+  negatiivinen (pino alkaa kortin alta).
+- **Rata täynnä → haamupaikka pois, kisko kertoo.** Muuten haamu valehtelee
+  paikasta ja palaute katoaa juuri siinä tapauksessa jossa kohde on
+  näkymättömissä (`.lane--full`).
+- **Tauko: ei muutosta.** `focus-mode = !!tmr` kattaa jo sekä työn että tauon
+  (`onPhaseEnd` kutsuu `startTmr()` myös tauolle), joten "tauko on tauko" ei
+  vaatinut uutta logiikkaa — rata vain perii saman säännön.
+- **Mockup voi valehdella siitä mitä se testaa.** Variantit on asetettava
+  `#queue-lane`lle eikä `<html>`-elementille: `<html>`-taso invalidoi koko puun
+  ja piilottaa juuri sen bugin jota vastaan `@property`-rekisteröinti on. Sama
+  opetus kuin viuhkan `--fan-step`issä, nyt toisin päin.
+- **Neljä vikaa löytyi mittaamalla, kaksi niistä olisi mennyt katselmoinnista
+  läpi:** V2:n ja V3:n ensimmäinen kortti jäi *kokonaan* areenakortin taakse
+  (jonon tärkein kortti näkymätön, mutta kuvassa se näyttää tarkoitukselliselta
+  syvyydeltä), ja haamupaikka osui täydellä radalla viimeisen kortin päälle.
+  Loput: `+N` kilpaili kiskosta 1440px:ssä, ja fixturessa oli liian vähän
+  q1/q2-tehtäviä joten käsi jäi vajaaksi eikä ennakkokorostusta voinut arvioida.
+
+#### Käden koherenssikorjaukset (samalla kierroksella, riippumattomat radasta)
+
+Molemmat olivat mainissa pitkään. `tests/suites/hand_order.js` todentaa.
+
+| # | Vika | Korjaus |
+|---|---|---|
+| C1 | `buildHandQueue` järjesti ämpärit `q1+frog → q1 → q2+frog → q2`, mutta **ämpärin sisällä ei lajitellut lainkaan** — `inbox.filter` säilyttää lisäysjärjestyksen. Matriisi taas lajittelee `t.order`illa. Kortin raahaaminen matriisissa **ei vaikuttanut käden järjestykseen ollenkaan** | Ämpärit lajitellaan `t.order`illa |
+| C2 | `buildHandQueue` palautti 7 ja varoitti *"Käden max on 7. Näkyvissä 7 / N"*, mutta `renderHandBar` teki `.slice(0,5)`. Varoitus lupasi kaksi korttia joita ei koskaan päätynyt ruudulle | `HAND_MAX`-vakio, johon molemmat nojaavat |
+
+- **`t.order` on kvadranttikohtainen indeksi** (`render()`: `qTasks.forEach(function(t,i){t.order=i})`), joten se on mielekäs vain **ämpärin sisällä** — ei ämpäreiden välillä. Siksi lajittelu on neljässä palassa eikä yhtenä. `forced` (tähtikortit) jätettiin lajittelematta: se kattaa useita kvadrantteja, joissa `order` ei ole vertailukelpoinen.
+- `Array.prototype.sort` on stabiili (ES2019), joten koskaan raahaamattomat (`order` undefined → `||0` → 0) säilyttävät lisäysjärjestyksensä.
+
+#### Testaus
+
+```bash
+python3 -m http.server 8080     # index.html — rata omalla datalla
+# mockup: http://localhost:8080/mockup-jono.html?v=v2
+export CHROME_BIN=/opt/pw-browsers/chromium-1194/chrome-linux/chrome
+python3 tests/run.py            # 150/150, 9 suitea
+```
+
+Kontrolliajo `hand_order`ille (suite joka ei kaadu korjaamattomaan ei mittaa
+mitään):
+
+```bash
+git archive main | tar -x -C /tmp/base-tree
+python3 tests/run.py hand_order --tree /tmp/base-tree   # → 4 EPÄONNISTUNUTTA
+```
+
+Tarkin niistä on `5 renderoity vs 7 palautettu` — se on koko C2 yhdellä rivillä.
+
+**⚠ Testaamatta oikeassa selaimessa:**
+
+| # | Testi | Miksi headless ei kata |
+|---|---|---|
+| 1 | Hoverin **liike** — 300 ms liuku ja paluu pinoon | Virtuaaliaika ei aja CSS-siirtymiä |
+| 2 | Hoverin poistuminen: osoitin voi osua naapuriin paluumatkalla → värinä | Sama |
+| 3 | Mobiili: rata on `display:none` <900px, mutta `--card-base`in uusi rAF-mittaus koskee myös puhelinta — hypähtääkö areenakortti latauksessa | Kapea viewport vaatii oikean ikkunan (CSP estää iframen) |
+| 4 | Aurinkoteema: ratakorttien teksti kauimmaisella `--lane-haze`-tasolla | Kontrastisondi, ei kuvakaappaus |
+
+Impeccable-deltaa **ei ajettu** — detektori on Jaakon koneella. Aja
+`node ~/.agents/skills/impeccable/scripts/detect.mjs --json index.html` ja vertaa
+`git show 2259048:index.html`-baselineen (4 osumaa / 3 kategoriaa) ennen mergeä.
+
+**Palautus:** `git revert 6113618 1715fdb` (C-korjaukset ja rata erikseen).
