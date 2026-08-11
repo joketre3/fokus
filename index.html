@@ -23,6 +23,17 @@
 @property --fan-step{syntax:'<angle>';inherits:true;initial-value:5.5deg}
 @property --i{syntax:'<number>';inherits:false;initial-value:0}
 @property --ia{syntax:'<number>';inherits:false;initial-value:0}
+/* Radan geometria. Sama pakko kuin viuhkassa: rekisteroimaton custom
+   property ei invalidoi siita laskettua transformia. */
+@property --qi         {syntax:'<number>';inherits:false;initial-value:0}
+@property --lane-gap   {syntax:'<length>';inherits:true;initial-value:-26px}
+@property --lane-x     {syntax:'<length>';inherits:true;initial-value:50px}
+@property --lane-y     {syntax:'<length>';inherits:true;initial-value:5px}
+@property --lane-curve {syntax:'<length>';inherits:true;initial-value:2px}
+@property --lane-tilt  {syntax:'<angle>' ;inherits:true;initial-value:.5deg}
+@property --lane-scale {syntax:'<number>';inherits:true;initial-value:.10}
+@property --lane-haze  {syntax:'<number>';inherits:true;initial-value:.13}
+@property --lane-fade  {syntax:'<number>';inherits:true;initial-value:.04}
 :root{
   /* ── Mobiilin turva-alueet ja korkeus ──────────────
      env() palauttaa 0px ilman viewport-fit=cover, joten nämä ovat
@@ -151,6 +162,28 @@
   --room-grid:rgba(255,255,255,.028);
   --chip-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 2px 0 rgba(0,0,0,.35), 0 3px 8px rgba(0,0,0,.25);
   --chip-shadow-dn:inset 0 1px 0 rgba(255,255,255,.04), 0 1px 0 rgba(0,0,0,.35);
+  /* ── Rata: tehtavajono areenan lattialla (desktop) ──
+     Kortit eivat ole luettavia levossa — rata kertoo jonon KOOSTUMUKSEN
+     reunojen pinona, ja luettavuus tulee hoverista. */
+  --lane-card-w:214px;
+  --lane-max:4;             /* nakyvien korttien maara; media-kyselyt laskevat */
+  --lane-gap:-26px;         /* ensimmaisen kortin lahtokohta areenan keskelta */
+  --lane-x:50px;            /* vaaka-askel per kortti */
+  --lane-y:5px;             /* pystynosto per kortti (kauempana = ylempana) */
+  --lane-curve:2px;         /* kaarrekiihtyvyys (qi^2) */
+  --lane-tilt:.5deg;
+  --lane-scale:.10;         /* kutistus per askel */
+  --lane-haze:.13;          /* ilmakeha per askel */
+  --lane-fade:.04;          /* tummennus per askel */
+  --lane-peek-x:120px;      /* hover: kuinka kauas kortti liukuu pinosta ulos.
+                               EI taysi paljastus — kortin vasen alanurkka saa
+                               jaada edellisen taakse. */
+  --lane-peek-y:10px;
+  /* Ilmakeha on HUONEEN oma vari, ei brightness(): kortin plate on tumma
+     kaikissa teemoissa, joten pelkka tummennus lukisi varjona vaaleassa
+     huoneessa. Tokenina se tummuu usvassa ja vaalenee auringossa. */
+  --room-haze:#071009;
+  --lane-ghost:rgba(196,154,58,.55);
 }
 body{
   color:var(--ink);
@@ -657,6 +690,7 @@ html[data-theme="havu"] {
   --room-bg:#010402;    /* huone huovan ympärillä (havu) */
   --vignette:rgba(0,0,0,.6);
   --well-bg:rgba(0,0,0,.3);
+  --room-haze:#010402;
 }
 html[data-theme="havu"] .pbox{background:rgba(12,35,22,.90)!important;border-color:rgba(255,255,255,.15)!important}
 html[data-theme="havu"] #proj-modal,html[data-theme="havu"] #profile-panel,html[data-theme="havu"] #schedule-modal,html[data-theme="havu"] #eise-modal,html[data-theme="havu"] #edit-modal{background:rgba(6,22,13,.97)!important;border-color:rgba(255,255,255,.15)!important}
@@ -721,6 +755,8 @@ html[data-theme="aurinko"] {
   --budget-over:#8c2f14;
   --chip-shadow:inset 0 1px 0 rgba(255,255,255,.8), 0 2px 0 rgba(120,80,30,.2), 0 3px 8px rgba(120,80,30,.12);
   --chip-shadow-dn:inset 0 1px 0 rgba(255,255,255,.55), 0 1px 0 rgba(120,80,30,.2);
+  --room-haze:#d8c6a4;
+  --lane-ghost:rgba(196,104,30,.6);
 }
 /* Panels */
 html[data-theme="aurinko"] .pbox{background:rgba(250,250,250,.90)!important;border-color:rgba(180,130,70,.30)!important;color:#2d2417!important}
@@ -1831,6 +1867,12 @@ html[data-theme="aurinko"][data-perf="lite"]{
           <div class="break-banner__ttl"></div>
           <div class="break-banner__txt"></div>
         </div>
+        <!-- Rata: tehtäväjono areenan lattialla. Visuaalinen peili —
+             hallinta on oikean kiskon paneelissa, joten aria-hidden ja
+             ei tab-järjestyksessä. render() säästää tämän. -->
+        <div id="queue-lane" aria-hidden="true"></div>
+        <!-- Ennakkokorostus kun jono on tyhjä: kortti nousee tähän -->
+        <div id="arena-slot-hint" aria-hidden="true"></div>
         <!-- FUT-huone: pysyvät lavastekerrokset kortin taakse (render() säästää tämän) -->
         <div id="arena-room" aria-hidden="true" data-quad="q1">
           <div class="arena-room__wall"><svg class="arena-room__art"><use href="#qart-q1"/></svg></div>
@@ -3965,7 +4007,7 @@ body.hand-open{padding-bottom:calc(var(--hand-card-h, 182px) + 1rem);}
    absoluuttinen asemointi peittäisi siellä kortin toimintonapit. */
 #break-banner{
   display:none;
-  position:relative; z-index:5; pointer-events:none;
+  position:relative; z-index:12; pointer-events:none;  /* areenakortin (9) yli */
   text-align:center; padding:0 1rem; margin:.25rem 0 .5rem;
 }
 /* Desktopilla areenan alalaita on vapaa (käsi piilossa fokustilassa) → banneri
@@ -3998,6 +4040,217 @@ html[data-perf="lite"] .arena-room__dust,
 html[data-perf="lite"] .arena-room__echo,
 html[data-perf="lite"] .arena-room__castshadow,
 html[data-perf="lite"] .arena-room__art{display:none!important;}
+
+/* ══════════════════════════════════════════════════════════════════
+   RATA — tehtavajono areenan lattialla (vain desktop)
+
+   Kysymys jota tama ratkaisee: kasiviuhka lepaa areenakortin alapuolella,
+   joten kasikortin napautus NAYTTAA kortin lyomiselta areenalle — mutta
+   kortti meneekin jonoon, joka piiloutuu 44px kiskon taakse. Jono saa
+   oman fyysisen paikkansa poydalla.
+
+   Kortit EIVAT ole luettavia levossa. Rata kertoo jonon KOOSTUMUKSEN
+   (kvadranttivarit reunojen pinona); luettavuus tulee hoverista.
+
+   Base-CSS piilottaa radan, desktop-lohko herattaa sen — sama kuvio kuin
+   kiskoissa ja PAKKA-palkissa (The Stage Rule).
+   ══════════════════════════════════════════════════════════════════ */
+#queue-lane{
+  display:none;
+  position:absolute;
+  left:50%;
+  /* Sama lattiaviiva jolla areenakortti seisoo. --card-base mitataan
+     _syncCastShadow():ssa; kiintea offset ei kelpaa, koska kortin korkeus
+     vaihtelee toimintonappien mukaan. */
+  top:calc(50% + var(--card-base, 188px));
+  width:0;height:0;
+  /* z-index:auto TARKOITUKSELLA — positioitu elementti ei luo stacking-
+     kontekstia ilman z-indexia, joten ratakorttien omat z-arvot kilpailevat
+     areenakortin (9) kanssa suoraan. Jos rata olisi oma konteksti, yhtakaan
+     yksittaista korttia ei voisi jarjestaa suhteessa areenakorttiin. */
+  z-index:auto;
+  pointer-events:none;
+}
+@media (min-width:900px) and (min-height:501px){
+  #queue-lane{display:block}
+}
+/* Kapea ikkuna: rata lyhenee, kortit eivat kutistu luettavuuden alle */
+@media (max-width:1399px){ :root{--lane-max:3} }
+@media (max-width:1199px){ :root{--lane-max:2} }
+
+/* Kortti seisoo lattialla: pivot tyvessa, jolloin skaalaus ei irrota sita
+   viivasta. transform-lista luetaan ulkoa sisaan — rotate ja scale tapahtuvat
+   origon ymparilla, translate siirtaa valmiin kortin paikalleen. */
+.lane-card{
+  position:absolute;left:0;bottom:0;
+  width:var(--lane-card-w);
+  transform-origin:0 100%;
+  transform:
+    translate(
+      calc(var(--lane-gap) + var(--qi) * var(--lane-x)
+           + var(--qi) * var(--qi) * var(--lane-curve)),
+      calc(-1 * var(--qi) * var(--lane-y))
+    )
+    scale(calc(1 - var(--qi) * var(--lane-scale)))
+    rotate(calc(var(--qi) * var(--lane-tilt)));
+  filter:brightness(calc(1 - var(--qi) * var(--lane-fade)));
+  z-index:var(--qz, 5);
+  pointer-events:auto;
+  transition:transform var(--dur-panel) var(--ease-out),
+             filter    var(--dur-panel) var(--ease-out);
+}
+.lane-card .tcg-card{width:100%;margin:0}
+
+/* Ilmakeha. Oma kaare juuri tata varten: .tcg-card--hand::after on jo
+   varattu hoverin osumakentalle. */
+.lane-card::after{
+  content:"";position:absolute;inset:0;border-radius:14px;
+  background:var(--room-haze);
+  opacity:calc(var(--qi) * var(--lane-haze));
+  pointer-events:none;
+  transition:opacity var(--dur-panel) var(--ease-out);
+}
+
+/* Kontaktivarjo: ilman tata kortit kelluvat. Areenakortilla on
+   .arena-room__castshadow, radalla tama. */
+.lane-shadow{
+  position:absolute;left:0;bottom:0;
+  width:var(--lane-card-w);height:26px;
+  transform-origin:0 100%;
+  transform:
+    translate(
+      calc(var(--lane-gap) + var(--qi) * var(--lane-x)
+           + var(--qi) * var(--qi) * var(--lane-curve)),
+      calc(-1 * var(--qi) * var(--lane-y) + 9px))
+    scale(calc(1 - var(--qi) * var(--lane-scale)));
+  background:radial-gradient(ellipse 50% 50% at 50% 50%,
+    rgba(0,0,0,.55) 0%, rgba(0,0,0,.28) 45%, transparent 72%);
+  opacity:calc(1 - var(--qi) * var(--lane-haze));
+  z-index:1;pointer-events:none;
+}
+html[data-perf="lite"] .lane-shadow{display:none}
+
+/* Hover: kortti LIUKUU ulos edessa olevan takaa. z-indexiin ei kosketa —
+   z-index ei ole animoituva, joten sen nostaminen saisi kortin ilmestymaan
+   tyhjasta: kerros vaihtuisi ensimmaisella framella samalla kun transform
+   vasta aloittaa liukunsa. Kun kortti pysyy lepokerroksessaan, se ei voi
+   koskaan mennä edessaan olevan paalle. */
+.lane-card:hover{
+  transform:
+    translate(
+      calc(var(--lane-gap) + var(--qi) * var(--lane-x)
+           + var(--qi) * var(--qi) * var(--lane-curve)
+           + var(--lane-peek-x)),
+      calc(-1 * var(--qi) * var(--lane-y) - var(--lane-peek-y))
+    )
+    scale(1) rotate(0deg);
+  filter:brightness(1.06);
+  box-shadow:0 18px 40px rgba(0,0,0,.55);
+}
+.lane-card:hover::after{opacity:0}
+
+/* Ylivuoto: rata ei kasva loputtomiin. Siru viimeisen kortin OIKEAAN
+   reunaan — vasemmasta se katoaisi areenakortin taakse negatiivisella
+   --lane-gapilla. */
+.lane-more{
+  position:absolute;left:0;bottom:0;
+  transform:translate(
+    calc(var(--lane-gap) + var(--qi) * var(--lane-x)
+         + var(--qi) * var(--qi) * var(--lane-curve)
+         + var(--lane-card-w) * (1 - var(--qi) * var(--lane-scale))
+         - 2.8rem),
+    calc(-1 * var(--qi) * var(--lane-y)
+         - var(--lane-card-w) * 1.4 * (1 - var(--qi) * var(--lane-scale))
+         - 10px));
+  font:600 var(--text-xs)/1 'DM Sans',sans-serif;
+  letter-spacing:.1em;color:var(--rail-ink);
+  text-shadow:var(--etch-shadow);
+  padding:.3rem .5rem;border-radius:20px;
+  background:linear-gradient(0deg,var(--well-bg),var(--well-bg)),var(--table-felt-deep);
+  box-shadow:inset 0 0 0 1px var(--engrave-dim);
+  white-space:nowrap;z-index:4;pointer-events:none;
+}
+
+/* ── Kohteen ennakkokorostus ────────────────────────────────────────
+   Kasikortin hover/fokus kertoo minne kortti on menossa ENNEN napautusta.
+   Sama tieto kuin title-attribuutissa, mutta nakyvana. */
+.lane-ghost{
+  position:absolute;left:0;bottom:0;
+  width:var(--lane-card-w);aspect-ratio:5/7;
+  transform-origin:0 100%;
+  transform:
+    translate(
+      calc(var(--lane-gap) + var(--qi) * var(--lane-x)
+           + var(--qi) * var(--qi) * var(--lane-curve)),
+      calc(-1 * var(--qi) * var(--lane-y))
+    )
+    scale(calc(1 - var(--qi) * var(--lane-scale)));
+  border:2px dashed var(--lane-ghost);
+  border-radius:14px;
+  background:color-mix(in srgb,var(--accent) 8%,transparent);
+  z-index:2;pointer-events:none;
+  opacity:0;visibility:hidden;
+  transition:opacity var(--dur-meso) var(--ease-out),
+             visibility 0s linear var(--dur-meso);
+}
+body[data-hand-target="queue"] .lane-ghost{
+  opacity:1;visibility:visible;transition-delay:0s;
+}
+/* Rata taynna → kortti menisi nakyvan osan ulkopuolelle. Haamu pois,
+   kisko kertoo — palaute ei saa kadota juuri siina tapauksessa jossa
+   kohde on nakymattomissa. */
+#queue-lane.lane--full .lane-ghost{display:none}
+body[data-hand-target="queue"] .tcg-right .tab-badge{
+  background:color-mix(in srgb,var(--accent) 28%,var(--surface-md));
+  color:var(--ink);
+  box-shadow:0 0 0 2px var(--lane-ghost);
+}
+/* Jono tyhja → kortti nousee AREENALLE, ei rataan */
+#arena-slot-hint{
+  display:none;
+  position:absolute;left:50%;top:50%;
+  width:300px;aspect-ratio:5/7;margin-left:-150px;
+  transform:translateY(calc(-50% - 12px));
+  border:2px dashed var(--lane-ghost);border-radius:16px;
+  background:color-mix(in srgb,var(--accent) 8%,transparent);
+  z-index:2;pointer-events:none;
+  opacity:0;visibility:hidden;
+  transition:opacity var(--dur-meso) var(--ease-out),
+             visibility 0s linear var(--dur-meso);
+}
+@media (min-width:900px) and (min-height:501px){
+  #arena-slot-hint{display:block}
+}
+body[data-hand-target="arena"] #arena-slot-hint{
+  opacity:1;visibility:visible;transition-delay:0s;
+}
+
+/* ── Saapumisreaktio ────────────────────────────────────────────────
+   Hehku ::before-pseudoon ja opacity-animaationa, EI box-shadow-
+   keyframena: box-shadow-animaatio on main-thread-repaint. */
+.lane-card::before{
+  content:"";position:absolute;inset:-3px;border-radius:17px;
+  box-shadow:0 0 0 2px var(--accent),
+             0 0 22px color-mix(in srgb,var(--accent) 55%,transparent);
+  opacity:0;pointer-events:none;z-index:2;
+}
+.lane-card--arriving::before{animation:laneArrive 620ms var(--ease-out) 1}
+@keyframes laneArrive{ 0%{opacity:0} 18%{opacity:1} 100%{opacity:0} }
+.tab-badge--bump{animation:badgeBump 420ms var(--ease-out-back) 1}
+@keyframes badgeBump{ 0%{transform:scale(1)} 40%{transform:scale(1.35)} 100%{transform:scale(1)} }
+
+/* ── Tilasaanto ─────────────────────────────────────────────────────
+   Rata nakyy vain kun ajastin ei kay. focus-mode kattaa jo sekä TYON
+   etta TAUON (focus-mode = !!tmr, ja onPhaseEnd kaynnistaa ajastimen
+   myos tauolle) — "tauko on tauko" ei siis vaadi uutta logiikkaa.
+   visibility eika pelkka transform, The Rail Rulen mukaisesti. */
+body.focus-mode #queue-lane,
+body.focus-mode #arena-slot-hint{
+  visibility:hidden;opacity:0;pointer-events:none;
+  transition:opacity var(--dur-panel) var(--ease-out),
+             visibility 0s linear var(--dur-panel);
+}
+
 @media(prefers-reduced-motion:reduce){
   .arena-room__dust i{animation:none; display:none;}
   .arena-room__echo-art,.arena-room__echo::after{animation:none;}
@@ -4361,7 +4614,7 @@ html[data-perf="lite"] .arena-room__art{display:none!important;}
 /* Areena-kortti isompi + kultainen hehku + huone-tilt (mockup: ±8°) */
 .tcg-card.tcg-card--arena-size{
   width:100%;max-width:300px;
-  z-index:3; /* huonekerrosten (lattia z:1, spot z:2) päälle, vinjetin (z:4) alle */
+  z-index:9; /* radan lepokorttien (5-8) yli, #eise-handlen (10) alle */
   transform-style:preserve-3d;
   will-change:transform;
   transform:translateY(-12px) rotateX(var(--rx,4deg)) rotateY(var(--ry,0deg));
@@ -9256,7 +9509,12 @@ function renderArenaCard(t, container, anyFrog, mode){
   var iconId = _tcgIconId(t.verbi);
 
   var card=document.createElement('div');
-  var modeClass = mode==='hand' ? 'tcg-card--hand' : 'tcg-card--arena-size';
+  // 'lane' = radan kortti: sama kompakti runko kuin kadessa, oma luokka
+  // kokoa ja hoveria varten.
+  var compact = (mode==='hand' || mode==='lane');
+  var modeClass = compact
+    ? (mode==='lane' ? 'tcg-card--hand tcg-card--lane' : 'tcg-card--hand')
+    : 'tcg-card--arena-size';
   var rar=rarityOf(t);
   card.className='tcg-card '+modeClass+' tcg-card--'+rar+' tcg-card--'+(t.quad||'q4')+(t.frog?' tcg-card--frog':'')+(t.frog?' tcg-card--holo':'')+(t.handForced?' tcg-card--star':'');
   card.setAttribute('tabindex','0');
@@ -9347,7 +9605,7 @@ function renderArenaCard(t, container, anyFrog, mode){
   body.appendChild(meta);
   plate.appendChild(body);
 
-  if(mode==='hand'){ card.appendChild(plate); if(container) container.appendChild(card); return card; }
+  if(compact){ card.appendChild(plate); if(container) container.appendChild(card); return card; }
 
   // Stats-rivi: tärkeä/kiireinen/sammakko vasen | odottaa/linkki/muokkaa oikea
   var stats=document.createElement('div');
@@ -9712,6 +9970,7 @@ function promoteToHand(id){
     // Ei areenaa — nosta suoraan areenalle
     active=id;
   }
+  delete document.body.dataset.handTarget;  // kortti lahti — kohde ei enaa odota
   var _msg=hadActive?'Kortti siirretty jonon perään':'Kortti nostettu areenalle';
   notify('🎴 '+_msg);
   // notify() on visuaalinen: ruudunlukija tarvitsee oman kuulutuksensa.
@@ -9933,6 +10192,78 @@ function renderTurnPanel(inbox){
   });
 }
 
+// ── Rata: tehtavajono areenan lattialla (desktop) ─────────────────
+// Lukee saman turn-taulukon kuin renderTurnPanel — ei uutta datamallia.
+// Rata on visuaalinen peili: kortit eivat ole tab-jarjestyksessa, ja
+// hover on hiirioikopolku. Koko jono on luettavana tekstina oikean
+// kiskon paneelissa, joten nappaimisto- ja ruudunlukijakayttaja ei
+// menetä mitaan.
+var _prevLaneIds=[];
+function _bumpTurnBadge(){
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+  var b=document.getElementById('turn-tab-count');
+  if(!b) return;
+  b.classList.remove('tab-badge--bump');
+  void b.offsetWidth;          // pakota reflow → animaatio toistuu
+  b.classList.add('tab-badge--bump');
+}
+function renderQueueLane(inbox){
+  var lane=document.getElementById('queue-lane');
+  if(!lane) return;
+  if(_isMobileLayout()){ lane.innerHTML=''; _prevLaneIds=[]; return; }
+
+  var ids=Array.isArray(turn)?turn:[];
+  var q=ids.map(function(id){return inbox.find(function(t){return t.id===id&&!t.done;});})
+           .filter(Boolean).filter(function(t){return !isQuick(t);});
+  var max=parseInt(getComputedStyle(document.documentElement)
+            .getPropertyValue('--lane-max'),10)||4;
+  var shown=q.slice(0,max);
+  var anyFrog=inbox.some(function(t){return t.frog;});
+
+  lane.innerHTML='';
+  lane.classList.toggle('lane--full', shown.length>=max);
+
+  shown.forEach(function(t,i){
+    var sh=document.createElement('i');
+    sh.className='lane-shadow';
+    sh.style.setProperty('--qi', i);
+    lane.appendChild(sh);
+
+    var wrap=document.createElement('div');
+    wrap.className='lane-card';
+    wrap.style.setProperty('--qi', i);
+    // Kauempi kortti maalautuu lahemman taakse. 8..5 mahtuu #arena-labelin (3)
+    // ja areenakortin (9) valiin — --lane-max on siksi enintaan 4.
+    wrap.style.setProperty('--qz', String(8-i));
+    if(_prevLaneIds.length && _prevLaneIds.indexOf(t.id)<0){
+      wrap.classList.add('lane-card--arriving');
+    }
+    var c=renderArenaCard(t, null, anyFrog, 'lane');
+    c.setAttribute('tabindex','-1');   // renderArenaCard asettaa 0:n ehdoitta
+    wrap.appendChild(c);
+    lane.appendChild(wrap);
+  });
+
+  var ghost=document.createElement('div');
+  ghost.className='lane-ghost';
+  ghost.style.setProperty('--qi', shown.length);
+  lane.appendChild(ghost);
+
+  if(q.length>shown.length){
+    var more=document.createElement('div');
+    more.className='lane-more';
+    more.style.setProperty('--qi', Math.max(0, shown.length-1));
+    more.textContent='+'+(q.length-shown.length);
+    lane.appendChild(more);
+    // Kortti laskeutui radan nakyvan osan ULKOPUOLELLE → kisko nykaisee,
+    // muuten palaute katoaisi juuri kun kohde on nakymattomissa.
+    if(_prevLaneIds.length && q.slice(shown.length).some(function(t){
+         return _prevLaneIds.indexOf(t.id)<0; })) _bumpTurnBadge();
+  }
+
+  _prevLaneIds=q.map(function(t){return t.id;});
+}
+
 function renderWaitingPanel(inbox){
   var listEl=document.getElementById('waiting-list');
   var emptyEl=document.getElementById('waiting-empty');
@@ -10000,6 +10331,15 @@ function renderHandBar(inbox){
     card.style.setProperty('--ia', Math.abs(i));
     if(_prevHandIds.indexOf(t.id)<0) card.classList.add('card-arriving'); // uusi käteen → fade-in
     card.title = active===null ? 'Nosta areenalle' : 'Siirrä jonon perään';
+    // Kohteen ennakkokorostus: sama tieto kuin titlessa, mutta nakyvana ja
+    // heti. Jono tyhja → areenaslotti hehkuu; muuten radan hanta.
+    var _tgt=function(){ return active===null ? 'arena' : 'queue'; };
+    var _on =function(){ document.body.dataset.handTarget=_tgt(); };
+    var _off=function(){ delete document.body.dataset.handTarget; };
+    card.addEventListener('mouseenter',_on);
+    card.addEventListener('mouseleave',_off);
+    card.addEventListener('focus',_on);
+    card.addEventListener('blur',_off);
     // Klikattava kortti on nappi, ei pelkkä fokusoitava div.
     card.setAttribute('role','button');
     card.onclick = (function(tid){ return function(e){
@@ -10085,7 +10425,7 @@ function render(){
   // ── Vaihe 6a: Areena — renderöi queue[0] isona kortina ──
   var arenaEl=document.getElementById('arena');
   if(arenaEl){
-    Array.from(arenaEl.children).forEach(function(ch){if(ch.id!=='eise-peek'&&ch.id!=='eise-handle'&&ch.id!=='arena-room'&&ch.id!=='break-banner')ch.remove();});
+    Array.from(arenaEl.children).forEach(function(ch){if(ch.id!=='eise-peek'&&ch.id!=='eise-handle'&&ch.id!=='arena-room'&&ch.id!=='break-banner'&&ch.id!=='queue-lane'&&ch.id!=='arena-slot-hint')ch.remove();});
     if(window._useCardUI){
       var label=document.createElement('div');
       label.id='arena-label';
@@ -10118,6 +10458,7 @@ function render(){
 
   // ── Vaihe 16c: Vuoro-panel ──
   renderTurnPanel(inbox);
+  renderQueueLane(inbox);   // rata: sama turn-taulukko, visuaalisena
   renderWaitingPanel(inbox);
   renderHandBar(inbox); // Vaihe 5B TCG
   updateEiseHandleCounts();
@@ -10218,6 +10559,11 @@ function render(){
   renderProjects();
   checkOnboarding();
   _syncCastShadow();
+  // Toinen mittaus seuraavassa framessa: kortin lopullinen korkeus asettuu
+  // vasta kun fontit ja koko lavaste ovat paikoillaan, ja renderin aikainen
+  // arvo jaa 10-15px pieleen. Heittovarjolla se ei nakynyt, mutta rata
+  // seisoo samalla viivalla — 14px kuilu lukisi kelluntana.
+  requestAnimationFrame(_syncCastShadow);
   _syncDeckRail();
   _syncHdrBottom();
   _syncMnav();
@@ -10250,13 +10596,19 @@ function _syncCastShadow(){
   if(window.innerWidth < 900) return;
   var arena=document.getElementById('arena'), room=document.getElementById('arena-room');
   if(!arena||!room) return;
+  // Kortti valitaan .tcg-card--arena-sizesta, EI .card-new--arenasta.
+  // Arvo asetetaan #arenaan eika #arena-roomiin: custom propertyt periytyvat
+  // alaspain, joten SEKA heittovarjo ETTA rata (#queue-lane) saavat saman
+  // lattiaviivan. Ilman tata rata kelluisi kortin tyvesta irrallaan.
   var card=arena.querySelector('.tcg-card--arena-size, .card-new--arena');
-  if(!card){ room.style.removeProperty('--card-base'); return; }
+  if(!card){ arena.style.removeProperty('--card-base'); return; }
   var a=arena.getBoundingClientRect(), c=card.getBoundingClientRect();
   if(!a.height||!c.height) return;
-  room.style.setProperty('--card-base', Math.round(c.bottom-(a.top+a.height/2)+4)+'px');
+  arena.style.setProperty('--card-base', Math.round(c.bottom-(a.top+a.height/2)+4)+'px');
 }
 window.addEventListener('resize', _syncCastShadow);
+// Fonttien lataus muuttaa korttitekstin korkeutta — mittaa uudelleen kun ne ovat.
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(_syncCastShadow);
 
 // Pakka ei peitä yläpalkkia: mitataan yläpalkin alareuna viewport-koordinaatteina
 // (#inv-modal on position:fixed) ja tarjotaan se CSS:lle. Alle 900px ominaisuus

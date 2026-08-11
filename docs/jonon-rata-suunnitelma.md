@@ -6,12 +6,45 @@ Haara: `claude/task-queue-visibility-ymx47m`
 
 | Osa | Tila |
 |---|---|
-| **A — `mockup-jono.html`** | ✅ **valmis työpuussa, committoimatta** (86 kt, `??` git statuksessa) |
-| B — index.html | ⬜ odottaa mockup-porttia |
+| **A — `mockup-jono.html`** | ✅ valmis |
+| **B — index.html** | ✅ **toteutettu haarassa** — V2-geometria, ei mergeä mainiin |
 | C — koherenssikorjaukset | ⬜ ei aloitettu |
 
-Seuraava askel: mockup committiin → **Jaakon katselmointi selaimessa** → variantin
-valinta → Osa B. Osa C ei ole riippuvainen portista ja voi mennä ensin.
+Rata on nyt testattavissa oikeassa sovelluksessa omalla datalla. Geometria on
+V2 (reunojen pino, luettavuus hoverista). Tokenit ovat `:root`issa, joten
+arvoja voi virittää devtoolsista ilman uudelleenkäännöstä.
+
+### Kerrosskaala poikkeaa mockupista — index.html:n oma on tiukempi
+
+Mockup käytti arvoja rata 20 / areenakortti 30 / hover 60. **Ne eivät kelpaa
+index.html:ään:** `#eise-handle` on z:10 ja `#eise-peek` z:20 `#arena`n sisällä,
+joten areenakortti z:30 olisi noussut **Eisenhower-matriisin peekin päälle**.
+
+Käytössä oleva skaala `#arena`n sisällä:
+
+| z | Elementti |
+|---|---|
+| auto (0) | `#arena-room` (oma stacking-konteksti) |
+| 1 | `.lane-shadow` |
+| 2 | `.lane-ghost`, `#arena-slot-hint` |
+| 3 | `#arena-label`, `#arena-empty` |
+| 4 | `.lane-more` |
+| **5–8** | **`.lane-card`** (`--qz = 8 − qi`) |
+| **9** | `.tcg-card--arena-size` (oli 3) |
+| 10 | `#eise-handle` |
+| **12** | `#break-banner` (oli 5) |
+| 20 | `#eise-peek` |
+
+`--lane-max` on siksi enintään **4**: viides kortti saisi `--qz:4` ja törmäisi
+`.lane-more`en, kuudes `#arena-label`iin. DESIGN.md §6 -taulukko päivitettävä.
+
+### `--card-base` mitattava kahdesti
+
+Renderin aikainen mittaus jäi **14px pieleen** (204px vs. oikea 190px): kortin
+lopullinen korkeus asettuu vasta kun fontit ja koko lavaste ovat paikoillaan.
+Heittovarjolla virhe ei näkynyt, mutta rata seisoo samalla viivalla ja 14px
+kuilu lukisi kelluntana. Korjaus: `requestAnimationFrame(_syncCastShadow)`
+renderin perään + `document.fonts.ready`-uusinta.
 
 ## Context
 
