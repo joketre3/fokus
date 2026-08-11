@@ -21,6 +21,7 @@ Vaatii Chromiumin polusta `harness.py:CHROME`. Ajo kestää ~30 s / suite.
 | `smoke` | index | Käynnistyy, data latautuu, areena ja jono renderöityvät |
 | `timer_break` | index | Fokustila, taukobanneri, eise-kahva, vaihesiirtymät |
 | `habits` | index | 2 min -sääntö, 1-3-5-budjetti, keskeytysparkki |
+| `edit_modal` | index | Muokkausmodaalin tilanapit (tehty/odottaa/palautukset) |
 | `regression` | index | Tehdyt-modaali (palauta/poista), ICS-päivämäärä |
 | `aamu` | aamu | Pikatehtävien suodatus, 1-3-5-mittari |
 | `aamu_skip` | aamu | Ohitus ei pyyhi eilistä sammakkoa |

@@ -725,6 +725,41 @@ Fokuksen etu: ohjattu aamurutiini metodologiana (ei vain näkymänä), selkeämp
 - [ ] Email-kirjautuminen Google-kirjautumisen rinnalle
 - [ ] Englanninkielinen versio
 
+### Tilanapit muokkausmodaaliin (2026-08-11) — valmis, mobiili testaamatta
+
+Tehtävä voi tulla tehdyksi tai jäädä odottamaan muulloinkin kuin pomodoron
+aikana areenalla. `✓ Tehty` ja `⏳ Odottaa` olivat tavoitettavissa vain
+areenakortilta, ajastinwidgetistä, eleistä ja listariviltä — eivät siitä
+näkymästä johon korttia mennään katsomaan jälkikäteen (jonokortin ✎, PAKKA).
+
+| Osa | Mitä |
+|---|---|
+| `#edit-done-btn` / `#edit-wait-btn` | Uusi nappirivi modaalin rungossa Jatkokortti-napin yläpuolella (ei footeriin: siellä on jo Tallenna/📅/Peruuta ja mobiilissa se on sticky). Teksti + `onclick` asetetaan `openEditModal`issa kortin tilan mukaan |
+| `editModalAction(fn)` | Tallenna ensin, toimi sitten. `saveEditModal` palauttaa nyt totuusarvon → tyhjä nimi keskeyttää toiminnon ja modaali jää auki |
+| `_editDone(id)` | `active===id` → `doneActive()` (nostaa ketjukortin kärkeen), muuten `markDone(id)` |
+| Tilat | `t.waiting` → «↩ Palauta vuoroon» (`clearWaiting`); `t.done` → «↩ Palauta tekemättömiin» (`restore`) ja odotusnappi piiloon |
+
+Opit:
+- **`markDone` ja `doneActive` eivät ole synonyymejä:** vain `doneActive` nostaa
+  `findChainNext`in jonon kärkeen. Uusi kutsupaikka joutuu valitsemaan kumpaa
+  se jäljittelee — areenan kortilla oikea vastaus on `doneActive`.
+- **Toiminnon on ajettava `saveEditModal`in JÄLKEEN**, ei ennen: se tekee
+  `save()+render()+closeEditModal()`, joten kortti on tuoreena DOM:issa ja
+  `markDone`in `[data-task-id]`-haku löytää sen ulosanimaatiota varten. Samalla
+  kesken jäänyt muokkaus ei huku. `active` voi myös vaihtua tallennuksessa
+  (pikatehtävä `est=0`) → `active===id` on vertailtava vasta sen jälkeen.
+- **Tehty kortti ei saa mennä odottamaan:** odottavat-paneeli suodattaa
+  `!t.done`, joten `waiting` jäisi tilaksi jota mikään näkymä ei näytä.
+- `wtB.style.display='none'` on nollattava `''`:ksi ei-tehdyllä kortilla —
+  napit ovat pysyviä DOM-elementtejä, joten piilotus jää muuten voimaan
+  seuraavalle kortille.
+- Testit: `tests/suites/edit_modal.js` (27 väitettä). Kontrolliajo
+  `--tree /tmp/base-tree`illa kaatuu heti («napit ovat DOM:issa» false) → suite
+  mittaa oikeasti tätä muutosta.
+
+**⚠ Mobiili testaamatta laitteella.** Napit perivät footerin toissijaisen
+tyylin ja ovat `flex:1` samalla rivillä; <600px modaali on lähes fullscreen.
+
 ### Selaintestit (2026-08-08)
 
 `tests/`-hakemisto: headless-Chrome-testipohja, ei riippuvuuksia.

@@ -7086,6 +7086,32 @@ function openEditModal(id){
     fb.style.borderColor=on?'var(--frog-deep)':'';
   };
 
+  // Tilanapit: tehty / odottaa. Teksti ja toiminto riippuvat kortin tilasta.
+  var dnB=document.getElementById('edit-done-btn');
+  var wtB=document.getElementById('edit-wait-btn');
+  if(t.done){
+    dnB.textContent='↩ Palauta tekemättömiin';
+    dnB.setAttribute('aria-label','Palauta tekemättömiin');
+    dnB.onclick=function(){editModalAction(restore);};
+    // Tehty kortti ei odota: odottavat-paneeli suodattaa done-kortit pois,
+    // joten waiting jäisi tilaksi jota mikään näkymä ei näytä
+    wtB.style.display='none';
+  }else{
+    dnB.textContent='✓ Merkitse tehdyksi';
+    dnB.setAttribute('aria-label','Merkitse tehdyksi');
+    dnB.onclick=function(){editModalAction(_editDone);};
+    wtB.style.display='';
+    if(t.waiting){
+      wtB.textContent='↩ Palauta vuoroon';
+      wtB.setAttribute('aria-label','Palauta vuoroon');
+      wtB.onclick=function(){editModalAction(clearWaiting);};
+    }else{
+      wtB.textContent='⏳ Siirrä odottamaan';
+      wtB.setAttribute('aria-label','Siirrä odottamaan');
+      wtB.onclick=function(){editModalAction(setWaiting);};
+    }
+  }
+
   var ov=document.getElementById('edit-overlay');
   var md=document.getElementById('edit-modal');
   ov.style.display='block';
@@ -7103,9 +7129,9 @@ function closeEditModal(){
 function saveEditModal(){
   var id=parseInt(document.getElementById('edit-modal-id').value,10);
   var t=tasks.find(function(x){return x.id===id;});
-  if(!t)return;
+  if(!t)return false;
   var txt=document.getElementById('edit-text').value.trim();
-  if(!txt)return;
+  if(!txt)return false;
   t.text=txt;
   // verbi/kuvaus on pidettävä synkassa tekstin kanssa — ICS-vienti ja
   // areenakortin verbi-chip lukevat niitä, eivät t.text:iä
@@ -7143,6 +7169,25 @@ function saveEditModal(){
   if(activeBtn)t.projectId=activeBtn.dataset.pid?parseInt(activeBtn.dataset.pid,10):null;
   save();render();
   closeEditModal();
+  return true;
+}
+
+// Tilanapin toiminto: tallenna kesken jäänyt muokkaus ENSIN, toimi vasta sitten.
+// saveEditModal on tehnyt save()+render()+closeEditModal(), joten kortti on juuri
+// renderöity DOM:iin ja markDone löytää sen ulosanimaatiota varten.
+function editModalAction(fn){
+  var id=parseInt(document.getElementById('edit-modal-id').value,10);
+  if(!saveEditModal())return;  // tyhjä teksti → modaali jää auki, ei toimintoa
+  fn(id);
+}
+
+// markDone ei nosta ketjukorttia jonon kärkeen, doneActive nostaa. Areenan
+// kortti käyttäytyy siis modaalista täsmälleen kuten sen oma ✓ Tehty -nappi.
+// active voi vaihtua saveEditModal:ssa (pikatehtävä) → vertaa vasta tallennuksen jälkeen.
+function _editDone(id){
+  if(active===id)doneActive();
+  else markDone(id);
+  notify('✓ Merkitty tehdyksi');
 }
 
 // Pilkkoo tehtävätekstin verbiin ja kuvaukseen (addTask: text=verbi+' '+kuvaus)
@@ -12636,6 +12681,11 @@ function closeChainView(){
     <div>
       <label for="edit-link" style="font-size:var(--text-xs);font-weight:500;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:.35rem">🔗 Linkki</label>
       <input id="edit-link" type="url" placeholder="https://..." style="width:100%;box-sizing:border-box;font-family:'DM Sans',sans-serif;font-size:var(--text-base);font-weight:300;padding:.6rem .85rem;border-radius:var(--r-md);border:1.5px solid var(--border);outline:none;color:var(--ink);background:var(--surface)">
+    </div>
+    <!-- Tilanapit: tehty / odottaa. Teksti ja onclick asetetaan openEditModal:ssa -->
+    <div style="display:flex;gap:.4rem">
+      <button id="edit-done-btn" onmouseenter="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseleave="this.style.borderColor='var(--border)';this.style.color='var(--muted)'" style="flex:1;font-family:'DM Sans',sans-serif;font-size:var(--text-sm);font-weight:500;padding:.55rem .7rem;border-radius:var(--r-md);border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:border-color .15s,color .15s"></button>
+      <button id="edit-wait-btn" onmouseenter="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseleave="this.style.borderColor='var(--border)';this.style.color='var(--muted)'" style="flex:1;font-family:'DM Sans',sans-serif;font-size:var(--text-sm);font-weight:500;padding:.55rem .7rem;border-radius:var(--r-md);border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:border-color .15s,color .15s"></button>
     </div>
     <!-- Jatkokortti (siirretty areenasta) -->
     <button id="edit-jatko-btn" onclick="(function(){var id=parseInt(document.getElementById('edit-modal-id').value,10);closeEditModal();openJatkokortti(id);})()" onmouseenter="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseleave="this.style.borderColor='var(--border)';this.style.color='var(--muted)'" title="Luo jatkokortti tälle tehtävälle" style="width:100%;font-family:'DM Sans',sans-serif;font-size:var(--text-sm);font-weight:500;padding:.55rem .7rem;border-radius:var(--r-md);border:1.5px dashed var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:border-color .15s,color .15s">↳ + Jatkokortti</button>
