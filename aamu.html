@@ -153,6 +153,7 @@ html[data-theme="aurinko"] .step-num.done{background:rgba(196,104,30,.12);color:
 .ca-move{background:rgba(196,154,58,.12);color:var(--q2);border:1.5px solid var(--q2);}
 html[data-theme="aurinko"] .ca-move{background:rgba(61,107,48,.1);color:#3d6b30;border-color:#3d6b30;}
 .ca-delegate{background:var(--light);color:var(--muted);}
+.ca-edit{background:transparent;color:var(--muted);border:1.5px solid var(--light);}
 .ca-btn:hover{filter:brightness(.92);}
 .ca-btn:active{transform:scale(.96);}
 
@@ -189,6 +190,13 @@ html[data-theme="aurinko"] .q2-task.selected .q2-check{background:var(--accent);
 html[data-theme="aurinko"] .q2-task.selected{border-color:var(--accent);background:rgba(196,104,30,.05);}
 .q2-name{font-size:.88rem;font-weight:400;line-height:1.3;flex:1;}
 .q2-est{font-size:.68rem;color:var(--muted);font-weight:300;white-space:nowrap;margin-top:.15rem;}
+.q2-edit{
+  font-family:'DM Sans',sans-serif;font-size:.8rem;line-height:1;
+  background:transparent;border:1.5px solid var(--light);border-radius:6px;
+  color:var(--muted);cursor:pointer;padding:.3rem .45rem;flex-shrink:0;
+  transition:border-color .15s,color .15s;
+}
+.q2-edit:hover{border-color:var(--accent);color:var(--accent);}
 .select-limit{
   font-size:.72rem;color:var(--pomo);font-weight:400;
   text-align:center;padding:.5rem;
@@ -394,6 +402,14 @@ html[data-theme="aurinko"] .done-summary{background:#f8f8f8;border-color:#e8d8b8
 .time-badge{
   font-size:.68rem;color:var(--muted);font-weight:300;
 }
+/* Toast — palaute muokkausmodaalin toiminnoista */
+.nt{
+  position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(8px);
+  background:var(--ink);color:var(--paper);font-size:.78rem;font-weight:400;
+  padding:.6rem 1.1rem;border-radius:8px;opacity:0;pointer-events:none;
+  transition:opacity .2s,transform .2s;z-index:600;max-width:90vw;text-align:center;
+}
+.nt.on{opacity:1;transform:translateX(-50%) translateY(0)}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
@@ -517,6 +533,345 @@ html[data-theme="aurinko"] .done-summary{background:#f8f8f8;border-color:#e8d8b8
   </div>
 </div>
 
+<div class="nt" id="nt"></div>
+
+<!-- BEGIN fokus:edit-modal v1 — jaettu lohko. PIDÄ IDENTTISENÄ aamu.html <-> swipe.html.
+     tests/run.py vertaa lohkot merkki merkiltä; ero kaataa ajon.
+     Lohko käyttää vain popupeista löytyviä tokeneita (--ink/--paper/--muted/
+     --light/--accent/--q1/--q2/--pomo), joten se seuraa isännän teemaa.
+     Isäntä rekisteröi FokusEdit.init({tasks,queue,projects,persist,refresh,notify}). -->
+<style>
+#edit-overlay{display:none;position:fixed;inset:0;background:rgba(8,12,9,.55);z-index:400}
+#edit-modal{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(440px,96vw);max-height:90vh;background:var(--paper);background:color-mix(in srgb, var(--paper) 90%, var(--ink) 10%);border:1px solid var(--light);border-radius:14px;box-shadow:0 24px 64px rgba(0,0,0,.45);z-index:500;flex-direction:column;overflow:hidden}
+#edit-modal .fem-hd{padding:1.1rem 1.35rem .8rem;border-bottom:1px solid var(--light);font-family:'DM Serif Display',serif;font-size:1.1rem;font-style:italic;color:var(--ink)}
+/* flex:1 pitaa footerin pohjassa kun modaali on mobiilissa koko ruudun korkea */
+#edit-modal .fem-bd{padding:1.1rem 1.35rem;display:flex;flex-direction:column;gap:.85rem;overflow-y:auto;flex:1 1 auto}
+#edit-modal .fem-ft{padding:.9rem 1.35rem 1.1rem;border-top:1px solid var(--light);display:flex;gap:.6rem}
+#edit-modal .fem-lbl{font-size:.68rem;font-weight:500;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:.3rem}
+#edit-modal .fem-in,#edit-modal textarea.fem-in{width:100%;box-sizing:border-box;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:300;padding:.55rem .8rem;border-radius:8px;border:1.5px solid var(--light);outline:none;color:var(--ink);background:var(--paper)}
+#edit-modal textarea.fem-in{resize:vertical;min-height:48px}
+#edit-modal .fem-in:focus{border-color:var(--accent)}
+#edit-modal .fem-row{display:flex;gap:.4rem}
+#edit-modal .fem-btn{font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;padding:.55rem .8rem;border-radius:8px;border:1.5px solid var(--light);background:var(--paper);color:var(--muted);cursor:pointer;transition:border-color .15s,color .15s,background .15s}
+#edit-modal .fem-btn:hover{border-color:var(--accent);color:var(--accent)}
+#edit-modal .fem-tog{flex:1;text-align:center}
+/* Valittu tila koskee myos sammakkonappia: pelkka taustavari jattaisi tekstin
+   --mutediksi, joka on vaaleassa teemassa lukukelvoton tummalla pohjalla */
+#edit-modal .fem-btn.on,#edit-modal .fem-btn.on:hover{color:#fff;border-color:transparent}
+#edit-modal #edit-important.on{background:var(--q2)}
+#edit-modal #edit-urgent.on{background:var(--q1)}
+#edit-modal #edit-frog.on{background:var(--q2)}
+#edit-modal .fem-est{display:flex;align-items:center;gap:.5rem;background:var(--paper);border:1px solid var(--light);border-radius:8px;padding:.4rem .8rem}
+#edit-modal .fem-est input[type=range]{flex:1;min-width:0;accent-color:var(--pomo);height:4px;cursor:pointer}
+#edit-modal .fem-step{background:none;border:none;cursor:pointer;color:var(--muted);font-size:.85rem;padding:0 .1rem;line-height:1;font-family:'DM Sans',sans-serif}
+#edit-modal .fem-chip{font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;padding:.3rem .6rem;border-radius:999px;border:1.5px solid var(--light);background:transparent;color:var(--muted);cursor:pointer}
+#edit-modal .fem-save{flex:1;border:none;background:var(--accent);color:#fff;font-weight:500}
+#edit-modal .fem-save:hover{color:#fff}
+@media(max-width:600px){
+  #edit-modal{top:0;left:0;transform:none;width:100%;max-width:100%;height:100%;max-height:100%;border-radius:0;border:none}
+  #edit-modal .fem-ft{position:sticky;bottom:0;background:var(--paper)}
+}
+@media(prefers-reduced-motion:reduce){#edit-modal .fem-btn{transition:none}}
+</style>
+<div id="edit-overlay"></div>
+<div id="edit-modal" role="dialog" aria-modal="true" aria-label="Muokkaa korttia">
+  <input type="hidden" id="edit-modal-id">
+  <div class="fem-hd">Muokkaa korttia</div>
+  <div class="fem-bd">
+    <div>
+      <label class="fem-lbl" for="edit-text">📝 Tehtävän teksti</label>
+      <input id="edit-text" class="fem-in" type="text" placeholder="Tehtävän teksti">
+    </div>
+    <div class="fem-row">
+      <button type="button" id="edit-important" class="fem-btn fem-tog">Tärkeä</button>
+      <button type="button" id="edit-urgent" class="fem-btn fem-tog">Kiireinen</button>
+      <button type="button" id="edit-frog" class="fem-btn" title="Aseta sammakoksi (tärkein tehtävä)">🐸 Sammakko</button>
+    </div>
+    <div class="fem-est">
+      <span style="font-size:.68rem;color:var(--muted);font-weight:300">🍅 Arvio</span>
+      <button type="button" class="fem-step" id="edit-est-dn" aria-label="Vähennä arviota">‹</button>
+      <input type="range" id="edit-esl" min="0" max="8" step="0.5" value="1" aria-label="Pomodoro-arvio">
+      <button type="button" class="fem-step" id="edit-est-up" aria-label="Lisää arviota">›</button>
+      <span id="edit-ev" style="font-size:.8rem;font-weight:500;color:var(--pomo);min-width:1.6rem">1</span>
+      <span id="edit-esl-unit" style="font-size:.68rem;color:var(--muted);font-weight:300;white-space:nowrap">× 25 min</span>
+    </div>
+    <div id="edit-proj-btns" style="display:flex;gap:.3rem;flex-wrap:wrap"></div>
+    <div>
+      <label class="fem-lbl" for="edit-notes">💬 Lisätiedot</label>
+      <textarea id="edit-notes" class="fem-in" rows="2" placeholder="Taustaa, muistiinpanoja..."></textarea>
+    </div>
+    <div>
+      <label class="fem-lbl" for="edit-link">🔗 Linkki</label>
+      <input id="edit-link" class="fem-in" type="url" placeholder="https://...">
+    </div>
+    <div class="fem-row">
+      <button type="button" id="edit-done-btn" class="fem-btn" style="flex:1"></button>
+      <button type="button" id="edit-wait-btn" class="fem-btn" style="flex:1"></button>
+    </div>
+  </div>
+  <div class="fem-ft">
+    <button type="button" id="edit-save-btn" class="fem-btn fem-save">Tallenna</button>
+    <button type="button" id="edit-cancel-btn" class="fem-btn">Peruuta</button>
+  </div>
+</div>
+<script>
+/* Jaettu muokkausmodaali. Sama logiikka kuin index.html:n openEditModal /
+   saveEditModal / editModalAction / _editDone — ilman ICS:aa ja jatkokorttia,
+   jotka jaavat paaikkunaan. */
+(function(){
+  var H = null, release = null;
+  var POMO = (function(){
+    try{ var s=JSON.parse(localStorage.getItem('fap_timer_settings')||'{}');
+         return (s.work>=5&&s.work<=90)?s.work:25; }catch(e){ return 25; }
+  }());
+  function q(id){ return document.getElementById(id); }
+  function fe(v){ if(v===0)return'⚡'; if(v===.5)return'½';
+    var w=Math.floor(v),h=v%1!==0; return h?(w>0?w+'½':'½'):String(w); }
+  function isQuick(t){ return !!t && t.est===0; }
+  function note(msg){ if(H&&H.notify)try{H.notify(msg);}catch(e){} }
+  function tasksOf(){ return (H&&H.tasks&&H.tasks())||[]; }
+  function queueOf(){ return (H&&H.queue&&H.queue())||[]; }
+  function findTask(id){
+    var a=tasksOf();
+    for(var i=0;i<a.length;i++){ if(a[i].id===id) return a[i]; }
+    return null;
+  }
+  function dropFromQueue(id){ var qa=queueOf(),i=qa.indexOf(id); if(i>=0)qa.splice(i,1); }
+  function addToQueue(id){ var qa=queueOf(); if(qa.indexOf(id)<0)qa.push(id); }
+
+  // text = verbi + ' ' + kuvaus — ICS-vienti ja verbi-chip lukevat naita
+  function syncVerbiKuvaus(t){
+    var m=(t.text||'').match(/^(\S+)\s+([\s\S]+)$/);
+    if(m){ t.verbi=m[1]; t.kuvaus=m[2]; } else { t.verbi=t.text||''; t.kuvaus=''; }
+  }
+  function setEstUI(v){
+    q('edit-ev').textContent=fe(v);
+    q('edit-esl-unit').textContent=(v===0)?'alle 2 min — tee heti':'× '+POMO+' min';
+  }
+  function trapFocus(modal){
+    var prev=document.activeElement;
+    function focusables(){
+      return Array.prototype.filter.call(
+        modal.querySelectorAll('button:not([disabled]),[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'),
+        function(el){ return el.offsetParent!==null; });
+    }
+    function onKey(e){
+      if(e.key!=='Tab')return;
+      var f=focusables(); if(f.length===0)return;
+      var first=f[0],last=f[f.length-1];
+      if(e.shiftKey&&(document.activeElement===first||!modal.contains(document.activeElement))){
+        e.preventDefault(); last.focus();
+      } else if(!e.shiftKey&&document.activeElement===last){
+        e.preventDefault(); first.focus();
+      }
+    }
+    document.addEventListener('keydown',onKey);
+    return function(){
+      document.removeEventListener('keydown',onKey);
+      if(prev&&prev.focus)try{prev.focus();}catch(e){}
+    };
+  }
+
+  function isOpen(){ return q('edit-modal').style.display==='flex'; }
+
+  function open(id){
+    var t=findTask(id); if(!t)return;
+    q('edit-modal-id').value=id;
+    q('edit-text').value=t.text||'';
+    q('edit-notes').value=t.lisatiedot||'';
+    q('edit-link').value=t.linkki||'';
+    q('edit-important').classList.toggle('on',!!t.important);
+    q('edit-urgent').classList.toggle('on',!!t.urgent);
+    q('edit-frog').classList.toggle('on',!!t.frog);
+    var estVal=(t.est==null?1:t.est);
+    q('edit-esl').value=estVal;
+    setEstUI(estVal);
+
+    // Projektisirut (vain nayttoa varten valittavissa; projektit tulevat isannalta)
+    var pb=q('edit-proj-btns');
+    pb.innerHTML='';
+    var projects=(H&&H.projects&&H.projects())||[];
+    if(projects.length){
+      var noneB=document.createElement('button');
+      noneB.type='button';
+      noneB.className='fem-chip'+(!t.projectId?' active':'');
+      noneB.textContent='— ei projektia —';
+      noneB.dataset.pid='';
+      if(!t.projectId){ noneB.style.borderColor='var(--accent)'; noneB.style.color='var(--accent)'; }
+      pb.appendChild(noneB);
+      projects.forEach(function(p){
+        var b=document.createElement('button');
+        b.type='button';
+        var act=t.projectId===p.id;
+        b.className='fem-chip'+(act?' active':'');
+        b.style.borderColor=p.color;
+        b.style.color=act?'#fff':p.color;
+        b.style.background=act?p.color:'transparent';
+        b.textContent=p.name;
+        b.dataset.pid=p.id;
+        pb.appendChild(b);
+      });
+      Array.prototype.forEach.call(pb.querySelectorAll('button'),function(btn){
+        btn.addEventListener('click',function(e){
+          e.stopPropagation();
+          Array.prototype.forEach.call(pb.querySelectorAll('button'),function(b2){
+            b2.classList.remove('active');
+            var pid2=b2.dataset.pid;
+            var p2=pid2?projects.find(function(p){return String(p.id)===String(pid2);}):null;
+            b2.style.color=p2?p2.color:'var(--muted)';
+            b2.style.borderColor=p2?p2.color:'var(--light)';
+            b2.style.background='transparent';
+          });
+          btn.classList.add('active');
+          var pid=btn.dataset.pid;
+          var p3=pid?projects.find(function(p){return String(p.id)===String(pid);}):null;
+          if(p3){ btn.style.color='#fff'; btn.style.background=p3.color; }
+          else { btn.style.borderColor='var(--accent)'; btn.style.color='var(--accent)'; }
+        });
+      });
+    }
+
+    // Tilanapit: teksti ja toiminto riippuvat kortin tilasta
+    var dnB=q('edit-done-btn'), wtB=q('edit-wait-btn');
+    if(t.done){
+      dnB.textContent='↩ Palauta tekemättömiin';
+      dnB.setAttribute('aria-label','Palauta tekemättömiin');
+      dnB.onclick=function(){ action(actRestore); };
+      // Tehty kortti ei odota: odottavat-nakyma suodattaa done-kortit pois,
+      // joten waiting jaisi tilaksi jota mikaan nakyma ei nayta
+      wtB.style.display='none';
+    }else{
+      dnB.textContent='✓ Merkitse tehdyksi';
+      dnB.setAttribute('aria-label','Merkitse tehdyksi');
+      dnB.onclick=function(){ action(actDone); };
+      wtB.style.display='';
+      if(t.waiting){
+        wtB.textContent='↩ Palauta vuoroon';
+        wtB.setAttribute('aria-label','Palauta vuoroon');
+        wtB.onclick=function(){ action(actUnwait); };
+      }else{
+        wtB.textContent='⏳ Siirrä odottamaan';
+        wtB.setAttribute('aria-label','Siirrä odottamaan');
+        wtB.onclick=function(){ action(actWait); };
+      }
+    }
+
+    q('edit-overlay').style.display='block';
+    q('edit-modal').style.display='flex';
+    if(release)release();
+    release=trapFocus(q('edit-modal'));
+    setTimeout(function(){ try{q('edit-text').focus();}catch(e){} },50);
+  }
+
+  function close(){
+    if(release){ release(); release=null; }
+    q('edit-overlay').style.display='none';
+    q('edit-modal').style.display='none';
+  }
+
+  function save(){
+    var id=parseInt(q('edit-modal-id').value,10);
+    var t=findTask(id); if(!t)return false;
+    var txt=q('edit-text').value.trim();
+    if(!txt)return false;
+    t.text=txt;
+    syncVerbiKuvaus(t);
+    t.lisatiedot=q('edit-notes').value.trim()||null;
+    t.linkki=q('edit-link').value.trim()||null;
+    t.important=q('edit-important').classList.contains('on');
+    t.urgent=q('edit-urgent').classList.contains('on');
+    if(t.important&&t.urgent)t.quad='q1';
+    else if(t.important&&!t.urgent)t.quad='q2';
+    else if(!t.important&&t.urgent)t.quad='q3';
+    else t.quad='q4';
+    var _e=parseFloat(q('edit-esl').value);
+    t.est=isNaN(_e)?1:_e;
+    // 2 min -saanto: pikatehtava ei kuulu jonoon vaan omaan nippuunsa
+    if(isQuick(t)){
+      dropFromQueue(t.id);
+      t.frog=false;
+      note('⚡ Siirretty pikatehtäviin — tee se heti.');
+    }
+    var wantFrog=q('edit-frog').classList.contains('on');
+    if(wantFrog&&!t.frog){ tasksOf().forEach(function(x){ x.frog=false; }); }
+    // Pikatehtava ei voi olla sammakko — ehto toistetaan isQuick-haaran JALKEEN
+    t.frog=wantFrog&&!isQuick(t);
+    var actBtn=q('edit-proj-btns').querySelector('button.active');
+    // dataset.pid on merkkijono, p.id numero → parseInt tai === menee epatodeksi
+    if(actBtn)t.projectId=actBtn.dataset.pid?parseInt(actBtn.dataset.pid,10):null;
+    if(H&&H.persist)H.persist(t);
+    close();
+    if(H&&H.refresh)H.refresh(t);
+    return true;
+  }
+
+  // Tilanapin toiminto: tallenna kesken jaanyt muokkaus ENSIN, toimi vasta sitten.
+  // Kortti otetaan talteen ENNEN tallennusta: save() kutsuu isannan refreshia,
+  // joka voi pudottaa kortin listalta (odottava/tehty) — silloin id:lla etsiminen
+  // ei enaa loytaisi sita ja toiminto jaisi hiljaa tekematta.
+  function action(fn){
+    var id=parseInt(q('edit-modal-id').value,10);
+    var t=findTask(id);
+    if(!save())return;  // tyhja teksti → modaali jaa auki, ei toimintoa
+    if(t)fn(t);
+  }
+  function commit(t,msg){
+    if(H&&H.persist)H.persist(t);
+    if(H&&H.refresh)H.refresh(t);
+    if(msg)note(msg);
+  }
+  function actDone(t){
+    t.done=true; t.doneAt=new Date().toISOString();
+    dropFromQueue(t.id);
+    commit(t,'✓ Merkitty tehdyksi');
+  }
+  function actRestore(t){
+    t.done=false; t.doneAt=null;
+    commit(t,'↩ Palautettu tekemättömiin');
+  }
+  function actWait(t){
+    t.waiting=true;
+    dropFromQueue(t.id);
+    commit(t,'Siirretty odottamaan');
+  }
+  function actUnwait(t){
+    t.waiting=false;
+    if(!isQuick(t)&&!t.done)addToQueue(t.id);
+    commit(t,'Palautettu vuoroon');
+  }
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&isOpen())close();
+  });
+
+  window.FokusEdit={
+    init:function(host){ H=host; },
+    open:open,
+    close:close,
+    isOpen:isOpen
+  };
+
+  // Lohkon skripti on modaalin DOM:in JALKEEN samassa dokumentissa, joten
+  // elementit ovat olemassa — ei tarvita DOMContentLoadedia.
+  (function(){
+    q('edit-overlay').addEventListener('click',close);
+    q('edit-cancel-btn').addEventListener('click',close);
+    q('edit-save-btn').addEventListener('click',function(){ save(); });
+    q('edit-important').addEventListener('click',function(){ this.classList.toggle('on'); });
+    q('edit-urgent').addEventListener('click',function(){ this.classList.toggle('on'); });
+    q('edit-frog').addEventListener('click',function(){ this.classList.toggle('on'); });
+    q('edit-est-dn').addEventListener('click',function(){
+      var s=q('edit-esl'); s.value=Math.max(0,parseFloat(s.value)-.5); setEstUI(parseFloat(s.value));
+    });
+    q('edit-est-up').addEventListener('click',function(){
+      var s=q('edit-esl'); s.value=Math.min(8,parseFloat(s.value)+.5); setEstUI(parseFloat(s.value));
+    });
+    q('edit-esl').addEventListener('input',function(){ setEstUI(parseFloat(this.value)); });
+  }());
+})();
+</script>
+<!-- END fokus:edit-modal v1 -->
+
 <script>
 var POMO_MIN=(function(){try{var s=JSON.parse(localStorage.getItem('fap_timer_settings')||'{}');return(s.work>=5&&s.work<=90)?s.work:25;}catch(e){return 25;}}());
 var MAX_Q2 = 3;
@@ -526,6 +881,7 @@ var SLOT_MAX = { aamu: 4, paiva: 4, loppu: 3 };
 var slots = { aamu: [], paiva: [], loppu: [] };
 var q1Tasks = [], q2Tasks = [], selectedQ2 = [];
 var allTasks = [], queue = [], active = null, turn = [];
+var projects = [];  // vain muokkausmodaalin projektisiruja varten
 
 // ── INIT ──────────────────────────────────────────────
 (function(){
@@ -572,12 +928,13 @@ function readData(){
 
 function loadData(){
   var d = readData();
-  if(!d){ allTasks=[]; queue=[]; active=null; turn=[]; q1Tasks=[]; q2Tasks=[]; return; }
+  if(!d){ allTasks=[]; queue=[]; active=null; turn=[]; q1Tasks=[]; q2Tasks=[]; projects=[]; return; }
+  projects = Array.isArray(d.projects) ? d.projects : [];
   // Aamusuunnittelun oma aloituskortti suodatetaan pois: velho ei kysy
   // itsestään "onko tämä oikeasti Q1" eikä tarjoa sitä sammakoksi.
   allTasks = (d.tasks||[]).filter(function(t){
     // 2 min -saanto: est 0 = pikatehtava, hoidetaan nipussa eika jonoteta
-    return t && !t.done && !t.scheduled_hidden && !isMorningTask(t) && t.est!==0;
+    return t && !t.done && !t.waiting && !t.scheduled_hidden && !isMorningTask(t) && t.est!==0;
   });
   // Migraatio: vanha queue[] → active+turn
   if(d.active!==undefined){
@@ -636,10 +993,11 @@ function saveData(applyFrog){
   // Merge: scheduled first, then existing turn items not in scheduled
   var newQueue = scheduled.slice();
   queue.forEach(function(id){ if(newQueue.indexOf(id)<0) newQueue.push(id); });
-  // Kuitatut tehtävät (esim. aamusuunnittelukortti) pois jonosta
+  // Kuitatut tehtävät (esim. aamusuunnittelukortti) pois jonosta.
+  // Myös odottamaan siirretty palaisi muutoin jonoon velhon lopussa.
   newQueue = newQueue.filter(function(id){
     var tt = d.tasks.find(function(u){ return u.id===id; });
-    return tt && !tt.done;
+    return tt && !tt.done && !tt.waiting;
   });
   // Tallenna active+turn rakenteella
   d.active = newQueue.length>0 ? newQueue[0] : null;
@@ -649,6 +1007,76 @@ function saveData(applyFrog){
   localStorage.setItem(key, JSON.stringify(d));
   // Delegoi pilvitallennus pääikkunalle (Firebase-SDK vain siellä)
   try { if(window.opener && window.opener._scheduleFsSave) window.opener._scheduleFsSave(); } catch(e){}
+}
+
+// ── MUOKKAUSMODAALI ───────────────────────────────────
+// Kapea kirjoitus yhdelle kortille. saveData():ta EI saa kutsua tästä: se
+// rakentaa jonon uudelleen slotteista ja tallentaisi kesken jääneen
+// lukujärjestyksen keskellä velhoa.
+var EDIT_FIELDS = ['text','verbi','kuvaus','quad','important','urgent','est',
+                   'lisatiedot','linkki','frog','waiting','done','doneAt','projectId'];
+
+function persistTaskEdit(t){
+  var key = getStorageKey();
+  var d = readData(); if(!d) return;
+  var o = d.tasks.find(function(u){ return u.id===t.id; });
+  if(o) EDIT_FIELDS.forEach(function(f){ o[f]=t[f]; });
+  // Sammakko on yksikäsitteinen koko pakassa, ei vain velhon listalla
+  if(t.frog) d.tasks.forEach(function(u){ if(u.id!==t.id) u.frog=false; });
+  // Jono on jo siivottu muistissa (lohko pudottaa/lisää id:n queue-taulukkoon)
+  d.active = queue.length>0 ? queue[0] : null;
+  d.turn = queue.slice(1);
+  delete d.queue;
+  d.updatedAt = Date.now();
+  localStorage.setItem(key, JSON.stringify(d));
+  // Delegoi pilvitallennus pääikkunalle (Firebase-SDK vain siellä)
+  try { if(window.opener && window.opener._scheduleFsSave) window.opener._scheduleFsSave(); } catch(e){}
+}
+
+// Velho ei näytä tehtyjä, odottavia eikä pikatehtäviä → pudota kortti listoilta
+function dropFromWizard(t){
+  var id = t.id;
+  [allTasks, q1Tasks, q2Tasks].forEach(function(arr){
+    var i = arr.indexOf(t); if(i>=0) arr.splice(i,1);
+  });
+  var si = selectedQ2.indexOf(id); if(si>=0) selectedQ2.splice(si,1);
+  ['aamu','paiva','loppu'].forEach(function(s){
+    slots[s] = slots[s].filter(function(x){ return x!==id; });
+  });
+  if(selectedFrog===id) selectedFrog=null;
+  if(q1Index>q1Tasks.length) q1Index=q1Tasks.length;
+}
+
+function rerenderCurrentStep(){
+  if(document.getElementById('s1').classList.contains('active')) renderQ1();
+  else if(document.getElementById('s2').classList.contains('active')) renderQ2();
+  else if(document.getElementById('s3').classList.contains('active')) renderFrog();
+  else if(document.getElementById('s4').classList.contains('active')) renderSchedule();
+}
+
+FokusEdit.init({
+  tasks:    function(){ return allTasks; },
+  queue:    function(){ return queue; },
+  projects: function(){ return projects; },
+  persist:  persistTaskEdit,
+  notify:   notify,
+  refresh:  function(t){
+    if(t && (t.done || t.waiting || t.est===0)) dropFromWizard(t);
+    // Kvadrantti on voinut vaihtua → listat rakennetaan uudelleen
+    q1Tasks = allTasks.filter(function(x){ return x.quad==='q1'; });
+    q2Tasks = allTasks.filter(function(x){ return x.quad==='q2'; });
+    if(q1Index>q1Tasks.length) q1Index=q1Tasks.length;
+    rerenderCurrentStep();
+  }
+});
+
+// Kevyt toast — velhossa ei ollut aiemmin mitään palautetta toiminnoista
+var _ntTimer=null;
+function notify(msg){
+  var e=document.getElementById('nt'); if(!e)return;
+  e.textContent=msg; e.classList.add('on');
+  clearTimeout(_ntTimer);
+  _ntTimer=setTimeout(function(){ e.classList.remove('on'); },2600);
 }
 
 // ── STEP 1: Q1 ────────────────────────────────────────
@@ -675,7 +1103,7 @@ function renderQ1(){
   area.innerHTML = '';
   var card = document.createElement('div');
   card.className = 'card';
-  var est = t.est||1;
+  var est = (t.est==null?1:t.est);
   card.innerHTML =
     '<div class="card-badge">TEE HETI</div>' +
     '<div class="card-name">' + esc(t.text) + '</div>' +
@@ -684,6 +1112,7 @@ function renderQ1(){
       '<button class="ca-btn ca-keep" onclick="q1Keep()">✓ Kyllä, on Q1</button>' +
       '<button class="ca-btn ca-move" onclick="q1Move()">→ Siirrä Q2:een</button>' +
       '<button class="ca-btn ca-delegate" onclick="q1Delegate()">Delegoi / Poista</button>' +
+      '<button class="ca-btn ca-edit" onclick="FokusEdit.open(' + t.id + ')" title="Muokkaa korttia">✎ Muokkaa</button>' +
     '</div>';
   area.appendChild(card);
 }
@@ -731,9 +1160,19 @@ function renderQ2(){
       '<div class="q2-check">'+(sel?'✓':'')+'</div>'+
       '<div style="flex:1">'+
         '<div class="q2-name">'+esc(t.text)+'</div>'+
-        '<div class="q2-est">'+fe(t.est||1)+' 🍅 &nbsp;·&nbsp; Tärkeä, ei kiireinen</div>'+
+        '<div class="q2-est">'+fe(t.est==null?1:t.est)+' 🍅 &nbsp;·&nbsp; Tärkeä, ei kiireinen</div>'+
       '</div>';
     row.onclick=(function(tid){ return function(){ toggleQ2(tid); }; })(t.id);
+    // Muokkaus omana nappinaan: rivin oma onclick valitsee/poistaa valinnan,
+    // joten klikkaus on pysäytettävä tähän
+    var ed=document.createElement('button');
+    ed.className='q2-edit';
+    ed.type='button';
+    ed.textContent='✎';
+    ed.title='Muokkaa korttia';
+    ed.setAttribute('aria-label','Muokkaa tehtävää');
+    ed.onclick=(function(tid){ return function(e){ e.stopPropagation(); FokusEdit.open(tid); }; })(t.id);
+    row.appendChild(ed);
     area.appendChild(row);
   });
 }
@@ -760,7 +1199,11 @@ function goStep3(){
   document.getElementById('nav2').style.display='none';
   document.getElementById('s3').classList.add('active');
   document.getElementById('nav3').style.display='flex';
-  selectedFrog = null;
+  // Säilytä jo tehty sammakkovalinta jos se on yhä ehdokkaana: muokkausmodaalista
+  // asetettu 🐸 katoaisi muuten heti, ja paluu vaiheeseen 2 unohtaisi valinnan.
+  var cands = getFrogCandidates();
+  var keep = cands.find(function(t){ return t.id===selectedFrog || t.frog; });
+  selectedFrog = keep ? keep.id : null;
   renderFrog();
 }
 

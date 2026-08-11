@@ -5,7 +5,10 @@
          allTasks.map(function(t){return t.id+':'+t.est}).join(' '));
       ok('non-quick tasks present', allTasks.length>0, allTasks.length);
       ok('done task filtered', allTasks.every(function(t){return t.id!==10;}));
-      ok('waiting task still present (id 9)', allTasks.some(function(t){return t.id===9;}));
+      // Odottava suodatetaan nyt pois: muokkausmodaalin ⏳ siirtää kortin pois
+      // velhosta, joten sen palaaminen listalle uudelleen ladattaessa olisi ristiriita
+      ok('waiting task filtered from wizard (id 9)', allTasks.every(function(t){return t.id!==9;}),
+         allTasks.map(function(t){return t.id;}).join(' '));
 
       // fe(0)
       ok('aamu fe(0)="⚡"', fe(0)==='⚡', fe(0));

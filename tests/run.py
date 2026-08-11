@@ -23,6 +23,46 @@ TARGETS = {"index": "index.html", "aamu": "aamu.html", "swipe": "swipe.html"}
 # Suitet, jotka mittaavat asettuneita CSS-siirtymiä, tarvitsevat pidemmän budjetin.
 SLOW = {"timer_break", "phase_end"}
 
+# Jaettu muokkausmodaali on kopioitu kahteen popupiin (single-file-rajoite).
+# Ajautuminen on tehtävä näkyväksi, muuten kopiot eriytyvät hiljaa.
+SHARED_BLOCK = ("<!-- BEGIN fokus:edit-modal v1", "<!-- END fokus:edit-modal v1 -->")
+SHARED_FILES = ["aamu.html", "swipe.html"]
+
+
+def check_shared_block(tree):
+    """Palauttaa virheiden määrän. Lohkon on oltava merkki merkiltä sama."""
+    begin, end = SHARED_BLOCK
+    blocks = {}
+    for name in SHARED_FILES:
+        path = os.path.join(tree, name)
+        if not os.path.exists(path):
+            continue
+        src = open(path, encoding="utf-8").read()
+        i = src.find(begin)
+        if i < 0:
+            print(f"  [FAIL] {name}: jaettu edit-modal-lohko puuttuu")
+            blocks[name] = None
+            continue
+        j = src.find(end, i)
+        if j < 0:
+            print(f"  [FAIL] {name}: lohkon END-merkintä puuttuu")
+            blocks[name] = None
+            continue
+        blocks[name] = src[i:j + len(end)]
+    vals = [b for b in blocks.values()]
+    if not vals or any(v is None for v in vals):
+        print("  == shared_block: EPÄONNISTUI")
+        return 1
+    if len(set(vals)) != 1:
+        sizes = ", ".join(f"{k} {len(v)} merkkiä" for k, v in blocks.items())
+        print(f"  [FAIL] lohkot eroavat toisistaan ({sizes})")
+        print("  == shared_block: EPÄONNISTUI")
+        return 1
+    print(f"  [PASS] jaettu lohko identtinen ({len(vals[0])} merkkiä) "
+          f"-> {', '.join(blocks)}")
+    print("  == shared_block: 1/1 passed")
+    return 0
+
 
 def load(path):
     src = open(path, encoding="utf-8").read()
@@ -47,10 +87,14 @@ def main(argv):
     if names:
         files = [f for f in files
                  if os.path.basename(f)[:-3] in names]
-        if not files:
+        if not files and "shared_block" not in names:
             print("Ei suiteja nimillä: " + ", ".join(names)); return 2
 
     total_fail = 0
+    if not names or "shared_block" in names:
+        print("\n### shared_block  [aamu.html + swipe.html]")
+        total_fail += check_shared_block(tree)
+
     for f in files:
         name = os.path.basename(f)[:-3]
         page, body = load(f)

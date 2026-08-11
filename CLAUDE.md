@@ -760,6 +760,63 @@ Opit:
 **⚠ Mobiili testaamatta laitteella.** Napit perivät footerin toissijaisen
 tyylin ja ovat `flex:1` samalla rivillä; <600px modaali on lähes fullscreen.
 
+### Muokkausmodaali popupeihin (2026-08-11) — valmis, laitteella testaamatta
+
+Sama modaali samoine tilanappeineen myös `aamu.html`:ään ja `swipe.html`:ään.
+Aiemmin aamussa ei ollut minkäänlaista muokkausta eikä yhtäkään modaalia;
+swipessä oli suppea bottom sheet, jonka värit oli kovakoodattu vaaleiksi
+(havu-teemassa valkoista valkoisella).
+
+**Rakenne: yksi lohko, kaksi identtistä kopiota.** `<!-- BEGIN fokus:edit-modal
+v1 -->…<!-- END -->` sisältää CSS:n, DOM:in ja IIFE:n joka julkaisee
+`window.FokusEdit`in (`init/open/close/isOpen`). Isäntä rekisteröi adapterin:
+`{tasks, queue, projects, persist, refresh, notify}`. Lohkoa **ei saa muokata
+vain toiseen tiedostoon** — `tests/run.py`:n `shared_block`-esitarkistus vertaa
+kopiot merkki merkiltä ja kaatuu erosta. Kanonista kolmatta kopiota ei ole
+tarkoituksella: se voisi ajautua näistä kahdesta ilman että mikään huomaa.
+Muokkaa siis molempia (esim. kopioi lohko toisesta toiseen) ja aja
+`python3 tests/run.py shared_block`.
+
+`index.html` jää supersetiksi: 📅 ICS ja ↳ Jatkokortti eivät porttautuneet.
+
+| Tiedosto | Mitä |
+|---|---|
+| `swipe.html` | `#edit-panel`, `openEditCard`, `saveEditCard` poistettu; ✎ → `FokusEdit.open`. `saveQueue`in kenttälistaan `waiting`/`projectId`, `done` vain tosi-suuntaan. `loadData` lukee `d.projects`in |
+| `aamu.html` | ✎ vaiheiden 1–2 riveille; uusi `persistTaskEdit` (kapea kirjoitus — `saveData` rakentaisi jonon uudelleen slotteista); `#nt`-toast (ei ollut aiemmin mitään palautetta); `goStep3` säilyttää sammakkovalinnan |
+
+Opit:
+- **Isäntä voi poistaa kortin listaltaan kesken toiminnon.** `action(fn)` teki
+  ensin `save()`n (joka kutsuu isännän `refresh`iä) ja etsi kortin vasta sitten
+  id:llä — odottavalla kortilla refresh oli jo pudottanut sen, joten «Palauta
+  vuoroon» ei tehnyt mitään eikä kertonut siitä. Nyt kortti otetaan talteen
+  **ennen** tallennusta ja toiminto saa olion, ei id:tä.
+- **Pudotussääntö on kopioitava latauksen suodattimesta.** swipe näyttää
+  odottavat kortit pakassa (`loadData` ei suodata `waiting`), joten niitä ei saa
+  pudottaa `refresh`issäkään — muuten sama kortti on yhtä aikaa poissa ja
+  palaa uudelleenlatauksessa. aamussa suodatin lisättiin (`!t.waiting`), joten
+  siellä pudotus on oikein. Suodatin ja refresh ovat sama sääntö kahdessa
+  paikassa; ristiriita näkyy vasta reloadissa.
+- **Kentän puuttuminen kirjoituslistalta on hiljainen bugi.** swipen `saveQueue`
+  kopioi 10 kenttää nimeltä; `waiting` olisi jäänyt tallentumatta ilman virhettä.
+  `done` taas kirjoitetaan vain `true`-suuntaan: pakassa on pelkkiä tekemättömiä,
+  joten `o.done=false` ylikirjoittaisi pääikkunassa juuri tehdyn kortin.
+- **Popupeilla on sama tokenisto** (`--ink/--paper/--muted/--light/--accent/
+  --q1…--q4/--pomo`), vain arvot eroavat → lohko seuraa isännän teemaa ilman
+  omia teemasääntöjä. Modaalin pinta on `color-mix(in srgb, var(--paper) 90%,
+  var(--ink) 10%)`, jotta kentät (`--paper`) erottuvat kummassakin suunnassa.
+- **Taustaväri ilman tekstiväriä on puolikas sääntö.** `#edit-frog.on` sai vain
+  `background:var(--q2)`, teksti jäi `--mutediksi` → vaaleassa teemassa tummaa
+  tummalla. Valittu tila on aina pari (tausta + muste).
+- `q2`-rivin `row.onclick` valitsee/poistaa valinnan → rivin sisään lisätyn
+  ✎-napin kuuntelija tarvitsee `e.stopPropagation()`.
+- Vanha suite voi olla vanhan sopimuksen dokumentaatio: `swipe.js` kutsui
+  poistettua `openEditCard`ia ja `aamu.js` väitti odottavan näkyvän velhossa.
+  Molemmat päivitettiin — kaatuva vanha testi kertoi käytösmuutoksesta, ei viasta.
+
+**⚠ Laitteella testaamatta.** Headless todentaa datan, tilat ja teemat; käymättä
+ovat oikea kosketuskäyttö, popupin paluu samassa välilehdessä (`?back=1`) ja
+Firestore-synkka.
+
 ### Selaintestit (2026-08-08)
 
 `tests/`-hakemisto: headless-Chrome-testipohja, ei riippuvuuksia.

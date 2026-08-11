@@ -14,6 +14,11 @@ python3 tests/run.py --tree /polku/puu  # muu puu (esim. merge-tulos)
 
 Vaatii Chromiumin polusta `harness.py:CHROME`. Ajo kestää ~30 s / suite.
 
+`shared_block` on esitarkistus (ei selainajoa): se lukee `fokus:edit-modal`
+-lohkon `aamu.html`:stä ja `swipe.html`:stä ja vertaa merkki merkiltä. Lohko on
+kopioitu kahteen tiedostoon single-file-rajoitteen takia, joten ajautuminen on
+tehtävä näkyväksi — muokkaa **molempia** kopioita tai tarkistus kaatuu.
+
 ## Suitet
 
 | Suite | Kohde | Mitä kattaa |
@@ -21,7 +26,10 @@ Vaatii Chromiumin polusta `harness.py:CHROME`. Ajo kestää ~30 s / suite.
 | `smoke` | index | Käynnistyy, data latautuu, areena ja jono renderöityvät |
 | `timer_break` | index | Fokustila, taukobanneri, eise-kahva, vaihesiirtymät |
 | `habits` | index | 2 min -sääntö, 1-3-5-budjetti, keskeytysparkki |
+| `shared_block` | aamu + swipe | Jaettu edit-modal-lohko on merkki merkiltä sama molemmissa |
 | `edit_modal` | index | Muokkausmodaalin tilanapit (tehty/odottaa/palautukset) |
+| `edit_modal_aamu` | aamu | Jaettu muokkausmodaali velhon vaiheissa 1–2 |
+| `edit_modal_swipe` | swipe | Jaettu muokkausmodaali korttiselauksessa |
 | `regression` | index | Tehdyt-modaali (palauta/poista), ICS-päivämäärä |
 | `aamu` | aamu | Pikatehtävien suodatus, 1-3-5-mittari |
 | `aamu_skip` | aamu | Ohitus ei pyyhi eilistä sammakkoa |
