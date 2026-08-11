@@ -265,6 +265,8 @@ html[data-theme="aurinko"] {
    mikä lukisi varjona eikä etäisyytenä. */
 :root{
   --lane-card-w:150px;      /* rata-kortti: kädeen (130) ja areenaan (300) väliin */
+  --lane-peek-x:104px;      /* kuinka kauas hoverattu kortti vedetään pinosta ulos */
+  --lane-peek-y:14px;       /* ja kuinka paljon ylös */
   --lane-max:4;             /* näkyvien korttien määrä; media-kyselyt laskevat */
   --room-haze:#071009;      /* usva: huoneen oma väri */
   --lane-ghost:rgba(196,154,58,.55);
@@ -722,7 +724,11 @@ body{
 }
 .arena-room__side{width:10%}
 .arena-room__spot{width:min(70%,900px)}
-.tcg-card.tcg-card--arena-size{width:100%;max-width:300px;flex:0 0 auto}
+.tcg-card.tcg-card--arena-size{
+  width:100%;max-width:300px;flex:0 0 auto;
+  z-index:30;             /* radan lepokorttien (20-) yli, hoverin (60) alle */
+}
+#break-banner{z-index:70}  /* hoverattu ratakortti ei saa peittää taukokehotusta */
 
 /* ── Sivupaneelit kiskoina — konteksti radalle ──
    Rata elää kiskojen VÄLISSÄ. Ilman kiskoja mockup valehtelisi
@@ -837,8 +843,14 @@ body{
   left:50%;
   top:calc(50% + var(--card-base, 188px));
   width:0;height:0;
-  z-index:2;              /* huoneen päälle (oma stacking-konteksti), areenakortin (z:3) alle */
-  pointer-events:none;    /* rata on visuaalinen peili — hallinta on paneelissa */
+  /* z-index:auto TARKOITUKSELLA. Positioitu elementti EI luo stacking-
+     kontekstia ilman z-indexia, joten ratakorttien omat z-arvot kilpailevat
+     areenakortin kanssa suoraan #arenan kontekstissa. Aiemmin rata oli z:2
+     ja kortti z:3 → radan sisainen z:90 ei voinut koskaan nostaa yhta korttia
+     kortin eteen, ja koko radan nostaminen toi MYOS hoveraamattomat kortit
+     aktiivisen tehtavan paalle. */
+  z-index:auto;
+  pointer-events:none;    /* korteille annetaan osoitintapahtumat erikseen */
 }
 
 /* Kortti seisoo lattialla: pivot tyvessä, jolloin skaalaus ei
@@ -858,11 +870,43 @@ body{
     scale(calc(1 - var(--qi) * var(--lane-scale)))
     rotate(calc(var(--qi) * var(--lane-tilt)));
   filter:brightness(calc(1 - var(--qi) * var(--lane-fade)));
+  z-index:var(--qz, 1);
+  /* Kortit eivat tarvitse olla luettavia levossa — rata kertoo jonon
+     KOOSTUMUKSEN reunojen pinona. Luettavuus tulee hoverista, joten
+     korteille on annettava osoitintapahtumat vaikka #queue-lane itse
+     on lapinakyva klikkauksille. */
+  pointer-events:auto;
   transition:transform var(--dur-panel) var(--ease-out),
              filter    var(--dur-panel) var(--ease-out),
              opacity   var(--dur-panel) var(--ease-out);
 }
 .lane-card .tcg-card{width:100%;margin:0}
+
+/* Hover-luettavuus: kortti palaa taydeen kokoon PAIKALLAAN. Pivot on
+   0 100% (tyvi vasemmalla), joten scale(1) kasvattaa oikealle ja ylos
+   siirtamatta korttia — juuri oikea liike reunojen pinolle. Ilmakeha
+   ja kierto pois, jotta teksti on puhdas.
+   .lane-card--peek on sama tila luokkana: sita tarvitaan kuvakaappauksiin
+   ja katselmointiin (?peek=N), koska headlessissa ei ole osoitinta. */
+.lane-card:hover,
+.lane-card--peek{
+  /* Kortti vedetaan ULOS pinosta, ei pelkastaan suurenneta paikallaan:
+     negatiivisella --lane-gapilla se lepaa areenakortin alla, jolloin
+     scale(1) kasvattaisi sen yha kortin taakse. */
+  transform:
+    translate(
+      calc(var(--lane-gap) + var(--qi) * var(--lane-x)
+           + var(--qi) * var(--qi) * var(--lane-curve)
+           + var(--lane-peek-x)),
+      calc(-1 * var(--qi) * var(--lane-y) - var(--lane-peek-y))
+    )
+    scale(1) rotate(0deg);
+  filter:brightness(1.06);
+  box-shadow:0 18px 40px rgba(0,0,0,.55);
+  z-index:60;             /* areenakortin (30) YLI — vain hoverattu, ei koko pino */
+}
+.lane-card:hover::after,
+.lane-card--peek::after{opacity:0}
 
 /* Kontaktivarjo lattialla. Ilman tätä kortit KELLUVAT: areenakortilla on
    .arena-room__castshadow, radalla ei ollut mitään, ja kolme varianttia
@@ -884,6 +928,7 @@ body{
   background:radial-gradient(ellipse 50% 50% at 50% 50%,
     rgba(0,0,0,.55) 0%, rgba(0,0,0,.28) 45%, transparent 72%);
   opacity:calc(1 - var(--qi) * var(--lane-haze));
+  z-index:var(--qz, 1);
   pointer-events:none;
 }
 html[data-perf="lite"] .lane-shadow{display:none}
@@ -907,7 +952,9 @@ html[data-perf="lite"] .lane-shadow{display:none}
   position:absolute;left:0;bottom:0;
   transform:translate(
     calc(var(--lane-gap) + var(--qi) * var(--lane-x)
-         + var(--qi) * var(--qi) * var(--lane-curve)),
+         + var(--qi) * var(--qi) * var(--lane-curve)
+         + var(--lane-card-w) * (1 - var(--qi) * var(--lane-scale))
+         - 2.8rem),
     calc(-1 * var(--qi) * var(--lane-y)
          - var(--lane-card-w) * 1.4 * (1 - var(--qi) * var(--lane-scale))
          - 10px));
@@ -939,6 +986,7 @@ html[data-perf="lite"] .lane-shadow{display:none}
   border:2px dashed var(--lane-ghost);
   border-radius:14px;
   background:color-mix(in srgb,var(--accent) 8%,transparent);
+  z-index:var(--qz, 1);
   opacity:0;visibility:hidden;
   transition:opacity var(--dur-meso) var(--ease-out),visibility 0s linear var(--dur-meso);
 }
@@ -1420,7 +1468,7 @@ const ICONS  = {soita:'soita',sovi:'sovi',kirjaa:'kirjaa',tee:'tee',
    siksi, että lopulliset luvut syntyvät katsomalla eivätkä laskemalla. */
 const PRESETS = {
   v1:{gap:186, x:104, y:17, curve:0,  tilt:0,   scale:.115, haze:.10, fade:.03, cw:150},
-  v2:{gap:64,  x:48,  y:32, curve:0,  tilt:-1.2,scale:.10,  haze:.15, fade:.04, cw:150},
+  v2:{gap:-26, x:50,  y:5,  curve:2,  tilt:.5,  scale:.10,  haze:.13, fade:.04, cw:214},
   v3:{gap:40,  x:34,  y:26, curve:26, tilt:1.5, scale:.11,  haze:.12, fade:.03, cw:150}
 };
 const KEYS = ['gap','x','y','curve','tilt','scale','haze','fade','cw'];
@@ -1429,7 +1477,8 @@ const UNIT = {gap:'px', x:'px', y:'px', curve:'px', tilt:'deg',
 
 /* ── Tila ───────────────────────────────────────────────────── */
 let variant = 'v1';
-let count   = 3;              // kortteja jonossa
+let count   = 3;
+let peekIdx = -1;   // ?peek=N — simuloi hoveria kuvakaappauksia varten              // kortteja jonossa
 let vals    = Object.assign({}, PRESETS.v1);
 
 const lane   = document.getElementById('queue-lane');
@@ -1553,7 +1602,7 @@ function renderLane(){
     const sh = document.createElement('i');
     sh.className = 'lane-shadow';
     sh.style.setProperty('--qi', i);
-    sh.style.zIndex = String(39 - i);
+    sh.style.setProperty('--qz', String(3 - i));
     lane.appendChild(sh);
 
     const wrap = document.createElement('div');
@@ -1561,10 +1610,11 @@ function renderLane(){
     wrap.style.setProperty('--qi', i);
     /* Kauempi kortti maalautuu lähemmän TAAKSE. z-index JS:stä, koska
        calc()-arvo z-indexissä on selainkohtaisesti epäluotettava. */
-    wrap.style.zIndex = String(80 - i);
+    wrap.style.setProperty('--qz', String(20 - i));
     if(prevLaneIds.length && prevLaneIds.indexOf(t.id) < 0){
       wrap.classList.add('lane-card--arriving');
     }
+    if(i === peekIdx) wrap.classList.add('lane-card--peek');
     wrap.appendChild(makeCard(t, 'lane'));
     lane.appendChild(wrap);
   });
@@ -1577,7 +1627,7 @@ function renderLane(){
   const ghost = document.createElement('div');
   ghost.className = 'lane-ghost';
   ghost.style.setProperty('--qi', shown.length);
-  ghost.style.zIndex = String(40 - shown.length);
+  ghost.style.setProperty('--qz', String(20 - shown.length));
   lane.appendChild(ghost);
 
   if(q.length > shown.length){
@@ -1782,6 +1832,8 @@ window.addEventListener('resize', () => { syncCardBase(); renderLane(); });
   if(p.get('focus') === '1'){ document.body.classList.add('focus-mode');
     const b = $('c-focus'); b.textContent = 'Ajastin: käy'; b.classList.add('on'); }
   if(p.get('ctl') === '0') $('ctl').classList.remove('open');
+  const pk = p.get('peek');
+  if(pk !== null && !isNaN(parseInt(pk,10))) peekIdx = parseInt(pk,10);
 })();
 
 applyVals();

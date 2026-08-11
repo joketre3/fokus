@@ -190,6 +190,42 @@ kellu. Ks. Osa B, kohta 2.
 - **Fonttien lataus muuttaa kortin korkeutta** → `--card-base` mitattava uudelleen
   `document.fonts.ready`ssä. Mockupissa tämä oli ero 156px vs. väärä alkuarvo.
 
+### Kerrosskaala — muuttuu index.html:ssä (lisätty V2-kierroksella)
+
+Rata luetaan levossa **reunojen pinona**, ja luettavuus tulee hoverista. Se
+pakottaa kolme asiaa:
+
+1. **`#queue-lane` ei saa olla stacking-konteksti** (`z-index:auto`). Jos rata on
+   `z:2` ja areenakortti `z:3`, radan sisäinen `z-index` ei kilpaile kortin kanssa
+   **koskaan** — hoverattu kortti jää sen taakse. Ja jos koko rata nostetaan kortin
+   yli, myös **hoveraamattomat** kortit peittävät aktiivisen tehtävän. Kun rata ei
+   luo kontekstia, jokainen kortti kilpailee areenakortin kanssa erikseen.
+2. **`.tcg-card--arena-size` z:3 → z:30.** Radan lepokortit tarvitsevat useita
+   tasoja kortin ALLE (20, 19, 18…), eikä niitä mahdu väliin 0–3. Negatiivinen z
+   veisi ne huoneen taakse.
+3. **`#break-banner` z:5 → z:70.** Hoverattu ratakortti (z:60) ei saa peittää
+   taukokehotusta. (Rata on tauolla piilossa, mutta sääntö ei saa nojata siihen.)
+
+Uusi skaala `#arena`n sisällä: rata 18–20 · areenakortti 30 · hoverattu ratakortti
+60 · taukobanneri 70. DESIGN.md §6 -taulukko päivitettävä.
+
+### Hover-luettavuus ja saavutettavuus
+
+Kortit **eivät ole luettavia levossa** — se on tarkoituksellista: rata kertoo jonon
+*koostumuksen* (kvadranttivärit reunoina), ei sen sisältöä. Luettavuus tulee
+hoverista, jolloin kortti vedetään pinosta ulos (`--lane-peek-x/y`) täyteen kokoon.
+
+Seuraus: `.lane-card` tarvitsee `pointer-events:auto`, vaikka `#queue-lane` on
+`none`. Hover on **hiirioikopolku**, ei ainoa reitti — koko jono on luettavana
+tekstinä oikean kiskon paneelissa, joten näppäimistö- ja ruudunlukijakäyttäjä ei
+menetä mitään. Rata pysyy `aria-hidden`ina eikä tab-järjestyksessä. Kosketuksella
+rata on `display:none` (< 900px).
+
+**Jatkokehitys jonka tämä avaa:** kun kortin visuaalinen hierarkia siirretään niin,
+että tärkein tieto on kortin **oikeassa laidassa**, pino kertoo jonon koostumuksen
+ilman hoveria. Nykyisellään reunoista lukee vain kvadranttivärin — se on jo
+merkityksellistä, mutta ei koko potentiaali.
+
 ### 1. DOM ja render-polku
 
 `<div id="queue-lane" aria-hidden="true">` **`#arena`n lapseksi**, ja
