@@ -173,10 +173,13 @@
   --lane-max:4;             /* nakyvien korttien maara; media-kyselyt laskevat */
   /* Lahin kortti on suurimmaksi osaksi areenakortin TAKANA — rata on pino,
      ei rivi. --lane-tuck on piiloon jaava osuus, joten kurkkaus on suoraan
-     --lane-card-w - --lane-tuck (214 - 176 = 38px). Areenakortti on
+     --lane-card-w - --lane-tuck (214 - 165 = 49px). Areenakortti on
      max-width:300px keskitettyna ja #queue-lane on left:50% samassa
-     #arenassa, joten puolikas on 150px. */
-  --lane-tuck:176px;
+     #arenassa, joten puolikas on 150px.
+     176 → 165: syvimman kortin lepokurkkaus oli 20px, ja se on kortin AINOA
+     osumakohta — muu on edellisten alla. Taper vaatii etta koko jono levenee,
+     joten myos lahin tulee 13px enemman esiin. */
+  --lane-tuck:162px;
   --lane-gap:calc(150px - var(--lane-tuck));
   /* Vaaka-askel LAHIMMAN kortin mitassa. --lane-x ja --lane-curve JOHDETAAN
      tasta, jotta askel kutistuu samassa suhteessa kuin kortti: muuten nakyva
@@ -191,8 +194,10 @@
      = step - 21,4px. Lahimman kurkkaus on 36px, joten pelkka "alle 36" ei
      riita — 52px antoi 33px eli 3px eron, mika lukeutuu tasaisena. 50px
      antaa jonon 36 → 29 → 24 → 19px, jossa suhde on joka askeleella ~0,8.
-     Sama luku kuin alkuperainen --lane-x, eli vika oli yksin kaarretermissa. */
-  --lane-step:50px;
+     50px oli sama luku kuin alkuperainen --lane-x, eli vika oli yksin
+     kaarretermissa. 65px levittaa jonon 49 → 44 → 37 → 31px, jolloin syvimman
+     osumakohta kasvaa 20 → 31px ja taper sailyy loivempana (0,89/0,85/0,82). */
+  --lane-step:63px;
   --lane-x:calc(var(--lane-step) * (1 + var(--lane-scale) / 2));
   --lane-curve:calc(var(--lane-step) * var(--lane-scale) / -2);
   --lane-y:5px;             /* pystynosto per kortti (kauempana = ylempana) */
@@ -200,10 +205,10 @@
   --lane-scale:.10;         /* kutistus per askel */
   --lane-haze:.13;          /* ilmakeha per askel */
   --lane-fade:.04;          /* tummennus per askel */
-  --lane-peek-x:140px;      /* hover: kuinka kauas LAHIN kortti liukuu ulos.
+  --lane-peek-x:129px;      /* hover: kuinka kauas LAHIN kortti liukuu ulos.
                                EI taysi paljastus — kortin vasen alanurkka saa
                                jaada edellisen taakse. */
-  --lane-peek-fade:-.066;   /* liu'un muutos per askel. NEGATIIVINEN eli syvempi
+  --lane-peek-fade:-.072;   /* liu'un muutos per askel. NEGATIIVINEN eli syvempi
                                kortti liukuu PIDEMMALLE — vain niin paljastuva
                                osa pysyy samana. Kaksi syyta: sita peittava
                                edellinen kortti on lepotilassa leveampi kuin
@@ -4128,7 +4133,9 @@ html[data-perf="lite"] .arena-room__art{display:none!important;}
    viuhkotuksesta — --lane-max on 2, joten hovered kortti on itse uloin eika
    mitaan vaisteta. Ainoa jaljella oleva saato on liuku, joten paljastus jaa
    tassa kaistassa muita pienemmaksi. */
-@media (max-width:949px){ :root{--lane-peek-x:112px} }
+@media (max-width:999px){
+  :root{--lane-tuck:167px; --lane-step:59px; --lane-peek-x:98px; --lane-fan-push:110px}
+}
 
 /* Kortti seisoo lattialla: pivot tyvessa, jolloin skaalaus ei irrota sita
    viivasta. transform-lista luetaan ulkoa sisaan — rotate ja scale tapahtuvat
@@ -4252,6 +4259,27 @@ html[data-perf="lite"] .lane-shadow{display:none}
    kaareen oman hover-transformin PAALLE, jolloin kortti hyppasi pois
    osoittimen alta ja valkkyi. Liike kuuluu kaareelle, osumakentta kortille. */
 .tcg-card--lane::after{content:none}
+
+/* ...mutta hover-tilassa sama pseudo otetaan kayttoon VASEMMALLE siltana.
+   Viuhkotus siirtaa vain hovered kortin TAKANA olevia, joten hovered kortin ja
+   sen EDELLA olevan valiin jaa tyhjaa lattiaa: mitattu 1600px:ssa kortilla 3
+   rako 33px (edellisen oikea reuna 1044, hovered vasen reuna 1077), kortilla 2
+   8,5px, kortilla 1 ei lainkaan. Osoitin rakoon → hover katkeaa → kortti palaa
+   lahtopaikalleen → osoitin on taas kortilla → silmukka. Siksi oire nakyi vain
+   viimeisella kortilla. Silta ulottuu kortin lahtopaikalle asti.
+
+   VASTA hoverissa: lepotilassa silta kaappaisi edellisen kortin sliverin ja
+   rikkoisi radan selaamisen. --qi on rekisteroity inherits:false, joten
+   sisakortti ei nae kaareen indeksia — vakioleveys riittaa, koska se on
+   moninkertainen suurimpaan rakoon nahden. Silta ulottuu edessa olevien alle,
+   mutta ne ovat korkeammassa --qz-kerroksessa ja voittavat osumatestin. */
+.lane-card:hover .tcg-card--lane::after{
+  content:'';
+  position:absolute;
+  top:0;bottom:0;height:auto;   /* kumoaa kaden bottom:-64px / height:64px */
+  left:auto;right:100%;         /* kumoaa kaden left:-8px / right:-8px */
+  width:var(--lane-peek-x);
+}
 .tcg-card--lane:hover{
   transform:none!important;
   transform-origin:0 100%;
@@ -10705,7 +10733,16 @@ function render(){
   // vasta kun fontit ja koko lavaste ovat paikoillaan, ja renderin aikainen
   // arvo jaa 10-15px pieleen. Heittovarjolla se ei nakynyt, mutta rata
   // seisoo samalla viivalla — 14px kuilu lukisi kelluntana.
-  requestAnimationFrame(_syncCastShadow);
+  // Kaksi framea: ensimmainen ajetaan ennen maalausta, jolloin areenan korkeus
+  // voi yha muuttua taman renderin muista kirjoituksista (mitattu ero 28px →
+  // --card-base 14px pieleen). Toinen frame on layoutin jalkeen.
+  requestAnimationFrame(function(){
+    _syncCastShadow();
+    requestAnimationFrame(_syncCastShadow);
+  });
+  // render() korvaa areenakortin uudella nodella, joten tarkkailu on
+  // kiinnitettava uudelleen joka renderissa.
+  _observeArenaCard();
   _syncDeckRail();
   _syncHdrBottom();
   _syncMnav();
@@ -10754,6 +10791,41 @@ function _syncCastShadow(){
 window.addEventListener('resize', _syncCastShadow);
 // Fonttien lataus muuttaa korttitekstin korkeutta — mittaa uudelleen kun ne ovat.
 if(document.fonts && document.fonts.ready) document.fonts.ready.then(_syncCastShadow);
+
+// Kiintein hetkin mittaaminen (render + rAF + fonts.ready) ei riita.
+// --card-base on kortin alareuna suhteessa AREENAN PYSTYKESKIOON, joten se
+// vanhenee myos silloin kun areena muuttaa korkeuttaan vaikka kortti pysyy
+// samana — keskio siirtyy, offset ei. Mitattu 1100px:ssa: talletettu 201px,
+// oikea 187px, joka ajolla. Rata seisoi 14px areenakortin alapuolella.
+// ResizeObserver laukeaa tasan oikeasta ehdosta: kumpi tahansa laatikko
+// muuttuu. Ei silmukkariskia — _syncCastShadow kirjoittaa vain --card-basen,
+// ja sen lukijat (#queue-lane, .arena-room__castshadow) ovat absoluuttisia
+// eivatka vaikuta areenan korkeuteen.
+var _cardRO=null;
+function _observeArenaCard(){
+  if(typeof ResizeObserver!=='function') return;
+  var arena=document.getElementById('arena');
+  if(!arena) return;
+  var card=arena.querySelector('.tcg-card--arena-size, .card-new--arena');
+  if(_cardRO) _cardRO.disconnect();
+  _cardRO=new ResizeObserver(_syncCastShadow);
+  _cardRO.observe(arena);
+  if(card) _cardRO.observe(card);
+  // ResizeObserver ei riita yksin: kortin deal-in (card-enter) ja tilt-siirtyma
+  // liikuttavat korttia TRANSFORMILLA, joka ei muuta laatikon kokoa eika siis
+  // laukaise RO:ta — mutta se muuttaa getBoundingClientRectia. Jos mittaus osuu
+  // animaation ajalle, arvo jaa vaaraksi pysyvasti. Mitattu: sama sivu antoi
+  // 2000 ms:ssa oikean 187px ja 3000 ms:ssa vaaran 201px.
+  if(!arena.__baseSyncBound){
+    arena.__baseSyncBound=1;
+    ['animationend','transitionend'].forEach(function(ev){
+      arena.addEventListener(ev, function(e){
+        if(e.target && e.target.closest &&
+           e.target.closest('.tcg-card--arena-size, .card-new--arena')) _syncCastShadow();
+      });
+    });
+  }
+}
 
 // Pakka ei peitä yläpalkkia: mitataan yläpalkin alareuna viewport-koordinaatteina
 // (#inv-modal on position:fixed) ja tarjotaan se CSS:lle. Alle 900px ominaisuus
