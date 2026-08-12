@@ -36,6 +36,7 @@ tehtävä näkyväksi — muokkaa **molempia** kopioita tai tarkistus kaatuu.
 | `aamu` | aamu | Pikatehtävien suodatus, 1-3-5-mittari |
 | `aamu_skip` | aamu | Ohitus ei pyyhi eilistä sammakkoa |
 | `swipe` | swipe | Pakan suodatus, muokkauksen tallennus, näppäinoikopolut |
+| `hand_order` | index | Käden järjestys seuraa `t.orderia`, `HAND_MAX` yksi luku |
 
 ## Suitejen kirjoittaminen
 
