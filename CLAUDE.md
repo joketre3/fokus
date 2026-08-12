@@ -69,6 +69,7 @@ Testit: `python3 tests/run.py` (ks. `tests/README.md`). Ei lintteriä, ei CI:tä
 | `mockup-arena-syvyys.html` | Areenan syvyyskokeilu (varhainen, korvattu `mockup-arena-3d-plus`illa) |
 | `mockup-eise-placement.html` | Eisenhower-peekin sijoitteluvaihtoehdot |
 | `mockup-jono.html` | Tehtäväjonon rata areenan lattialla — 3 varianttia + elävät geometrialiu'ut (`?v=v2`) |
+| `mockup-kortti-v2.html` | Kortin kaksoisindeksi — kolme rajausta rinnakkain (areena/viuhka/rata), 3 indeksivarianttia, kustannusmittari pysty/vaaka, Frankenstein-kytkin |
 | `manifest.json` | PWA-manifesti — asennettava sovellus, standalone-tila |
 | `sw.js` | Service worker — navigointi verkosta ensin, muu välimuistista (offline) |
 | `icon-192.png`, `icon-512.png`, `icon-180.png` | Sovellusikonit (512 myös maskable) |
