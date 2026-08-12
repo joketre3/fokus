@@ -179,6 +179,15 @@
                                EI taysi paljastus — kortin vasen alanurkka saa
                                jaada edellisen taakse. */
   --lane-peek-y:10px;
+  --lane-peek-tilt:3.5deg;  /* hover: kortti nojaa oikealle. Origo on vasen
+                               alanurkka, joten se pysyy paikallaan edellisen
+                               kortin takana ja vain ylareuna kaartuu ulos. */
+  --lane-fan-push:160px;    /* hover: takana olevat kortit vaistavat oikealle.
+                               Ilman tata hovered kortti peittaisi ne, eika
+                               rataa voisi selata vasemmalta oikealle. Mitoitus
+                               syvimman kortin mukaan: se kasvaa scale .8 → 1
+                               (+43px) ja liukuu --lane-peek-x (120px), joten
+                               130px jatti enaa 11px rakoa. */
   /* Ilmakeha on HUONEEN oma vari, ei brightness(): kortin plate on tumma
      kaikissa teemoissa, joten pelkka tummennus lukisi varjona vaaleassa
      huoneessa. Tokenina se tummuu usvassa ja vaalenee auringossa. */
@@ -4097,6 +4106,7 @@ html[data-perf="lite"] .arena-room__art{display:none!important;}
   z-index:var(--qz, 5);
   pointer-events:auto;
   transition:transform var(--dur-panel) var(--ease-out),
+             translate var(--dur-panel) var(--ease-out),
              filter    var(--dur-panel) var(--ease-out);
 }
 .lane-card .tcg-card{width:100%;margin:0}
@@ -4127,14 +4137,17 @@ html[data-perf="lite"] .arena-room__art{display:none!important;}
     rgba(0,0,0,.55) 0%, rgba(0,0,0,.28) 45%, transparent 72%);
   opacity:calc(1 - var(--qi) * var(--lane-haze));
   z-index:1;pointer-events:none;
+  transition:translate var(--dur-panel) var(--ease-out);
 }
 html[data-perf="lite"] .lane-shadow{display:none}
 
-/* Hover: kortti LIUKUU ulos edessa olevan takaa. z-indexiin ei kosketa —
-   z-index ei ole animoituva, joten sen nostaminen saisi kortin ilmestymaan
-   tyhjasta: kerros vaihtuisi ensimmaisella framella samalla kun transform
-   vasta aloittaa liukunsa. Kun kortti pysyy lepokerroksessaan, se ei voi
-   koskaan mennä edessaan olevan paalle. */
+/* Hover: kortti LIUKUU ulos edessa olevan takaa ja NOJAA oikealle. z-indexiin
+   ei kosketa — z-index ei ole animoituva, joten sen nostaminen saisi kortin
+   ilmestymaan tyhjasta: kerros vaihtuisi ensimmaisella framella samalla kun
+   transform vasta aloittaa liukunsa. Kun kortti pysyy lepokerroksessaan, se ei
+   voi koskaan menna edessaan olevan paalle — ja juuri siksi sen vasen alanurkka
+   jaa edellisen taakse, mika on tarkoitus: rata pysyy pinona eika hajoa riviksi.
+   Kallistuksen origo on sama 0 100% kuin levossa, joten nurkka ei liiku. */
 .lane-card:hover{
   transform:
     translate(
@@ -4143,11 +4156,39 @@ html[data-perf="lite"] .lane-shadow{display:none}
            + var(--lane-peek-x)),
       calc(-1 * var(--qi) * var(--lane-y) - var(--lane-peek-y))
     )
-    scale(1) rotate(0deg);
+    scale(1) rotate(var(--lane-peek-tilt));
   filter:brightness(1.06);
   box-shadow:0 18px 40px rgba(0,0,0,.55);
 }
 .lane-card:hover::after{opacity:0}
+
+/* Viuhkotus: hovered kortin TAKANA olevat vaistavat oikealle. Mitattu ilman
+   tata: kortti 0 hoverissa ulottui x=1108:aan kun korttien 1-3 oikeat reunat
+   olivat 1021/1057/1097 — etummainen nieli koko lopun radasta, joten
+   vasemmalta oikealle ei paassyt seuraavaan korttiin lainkaan.
+   Siirto tehdaan erillisella translate-propertylla eika transformiin: transform
+   on jo yksi kaava --qi:n varassa, ja translate soveltuu sen ULKOPUOLELTA
+   (jarjestys translate → rotate → scale → transform), joten kaavaa ei tarvitse
+   toistaa neljassa saannossa. Se on myos itsenaisesti animoituva. */
+.lane-card:hover ~ .lane-card,
+.lane-card:hover ~ .lane-shadow,
+.lane-card:hover ~ .lane-ghost,
+.lane-card:hover ~ .lane-more{ translate:var(--lane-fan-push) 0; }
+
+/* Ratakortti kayttaa .tcg-card--hand-ilmetta mutta EI sen hover-sopimusta.
+   Kaden sopimus on viuhkaa varten: nosto -52px + scale 1.1 !importantilla ja
+   64px korkea nakymaton osumakentta kortin ALLA (bottom:-64px). Radalla
+   molemmat ovat vikoja — mitattu: osuma-alue ulottui 63px kortin alareunan
+   alle, joten hover laukesi tyhjalta lattialta, ja sisakortin nosto tuli
+   kaareen oman hover-transformin PAALLE, jolloin kortti hyppasi pois
+   osoittimen alta ja valkkyi. Liike kuuluu kaareelle, osumakentta kortille. */
+.tcg-card--lane::after{content:none}
+.tcg-card--lane:hover{
+  transform:none!important;
+  transform-origin:0 100%;
+  box-shadow:0 6px 18px rgba(0,0,0,.35);
+  z-index:auto;
+}
 
 /* Ylivuoto: rata ei kasva loputtomiin. Siru viimeisen kortin OIKEAAN
    reunaan — vasemmasta se katoaisi areenakortin taakse negatiivisella
@@ -4169,6 +4210,7 @@ html[data-perf="lite"] .lane-shadow{display:none}
   background:linear-gradient(0deg,var(--well-bg),var(--well-bg)),var(--table-felt-deep);
   box-shadow:inset 0 0 0 1px var(--engrave-dim);
   white-space:nowrap;z-index:4;pointer-events:none;
+  transition:translate var(--dur-panel) var(--ease-out);
 }
 
 /* ── Kohteen ennakkokorostus ────────────────────────────────────────
@@ -4191,6 +4233,7 @@ html[data-perf="lite"] .lane-shadow{display:none}
   z-index:2;pointer-events:none;
   opacity:0;visibility:hidden;
   transition:opacity var(--dur-meso) var(--ease-out),
+             translate var(--dur-panel) var(--ease-out),
              visibility 0s linear var(--dur-meso);
 }
 body[data-hand-target="queue"] .lane-ghost{
@@ -4989,9 +5032,25 @@ svg[aria-hidden="true"]{pointer-events:none;}
     filter: brightness(calc(1 - var(--ia, 0) * .05));
     transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
   }
-  /* Hover: pivot kortin tyveen (transform tulee globaalista !important-säännöstä) */
+  /* Hover: kortti työntyy ulos kädestä OMAA akseliaan pitkin.
+     Globaali .tcg-card--hand:hover pakottaa `translateY(-52px) scale(1.1)
+     rotate(0deg)` — se on jäänne vanhasta geometriasta, jossa jokaisella
+     kortilla oli oma layout-paikka. Pidetyssä viuhkassa kortit ovat kaikki
+     samassa paikassa (`left:50%`) ja levitys tulee YKSIN rotatesta, joten
+     `rotate(0deg)` romauttaa kortin pinon keskelle: mitattu 1600px:ssä
+     uloimmat kortit hyppäsivät ±232px ja osoitin jäi tyhjän päälle →
+     hover katkesi heti ja kortti värähteli.
+
+     Korjaus säilyttää saman kaavan kuin lepotila ja lisää siihen VAIN
+     skaalan. Origo on --fan-r:n päässä kortin alapuolella, joten
+     skaalaus siirtää korttia origosta POISPÄIN — eli kortin omaa akselia
+     pitkin ulos viuhkasta. Yksi kerroin hoitaa siis sekä noston että
+     suurennuksen: keskiö on 745px pivotista, joten 1.07 ≈ 52px nosto,
+     sama kuin vanha translateY. Erillinen translateY olisi tarpeeton ja
+     rikkoisi kaaren. */
   #hand-bar-cards .tcg-card--hand:hover {
-    transform-origin: bottom center;
+    transform-origin: 50% var(--fan-r);
+    transform: rotate(calc(var(--i, 0) * var(--fan-step))) scale(1.07) !important;
     filter: brightness(1.06);
   }
   /* Ajastin käynnissä: kortit täysin piilossa */
