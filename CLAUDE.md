@@ -1163,3 +1163,42 @@ Impeccable-deltaa **ei ajettu** — detektori on Jaakon koneella. Aja
 `git show 2259048:index.html`-baselineen (4 osumaa / 3 kategoriaa) ennen mergeä.
 
 **Palautus:** `git revert 6113618 1715fdb` (C-korjaukset ja rata erikseen).
+
+### Ajastetut kortit (2026-08-12) — haarassa, manuaalitestit tekemättä
+
+Haara `claude/ajastetut-kortit-korjaus`, PR #11. Spec:
+`docs/superpowers/specs/2026-08-12-ajastetut-kortit-design.md`.
+
+**Vika:** ajastettu tehtävä näkyi vain pakassa. Tähden sai laitettua mutta
+kortti ei mennyt käteen, eikä syytä voinut todeta mistään.
+
+**Juurisyy:** `checkScheduledTasks` vertasi täsmäminuuttiin
+(`s.time===currentHHMM`) ja ajoi kerran minuutissa. Selain kiinni sinä
+minuuttina → `scheduled_hidden:true` jäi pysyvästi. `inbox` suodattaa sen pois,
+pakka ei suodata mitään, ja `t.schedule` luettiin vain tuossa yhdessä
+funktiossa — joten ajastusta ei voinut nähdä, muuttaa eikä poistaa.
+
+| Osa | Mitä |
+|---|---|
+| A | `scheduleDue` (`<=` eikä `===`), `localDateStr` (paikallinen päivä — `toISOString` heitti vuorokauden ennen klo 3), `sched_last_<id>` → `t.schedLast` jotta toisto synkkaa laitteiden välillä |
+| B | `fmtSchedule(t, short)` -rivi kursiivilla: iso kortti, muokkausmodaali, pakkakortti. **Ei** kirjoiteta `t.lisatiedot`iin — tallennus lukisi sen käyttäjän tekstiksi |
+| C | "Ajastetut" oma kategoria pakassa |
+| D | Pakkakortin `⏳2` → `2 pom`; ⏳ merkitsi Odottaa-tilaa joka muualla |
+| E | Ajastus näkyviin ja poistettavaksi muokkausmodaalista |
+| F | Aamu ja selaus: jaettu `fokus:sched v1`, molemmat vapauttavat erääntyneet latauksessa |
+
+**⚠ MANUAALITESTIT TEKEMÄTTÄ** — headless ei kata näitä:
+
+| # | Testi |
+|---|---|
+| 1 | Ajasta tehtävä muutaman minuutin päähän, sulje välilehti, avaa ajan mentyä → ilmestyy + notify |
+| 2 | Avaa **aamusuunnittelu PWA-pikakuvakkeesta** ilman pääsovellusta → aamuksi ajastettu on mukana |
+| 3 | Toistoajastus ma–pe: laukeaa kerran päivässä, ei uudelleen refreshin jälkeen |
+| 4 | Kaksi laitetta samalla tilillä: toisto ei laukea toiseen kertaan toisella |
+| 5 | Ennen korjausta jumiin jäänyt kortti vapautuu itsestään ensimmäisellä avauksella |
+| 6 | Mobiili: pakkakortin ajastusrivi ei mene tähtinapin alle kapeammalla kortilla |
+
+Automaattitestit: `scheduled` 47, `sched_aamu` 15, `sched_swipe` 10, kaikki
+läpi. Detektoridelta 0 kaikissa kolmessa tiedostossa.
+
+**Palautus:** `git revert 359b49a 6553cd8 62313bb ec529dc`.
