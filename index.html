@@ -10973,34 +10973,62 @@ function clearNewSchedule(){
 }
 
 // ── SCHEDULED TASK CHECKING ──
+// Paikallinen YYYY-MM-DD. toISOString() antaa UTC-päivän, joka Suomessa
+// (UTC+2/+3) on eri kuin kalenterissa keskiyön jälkeen — s.date-vertailu
+// heittäisi vuorokauden joka yö.
+function localDateStr(d){
+  return d.getFullYear()+'-'
+    +String(d.getMonth()+1).padStart(2,'0')+'-'
+    +String(d.getDate()).padStart(2,'0');
+}
+
+// Onko ajastus erääntynyt? Puhdas predikaatti: ei lue kelloa eikä
+// localStoragea, joten sen voi testata kiinteillä ajoilla.
+//
+// Vertailu on `<=`, ei `===`. Vanha täsmäminuuttivertailu vapautti tehtävän
+// vain jos sovellus sattui olemaan auki juuri sillä minuutilla; muuten
+// tehtävä jäi scheduled_hidden:true pysyvästi.
+function scheduleDue(s,now,lastTriggered){
+  if(!s)return false;
+  var today=localDateStr(now);
+  var hhmm=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  if(s.type==='once'){
+    if(s.triggered)return false;
+    return s.date<today||(s.date===today&&s.time<=hhmm);
+  }
+  if(s.type==='repeat'){
+    // Menneitä päiviä ei kaiveta takaisin — päivittäinen rutiini ei saa
+    // kasautua ruudulle viikon poissaolon jälkeen. Vain tämä päivä.
+    if(lastTriggered===today)return false;
+    return s.days.indexOf(now.getDay())>=0&&s.time<=hhmm;
+  }
+  return false;
+}
+
 function checkScheduledTasks(){
   var now=new Date();
-  var todayStr=now.toISOString().split('T')[0];
-  var currentDay=now.getDay(); // 0=Sun
-  var currentHHMM=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  var todayStr=localDateStr(now);
   var changed=false;
   tasks.forEach(function(t){
     if(t.done||!t.schedule)return;
     var s=t.schedule;
-    var shouldAppear=false;
-    if(s.type==='once'){
-      // Check if scheduled datetime matches now (within this minute)
-      if(s.date===todayStr&&s.time===currentHHMM&&!s.triggered){
-        shouldAppear=true;s.triggered=true;
-      }
-    } else if(s.type==='repeat'){
-      // Check if today is a scheduled day and time matches
-      var lastKey='sched_last_'+t.id;
-      var lastTriggered=localStorage.getItem(lastKey);
-      if(s.days.indexOf(currentDay)>=0&&s.time===currentHHMM&&lastTriggered!==todayStr){
-        shouldAppear=true;localStorage.setItem(lastKey,todayStr);
-      }
+    // Migraatio: laukaisutieto oli localStoragessa, jolloin toistoajastus
+    // laukesi uudelleen jokaisella laitteella erikseen. Nyt tehtävässä,
+    // jolloin se synkkaa muun datan mukana.
+    var lastKey='sched_last_'+t.id;
+    if(t.schedLast===undefined){
+      var legacy=null;
+      try{legacy=localStorage.getItem(lastKey);}catch(e){}
+      if(legacy){t.schedLast=legacy;changed=true;}
     }
-    if(shouldAppear){
-      t.scheduled_hidden=false;
-      changed=true;
-      notify('🕐 Ajastettu tehtävä ilmestyi: '+t.text);
-    }
+    try{if(localStorage.getItem(lastKey)!==null)localStorage.removeItem(lastKey);}catch(e){}
+
+    if(!scheduleDue(s,now,t.schedLast||null))return;
+    if(s.type==='once')s.triggered=true;
+    else t.schedLast=todayStr;
+    t.scheduled_hidden=false;
+    changed=true;
+    notify('🕐 Ajastettu tehtävä ilmestyi: '+t.text);
   });
   if(changed){save();render();}
 }
