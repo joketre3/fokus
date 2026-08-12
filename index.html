@@ -11012,6 +11012,14 @@ function clearNewSchedule(){
 }
 
 // ── SCHEDULED TASK CHECKING ──
+/* BEGIN fokus:sched v1 — jaettu lohko. PIDÄ IDENTTISENÄ
+   index.html <-> aamu.html <-> swipe.html. Kopio on single-file-rajoitteen
+   seuraus; tests/run.py:n shared_block vertaa kaikkia kolmea merkki
+   merkiltä, joten ajautuminen kaataa testin. Muokkaa kaikkia kolmea.
+
+   Lohko on puhdasta logiikkaa: se ei tallenna, piirrä eikä ilmoita mitään.
+   Kutsuja hoitaa ne, koska save/render/notify ovat eri asioita
+   pääsovelluksessa ja popupeissa. */
 // Paikallinen YYYY-MM-DD. toISOString() antaa UTC-päivän, joka Suomessa
 // (UTC+2/+3) on eri kuin kalenterissa keskiyön jälkeen — s.date-vertailu
 // heittäisi vuorokauden joka yö.
@@ -11087,6 +11095,45 @@ function fmtSchedule(t,short){
   return '';
 }
 
+// Ilmestyykö tehtävä vasta myöhemmin kuin tänään? Aamusuunnittelu näyttää
+// tänään ilmestyvät (ne kuuluvat tähän päivään) mutta ei lokakuun tehtävää.
+function schedLaterThanToday(t,now){
+  if(!t||!t.scheduled_hidden||!t.schedule)return false;
+  var s=t.schedule;
+  if(s.type==='once')return s.date>localDateStr(now);
+  if(s.type==='repeat')return (s.days||[]).indexOf(now.getDay())<0;
+  return false;
+}
+
+// Vapauttaa erääntyneet ajastukset. Mutatoi tehtäväoliot mutta ei tallenna
+// eikä piirrä — kutsuja päättää mitä tehdä. Palauttaa vapautetut ja tiedon
+// siitä muuttuiko data muuten (migraatio), jotta kutsuja osaa tallentaa.
+function releaseDueSchedules(list,now){
+  var today=localDateStr(now), released=[], changed=false;
+  (list||[]).forEach(function(t){
+    if(!t||t.done||!t.schedule)return;
+    var s=t.schedule;
+    // Migraatio: laukaisutieto oli localStoragessa, jolloin toistoajastus
+    // laukesi uudelleen jokaisella laitteella erikseen. Nyt tehtävässä,
+    // jolloin se synkkaa muun datan mukana.
+    var lastKey='sched_last_'+t.id;
+    if(t.schedLast===undefined){
+      var legacy=null;
+      try{legacy=localStorage.getItem(lastKey);}catch(e){}
+      if(legacy){t.schedLast=legacy;changed=true;}
+    }
+    try{if(localStorage.getItem(lastKey)!==null)localStorage.removeItem(lastKey);}catch(e){}
+
+    if(!scheduleDue(s,now,t.schedLast||null))return;
+    if(s.type==='once')s.triggered=true;
+    else t.schedLast=today;
+    t.scheduled_hidden=false;
+    released.push(t);
+  });
+  return {released:released,changed:changed};
+}
+/* END fokus:sched v1 */
+
 // Ajastuksen poisto muokkausmodaalista. Piilotettu tehtävä on
 // vapautettava samalla — muuten se jäisi pakkaan ilman ajastusta joka
 // voisi enää koskaan nostaa sen esiin.
@@ -11105,31 +11152,11 @@ function clearTaskSchedule(){
 }
 
 function checkScheduledTasks(){
-  var now=new Date();
-  var todayStr=localDateStr(now);
-  var changed=false;
-  tasks.forEach(function(t){
-    if(t.done||!t.schedule)return;
-    var s=t.schedule;
-    // Migraatio: laukaisutieto oli localStoragessa, jolloin toistoajastus
-    // laukesi uudelleen jokaisella laitteella erikseen. Nyt tehtävässä,
-    // jolloin se synkkaa muun datan mukana.
-    var lastKey='sched_last_'+t.id;
-    if(t.schedLast===undefined){
-      var legacy=null;
-      try{legacy=localStorage.getItem(lastKey);}catch(e){}
-      if(legacy){t.schedLast=legacy;changed=true;}
-    }
-    try{if(localStorage.getItem(lastKey)!==null)localStorage.removeItem(lastKey);}catch(e){}
-
-    if(!scheduleDue(s,now,t.schedLast||null))return;
-    if(s.type==='once')s.triggered=true;
-    else t.schedLast=todayStr;
-    t.scheduled_hidden=false;
-    changed=true;
+  var r=releaseDueSchedules(tasks,new Date());
+  r.released.forEach(function(t){
     notify('🕐 Ajastettu tehtävä ilmestyi: '+t.text);
   });
-  if(changed){save();render();}
+  if(r.released.length||r.changed){save();render();}
 }
 
 // Run every minute

@@ -789,6 +789,17 @@ Muokkaa siis molempia (esim. kopioi lohko toisesta toiseen) ja aja
 
 `index.html` jää supersetiksi: 📅 ICS ja ↳ Jatkokortti eivät porttautuneet.
 
+**Toinen jaettu lohko (2026-08-12): `/* BEGIN fokus:sched v1 */…/* END */`** —
+ajastuksen logiikka `localDateStr`, `scheduleDue`, `fmtSchedule`,
+`fmtSchedDays`, `schedLaterThanToday`, `releaseDueSchedules`. Kopiot
+**kolmessa** tiedostossa: `index.html`, `aamu.html`, `swipe.html` (toisin kuin
+edit-modal, joka on vain popupeissa). `shared_block` vertaa nyt molemmat lohkot
+ja tuntee eri tiedostojoukot. Lohko on puhdasta logiikkaa: se ei tallenna,
+piirrä eikä ilmoita mitään, koska `save`/`render`/`notify` ovat eri asioita
+pääsovelluksessa ja popupeissa — kutsuja hoitaa ne. Kopiointiin:
+`/tmp/.../sync_block.py`-tyylinen skripti tai käsin, mutta aja
+`python3 tests/run.py shared_block` perään.
+
 | Tiedosto | Mitä |
 |---|---|
 | `swipe.html` | `#edit-panel`, `openEditCard`, `saveEditCard` poistettu; ✎ → `FokusEdit.open`. `saveQueue`in kenttälistaan `waiting`/`projectId`, `done` vain tosi-suuntaan. `loadData` lukee `d.projects`in |

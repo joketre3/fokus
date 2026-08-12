@@ -1,7 +1,7 @@
 # Ajastetut kortit — näkyvyys ja myöhästyneiden vapautus
 
 Päivä: 2026-08-12
-Tila: toteutettu (A–E), `tests/suites/scheduled.js` 47/47
+Tila: toteutettu (A–F), scheduled 47 + sched_aamu 15 + sched_swipe 10 väitettä
 
 ## Oire
 
@@ -107,9 +107,31 @@ Modaali näyttää nykyisen ajastuksen ja tarjoaa "Poista ajastus" -napin, joka
 tyhjentää `t.schedule` ja `t.scheduled_hidden`. Ilman tätä ajastusta ei saa pois
 muuten kuin poistamalla tehtävä.
 
+### F — Popupit: aamu ja swipe
+
+Jatkokysymys toteutuksen jälkeen: näkyvätkö ajastetut `aamu.html`:ssä ja
+`swipe.html`:ssä? Eivät — molemmat suodattivat `scheduled_hidden` pois. Ja
+vapautuslogiikka oli vain `index.html`:ssä, vaikka `manifest.json` tarjoaa
+molemmat PWA-pikakuvakkeina: aamuksi ajastettu tehtävä oli näkymätön juuri
+aamusuunnittelussa.
+
+- **Jaettu lohko** `fokus:sched v1` kolmeen tiedostoon. Puhdasta logiikkaa: ei
+  tallenna, piirrä eikä ilmoita — `save`/`render`/`notify` ovat eri asioita
+  pääsovelluksessa ja popupeissa, joten kutsuja hoitaa ne.
+  `checkScheduledTasks` kutistuu `releaseDueSchedules`in kutsujaksi.
+- **Selaus** (swipe): näyttää ajastetut. Sen oma sopimus on näyttää kortti ja
+  merkitä tila, ei piilottaa — sama periaate kuin odottavilla korteilla.
+  Siru `🕐 Ajastettu` + ajastusrivi.
+- **Aamusuunnittelu**: näyttää vain tänään ilmestyvät (`schedLaterThanToday`).
+  Lokakuun tehtävää ei tarjota tämän aamun jonoon. Ajastusrivi Q1-kortissa ja
+  Q2-rivillä, kellonaika-siru valintanapeissa ja slot-riveillä.
+- **Molemmat** ajavat vapautuksen latauksessa ja tallentavat tuloksen.
+- `shared_block`-esitarkistus vertaa nyt molemmat lohkot; `fokus:sched` kattaa
+  myös `index.html`:n, jota edit-modal-vertailu ei kata.
+
 ## Toteutusjärjestys
 
-A → D → B → C → E. A on juurisyy; ilman sitä B ja C vain näyttävät jumissa
+A → D → B → C → E → F. A on juurisyy; ilman sitä B ja C vain näyttävät jumissa
 olevan kortin siistimmin.
 
 ## Testaus
