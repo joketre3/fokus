@@ -200,13 +200,16 @@
   --lane-scale:.10;         /* kutistus per askel */
   --lane-haze:.13;          /* ilmakeha per askel */
   --lane-fade:.04;          /* tummennus per askel */
-  --lane-peek-x:120px;      /* hover: kuinka kauas LAHIN kortti liukuu ulos.
+  --lane-peek-x:140px;      /* hover: kuinka kauas LAHIN kortti liukuu ulos.
                                EI taysi paljastus — kortin vasen alanurkka saa
                                jaada edellisen taakse. */
-  --lane-peek-fade:.25;     /* hover-liu'un vaimennus per askel: lahin kurkkaa
-                               eniten, kauin vahiten (120/90/60/30px). Vakio
-                               liuku teki painvastoin — kauimmainen paljastui
-                               eniten, koska sen edessa ei ole mitaan. */
+  --lane-peek-fade:-.066;   /* liu'un muutos per askel. NEGATIIVINEN eli syvempi
+                               kortti liukuu PIDEMMALLE — vain niin paljastuva
+                               osa pysyy samana. Kaksi syyta: sita peittava
+                               edellinen kortti on lepotilassa leveampi kuin
+                               hovered kortti hover-tilassa (-8,6px), ja
+                               perspektiiviaskel lyhenee 5px per askel.
+                               Yhteensa +9,2px liukua per askel. */
   --lane-peek-pop:.06;      /* hover: perspektiiviskaala SAILYY ja saa vain
                                taman lisan. scale(1) kasvatti syvinta korttia
                                +64px ja lahinta 0px, eli sekin suosi
@@ -4119,6 +4122,13 @@ html[data-perf="lite"] .arena-room__art{display:none!important;}
 /* Kapea ikkuna: rata lyhenee, kortit eivat kutistu luettavuuden alle */
 @media (max-width:1399px){ :root{--lane-max:3} }
 @media (max-width:1199px){ :root{--lane-max:2} }
+/* Kapeimmassa kaistassa (900-949px) areenakortin oikealle puolelle jaa vain
+   ~228px kiskoon asti, eika 208px paljastus + liuku mahdu: mitattu 900px:ssa
+   hovered kortti ulottui 846:een kun kisko alkaa 828:sta. Kyse EI ole
+   viuhkotuksesta — --lane-max on 2, joten hovered kortti on itse uloin eika
+   mitaan vaisteta. Ainoa jaljella oleva saato on liuku, joten paljastus jaa
+   tassa kaistassa muita pienemmaksi. */
+@media (max-width:949px){ :root{--lane-peek-x:112px} }
 
 /* Kortti seisoo lattialla: pivot tyvessa, jolloin skaalaus ei irrota sita
    viivasta. transform-lista luetaan ulkoa sisaan — rotate ja scale tapahtuvat
