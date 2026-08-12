@@ -10781,6 +10781,11 @@ function _syncCastShadow(){
   // lattiaviivan. Ilman tata rata kelluisi kortin tyvesta irrallaan.
   var card=arena.querySelector('.tcg-card--arena-size, .card-new--arena');
   if(!card){ arena.style.removeProperty('--card-base'); return; }
+  // Kallistettuna EI mitata. Tilt on hiiriefekti, ja rotateX muuttaa kortin
+  // rectin alareunaa — lattiaviiva ei saa seurata kursoria. Tilt-kasittelija
+  // asettaa --rx inline-tyyliksi ja poistaa sen pointerleavessa, joten taman
+  // olemassaolo kertoo suoraan onko kortti levossa.
+  if(card.style.getPropertyValue('--rx')) return;
   var a=arena.getBoundingClientRect(), c=card.getBoundingClientRect();
   if(!a.height||!c.height) return;
   // --card-base = areenakortin ALAREUNA, ei mitaan siita johdettua. Aiempi +4
@@ -10816,13 +10821,15 @@ function _observeArenaCard(){
   // laukaise RO:ta — mutta se muuttaa getBoundingClientRectia. Jos mittaus osuu
   // animaation ajalle, arvo jaa vaaraksi pysyvasti. Mitattu: sama sivu antoi
   // 2000 ms:ssa oikean 187px ja 3000 ms:ssa vaaran 201px.
+  // VAIN animationend. transitionend oli virhe: tilt-efekti (pointermove
+  // #arenassa asettaa --rx/--ry) siirtyy kortin transition:transform .18s:lla,
+  // joten jokainen hiiren liike laukaisi uudelleenmittauksen kallistetusta
+  // kortista ja koko rata nousi ja laski muutaman pikselin kursorin mukana.
   if(!arena.__baseSyncBound){
     arena.__baseSyncBound=1;
-    ['animationend','transitionend'].forEach(function(ev){
-      arena.addEventListener(ev, function(e){
-        if(e.target && e.target.closest &&
-           e.target.closest('.tcg-card--arena-size, .card-new--arena')) _syncCastShadow();
-      });
+    arena.addEventListener('animationend', function(e){
+      if(e.target && e.target.closest &&
+         e.target.closest('.tcg-card--arena-size, .card-new--arena')) _syncCastShadow();
     });
   }
 }
