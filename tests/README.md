@@ -45,6 +45,7 @@ tarkistus kaatuu.
 | `scheduled` | index | Myöhästyneiden ajastusten vapautus, ajastusrivi, Ajastetut-kategoria |
 | `sched_aamu` | aamu | Velho vapauttaa erääntyneet; tänään ilmestyvä on suunniteltavissa |
 | `sched_swipe` | swipe | Pakka näyttää ajastetut tilamerkinnällä, vapauttaa erääntyneet |
+| `card_zones` | index | Kortin rajausvyöhykkeet: viuhkan ja radan geometria, Frankenstein-kortin ylivuoto |
 
 ## Suitejen kirjoittaminen
 
@@ -57,6 +58,18 @@ itse ja päättyy `return;`iin — malli `timer_break.js`.
 Testidata siemenetään `seed.py`:llä `localStorage`iin ennen sovelluksen
 skriptejä. Siemenen tehtävä id 7 on pikatehtävä (`est:0`), id 1 sammakko,
 id 9 odottava, id 10 valmis.
+
+Suite voi valita siemenen rivillä `// seed: <nimi>` heti target-rivin jälkeen:
+
+| Siemen | Sisältö |
+|---|---|
+| `default` | `TASKS` — 10 tavallista tehtävää (oletus, ei tarvitse merkitä) |
+| `frank` | **Frankenstein-kortti**: jokainen kenttä äärimmillään (pisin verbi `Aikatauluta`, `est:8`, toistuva ajastus, projekti, linkki, kaksirivinen lisätieto, sammakko + tähti) viidessä kappaleessa, jotta maksimikortti osuu areenalle, radalle JA käteen yhtä aikaa |
+
+Frankenstein on Paquetten *Game Cards 101* -menetelmä: kehys mitoitetaan
+äärimmäisen sisällön mukaan, ennen kuin visuaali lukitaan. Uusi kortin
+kenttä lisätään siis myös `frank()`iin — muuten ylivuoto löytyy vasta
+käyttäjän datasta.
 
 ## Mitä tämä EI kata
 

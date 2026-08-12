@@ -17,9 +17,19 @@ import sys, os, re, glob
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from harness import build, run, report          # noqa: E402
-from seed import seed_js                        # noqa: E402
+from seed import seed_js, FRANK_TASKS, FRANK_PROJECTS   # noqa: E402
 
 TARGETS = {"index": "index.html", "aamu": "aamu.html", "swipe": "swipe.html"}
+
+# Siemenvalinta. Suite ilmoittaa sen rivillä `// seed: <nimi>` heti
+# target-rivin jälkeen; ilman riviä käytetään oletusta. Frankenstein-siemen
+# on maksimikuormitettu kortti jokaisessa kolmessa renderöintimoodissa
+# (areena / rata / käsi) — ks. seed.py.
+SEEDS = {
+    "default": lambda: seed_js(),
+    "frank":   lambda: seed_js(active=1, turn=(2,), tasks=FRANK_TASKS,
+                               projects=FRANK_PROJECTS),
+}
 # Suitet, jotka mittaavat asettuneita CSS-siirtymiä, tarvitsevat pidemmän budjetin.
 SLOW = {"timer_break", "phase_end"}
 
@@ -84,7 +94,17 @@ def load(path):
     src = open(path, encoding="utf-8").read()
     m = re.match(r"//\s*target:\s*(\w+)\s*\n", src)
     target = m.group(1) if m else "index"
-    return TARGETS[target], src[m.end():] if m else src
+    if m:
+        src = src[m.end():]
+    s = re.match(r"//\s*seed:\s*(\w+)\s*\n", src)
+    seed = "default"
+    if s:
+        seed = s.group(1)
+        src = src[s.end():]
+        if seed not in SEEDS:
+            raise SystemExit(f"{path}: tuntematon siemen '{seed}' "
+                             f"(tunnetut: {', '.join(SEEDS)})")
+    return TARGETS[target], seed, src
 
 
 def main(argv):
@@ -113,15 +133,15 @@ def main(argv):
 
     for f in files:
         name = os.path.basename(f)[:-3]
-        page, body = load(f)
+        page, seed, body = load(f)
         src = os.path.join(tree, page)
         if not os.path.exists(src):
             print(f"\n### {name}: OHITETTU (puuttuu {src})"); continue
-        print(f"\n### {name}  [{page}]")
+        print(f"\n### {name}  [{page}]" + ("" if seed == "default" else f"  seed={seed}"))
         out_page = os.path.join(out, f"page_{name}.html")
         delay = 1200 if name in SLOW else 2500
         budget = 26000 if name in SLOW else 12000
-        build(src, out_page, seed_js(), body, delay=delay)
+        build(src, out_page, SEEDS[seed](), body, delay=delay)
         res, err, _ = run(out_page, budget=budget)
         if res is None:
             print("  !! ei probe-tulostetta"); print("  " + err[-600:].replace("\n", "\n  "))
