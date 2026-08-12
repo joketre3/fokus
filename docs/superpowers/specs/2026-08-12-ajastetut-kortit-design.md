@@ -1,7 +1,7 @@
 # Ajastetut kortit — näkyvyys ja myöhästyneiden vapautus
 
 Päivä: 2026-08-12
-Tila: hyväksytty, toteutus alkamassa
+Tila: toteutettu (A–E), `tests/suites/scheduled.js` 47/47
 
 ## Oire
 
@@ -29,9 +29,12 @@ Seuraukset ketjussa:
 - `t.schedule` luetaan vain `checkScheduledTasks`issa → ajastusta ei voi nähdä,
   muuttaa eikä poistaa
 
-Sivulöydös: pakkakortin `⏳2` (14000) on **arvio** (`t.est`), ei Odottaa-tila.
-Sama symboli merkitsee Odottaa-tilaa muualla (1866, 9840, 13417). Tämä johti
-väärään diagnoosiin käyttöä tehdessä.
+Sivulöydös: pakkakortin `⏳2` (14000) on **arvioitu pomodoro-määrä** (`t.est`),
+ei Odottaa-tila. Iso kortti kirjoittaa saman luvun auki muodossa `2 pom`
+(9793). Pakan rivin toinen luku `🍅1` on *tehdyt* pomodorot (`t.pomos`), joten
+symbolipari näyttää kahdelta eri asialta vaikka mittayksikkö on sama. ⏳
+merkitsee Odottaa-tilaa joka muualla (1866, 9840, 13417). Tämä johti väärään
+diagnoosiin käyttöä tehdessä.
 
 ## Muutokset
 
@@ -59,13 +62,27 @@ Yhteinen muotoilija `fmtSchedule(t)`:
 - `repeat` → `🔁 Ma, Ke klo 08:00`
 - myöhässä → perään `— myöhässä`
 
-Kaksi piirtopaikkaa:
+`fmtSchedule(t, short)` — `short` jättää `Ajastettu`-etuliitteen pois.
+`fmtSchedDays` tiivistää viikonpäivät: koko viikko → `päivittäin`, ma–pe →
+`arkisin`, la+su → `viikonloppuisin`, muuten lista maanantai ensin. Ilman tätä
+`Ma, Ti, Ke, To, Pe` ei mahdu pakkakortin 125 pikseliin eikä kerro enempää.
 
-1. **Kortti** (9785, `.tcg-card__notes-tcg`): kursivoitu rivi ennen käyttäjän
-   tekstiä, väli alle. Lohkon ehto laajenee: piirtyy myös kun `lisatiedot`
-   puuttuu mutta `schedule` on.
+Kolme piirtopaikkaa:
+
+1. **Iso kortti** (9785, `.tcg-card__notes-tcg`): kursivoitu rivi ennen
+   käyttäjän tekstiä, väli alle. Lohkon ehto laajenee: piirtyy myös kun
+   `lisatiedot` puuttuu mutta `schedule` on.
 2. **Muokkausmodaali** (13253): kursiivirivi `#edit-notes`-textarean
    **yläpuolelle**.
+3. **Pakkakortti**: `short`-muoto omalla rivillään. Pakka on ainoa näkymä
+   jossa piilotettu kortti näkyy, joten sen on kerrottava myös milloin kortti
+   ilmestyy.
+
+Pakkakortin asettelurajoite: rivi ei saa mennä tähtinapin alle eikä
+leikkautua. Ensimmäinen versio teki molemmat — `— myöhässä` jäi napin taakse
+juuri niissä korteissa joissa se on tärkein tieto. Ratkaisu: `margin-right`
+(ei `padding-right`, jotta laatikon geometria vastaa näkyvää) ja kahden rivin
+`line-clamp`. Testit mittaavat tämän `getBoundingClientRect`illa.
 
 Teksti renderöidään, sitä **ei kirjoiteta `t.lisatiedot`iin**. Syy: tallennus
 (7550) lukisi sen käyttäjän omaksi tekstiksi → monistuisi joka avauksella ja
@@ -81,6 +98,7 @@ Nappi ryhmään `g0` (13892) laskurilla, samalla `makeBtn`-kaavalla.
 ### D — ⏳ tarkoittaa kahta asiaa
 
 Pakkakortin arvio `⏳2` (14000) → `2 pom`, sama kieli kuin TCG-kortilla (9793).
+Rivi lukee tämän jälkeen `2 pom · 🍅1` = arvioidut ja tehdyt pomodorot.
 ⏳ jää yksin merkitsemään Odottaa-tilaa.
 
 ### E — Ajastus muokkausmodaaliin

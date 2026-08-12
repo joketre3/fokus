@@ -140,4 +140,158 @@
          localStorage.getItem('sched_last_951') === null,
          String(localStorage.getItem('sched_last_951')));
 
+      // ── D: ⏳ ei enää tarkoita kahta asiaa ────────────────────────────
+      // Pakkakortin ⏳N oli arvioitu pomodoro-määrä (t.est), mutta ⏳
+      // merkitsee Odottaa-tilaa joka muualla. Sama symboli kahdessa
+      // merkityksessä luki väärin.
+      invSetCat('all', null);
+      renderInventory();
+      var invHtml = document.getElementById('inv-grid').innerHTML;
+      ok('pakkakortissa ei ole tiimalasia',
+         invHtml.indexOf('⏳') < 0,
+         invHtml.indexOf('⏳') < 0 ? '' : 'tiimalasi loytyi yha');
+      ok('arvio kirjoitetaan auki (pom)',
+         invHtml.indexOf(' pom') >= 0,
+         '');
+
+      // ── B: fmtSchedule ────────────────────────────────────────────────
+      ok('fmtSchedule on olemassa',
+         typeof window.fmtSchedule === 'function',
+         typeof window.fmtSchedule);
+
+      var kertaTask = { schedule:{type:'once',date:'2026-08-12',time:'08:00'},
+                        scheduled_hidden:false };
+      ok('fmtSchedule once: suomalainen paivamaara',
+         window.fmtSchedule(kertaTask) === '📅 Ajastettu 12.8.2026 klo 08:00',
+         window.fmtSchedule(kertaTask));
+
+      var laukaistu = { schedule:{type:'once',date:'2026-08-11',time:'08:00',triggered:true},
+                        scheduled_hidden:false };
+      ok('fmtSchedule once: jo laukaistu kertoo menneesta',
+         window.fmtSchedule(laukaistu).indexOf('Ilmestyi') >= 0,
+         window.fmtSchedule(laukaistu));
+
+      var toisto = { schedule:{type:'repeat',days:[1,3],time:'08:00'} };
+      ok('fmtSchedule repeat: viikonpaivat lyhenteina',
+         window.fmtSchedule(toisto) === '🔁 Ma, Ke klo 08:00',
+         window.fmtSchedule(toisto));
+
+      // Pakkakortin rivi on 8px ja ~125px levea. "Ma, Ti, Ke, To, Pe" ei
+      // mahdu sinne eika kerro enempaa kuin "arkisin".
+      ok('fmtSchedDays: ma-pe on arkisin',
+         window.fmtSchedDays([1,2,3,4,5]) === 'arkisin',
+         window.fmtSchedDays([1,2,3,4,5]));
+      ok('fmtSchedDays: koko viikko on paivittain',
+         window.fmtSchedDays([0,1,2,3,4,5,6]) === 'päivittäin',
+         window.fmtSchedDays([0,1,2,3,4,5,6]));
+      ok('fmtSchedDays: la+su on viikonloppuisin',
+         window.fmtSchedDays([0,6]) === 'viikonloppuisin',
+         window.fmtSchedDays([0,6]));
+      ok('fmtSchedDays: sunnuntai on viikon viimeinen',
+         window.fmtSchedDays([0,1]) === 'Ma, Su',
+         window.fmtSchedDays([0,1]));
+
+      // Lyhyt muoto jattaa "Ajastettu"-etuliitteen pois, mutta ei
+      // myohassa-tietoa — se on juuri se mita kortista pitaa nahda.
+      ok('fmtSchedule short: ei Ajastettu-etuliitetta',
+         window.fmtSchedule(kertaTask, true) === '📅 12.8.2026 klo 08:00',
+         window.fmtSchedule(kertaTask, true));
+
+      var myohassaT = { schedule:{type:'once',date:eilenStr,time:'08:00'},
+                        scheduled_hidden:true };
+      ok('fmtSchedule merkitsee myohassa olevan',
+         window.fmtSchedule(myohassaT).indexOf('myöhässä') >= 0,
+         window.fmtSchedule(myohassaT));
+
+      ok('fmtSchedule ilman ajastusta on tyhja',
+         window.fmtSchedule({ schedule:null }) === '',
+         '"' + window.fmtSchedule({ schedule:null }) + '"');
+
+      // Ajastusrivi piirtyy korttiin myos ilman kayttajan lisatietoja.
+      var kortti = renderArenaCard(t950, null, false, 'hand');
+      var schedEl = kortti.querySelector('.tcg-card__sched');
+      ok('ajastusrivi piirtyy korttiin ilman omaa lisatietotekstia',
+         !!schedEl && schedEl.textContent.indexOf('📅') === 0,
+         schedEl ? schedEl.textContent : 'rivia ei ole');
+
+      // Kayttajan oma teksti tulee ajastusrivin jalkeen, ei sen tilalle.
+      t950.lisatiedot = 'Muista soittaa esihenkilolle';
+      var kortti2 = renderArenaCard(t950, null, false, 'hand');
+      var notes2 = kortti2.querySelector('.tcg-card__notes-tcg');
+      ok('oma teksti sailyy ajastusrivin rinnalla',
+         !!notes2 && notes2.textContent.indexOf('📅') === 0
+           && notes2.textContent.indexOf('Muista soittaa') > 0,
+         notes2 ? notes2.textContent : 'lohkoa ei ole');
+
+      ok('ajastustekstia ei kirjoiteta t.lisatiedotiin',
+         t950.lisatiedot === 'Muista soittaa esihenkilolle',
+         t950.lisatiedot);
+
+      // ── C: Ajastetut-kategoria pakassa ────────────────────────────────
+      tasks.push({ id: 952, text: 'Tee lokakuun raportti', verbi: 'Tee',
+                   kuvaus: 'lokakuun raportti', quad: 'q2', est: 2,
+                   done: false, frog: false, waiting: false, pomos: 0,
+                   tags: [], projectId: null,
+                   schedule: { type:'once', date:'2026-10-01', time:'09:00' },
+                   scheduled_hidden: true });
+
+      invSetCat('scheduled', null);
+      var vainAjastetut = getInventoryFilteredTasks();
+      ok('Ajastetut-kategoria suodattaa piilotetut ajastetut',
+         vainAjastetut.length === 1 && vainAjastetut[0].id === 952,
+         vainAjastetut.map(function(t){return t.id;}).join(','));
+
+      buildInvSidebar();
+      var sbText = document.getElementById('inv-sidebar').textContent;
+      ok('Ajastetut-nappi on sivupalkissa',
+         sbText.indexOf('Ajastetut') >= 0,
+         '');
+
+      renderInventory();
+      ok('ajastusrivi nakyy pakkakortissa',
+         document.querySelectorAll('.inv-card__sched').length === 1,
+         document.querySelectorAll('.inv-card__sched').length + ' rivia');
+
+      // Asettelu: rivi ei saa mennä tähtinapin alle eikä leikkautua.
+      // Ensimmäinen versio teki molemmat — "— myöhässä" jäi napin taakse.
+      var invCard = document.querySelector('.inv-card');
+      var sEl = invCard.querySelector('.inv-card__sched');
+      var starEl = invCard.querySelector('.inv-card__star-btn');
+      var rS = sEl.getBoundingClientRect(),
+          rB = starEl.getBoundingClientRect(),
+          rC = invCard.getBoundingClientRect();
+      ok('ajastusrivi ei mene tahtinapin alle',
+         rS.right <= rB.left || rS.bottom <= rB.top,
+         'rivi ' + Math.round(rS.right) + ', tahti alkaa ' + Math.round(rB.left));
+      ok('ajastusrivi nakyy kokonaan (ei leikkausta)',
+         sEl.scrollHeight <= sEl.clientHeight + 1,
+         sEl.scrollHeight + '/' + sEl.clientHeight + ' "' + sEl.textContent + '"');
+      ok('ajastusrivi pysyy kortin sisalla',
+         rS.bottom <= rC.bottom + 1,
+         Math.round(rS.bottom) + ' vs ' + Math.round(rC.bottom));
+
+      // ── E: ajastuksen poisto muokkausmodaalista ───────────────────────
+      ok('clearTaskSchedule on olemassa',
+         typeof window.clearTaskSchedule === 'function',
+         typeof window.clearTaskSchedule);
+
+      openEditModal(952);
+      var row = document.getElementById('edit-sched-row');
+      ok('modaali nayttaa ajastuksen',
+         !!row && row.style.display === 'flex'
+           && document.getElementById('edit-sched-text').textContent.indexOf('1.10.2026') >= 0,
+         row ? document.getElementById('edit-sched-text').textContent : 'rivia ei ole');
+
+      clearTaskSchedule();
+      var t952 = tasks.find(function(t){ return t.id === 952; });
+      ok('poisto tyhjentaa ajastuksen',
+         t952 && t952.schedule === null,
+         t952 ? String(t952.schedule) : 'kortti kadonnut');
+      ok('poisto vapauttaa kortin piilosta',
+         t952 && t952.scheduled_hidden === false,
+         t952 ? String(t952.scheduled_hidden) : '');
+
+      closeEditModal();
+      invSetCat('all', null);
+
       }

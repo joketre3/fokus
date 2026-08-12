@@ -2551,6 +2551,15 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   display:flex;align-items:center;gap:.3rem;z-index:1;
   font-size:8px;color:var(--faint);
 }
+/* Ajastusrivi pakkakortissa: kursiivi, oma sävy. Oikea reuna väistää
+   tähtinappia — muuten "— myöhässä" jäisi napin alle juuri niissä
+   korteissa joissa se on tärkein tieto. Kaksi riviä, sitten katkaisu. */
+.inv-card__sched{
+  z-index:1;font-size:8px;line-height:1.3;font-style:italic;
+  color:var(--pomo);margin-top:.1rem;margin-right:1.4rem;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+  overflow:hidden;
+}
 .inv-card__active-badge{
   position:absolute;top:.35rem;right:.4rem;
   font-size:8px;color:var(--accent-dim,var(--accent));z-index:2;
@@ -4688,6 +4697,13 @@ body.focus-mode #arena-slot-hint{
   font-style:italic;padding-left:.75rem;
   box-shadow:inset 0 1px 0 color-mix(in srgb,var(--gold) 18%,transparent);
   padding-top:.35rem;margin-top:.1rem;
+}
+/* Ajastusrivi lisätietolohkon kärjessä. Lohko on jo kokonaan kursiivi,
+   joten ero käyttäjän tekstiin tehdään omalla rivillä, kullan sävyllä ja
+   välillä alle — ei fontin kallistuksella. */
+.tcg-card__sched{
+  display:block;margin-bottom:.3rem;
+  color:color-mix(in srgb,var(--gold) 70%,rgba(255,255,255,.5));
 }
 .tcg-card__meta-tcg{
   margin-top:auto;display:flex;align-items:center;gap:.5rem;
@@ -7439,6 +7455,15 @@ function openEditModal(id){
   document.getElementById('edit-modal-id').value=id;
   document.getElementById('edit-text').value=t.text||'';
   document.getElementById('edit-notes').value=t.lisatiedot||'';
+  // Ajastus näkyviin. Ilman tätä t.schedule luettiin vain
+  // checkScheduledTasksissa, eikä käyttäjä voinut nähdä eikä poistaa sitä.
+  var schedRow=document.getElementById('edit-sched-row');
+  var schedTxt=document.getElementById('edit-sched-text');
+  if(schedRow&&schedTxt){
+    var st=fmtSchedule(t);
+    schedRow.style.display=st?'flex':'none';
+    schedTxt.textContent=st;
+  }
   document.getElementById('edit-link').value=t.linkki||'';
 
   // Tärkeä / Kiireinen / Sammakko
@@ -9782,10 +9807,24 @@ function renderArenaCard(t, container, anyFrog, mode){
   title.textContent=t.text;
   body.appendChild(title);
 
-  if(t.lisatiedot&&t.lisatiedot.trim()){
+  // Lisätiedot: ajastusrivi kursiivilla ennen käyttäjän tekstiä. Lohko
+  // piirtyy myös kun oma teksti puuttuu mutta ajastus on — muuten ajastus
+  // olisi näkymätön juuri niissä korteissa jotka odottavat ilmestymistään.
+  var schedTxt=fmtSchedule(t);
+  if(schedTxt||(t.lisatiedot&&t.lisatiedot.trim())){
     var notes=document.createElement('div');
     notes.className='tcg-card__notes-tcg';
-    notes.textContent=t.lisatiedot;
+    if(schedTxt){
+      var sline=document.createElement('em');
+      sline.className='tcg-card__sched';
+      sline.textContent=schedTxt;
+      notes.appendChild(sline);
+    }
+    if(t.lisatiedot&&t.lisatiedot.trim()){
+      var own=document.createElement('span');
+      own.textContent=t.lisatiedot;
+      notes.appendChild(own);
+    }
     body.appendChild(notes);
   }
 
@@ -11003,6 +11042,66 @@ function scheduleDue(s,now,lastTriggered){
     return s.days.indexOf(now.getDay())>=0&&s.time<=hhmm;
   }
   return false;
+}
+
+// Ajastus ihmisluettavana. Renderöidään joka kerta tuoreena — tekstiä ei
+// koskaan kirjoiteta t.lisatiedotiin, koska tallennus lukisi sen käyttäjän
+// omaksi tekstiksi ja se monistuisi ja vanhentuisi.
+var SCHED_DAY_NAMES=['Su','Ma','Ti','Ke','To','Pe','La'];
+
+function fmtSchedDate(iso){
+  var p=String(iso||'').split('-');
+  if(p.length!==3)return String(iso||'');
+  return parseInt(p[2],10)+'.'+parseInt(p[1],10)+'.'+p[0];
+}
+
+// Viikonpäivät luettavana. "Ma, Ti, Ke, To, Pe" ei mahdu pakkakortin
+// leveyteen eikä kerro enempää kuin "arkisin".
+function fmtSchedDays(days){
+  var d=(days||[]).slice().sort(function(a,b){return a-b;});
+  var key=d.join(',');
+  if(key==='0,1,2,3,4,5,6')return 'päivittäin';
+  if(key==='1,2,3,4,5')return 'arkisin';
+  if(key==='0,6')return 'viikonloppuisin';
+  // Maanantai ensin — sunnuntai (0) on suomalaisessa viikossa viimeinen.
+  return d.map(function(x){return x===0?7:x;}).sort(function(a,b){return a-b;})
+          .map(function(x){return SCHED_DAY_NAMES[x===7?0:x];}).join(', ');
+}
+
+// short=true pakkakortille, jossa rivi on 8px ja ~125px leveä.
+function fmtSchedule(t,short){
+  if(!t||!t.schedule)return '';
+  var s=t.schedule;
+  if(s.type==='once'){
+    var pvm=fmtSchedDate(s.date);
+    var when=pvm+' klo '+s.time;
+    if(s.triggered)return '📅 Ilmestyi '+(short?pvm:when);
+    // Erääntynyt mutta yhä piilossa: minuuttitarkistus ei ole vielä ehtinyt
+    // ajaa. Kerrotaan se, ettei kortti näytä syyttä jumittavan.
+    var myohassa=t.scheduled_hidden&&scheduleDue(s,new Date(),t.schedLast||null);
+    return '📅 '+(short?'':'Ajastettu ')+when+(myohassa?' — myöhässä':'');
+  }
+  if(s.type==='repeat'){
+    return '🔁 '+fmtSchedDays(s.days)+' klo '+s.time;
+  }
+  return '';
+}
+
+// Ajastuksen poisto muokkausmodaalista. Piilotettu tehtävä on
+// vapautettava samalla — muuten se jäisi pakkaan ilman ajastusta joka
+// voisi enää koskaan nostaa sen esiin.
+function clearTaskSchedule(){
+  var id=parseInt(document.getElementById('edit-modal-id').value,10);
+  var t=tasks.find(function(x){return x.id===id;});
+  if(!t||!t.schedule){notify('Ei ajastusta');return;}
+  t.schedule=null;
+  t.scheduled_hidden=false;
+  delete t.schedLast;
+  var row=document.getElementById('edit-sched-row');
+  if(row)row.style.display='none';
+  notify('Ajastus poistettu — tehtävä on näkyvissä');
+  save();render();
+  if(typeof renderInventory==='function') renderInventory();
 }
 
 function checkScheduledTasks(){
@@ -13279,6 +13378,13 @@ function closeChainView(){
     <!-- Lisätiedot -->
     <div>
       <label for="edit-notes" style="font-size:var(--text-xs);font-weight:500;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:.35rem">💬 Lisätiedot</label>
+      <!-- Ajastusrivi kentän yläpuolella, ei sen sisällä: textarea ei osaa
+           kursiivia, ja tekstin kirjoittaminen kenttään tallentuisi
+           käyttäjän omaksi lisätiedoksi. -->
+      <div id="edit-sched-row" style="display:none;align-items:center;gap:.5rem;margin-bottom:.4rem">
+        <em id="edit-sched-text" style="font-size:var(--text-xs);color:var(--pomo);font-weight:300;line-height:1.4"></em>
+        <button type="button" id="edit-sched-clear" onclick="clearTaskSchedule()" style="background:none;border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;color:var(--muted);font-size:var(--text-xs);font-weight:300;padding:.15rem .5rem;font-family:'DM Sans',sans-serif;white-space:nowrap">Poista ajastus</button>
+      </div>
       <textarea id="edit-notes" rows="2" placeholder="Taustaa, muistiinpanoja..." style="width:100%;box-sizing:border-box;font-family:'DM Sans',sans-serif;font-size:var(--text-sm);font-weight:300;padding:.6rem .85rem;border-radius:var(--r-md);border:1.5px solid var(--border);outline:none;color:var(--ink);background:var(--surface);resize:vertical;min-height:52px"></textarea>
     </div>
     <!-- Linkki -->
@@ -13841,7 +13947,11 @@ function isTaskActive(t){
 function filterInventory(taskList, cat, sub, hideActive, search){
   var result = taskList.slice();
   // Kategoria
-  if(cat === 'quad' && sub){
+  if(cat === 'scheduled'){
+    // Odottavat ilmestymistään. Pakka on ainoa näkymä joka näyttää nämä,
+    // joten ne saavat oman ryhmänsä eivätkä huku muiden sekaan.
+    result = result.filter(function(t){ return !!t.schedule && !!t.scheduled_hidden; });
+  } else if(cat === 'quad' && sub){
     result = result.filter(function(t){ return t.quad === sub; });
   } else if(cat === 'project' && sub){
     if(sub === '__none'){
@@ -13919,6 +14029,12 @@ function buildInvSidebar(){
   var g0 = makeGroup(null);
   g0.appendChild(makeBtn('Kaikki', allTasks.length, 'all', null, invState.category==='all'));
   g0.appendChild(makeBtn('Tehdyt', doneTasks.length, 'done', null, invState.category==='done'));
+  // Ajastetut näkyvät vain pakassa, joten ne tarvitsevat oman nappinsa —
+  // muuten ne ovat "Kaikki"-listassa erottumatta millään.
+  var schedCount = allTasks.filter(function(t){ return !!t.schedule && !!t.scheduled_hidden; }).length;
+  if(schedCount > 0){
+    g0.appendChild(makeBtn('🕐 Ajastetut', schedCount, 'scheduled', null, invState.category==='scheduled'));
+  }
   sb.appendChild(g0);
 
   // ── Ruudut ──
@@ -14025,9 +14141,16 @@ function renderInventory(){
     html += '<div class="inv-card__name">'+esc(t.text||'')+'</div>';
     if(verb) html += '<div class="inv-card__verb">'+esc(verb)+'</div>';
     html += '<div class="inv-card__meta">';
-    if(t.est) html += '\u23f3'+t.est;
+    // Arvio kirjoitetaan auki, ei \u23f3-symbolina: \u23f3 merkitsee Odottaa-tilaa
+    // joka muualla sovelluksessa, ja sama symboli kahdessa merkityksess\u00e4
+    // luki pakassa v\u00e4\u00e4rin. 'pom' on sama kieli kuin isolla kortilla.
+    if(t.est) html += t.est+' pom';
     if(t.pomos) html += ' \u00b7 \ud83c\udf45'+t.pomos;
     html += '</div>';
+    // Pakka on ainoa n\u00e4kym\u00e4 jossa piilotettu ajastettu kortti n\u00e4kyy, joten
+    // sen on kerrottava my\u00f6s milloin kortti ilmestyy.
+    var invSched = fmtSchedule(t, true);
+    if(invSched) html += '<div class="inv-card__sched">'+esc(invSched)+'</div>';
     if(!t.done){
       html += '<button class="inv-card__star-btn" title="'+(t.handForced?'Poista käden tähtikortti':'Nosta käteen tähtikorttina')+'">'+(t.handForced?'⭐':'☆')+'</button>';
     }
