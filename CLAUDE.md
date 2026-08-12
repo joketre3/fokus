@@ -5,6 +5,13 @@
 Impeccable-analyysi tehty 2026-06-07. Raportti: `docs/impeccable-kritiikki.md`.
 PRODUCT.md luotu 2026-06-10. P0 valmis.
 
+**⬜ Avoin (kirjattu 2026-08-12, Jaakon havainto):** pitäisikö korttien
+(areenakortti, ratakortit, käsikortit) skaalautua ikkunan koon mukaan? Nyt
+mitat ovat kiinteitä pikseleitä — `--lane-card-w:214px`, `--hand-card-w:130px`,
+areenakortti `max-width:300px` — ja kapeissa ikkunoissa rata joutuu
+lyhenemään (`--lane-max` 4→3→2), kun se voisi kutistua. Ei aloitettu; oma
+kierroksensa, koska koskee kaikkia kolmea korttikokoa yhtä aikaa.
+
 **P0 ✅ valmis (2026-06-10):** Aurinko-teema kerma → puhdas valkoinen; aamu.html usva-synkronointi; --muted .55 → .72
 *(Aurinkoteeman värinäkyvyys korjattu rakenteellisesti 2026-08-07 — ks. oma osio alempana.)*
 

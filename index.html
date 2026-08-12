@@ -171,10 +171,12 @@
      reunojen pinona, ja luettavuus tulee hoverista. */
   --lane-card-w:214px;
   --lane-max:4;             /* nakyvien korttien maara; media-kyselyt laskevat */
-  /* Lahin kortti tulee esiin areenakortin TAKAA: rata jatkuu areenasta eika
-     irtoa omaksi saarekkeekseen. Areenakortti on max-width:300px keskitettyna
-     ja #queue-lane on left:50% samassa #arenassa, joten puolikas on 150px. */
-  --lane-tuck:30px;         /* paljonko lahin kortti jaa areenakortin taakse */
+  /* Lahin kortti on suurimmaksi osaksi areenakortin TAKANA — rata on pino,
+     ei rivi. --lane-tuck on piiloon jaava osuus, joten kurkkaus on suoraan
+     --lane-card-w - --lane-tuck (214 - 176 = 38px). Areenakortti on
+     max-width:300px keskitettyna ja #queue-lane on left:50% samassa
+     #arenassa, joten puolikas on 150px. */
+  --lane-tuck:176px;
   --lane-gap:calc(150px - var(--lane-tuck));
   /* Vaaka-askel LAHIMMAN kortin mitassa. --lane-x ja --lane-curve JOHDETAAN
      tasta, jotta askel kutistuu samassa suhteessa kuin kortti: muuten nakyva
@@ -182,8 +184,15 @@
      skaala on 1 - k*s, joten kumulatiivinen siirtyma on
        step * (i - s*i(i-1)/2)  =  step(1+s/2)*qi - (step*s/2)*qi^2,
      eli kaarretermi on NEGATIIVINEN. Aiempi +2px oli juuri vian lahde:
-     sliverit kasvoivat 33 → 36 → 40px. */
-  --lane-step:58px;
+     sliverit kasvoivat 33 → 36 → 40px.
+
+     Askel on lisaksi mitoitettava LAHIMMAN kortin kurkkauksen mukaan: taperin
+     on alettava siita, ei toisesta kortista. Sliveri_1 = step - card-w*scale
+     = step - 21,4px. Lahimman kurkkaus on 36px, joten pelkka "alle 36" ei
+     riita — 52px antoi 33px eli 3px eron, mika lukeutuu tasaisena. 50px
+     antaa jonon 36 → 29 → 24 → 19px, jossa suhde on joka askeleella ~0,8.
+     Sama luku kuin alkuperainen --lane-x, eli vika oli yksin kaarretermissa. */
+  --lane-step:50px;
   --lane-x:calc(var(--lane-step) * (1 + var(--lane-scale) / 2));
   --lane-curve:calc(var(--lane-step) * var(--lane-scale) / -2);
   --lane-y:5px;             /* pystynosto per kortti (kauempana = ylempana) */
@@ -4101,23 +4110,7 @@ html[data-perf="lite"] .arena-room__art{display:none!important;}
 }
 /* Kapea ikkuna: rata lyhenee, kortit eivat kutistu luettavuuden alle */
 @media (max-width:1399px){ :root{--lane-max:3} }
-/* Kapeimmassa ikkunassa rata on lahella oikeaa kiskoa, ja hover-liuku +
-   viuhkotus veisivat viimeisen kortin sen taakse. Mitattu 1100px:ssa:
-   peek-x 120 + push 160 → viimeinen.right 1080, kisko 1028. Lyhennetaan
-   MOLEMPIA — pelkka pienempi push jattaisi hovered kortin peittamaan
-   seuraavan, mika oli koko viuhkotuksen syy. */
-@media (max-width:1199px){
-  :root{
-    --lane-max:2;
-    --lane-card-w:170px;  /* rata ei ole luettava levossa, joten kapea kortti
-                             ei maksa mitaan — hover paljastaa sen taysikokoisena
-                             suhteessa muihin */
-    --lane-step:44px;
-    --lane-tuck:60px;     /* lahempana areenakorttia → rata alkaa vasemmalta */
-    --lane-peek-x:54px;
-    --lane-fan-push:58px;
-  }
-}
+@media (max-width:1199px){ :root{--lane-max:2} }
 
 /* Kortti seisoo lattialla: pivot tyvessa, jolloin skaalaus ei irrota sita
    viivasta. transform-lista luetaan ulkoa sisaan — rotate ja scale tapahtuvat
