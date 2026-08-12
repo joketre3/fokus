@@ -142,6 +142,11 @@ html[data-theme="aurinko"] .step-num.done{background:rgba(196,104,30,.12);color:
   font-size:1.2rem;line-height:1.3;margin-bottom:.75rem;
 }
 .card-meta{font-size:.7rem;color:var(--muted);font-weight:300;margin-bottom:1rem;}
+/* Ajastustieto: kursiivi erottaa sen omista arvioista, väri kertoo että
+   aika on jo lyöty kiinni eikä vapaasti valittavissa. */
+.card-sched{font-size:.7rem;color:var(--pomo);font-weight:300;font-style:italic;margin:-.75rem 0 1rem;}
+.q2-task .card-sched{font-size:.66rem;margin:.15rem 0 0;}
+.sp-sched{color:var(--pomo);font-size:.62rem;font-style:italic;white-space:nowrap;}
 
 .card-actions{display:flex;gap:.5rem;flex-wrap:wrap;}
 .ca-btn{
@@ -900,6 +905,128 @@ function updateClock(){
     h + ':' + (m < 10 ? '0'+m : m) + ' · ' + now.toLocaleDateString('fi-FI',{weekday:'long',day:'numeric',month:'numeric'});
 }
 
+/* BEGIN fokus:sched v1 — jaettu lohko. PIDÄ IDENTTISENÄ
+   index.html <-> aamu.html <-> swipe.html. Kopio on single-file-rajoitteen
+   seuraus; tests/run.py:n shared_block vertaa kaikkia kolmea merkki
+   merkiltä, joten ajautuminen kaataa testin. Muokkaa kaikkia kolmea.
+
+   Lohko on puhdasta logiikkaa: se ei tallenna, piirrä eikä ilmoita mitään.
+   Kutsuja hoitaa ne, koska save/render/notify ovat eri asioita
+   pääsovelluksessa ja popupeissa. */
+// Paikallinen YYYY-MM-DD. toISOString() antaa UTC-päivän, joka Suomessa
+// (UTC+2/+3) on eri kuin kalenterissa keskiyön jälkeen — s.date-vertailu
+// heittäisi vuorokauden joka yö.
+function localDateStr(d){
+  return d.getFullYear()+'-'
+    +String(d.getMonth()+1).padStart(2,'0')+'-'
+    +String(d.getDate()).padStart(2,'0');
+}
+
+// Onko ajastus erääntynyt? Puhdas predikaatti: ei lue kelloa eikä
+// localStoragea, joten sen voi testata kiinteillä ajoilla.
+//
+// Vertailu on `<=`, ei `===`. Vanha täsmäminuuttivertailu vapautti tehtävän
+// vain jos sovellus sattui olemaan auki juuri sillä minuutilla; muuten
+// tehtävä jäi scheduled_hidden:true pysyvästi.
+function scheduleDue(s,now,lastTriggered){
+  if(!s)return false;
+  var today=localDateStr(now);
+  var hhmm=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  if(s.type==='once'){
+    if(s.triggered)return false;
+    return s.date<today||(s.date===today&&s.time<=hhmm);
+  }
+  if(s.type==='repeat'){
+    // Menneitä päiviä ei kaiveta takaisin — päivittäinen rutiini ei saa
+    // kasautua ruudulle viikon poissaolon jälkeen. Vain tämä päivä.
+    if(lastTriggered===today)return false;
+    return s.days.indexOf(now.getDay())>=0&&s.time<=hhmm;
+  }
+  return false;
+}
+
+// Ajastus ihmisluettavana. Renderöidään joka kerta tuoreena — tekstiä ei
+// koskaan kirjoiteta t.lisatiedotiin, koska tallennus lukisi sen käyttäjän
+// omaksi tekstiksi ja se monistuisi ja vanhentuisi.
+var SCHED_DAY_NAMES=['Su','Ma','Ti','Ke','To','Pe','La'];
+
+function fmtSchedDate(iso){
+  var p=String(iso||'').split('-');
+  if(p.length!==3)return String(iso||'');
+  return parseInt(p[2],10)+'.'+parseInt(p[1],10)+'.'+p[0];
+}
+
+// Viikonpäivät luettavana. "Ma, Ti, Ke, To, Pe" ei mahdu pakkakortin
+// leveyteen eikä kerro enempää kuin "arkisin".
+function fmtSchedDays(days){
+  var d=(days||[]).slice().sort(function(a,b){return a-b;});
+  var key=d.join(',');
+  if(key==='0,1,2,3,4,5,6')return 'päivittäin';
+  if(key==='1,2,3,4,5')return 'arkisin';
+  if(key==='0,6')return 'viikonloppuisin';
+  // Maanantai ensin — sunnuntai (0) on suomalaisessa viikossa viimeinen.
+  return d.map(function(x){return x===0?7:x;}).sort(function(a,b){return a-b;})
+          .map(function(x){return SCHED_DAY_NAMES[x===7?0:x];}).join(', ');
+}
+
+// short=true pakkakortille, jossa rivi on 8px ja ~125px leveä.
+function fmtSchedule(t,short){
+  if(!t||!t.schedule)return '';
+  var s=t.schedule;
+  if(s.type==='once'){
+    var pvm=fmtSchedDate(s.date);
+    var when=pvm+' klo '+s.time;
+    if(s.triggered)return '📅 Ilmestyi '+(short?pvm:when);
+    // Erääntynyt mutta yhä piilossa: minuuttitarkistus ei ole vielä ehtinyt
+    // ajaa. Kerrotaan se, ettei kortti näytä syyttä jumittavan.
+    var myohassa=t.scheduled_hidden&&scheduleDue(s,new Date(),t.schedLast||null);
+    return '📅 '+(short?'':'Ajastettu ')+when+(myohassa?' — myöhässä':'');
+  }
+  if(s.type==='repeat'){
+    return '🔁 '+fmtSchedDays(s.days)+' klo '+s.time;
+  }
+  return '';
+}
+
+// Ilmestyykö tehtävä vasta myöhemmin kuin tänään? Aamusuunnittelu näyttää
+// tänään ilmestyvät (ne kuuluvat tähän päivään) mutta ei lokakuun tehtävää.
+function schedLaterThanToday(t,now){
+  if(!t||!t.scheduled_hidden||!t.schedule)return false;
+  var s=t.schedule;
+  if(s.type==='once')return s.date>localDateStr(now);
+  if(s.type==='repeat')return (s.days||[]).indexOf(now.getDay())<0;
+  return false;
+}
+
+// Vapauttaa erääntyneet ajastukset. Mutatoi tehtäväoliot mutta ei tallenna
+// eikä piirrä — kutsuja päättää mitä tehdä. Palauttaa vapautetut ja tiedon
+// siitä muuttuiko data muuten (migraatio), jotta kutsuja osaa tallentaa.
+function releaseDueSchedules(list,now){
+  var today=localDateStr(now), released=[], changed=false;
+  (list||[]).forEach(function(t){
+    if(!t||t.done||!t.schedule)return;
+    var s=t.schedule;
+    // Migraatio: laukaisutieto oli localStoragessa, jolloin toistoajastus
+    // laukesi uudelleen jokaisella laitteella erikseen. Nyt tehtävässä,
+    // jolloin se synkkaa muun datan mukana.
+    var lastKey='sched_last_'+t.id;
+    if(t.schedLast===undefined){
+      var legacy=null;
+      try{legacy=localStorage.getItem(lastKey);}catch(e){}
+      if(legacy){t.schedLast=legacy;changed=true;}
+    }
+    try{if(localStorage.getItem(lastKey)!==null)localStorage.removeItem(lastKey);}catch(e){}
+
+    if(!scheduleDue(s,now,t.schedLast||null))return;
+    if(s.type==='once')s.triggered=true;
+    else t.schedLast=today;
+    t.scheduled_hidden=false;
+    released.push(t);
+  });
+  return {released:released,changed:changed};
+}
+/* END fokus:sched v1 */
+
 function getStorageKey(){
   // Sama logiikka kuin eisenhower.html: wsStorageKey = 'eis_v5_' + (fap_active_ws || 'work')
   var wsId = localStorage.getItem('fap_active_ws') || 'work';
@@ -930,11 +1057,28 @@ function loadData(){
   var d = readData();
   if(!d){ allTasks=[]; queue=[]; active=null; turn=[]; q1Tasks=[]; q2Tasks=[]; projects=[]; return; }
   projects = Array.isArray(d.projects) ? d.projects : [];
+
+  // Ajastettujen vapautus. Velho aukeaa myös PWA-pikakuvakkeesta ilman
+  // pääsovellusta (manifest.json), jolloin mikään muu ei ajaisi tarkistusta
+  // — aamuksi ajastettu tehtävä olisi näkymätön juuri aamusuunnittelussa.
+  var now = new Date();
+  var rel = releaseDueSchedules(d.tasks, now);
+  if(rel.released.length || rel.changed){
+    d.updatedAt = Date.now();
+    try{
+      localStorage.setItem(getStorageKey(), JSON.stringify(d));
+    }catch(e){ console.warn('Fokus: ajastusten vapautuksen tallennus epäonnistui', e); }
+    try{ if(window.opener && window.opener._scheduleFsSave) window.opener._scheduleFsSave(); }catch(e){}
+  }
+
   // Aamusuunnittelun oma aloituskortti suodatetaan pois: velho ei kysy
   // itsestään "onko tämä oikeasti Q1" eikä tarjoa sitä sammakoksi.
   allTasks = (d.tasks||[]).filter(function(t){
     // 2 min -saanto: est 0 = pikatehtava, hoidetaan nipussa eika jonoteta
-    return t && !t.done && !t.waiting && !t.scheduled_hidden && !isMorningTask(t) && t.est!==0;
+    // Tänään ilmestyvä ajastettu kuuluu tähän päivään ja on suunniteltavissa;
+    // myöhemmälle päivälle ajastettu ei.
+    return t && !t.done && !t.waiting && !schedLaterThanToday(t, now)
+      && !isMorningTask(t) && t.est!==0;
   });
   // Migraatio: vanha queue[] → active+turn
   if(d.active!==undefined){
@@ -1082,6 +1226,20 @@ function notify(msg){
 // ── STEP 1: Q1 ────────────────────────────────────────
 var q1Index = 0;
 
+// Ajastustieto velhon korteissa. Tänään ilmestyvä ajastettu tehtävä on
+// mukana suunnittelussa, joten sen kellonajan on näyttävä — muuten se
+// näyttäisi vapaasti sijoitettavalta vaikka se on jo lyöty kiinni.
+function schedLine(t){
+  var s = fmtSchedule(t);
+  return s ? '<div class="card-sched">'+esc(s)+'</div>' : '';
+}
+
+// Tiivis muoto valintanapin perään, johon koko rivi ei mahdu.
+function schedChip(t){
+  if(!t || !t.schedule || !t.schedule.time) return '';
+  return ' <span class="sp-sched">🕐'+esc(t.schedule.time)+'</span>';
+}
+
 function renderQ1(){
   if(isNaN(q1Index)||q1Index<0) q1Index=0;
   var area = document.getElementById('q1Area');
@@ -1108,6 +1266,7 @@ function renderQ1(){
     '<div class="card-badge">TEE HETI</div>' +
     '<div class="card-name">' + esc(t.text) + '</div>' +
     '<div class="card-meta">' + fe(est) + ' 🍅 &nbsp;·&nbsp; Tärkeä + kiireinen</div>' +
+    schedLine(t) +
     '<div class="card-actions">' +
       '<button class="ca-btn ca-keep" onclick="q1Keep()">✓ Kyllä, on Q1</button>' +
       '<button class="ca-btn ca-move" onclick="q1Move()">→ Siirrä Q2:een</button>' +
@@ -1161,6 +1320,7 @@ function renderQ2(){
       '<div style="flex:1">'+
         '<div class="q2-name">'+esc(t.text)+'</div>'+
         '<div class="q2-est">'+fe(t.est==null?1:t.est)+' 🍅 &nbsp;·&nbsp; Tärkeä, ei kiireinen</div>'+
+        schedLine(t)+
       '</div>';
     row.onclick=(function(tid){ return function(){ toggleQ2(tid); }; })(t.id);
     // Muokkaus omana nappinaan: rivin oma onclick valitsee/poistaa valinnan,
@@ -1396,7 +1556,7 @@ function renderSlot(slotName, lookup){
     var item = document.createElement('div');
     item.className='slot-item';
     item.innerHTML=
-      '<div class="si-name">'+esc(t.text)+'</div>'+
+      '<div class="si-name">'+esc(t.text)+schedChip(t)+'</div>'+
       '<span class="si-badge '+(t.quad||'q2')+'">'+((t.quad==='q1')?'Q1':'Q2')+'</span>'+
       '<button class="si-rm" onclick="removeFromSlot(\''+slotName+'\','+id+')">×</button>';
     box.appendChild(item);
@@ -1415,7 +1575,8 @@ function renderPickers(){
       btn.className='sp-btn';
       var label = t.text.length>28 ? t.text.substr(0,27)+'\u2026' : t.text;
       btn.innerHTML='+ '+esc(label)+
-        ' <span style="color:var(--muted);font-size:.62rem">'+fe(t.est||1)+'\uD83C\uDF45</span>';
+        ' <span style="color:var(--muted);font-size:.62rem">'+fe(t.est||1)+'\uD83C\uDF45</span>'+
+        schedChip(t);
       btn.onclick=(function(slotN,tid){ return function(){ addToSlot(slotN,tid); }; })(s,t.id);
       pick.appendChild(btn);
     });

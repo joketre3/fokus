@@ -46,6 +46,11 @@ python3 -m http.server 8080
 
 Testit: `python3 tests/run.py` (ks. `tests/README.md`). Ei lintteriä, ei CI:tä.
 
+- **`smoke` (2) ja `habits` (2) kaatuvat ajoittain** (`active=100`, `turn=[1,2,3,7]`) — epädeterministisiä ja vanhoja. Vertaa baselineen ennen kuin syytät omaa muutostasi: `git stash && python3 tests/run.py smoke habits; git stash pop`
+- **Mittaa asettelu DOM:sta, älä kuvakaappauksesta.** `tests/harness.py`:n `build()`+`run()` ajaa mitä tahansa JS:ää sivun sisällä. `getBoundingClientRect` paljasti napin alle jääneen tekstin, jonka kaappaus hukkasi — ja mittauksen saa jätettyä pysyväksi testiksi.
+- Oma siemendata: `seed_js(tasks=TASKS+extra)` + `mk()` (`tests/seed.py`). `extra=`-parametri on raakaa JS:ää joka ajetaan **ennen** sovelluksen skriptejä — `tasks`-globaalia ei siellä vielä ole, joten `tasks.push` menee hiljaa try/catchiin.
+- Zoomattu kaappaus popupista: `--force-device-scale-factor=2` + pieni `--window-size`
+
 ## File structure
 
 | File | Purpose |
@@ -120,6 +125,7 @@ Jokainen tiedosto on itsenäinen: kaikki CSS ja JS sisäänrakennettu HTML-tiedo
 - Rinnakkaishaarojen mergen/rebasen jälkeen tarkista funktioduplikaatit: `grep -c "function nimi" index.html` — auto-merge voi tuoda saman funktion kahdesti (esim. rarityOf PR #4 + M1)
 - Projektiväri-indikaattori: `box-shadow: inset 0 3px 0 <väri>` — ei `border-left` eikä `border-top` (detektori ampuu kaikista `border-top:Npx solid` -säännöistä)
 - Piilotettava sisältö: `.wrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows .18s}` + sisältö `min-height:0;overflow:hidden` — ei max-height-animaatiota
+- Absoluuttisen napin (esim. `.inv-card__star-btn`) väistäminen: `margin-right`, **ei** `padding-right`. Padding jättää laatikon geometrian napin päälle, jolloin `getBoundingClientRect`-päällekkäisyysväite kaatuu vaikka teksti näyttää oikealta — ja z-indexin varaan jäävä klikkaus on hauras. Marginilla geometria vastaa näkyvää.
 - `git stash` tarvitaan ennen `git checkout main` jos working treessä on muutoksia muissa tiedostoissa
 
 ## Core data model
@@ -693,6 +699,8 @@ Kutsuu Anthropic API:a suoraan selaimesta (`https://api.anthropic.com/v1/message
 - Stack: Single-file HTML, Firebase SDK v10+ (modulaarinen, CDN), Firestore, anonyymi auth, valinnainen Google Sign-In
 - Fontit: DM Sans, DM Serif Display, Cinzel (TCG-kortit)
 - Deployment: GitHub Pages https://joketre3.github.io/fokus/ (repo: "fokus")
+- `gh` ei ole asennettu — PR:t GitHub MCP:llä (`mcp__plugin_github_github__create_pull_request` / `update_pull_request`), ei `gh pr create`
+- Bash-työkalun työhakemisto palautuu `/home/jaakko`:hon heredocin tai `python3 -c`:n jälkeen. Sen jälkeen `grep` suhteellisella polulla palauttaa hiljaa tyhjän — se näyttää "ei osumia", ei virheeltä. Käytä `cd /home/jaakko/fokus && ...`
 - Bash-työkalut: `grep -n` pipe-erotetuilla kuvioilla; `sed -n 'start,endp'` alueiden lukemiseen; `wc -l` tiedostokoon tarkistukseen ensin. `index.html`:ssä ei ole enää upotettuja valokuvia (poistettu 2026-07-27), vain 4 pientä inline-SVG:tä — `sed -n` on taas turvallinen
 
 ## Kaupallistaminen (lisätty 2026-05-28)
@@ -788,6 +796,17 @@ Muokkaa siis molempia (esim. kopioi lohko toisesta toiseen) ja aja
 `python3 tests/run.py shared_block`.
 
 `index.html` jää supersetiksi: 📅 ICS ja ↳ Jatkokortti eivät porttautuneet.
+
+**Toinen jaettu lohko (2026-08-12): `/* BEGIN fokus:sched v1 */…/* END */`** —
+ajastuksen logiikka `localDateStr`, `scheduleDue`, `fmtSchedule`,
+`fmtSchedDays`, `schedLaterThanToday`, `releaseDueSchedules`. Kopiot
+**kolmessa** tiedostossa: `index.html`, `aamu.html`, `swipe.html` (toisin kuin
+edit-modal, joka on vain popupeissa). `shared_block` vertaa nyt molemmat lohkot
+ja tuntee eri tiedostojoukot. Lohko on puhdasta logiikkaa: se ei tallenna,
+piirrä eikä ilmoita mitään, koska `save`/`render`/`notify` ovat eri asioita
+pääsovelluksessa ja popupeissa — kutsuja hoitaa ne. Kopiointiin:
+`/tmp/.../sync_block.py`-tyylinen skripti tai käsin, mutta aja
+`python3 tests/run.py shared_block` perään.
 
 | Tiedosto | Mitä |
 |---|---|
@@ -1144,3 +1163,42 @@ Impeccable-deltaa **ei ajettu** — detektori on Jaakon koneella. Aja
 `git show 2259048:index.html`-baselineen (4 osumaa / 3 kategoriaa) ennen mergeä.
 
 **Palautus:** `git revert 6113618 1715fdb` (C-korjaukset ja rata erikseen).
+
+### Ajastetut kortit (2026-08-12) — haarassa, manuaalitestit tekemättä
+
+Haara `claude/ajastetut-kortit-korjaus`, PR #11. Spec:
+`docs/superpowers/specs/2026-08-12-ajastetut-kortit-design.md`.
+
+**Vika:** ajastettu tehtävä näkyi vain pakassa. Tähden sai laitettua mutta
+kortti ei mennyt käteen, eikä syytä voinut todeta mistään.
+
+**Juurisyy:** `checkScheduledTasks` vertasi täsmäminuuttiin
+(`s.time===currentHHMM`) ja ajoi kerran minuutissa. Selain kiinni sinä
+minuuttina → `scheduled_hidden:true` jäi pysyvästi. `inbox` suodattaa sen pois,
+pakka ei suodata mitään, ja `t.schedule` luettiin vain tuossa yhdessä
+funktiossa — joten ajastusta ei voinut nähdä, muuttaa eikä poistaa.
+
+| Osa | Mitä |
+|---|---|
+| A | `scheduleDue` (`<=` eikä `===`), `localDateStr` (paikallinen päivä — `toISOString` heitti vuorokauden ennen klo 3), `sched_last_<id>` → `t.schedLast` jotta toisto synkkaa laitteiden välillä |
+| B | `fmtSchedule(t, short)` -rivi kursiivilla: iso kortti, muokkausmodaali, pakkakortti. **Ei** kirjoiteta `t.lisatiedot`iin — tallennus lukisi sen käyttäjän tekstiksi |
+| C | "Ajastetut" oma kategoria pakassa |
+| D | Pakkakortin `⏳2` → `2 pom`; ⏳ merkitsi Odottaa-tilaa joka muualla |
+| E | Ajastus näkyviin ja poistettavaksi muokkausmodaalista |
+| F | Aamu ja selaus: jaettu `fokus:sched v1`, molemmat vapauttavat erääntyneet latauksessa |
+
+**⚠ MANUAALITESTIT TEKEMÄTTÄ** — headless ei kata näitä:
+
+| # | Testi |
+|---|---|
+| 1 | Ajasta tehtävä muutaman minuutin päähän, sulje välilehti, avaa ajan mentyä → ilmestyy + notify |
+| 2 | Avaa **aamusuunnittelu PWA-pikakuvakkeesta** ilman pääsovellusta → aamuksi ajastettu on mukana |
+| 3 | Toistoajastus ma–pe: laukeaa kerran päivässä, ei uudelleen refreshin jälkeen |
+| 4 | Kaksi laitetta samalla tilillä: toisto ei laukea toiseen kertaan toisella |
+| 5 | Ennen korjausta jumiin jäänyt kortti vapautuu itsestään ensimmäisellä avauksella |
+| 6 | Mobiili: pakkakortin ajastusrivi ei mene tähtinapin alle kapeammalla kortilla |
+
+Automaattitestit: `scheduled` 47, `sched_aamu` 15, `sched_swipe` 10, kaikki
+läpi. Detektoridelta 0 kaikissa kolmessa tiedostossa.
+
+**Palautus:** `git revert 359b49a 6553cd8 62313bb ec529dc`.

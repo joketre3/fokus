@@ -23,45 +23,61 @@ TARGETS = {"index": "index.html", "aamu": "aamu.html", "swipe": "swipe.html"}
 # Suitet, jotka mittaavat asettuneita CSS-siirtymiä, tarvitsevat pidemmän budjetin.
 SLOW = {"timer_break", "phase_end"}
 
-# Jaettu muokkausmodaali on kopioitu kahteen popupiin (single-file-rajoite).
+# Jaetut lohkot on kopioitu useaan tiedostoon (single-file-rajoite).
 # Ajautuminen on tehtävä näkyväksi, muuten kopiot eriytyvät hiljaa.
-SHARED_BLOCK = ("<!-- BEGIN fokus:edit-modal v1", "<!-- END fokus:edit-modal v1 -->")
-SHARED_FILES = ["aamu.html", "swipe.html"]
+#
+# edit-modal on kopioitu vain kahteen popupiin — index.html:llä on oma,
+# laajempi modaalinsa. sched-lohko sen sijaan on kaikissa kolmessa:
+# ajastuksen logiikka on sama riippumatta siitä mistä sovellus avataan.
+SHARED_BLOCKS = [
+    ("edit-modal",
+     "<!-- BEGIN fokus:edit-modal v1", "<!-- END fokus:edit-modal v1 -->",
+     ["aamu.html", "swipe.html"]),
+    ("sched",
+     "/* BEGIN fokus:sched v1", "/* END fokus:sched v1 */",
+     ["index.html", "aamu.html", "swipe.html"]),
+]
 
 
-def check_shared_block(tree):
+def check_one_block(tree, label, begin, end, names):
     """Palauttaa virheiden määrän. Lohkon on oltava merkki merkiltä sama."""
-    begin, end = SHARED_BLOCK
     blocks = {}
-    for name in SHARED_FILES:
+    for name in names:
         path = os.path.join(tree, name)
         if not os.path.exists(path):
             continue
         src = open(path, encoding="utf-8").read()
         i = src.find(begin)
         if i < 0:
-            print(f"  [FAIL] {name}: jaettu edit-modal-lohko puuttuu")
+            print(f"  [FAIL] {name}: jaettu {label}-lohko puuttuu")
             blocks[name] = None
             continue
         j = src.find(end, i)
         if j < 0:
-            print(f"  [FAIL] {name}: lohkon END-merkintä puuttuu")
+            print(f"  [FAIL] {name}: {label}-lohkon END-merkintä puuttuu")
             blocks[name] = None
             continue
         blocks[name] = src[i:j + len(end)]
     vals = [b for b in blocks.values()]
     if not vals or any(v is None for v in vals):
-        print("  == shared_block: EPÄONNISTUI")
         return 1
     if len(set(vals)) != 1:
         sizes = ", ".join(f"{k} {len(v)} merkkiä" for k, v in blocks.items())
-        print(f"  [FAIL] lohkot eroavat toisistaan ({sizes})")
-        print("  == shared_block: EPÄONNISTUI")
+        print(f"  [FAIL] {label}-lohkot eroavat toisistaan ({sizes})")
         return 1
-    print(f"  [PASS] jaettu lohko identtinen ({len(vals[0])} merkkiä) "
+    print(f"  [PASS] {label} identtinen ({len(vals[0])} merkkiä) "
           f"-> {', '.join(blocks)}")
-    print("  == shared_block: 1/1 passed")
     return 0
+
+
+def check_shared_block(tree):
+    bad = sum(check_one_block(tree, *b) for b in SHARED_BLOCKS)
+    n = len(SHARED_BLOCKS)
+    if bad:
+        print("  == shared_block: EPÄONNISTUI")
+    else:
+        print(f"  == shared_block: {n}/{n} passed")
+    return bad
 
 
 def load(path):

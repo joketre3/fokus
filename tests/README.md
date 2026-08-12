@@ -14,10 +14,15 @@ python3 tests/run.py --tree /polku/puu  # muu puu (esim. merge-tulos)
 
 Vaatii Chromiumin polusta `harness.py:CHROME`. Ajo kestää ~30 s / suite.
 
-`shared_block` on esitarkistus (ei selainajoa): se lukee `fokus:edit-modal`
--lohkon `aamu.html`:stä ja `swipe.html`:stä ja vertaa merkki merkiltä. Lohko on
-kopioitu kahteen tiedostoon single-file-rajoitteen takia, joten ajautuminen on
-tehtävä näkyväksi — muokkaa **molempia** kopioita tai tarkistus kaatuu.
+`shared_block` on esitarkistus (ei selainajoa): se vertaa jaetut lohkot merkki
+merkiltä. Lohkot on kopioitu useaan tiedostoon single-file-rajoitteen takia,
+joten ajautuminen on tehtävä näkyväksi — muokkaa **kaikkia** kopioita tai
+tarkistus kaatuu.
+
+| Lohko | Tiedostot |
+|---|---|
+| `fokus:edit-modal v1` | `aamu.html`, `swipe.html` |
+| `fokus:sched v1` | `index.html`, `aamu.html`, `swipe.html` |
 
 ## Suitet
 
@@ -37,6 +42,9 @@ tehtävä näkyväksi — muokkaa **molempia** kopioita tai tarkistus kaatuu.
 | `aamu_skip` | aamu | Ohitus ei pyyhi eilistä sammakkoa |
 | `swipe` | swipe | Pakan suodatus, muokkauksen tallennus, näppäinoikopolut |
 | `hand_order` | index | Käden järjestys seuraa `t.orderia`, `HAND_MAX` yksi luku |
+| `scheduled` | index | Myöhästyneiden ajastusten vapautus, ajastusrivi, Ajastetut-kategoria |
+| `sched_aamu` | aamu | Velho vapauttaa erääntyneet; tänään ilmestyvä on suunniteltavissa |
+| `sched_swipe` | swipe | Pakka näyttää ajastetut tilamerkinnällä, vapauttaa erääntyneet |
 
 ## Suitejen kirjoittaminen
 

@@ -51,6 +51,9 @@ body{background:var(--paper);font-family:'DM Sans',sans-serif;color:var(--ink);m
 .meta-item{font-size:.68rem;color:var(--muted);font-weight:300}
 .chip{font-size:.6rem;font-weight:500;padding:.12rem .35rem;border-radius:4px}
 .chip.frog{color:#4a6e22;background:rgba(74,110,34,.1)}.chip.inq{color:var(--accent);background:rgba(196,154,58,.1)}.chip.wait{color:#3a6b8a;background:rgba(58,107,138,.1)}
+.chip.sched{color:var(--pomo);background:rgba(192,86,33,.1)}
+/* Ajastusrivi: kursiivi erottaa sen tehtävän omasta tekstistä. */
+.card-sched{font-size:.62rem;font-weight:300;font-style:italic;color:var(--pomo);margin-top:.3rem}
 .shadow-card{position:absolute;width:100%;max-width:320px;pointer-events:none}
 .shadow-card .task-card{opacity:.4;transform:scale(.94);box-shadow:0 2px 10px rgba(0,0,0,.05)}
 .shadow-card.back2 .task-card{opacity:.18;transform:scale(.88)}
@@ -581,6 +584,128 @@ function startSwipe(override){
   renderStack();renderQueuePanel();
 }
 
+/* BEGIN fokus:sched v1 — jaettu lohko. PIDÄ IDENTTISENÄ
+   index.html <-> aamu.html <-> swipe.html. Kopio on single-file-rajoitteen
+   seuraus; tests/run.py:n shared_block vertaa kaikkia kolmea merkki
+   merkiltä, joten ajautuminen kaataa testin. Muokkaa kaikkia kolmea.
+
+   Lohko on puhdasta logiikkaa: se ei tallenna, piirrä eikä ilmoita mitään.
+   Kutsuja hoitaa ne, koska save/render/notify ovat eri asioita
+   pääsovelluksessa ja popupeissa. */
+// Paikallinen YYYY-MM-DD. toISOString() antaa UTC-päivän, joka Suomessa
+// (UTC+2/+3) on eri kuin kalenterissa keskiyön jälkeen — s.date-vertailu
+// heittäisi vuorokauden joka yö.
+function localDateStr(d){
+  return d.getFullYear()+'-'
+    +String(d.getMonth()+1).padStart(2,'0')+'-'
+    +String(d.getDate()).padStart(2,'0');
+}
+
+// Onko ajastus erääntynyt? Puhdas predikaatti: ei lue kelloa eikä
+// localStoragea, joten sen voi testata kiinteillä ajoilla.
+//
+// Vertailu on `<=`, ei `===`. Vanha täsmäminuuttivertailu vapautti tehtävän
+// vain jos sovellus sattui olemaan auki juuri sillä minuutilla; muuten
+// tehtävä jäi scheduled_hidden:true pysyvästi.
+function scheduleDue(s,now,lastTriggered){
+  if(!s)return false;
+  var today=localDateStr(now);
+  var hhmm=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  if(s.type==='once'){
+    if(s.triggered)return false;
+    return s.date<today||(s.date===today&&s.time<=hhmm);
+  }
+  if(s.type==='repeat'){
+    // Menneitä päiviä ei kaiveta takaisin — päivittäinen rutiini ei saa
+    // kasautua ruudulle viikon poissaolon jälkeen. Vain tämä päivä.
+    if(lastTriggered===today)return false;
+    return s.days.indexOf(now.getDay())>=0&&s.time<=hhmm;
+  }
+  return false;
+}
+
+// Ajastus ihmisluettavana. Renderöidään joka kerta tuoreena — tekstiä ei
+// koskaan kirjoiteta t.lisatiedotiin, koska tallennus lukisi sen käyttäjän
+// omaksi tekstiksi ja se monistuisi ja vanhentuisi.
+var SCHED_DAY_NAMES=['Su','Ma','Ti','Ke','To','Pe','La'];
+
+function fmtSchedDate(iso){
+  var p=String(iso||'').split('-');
+  if(p.length!==3)return String(iso||'');
+  return parseInt(p[2],10)+'.'+parseInt(p[1],10)+'.'+p[0];
+}
+
+// Viikonpäivät luettavana. "Ma, Ti, Ke, To, Pe" ei mahdu pakkakortin
+// leveyteen eikä kerro enempää kuin "arkisin".
+function fmtSchedDays(days){
+  var d=(days||[]).slice().sort(function(a,b){return a-b;});
+  var key=d.join(',');
+  if(key==='0,1,2,3,4,5,6')return 'päivittäin';
+  if(key==='1,2,3,4,5')return 'arkisin';
+  if(key==='0,6')return 'viikonloppuisin';
+  // Maanantai ensin — sunnuntai (0) on suomalaisessa viikossa viimeinen.
+  return d.map(function(x){return x===0?7:x;}).sort(function(a,b){return a-b;})
+          .map(function(x){return SCHED_DAY_NAMES[x===7?0:x];}).join(', ');
+}
+
+// short=true pakkakortille, jossa rivi on 8px ja ~125px leveä.
+function fmtSchedule(t,short){
+  if(!t||!t.schedule)return '';
+  var s=t.schedule;
+  if(s.type==='once'){
+    var pvm=fmtSchedDate(s.date);
+    var when=pvm+' klo '+s.time;
+    if(s.triggered)return '📅 Ilmestyi '+(short?pvm:when);
+    // Erääntynyt mutta yhä piilossa: minuuttitarkistus ei ole vielä ehtinyt
+    // ajaa. Kerrotaan se, ettei kortti näytä syyttä jumittavan.
+    var myohassa=t.scheduled_hidden&&scheduleDue(s,new Date(),t.schedLast||null);
+    return '📅 '+(short?'':'Ajastettu ')+when+(myohassa?' — myöhässä':'');
+  }
+  if(s.type==='repeat'){
+    return '🔁 '+fmtSchedDays(s.days)+' klo '+s.time;
+  }
+  return '';
+}
+
+// Ilmestyykö tehtävä vasta myöhemmin kuin tänään? Aamusuunnittelu näyttää
+// tänään ilmestyvät (ne kuuluvat tähän päivään) mutta ei lokakuun tehtävää.
+function schedLaterThanToday(t,now){
+  if(!t||!t.scheduled_hidden||!t.schedule)return false;
+  var s=t.schedule;
+  if(s.type==='once')return s.date>localDateStr(now);
+  if(s.type==='repeat')return (s.days||[]).indexOf(now.getDay())<0;
+  return false;
+}
+
+// Vapauttaa erääntyneet ajastukset. Mutatoi tehtäväoliot mutta ei tallenna
+// eikä piirrä — kutsuja päättää mitä tehdä. Palauttaa vapautetut ja tiedon
+// siitä muuttuiko data muuten (migraatio), jotta kutsuja osaa tallentaa.
+function releaseDueSchedules(list,now){
+  var today=localDateStr(now), released=[], changed=false;
+  (list||[]).forEach(function(t){
+    if(!t||t.done||!t.schedule)return;
+    var s=t.schedule;
+    // Migraatio: laukaisutieto oli localStoragessa, jolloin toistoajastus
+    // laukesi uudelleen jokaisella laitteella erikseen. Nyt tehtävässä,
+    // jolloin se synkkaa muun datan mukana.
+    var lastKey='sched_last_'+t.id;
+    if(t.schedLast===undefined){
+      var legacy=null;
+      try{legacy=localStorage.getItem(lastKey);}catch(e){}
+      if(legacy){t.schedLast=legacy;changed=true;}
+    }
+    try{if(localStorage.getItem(lastKey)!==null)localStorage.removeItem(lastKey);}catch(e){}
+
+    if(!scheduleDue(s,now,t.schedLast||null))return;
+    if(s.type==='once')s.triggered=true;
+    else t.schedLast=today;
+    t.scheduled_hidden=false;
+    released.push(t);
+  });
+  return {released:released,changed:changed};
+}
+/* END fokus:sched v1 */
+
 // Turvallinen luku: rikki mennyt localStorage ei saa kaataa näkymää
 function readData(){
   try{
@@ -600,7 +725,20 @@ function readData(){
 function loadData(){
   var d=readData();
   if(!d){tasks=[];queue=[];active=null;turn=[];total=0;projects=[];return;}
-  tasks=JSON.parse(JSON.stringify(d.tasks)).filter(function(t){return !t.done&&!t.scheduled_hidden&&!isQuick(t)});
+  // Ajastettujen vapautus. Selaus aukeaa myös PWA-pikakuvakkeesta ilman
+  // pääsovellusta (manifest.json), jolloin mikään muu ei ajaisi tarkistusta.
+  var relSrc=releaseDueSchedules(d.tasks,new Date());
+  if(relSrc.released.length||relSrc.changed){
+    d.updatedAt=Date.now();
+    try{
+      var wsId2=localStorage.getItem('fap_active_ws')||'work';
+      localStorage.setItem('eis_v5_'+wsId2,JSON.stringify(d));
+    }catch(e){ console.warn('Fokus: ajastusten vapautuksen tallennus epäonnistui',e); }
+    try{ if(window.opener&&window.opener._scheduleFsSave) window.opener._scheduleFsSave(); }catch(e){}
+  }
+  // Pakka näyttää myös ajastetut: sen sopimus on näyttää kortti ja merkitä
+  // tila, ei piilottaa. Sama periaate kuin odottavilla korteilla.
+  tasks=JSON.parse(JSON.stringify(d.tasks)).filter(function(t){return !t.done&&!isQuick(t)});
   projects=Array.isArray(d.projects)?d.projects:[];
   // Migraatio: vanha queue[] → active+turn
   if(d.active!==undefined){
@@ -707,7 +845,16 @@ function buildCard(t,shadow){
   if(queue.indexOf(t.id)>=0){var c=document.createElement('span');c.className='chip inq';c.textContent='Jonossa';meta.appendChild(c);}
   if(t.frog){var c2=document.createElement('span');c2.className='chip frog';c2.textContent='🐸';meta.appendChild(c2);}
   if(t.waiting){var c3=document.createElement('span');c3.className='chip wait';c3.textContent='⏳';meta.appendChild(c3);}
+  // Ajastettu, ei vielä ilmestynyt: siru kertoo tilan, rivi kertoo milloin.
+  if(t.scheduled_hidden&&t.schedule){
+    var c4=document.createElement('span');c4.className='chip sched';c4.textContent='🕐 Ajastettu';meta.appendChild(c4);
+  }
   card.appendChild(meta);
+  var schedTxt=fmtSchedule(t);
+  if(schedTxt){
+    var sl=document.createElement('div');sl.className='card-sched';sl.textContent=schedTxt;
+    card.appendChild(sl);
+  }
   // Tags row
   if(t.tags&&t.tags.length){
     var tagsRow=document.createElement('div');
