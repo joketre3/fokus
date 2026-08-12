@@ -200,9 +200,17 @@
   --lane-scale:.10;         /* kutistus per askel */
   --lane-haze:.13;          /* ilmakeha per askel */
   --lane-fade:.04;          /* tummennus per askel */
-  --lane-peek-x:120px;      /* hover: kuinka kauas kortti liukuu pinosta ulos.
+  --lane-peek-x:120px;      /* hover: kuinka kauas LAHIN kortti liukuu ulos.
                                EI taysi paljastus — kortin vasen alanurkka saa
                                jaada edellisen taakse. */
+  --lane-peek-fade:.25;     /* hover-liu'un vaimennus per askel: lahin kurkkaa
+                               eniten, kauin vahiten (120/90/60/30px). Vakio
+                               liuku teki painvastoin — kauimmainen paljastui
+                               eniten, koska sen edessa ei ole mitaan. */
+  --lane-peek-pop:.06;      /* hover: perspektiiviskaala SAILYY ja saa vain
+                               taman lisan. scale(1) kasvatti syvinta korttia
+                               +64px ja lahinta 0px, eli sekin suosi
+                               kauimmaista ja litisti radan tasoksi. */
   --lane-peek-y:10px;
   --lane-peek-tilt:3.5deg;  /* hover: kortti nojaa oikealle. Origo on vasen
                                alanurkka, joten se pysyy paikallaan edellisen
@@ -4176,9 +4184,10 @@ html[data-perf="lite"] .arena-room__art{display:none!important;}
     translate(
       calc(var(--lane-gap) + var(--qi) * var(--lane-x)
            + var(--qi) * var(--qi) * var(--lane-curve)
-           + var(--lane-peek-x)),
+           + var(--lane-peek-x)
+             * (1 - var(--qi) * var(--lane-peek-fade))),
       calc(-1 * var(--qi) * var(--lane-y) + 9px))
-    scale(1);
+    scale(calc(1 - var(--qi) * var(--lane-scale) + var(--lane-peek-pop)));
   opacity:1;
 }
 html[data-perf="lite"] .lane-shadow{display:none}
@@ -4189,16 +4198,24 @@ html[data-perf="lite"] .lane-shadow{display:none}
    transform vasta aloittaa liukunsa. Kun kortti pysyy lepokerroksessaan, se ei
    voi koskaan menna edessaan olevan paalle — ja juuri siksi sen vasen alanurkka
    jaa edellisen taakse, mika on tarkoitus: rata pysyy pinona eika hajoa riviksi.
-   Kallistuksen origo on sama 0 100% kuin levossa, joten nurkka ei liiku. */
+   Kallistuksen origo on sama 0 100% kuin levossa, joten nurkka ei liiku.
+
+   Kurkkaus vaimenee syvyyteen (--lane-peek-fade) ja perspektiiviskaala SAILYY
+   (--lane-peek-pop lisana, ei scale(1)). Mitattu ennen: paljastuva osa oli
+   156/172/195/219px eli kauimmainen paljastui eniten — kaksi syyta samaan
+   suuntaan. Vakio liuku suosi kauimmaista koska sen edessa ei ole mitaan mika
+   peittaisi, ja scale(1) kasvatti syvinta korttia +64px mutta lahinta 0px. */
 .lane-card:hover{
   transform:
     translate(
       calc(var(--lane-gap) + var(--qi) * var(--lane-x)
            + var(--qi) * var(--qi) * var(--lane-curve)
-           + var(--lane-peek-x)),
+           + var(--lane-peek-x)
+             * (1 - var(--qi) * var(--lane-peek-fade))),
       calc(-1 * var(--qi) * var(--lane-y) - var(--lane-peek-y))
     )
-    scale(1) rotate(var(--lane-peek-tilt));
+    scale(calc(1 - var(--qi) * var(--lane-scale) + var(--lane-peek-pop)))
+    rotate(var(--lane-peek-tilt));
   filter:brightness(1.06);
   box-shadow:0 18px 40px rgba(0,0,0,.55);
 }
