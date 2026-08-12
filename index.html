@@ -107,7 +107,11 @@
      Näkyvä osa PAKKA-palkin yläpuolella = 156px - translateY, riippumaton
      ikkunan korkeudesta. */
   --hand-rest-t:60px;        /* → 96px näkyvissä: taide + verbisiru */
-  --hand-open-t:24px;        /* → 132px; areenakortin napit jäävät vapaiksi */
+  /* Auki-tilan yläraja on 0, ei mielivaltainen luku: negatiivinen arvo nostaa
+     viuhkan kokonaan pöydän kehyksen yli, jolloin se kelluu eikä tule pöydän
+     alta (vaiheiden 2–5 opetus). 0:lla alin --ledge-h jää kehyksen taakse.
+     Lepotila (--hand-rest-t) ei muutu — nosto koskee vain käytettävää kättä. */
+  --hand-open-t:0px;         /* → 156px; areenakortin napit jäävät vapaiksi */
   --fan-r:836px;             /* pivot kortin yläreunasta (kortin keskiö 745px) */
   --fan-step:5.5deg;         /* 745px * 5.5deg ≈ 72px vaakajako */
   --fan-step-open:9deg;      /* auki ≈ 117px jako, uloin kortti ±18deg */
@@ -167,10 +171,22 @@
      reunojen pinona, ja luettavuus tulee hoverista. */
   --lane-card-w:214px;
   --lane-max:4;             /* nakyvien korttien maara; media-kyselyt laskevat */
-  --lane-gap:-26px;         /* ensimmaisen kortin lahtokohta areenan keskelta */
-  --lane-x:50px;            /* vaaka-askel per kortti */
+  /* Lahin kortti tulee esiin areenakortin TAKAA: rata jatkuu areenasta eika
+     irtoa omaksi saarekkeekseen. Areenakortti on max-width:300px keskitettyna
+     ja #queue-lane on left:50% samassa #arenassa, joten puolikas on 150px. */
+  --lane-tuck:30px;         /* paljonko lahin kortti jaa areenakortin taakse */
+  --lane-gap:calc(150px - var(--lane-tuck));
+  /* Vaaka-askel LAHIMMAN kortin mitassa. --lane-x ja --lane-curve JOHDETAAN
+     tasta, jotta askel kutistuu samassa suhteessa kuin kortti: muuten nakyva
+     sliveri kasvaa syvyyteen ja jonon tarkein kortti nakyy vahiten. Kortin k
+     skaala on 1 - k*s, joten kumulatiivinen siirtyma on
+       step * (i - s*i(i-1)/2)  =  step(1+s/2)*qi - (step*s/2)*qi^2,
+     eli kaarretermi on NEGATIIVINEN. Aiempi +2px oli juuri vian lahde:
+     sliverit kasvoivat 33 → 36 → 40px. */
+  --lane-step:58px;
+  --lane-x:calc(var(--lane-step) * (1 + var(--lane-scale) / 2));
+  --lane-curve:calc(var(--lane-step) * var(--lane-scale) / -2);
   --lane-y:5px;             /* pystynosto per kortti (kauempana = ylempana) */
-  --lane-curve:2px;         /* kaarrekiihtyvyys (qi^2) */
   --lane-tilt:.5deg;
   --lane-scale:.10;         /* kutistus per askel */
   --lane-haze:.13;          /* ilmakeha per askel */
@@ -4085,7 +4101,23 @@ html[data-perf="lite"] .arena-room__art{display:none!important;}
 }
 /* Kapea ikkuna: rata lyhenee, kortit eivat kutistu luettavuuden alle */
 @media (max-width:1399px){ :root{--lane-max:3} }
-@media (max-width:1199px){ :root{--lane-max:2} }
+/* Kapeimmassa ikkunassa rata on lahella oikeaa kiskoa, ja hover-liuku +
+   viuhkotus veisivat viimeisen kortin sen taakse. Mitattu 1100px:ssa:
+   peek-x 120 + push 160 → viimeinen.right 1080, kisko 1028. Lyhennetaan
+   MOLEMPIA — pelkka pienempi push jattaisi hovered kortin peittamaan
+   seuraavan, mika oli koko viuhkotuksen syy. */
+@media (max-width:1199px){
+  :root{
+    --lane-max:2;
+    --lane-card-w:170px;  /* rata ei ole luettava levossa, joten kapea kortti
+                             ei maksa mitaan — hover paljastaa sen taysikokoisena
+                             suhteessa muihin */
+    --lane-step:44px;
+    --lane-tuck:60px;     /* lahempana areenakorttia → rata alkaa vasemmalta */
+    --lane-peek-x:54px;
+    --lane-fan-push:58px;
+  }
+}
 
 /* Kortti seisoo lattialla: pivot tyvessa, jolloin skaalaus ei irrota sita
    viivasta. transform-lista luetaan ulkoa sisaan — rotate ja scale tapahtuvat
@@ -4137,7 +4169,24 @@ html[data-perf="lite"] .arena-room__art{display:none!important;}
     rgba(0,0,0,.55) 0%, rgba(0,0,0,.28) 45%, transparent 72%);
   opacity:calc(1 - var(--qi) * var(--lane-haze));
   z-index:1;pointer-events:none;
-  transition:translate var(--dur-panel) var(--ease-out);
+  transition:transform var(--dur-panel) var(--ease-out),
+             translate var(--dur-panel) var(--ease-out);
+}
+/* Varjo seuraa hovered korttia. Kortin OMA varjo edeltaa sita DOM:issa
+   (renderQueueLane lisaa .lane-shadow ennen .lane-cardia), joten viuhkotuksen
+   ~-selektori ei tavoita sita — se osuu vain seuraavien korttien varjoihin.
+   :has(+ ...) katsoo eteenpain. Varjo saa saman liu'un ja skaalan kuin kortti
+   mutta EI --lane-peek-y-nostoa eika kallistusta: kontaktivarjo pysyy
+   lattiaviivalla ja kortti irtoaa siita ylospain. */
+.lane-shadow:has(+ .lane-card:hover){
+  transform:
+    translate(
+      calc(var(--lane-gap) + var(--qi) * var(--lane-x)
+           + var(--qi) * var(--qi) * var(--lane-curve)
+           + var(--lane-peek-x)),
+      calc(-1 * var(--qi) * var(--lane-y) + 9px))
+    scale(1);
+  opacity:1;
 }
 html[data-perf="lite"] .lane-shadow{display:none}
 
@@ -5208,7 +5257,9 @@ svg[aria-hidden="true"]{pointer-events:none;}
      kortista (kuilu kasvaa ikkunan korkeuden mukaan). --card-base = kortin
      alareunan etäisyys areenan pystykeskeltä, asetetaan _syncCastShadow():ssa. */
   .arena-room__castshadow {
-    top: calc(50% + var(--card-base, 188px));
+    /* +4px: kontaktipiste kuuluu kortin tyven ALLE. Offset on taalla eika
+       --card-basessa, jotta rata saa saman viivan kuin kortin alareuna. */
+    top: calc(50% + var(--card-base, 188px) + 4px);
     bottom: auto;
   }
   /* Tyhjä tila: kaiverrettu teksti syvennyksen sisällä */
@@ -10675,7 +10726,10 @@ function _syncCastShadow(){
   if(!card){ arena.style.removeProperty('--card-base'); return; }
   var a=arena.getBoundingClientRect(), c=card.getBoundingClientRect();
   if(!a.height||!c.height) return;
-  arena.style.setProperty('--card-base', Math.round(c.bottom-(a.top+a.height/2)+4)+'px');
+  // --card-base = areenakortin ALAREUNA, ei mitaan siita johdettua. Aiempi +4
+  // oli heittovarjon kontaktipiste tyven alla, mutta rata perii saman viivan ja
+  // valui 4px kortin alle. Kukin kayttaja lisaa nyt oman offsettinsa.
+  arena.style.setProperty('--card-base', Math.round(c.bottom-(a.top+a.height/2))+'px');
 }
 window.addEventListener('resize', _syncCastShadow);
 // Fonttien lataus muuttaa korttitekstin korkeutta — mittaa uudelleen kun ne ovat.
