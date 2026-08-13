@@ -50,12 +50,17 @@
 @property --lane-scale{syntax:'<number>';inherits:true;initial-value:.10}
 @property --lane-haze {syntax:'<number>';inherits:true;initial-value:.13}
 @property --lane-fade {syntax:'<number>';inherits:true;initial-value:.04}
-/* UUDET — indeksin geometria */
-@property --idx-w    {syntax:'<length>';inherits:true;initial-value:26px}
-@property --idx-gut  {syntax:'<length>';inherits:true;initial-value:8px}
-@property --seg-h    {syntax:'<length>';inherits:true;initial-value:5px}
+/* UUDET — indeksin geometria. initial-value on pidettävä samana kuin
+   :rootin arvo: eroavaisuus ylikirjoittaa hiljaa (maksoi yhden kierroksen). */
+@property --idx-w    {syntax:'<length>';inherits:true;initial-value:34px}
+@property --idx-gut  {syntax:'<length>';inherits:true;initial-value:3px}
+@property --seg-h    {syntax:'<length>';inherits:true;initial-value:6px}
 @property --seg-gap  {syntax:'<length>';inherits:true;initial-value:2px}
-@property --seg-w    {syntax:'<length>';inherits:true;initial-value:5px}
+@property --seg-w    {syntax:'<length>';inherits:true;initial-value:7px}
+/* Moodikohtainen kerroin: 1 = areena (300px). Kaikki indeksin sisämitat
+   johdetaan tästä, joten mitään ei saa laskea kiinteällä vähennyksellä
+   (calc(--idx-w - 8px) romahtaisi kädessä negatiiviseksi). */
+@property --idx-k    {syntax:'<number>';inherits:true;initial-value:1}
 
 /* ── Tokenit: kopioitu index.html:n :root-lohkosta ──────────────
    Vain se osa jonka kortti, viuhka ja rata tarvitsevat. Arvot ovat
@@ -111,12 +116,22 @@
      Mitoitus tulee AHTAIMMASTA rajauksesta: radan syvimmän kortin näkyvä
      kaistale on 42 kortin px. BR-indeksi vie `gut + idx-w`, joten 6+26=32
      jättää 10px pelivaraa. 8px gutterilla vara oli 0 ja indeksi kosketti
-     edellisen kortin reunaa. Yksi mitta kaikkiin kolmeen moodiin: indeksi
-     on kiinteä käyttöliittymäelementti kuten mana-symboli, ei kortin
-     mukana skaalautuva koriste. */
-  --idx-w:26px;      /* palstan leveys kortin koordinaatistossa */
-  --idx-gut:6px;     /* turva-alue: Paquetten 3–4 mm digitaalisena */
-  --seg-h:5px; --seg-gap:2px; --seg-w:5px;
+     edellisen kortin reunaa.
+
+     Arvot lukittu mockup-kierroksella: 34 / 3 / 6 / 7 / 2. Ne ovat
+     AREENAKORTIN (300px) mittoja — käsi ja rata skaalaavat ne --idx-k:llä,
+     koska 34px palsta 130px kortilla menee yli. Kiinteä mitta olisi ollut
+     yksinkertaisempi mutta väärä: indeksi on osa kortin kehystä, ei sen
+     päälle liimattu widgetti. */
+  --idx-w:34px;      /* palstan leveys AREENAKORTILLA */
+  --idx-gut:3px;     /* turva-alue: Paquetten 3–4 mm digitaalisena */
+  --seg-h:6px; --seg-gap:2px; --seg-w:7px;
+
+  /* Radiaalirypäs */
+  --rad-main:66px;   /* keskinapin halkaisija */
+  --rad-sat:38px;    /* satelliitin halkaisija */
+  --rad-r:62px;      /* etäisyys keskeltä */
+  --rad-y:70%;       /* pystysijainti kortilla */
 }
 html[data-theme="havu"]{
   --ink:rgba(255,255,255,.97); --muted:rgba(255,255,255,.72);
@@ -437,6 +452,109 @@ body:not(.title-center) .tcg-card__title{text-align:left}
 }
 .tcg-card__meta-tcg .dot{opacity:.4}
 
+/* ═══ RADIAALINEN TOIMINTORYPÄS ══════════════════════════════
+   Aloita-nappi siirtyy kortin alalaidasta sen keskelle pyöreäksi
+   play-napiksi. Muut toiminnot ovat sen ympärillä ja tulevat esiin
+   hoverilla/fokuksella.
+
+   Suuntien on vastattava mobiilin eleitä (DESIGN.md The Gesture Rule:
+   oikea = tehty, vasen = odottaa, ylös = seuraava), muuten laitteiden
+   välille syntyy opeteltava ero. Alas = muokkaa (mobiilissa alas on
+   varattu vieritykselle, joten suunta on vapaa). Poista yläoikealle:
+   diagonaali erottaa peruuttamattoman toiminnon neljästä muusta.
+
+   Rypäs on olemassa VAIN areenakortilla — toimintonapit renderöityvät
+   muutenkin vain aktiiviselle kortille (renderArenaCard palaa ennen
+   .tcg-card__actions-tcg -lohkoa kompakteissa moodeissa). */
+.tcg-card__radial{
+  /* Pystysijainti on säädettävä: 50% osuu kortin NIMEN päälle. Rungon
+     alaosa on Frankenstein-korttiakin ajatellen se ainoa alue joka on
+     luotettavasti tyhjä. */
+  position:absolute;left:50%;top:var(--rad-y,70%);z-index:6;
+  width:0;height:0;
+  /* Kontaineri ei saa napata osumia: se peittäisi kortin muun sisällön.
+     :hover propagoituu silti lapsen kautta — sama idiomi kuin
+     #hand-bar-cards -kääreessä. */
+  pointer-events:none;
+}
+.rad{
+  position:absolute;left:0;top:0;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:50%;cursor:pointer;pointer-events:auto;
+  border:1px solid color-mix(in srgb,var(--gold) 45%,transparent);
+  background:linear-gradient(180deg,rgba(20,34,28,.96),rgba(10,20,16,.96));
+  color:var(--tcg-plate-ink);
+  box-shadow:var(--chip-shadow,0 2px 0 rgba(0,0,0,.35)), 0 4px 14px rgba(0,0,0,.45);
+  /* Sijainti tulee `translate`-propertystä ja painallus `transform`ista:
+     jos molemmat olisivat samassa transformissa, :active kumoaisi
+     sijoituksen ja nappi hyppäisi keskelle. */
+  transition:translate var(--dur-panel) var(--ease-out),
+             opacity .18s var(--ease-out),
+             transform .1s, background .15s;
+}
+.rad svg{width:52%;height:52%;display:block}
+.rad:active{transform:scale(.93)}
+.rad--main{
+  width:var(--rad-main);height:var(--rad-main);
+  margin:calc(var(--rad-main) / -2) 0 0 calc(var(--rad-main) / -2);
+  background:linear-gradient(180deg,var(--accent),color-mix(in srgb,var(--accent) 72%,black));
+  border-color:color-mix(in srgb,var(--accent) 70%,white);
+  color:var(--ink-on-art);
+  box-shadow:0 3px 0 color-mix(in srgb,var(--accent) 50%,black),
+             0 8px 22px rgba(0,0,0,.5);
+}
+.rad--main:active{transform:scale(.96) translateY(2px)}
+/* Play ja seis ovat molemmat DOM:issa, CSS valitsee. Näin ajastintilan
+   vaihto ei vaadi uudelleenrenderöintiä eikä nappi katoa hetkeksi. */
+.rad--main svg{width:46%;height:46%;margin-left:6%}   /* play-kolmio optisesti keskelle */
+.rad--main svg + svg{display:none}
+body.timer-on .rad--main svg:first-of-type{display:none}
+body.timer-on .rad--main svg + svg{display:block}
+body.timer-on .rad--main{
+  background:linear-gradient(180deg,var(--tcg-stop,#7a2020),#4d1414);
+  border-color:#a33;
+  box-shadow:0 3px 0 #3a0f0f, 0 8px 22px rgba(0,0,0,.5);
+}
+body.timer-on .rad--main svg + svg{width:40%;height:40%;margin-left:0}
+
+/* Satelliitit: lepotilassa keskinapin alla, hoverilla ulos. */
+.rad--sat{
+  width:var(--rad-sat);height:var(--rad-sat);
+  margin:calc(var(--rad-sat) / -2) 0 0 calc(var(--rad-sat) / -2);
+  opacity:0;translate:0 0;z-index:-1;
+}
+/* body.rad-open on mockupin tarkastelutila: rypäs auki ilman hiirtä, jotta
+   sen geometrian voi arvioida ja kuvakaapata. Ei tule index.html:ään. */
+.tcg-card__radial:hover .rad--sat,
+.tcg-card__radial:focus-within .rad--sat,
+body.rad-open .rad--sat{opacity:1}
+.tcg-card__radial:hover .rad--tehty,
+.tcg-card__radial:focus-within .rad--tehty,
+body.rad-open .rad--tehty  {translate:var(--rad-r) 0}
+.tcg-card__radial:hover .rad--odottaa,
+.tcg-card__radial:focus-within .rad--odottaa,
+body.rad-open .rad--odottaa{translate:calc(var(--rad-r) * -1) 0}
+.tcg-card__radial:hover .rad--jonoon,
+.tcg-card__radial:focus-within .rad--jonoon,
+body.rad-open .rad--jonoon {translate:0 calc(var(--rad-r) * -1)}
+.tcg-card__radial:hover .rad--muokkaa,
+.tcg-card__radial:focus-within .rad--muokkaa,
+body.rad-open .rad--muokkaa{translate:0 var(--rad-r)}
+/* Poista: diagonaali yläoikealle, .72 pitää etäisyyden samana kuin
+   suorilla suunnilla (cos45 ≈ .707). */
+.tcg-card__radial:hover .rad--poista,
+.tcg-card__radial:focus-within .rad--poista,
+body.rad-open .rad--poista{
+  translate:calc(var(--rad-r) * .72) calc(var(--rad-r) * -.72);
+}
+.rad--tehty:hover  {background:color-mix(in srgb,var(--q2) 70%,black);border-color:var(--q2-bright,#4a8a4a)}
+.rad--poista:hover {background:color-mix(in srgb,#7a2020 80%,black);border-color:#a33}
+.rad--sat:hover    {color:var(--ink-on-art)}
+
+/* Radiaalirypäs korvaa alarivin: Aloita, ✓ ja × siirtyivät sinne. */
+body.radial .tcg-card__actions-tcg{display:none}
+body:not(.radial) .tcg-card__radial{display:none}
+
 /* Stats- ja toimintorivit — vain areenakortilla. Arvot index.html:stä. */
 .tcg-card__stats{
   position:relative;z-index:1;
@@ -493,18 +611,38 @@ body:not(.title-center) .tcg-card__title{text-align:left}
    hoverin osumakentälle ja .tcg-card--lane::after hoverin sillalle.
    Kumpaakaan ei voi ottaa indeksille ilman että radan selaus rikkoutuu. */
 .tcg-card__idx{
+  /* Kaikki sisämitat johdetaan --w:stä, jotta yksi kerroin riittää.
+     Kiinteä vähennys (calc(--idx-w - 8px)) toimisi areenalla ja antaisi
+     kädessä 6px symbolin — juuri se "menee yli" jonka Jaakko huomasi. */
+  --w:calc(var(--idx-w) * var(--idx-k));
+  --g:calc(var(--idx-gut) * var(--idx-k));
   position:absolute;z-index:4;
   display:flex;flex-direction:column;align-items:center;
-  gap:calc(var(--idx-gut) / 2);
-  width:var(--idx-w);
+  gap:calc(var(--w) * .12);
+  width:var(--w);
   pointer-events:none;
 }
-.tcg-card__idx--tl{top:var(--idx-gut);left:var(--idx-gut)}
-.tcg-card__idx--br{bottom:var(--idx-gut);right:var(--idx-gut);justify-content:flex-end}
+.tcg-card__idx--tl{top:var(--g);left:var(--g)}
+.tcg-card__idx--br{bottom:var(--g);right:var(--g);justify-content:flex-end}
+
+/* Moodikohtainen kerroin. Suhde korttileveyteen: 130/300 = .43 ja
+   214/300 = .71. Kädessä käytetään .62 eikä .43, koska glyfin viivapaino
+   on 1,75 / 24 — .43:lla viiva olisi 0,73px eli alle pikselin, ja se on
+   täsmälleen nykyisten ikonien vika (verb-i-vie: stroke-width .3).
+   .62 antaa 21px palstan, 15px symbolin ja 1,04px viivan. */
+.tcg-card--hand{--idx-k:.62}
+/* Rata .85 eikä .71 (= 214/300): syvin kortti on lisäksi scale(.7), joten
+   suhdeluku kertautuu ja glyfin viiva jäisi 0,94px:ään ruudulla. .85 nostaa
+   sen 1,0px:ään ja jättää silti ~8px pelivaran kaistaleeseen.
+   .tcg-card--lane on AINA myös --hand → tämän on tultava jälkeen. */
+.tcg-card--lane{--idx-k:.85}
+
 /* Pelikortin oikea kaksoisindeksi on 180° käännetty, koska korttia voi
    pidellä kummin päin tahansa. Fokuksen kortti on aina samoin päin, joten
-   käännös on tyylivalinta eikä toiminnallisuus — kytkin paneelissa. */
+   symbolit vastakierretään: palstan JÄRJESTYS kääntyy (verbi ylös, kvadrantti
+   alas) mutta jokainen merkki jää oikein päin. */
 body.br-rotate .tcg-card__idx--br{transform:rotate(180deg)}
+body.br-rotate .tcg-card__idx--br > *{transform:rotate(180deg)}
 
 /* Näkyvyys per variantti */
 body:not(.idx-none) .tcg-card__idx{display:flex}
@@ -521,7 +659,7 @@ body:not(.br-arena) .tcg-card--arena-size .tcg-card__idx--br{display:none}
 /* Kvadranttimerkki: muoto värin pariksi. Väri ei saa olla ainoa
    tiedon kantaja (PDF §5, saavutettavuus). */
 .idx__quad{
-  width:calc(var(--idx-w) - 8px);height:calc(var(--idx-w) - 8px);
+  width:calc(var(--w) * .68);height:calc(var(--w) * .68);
   flex:none;color:var(--qc);
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.7));
 }
@@ -529,7 +667,7 @@ body:not(.br-arena) .tcg-card--arena-size .tcg-card__idx--br{display:none}
 
 /* Verbiglyfi */
 .idx__verb{
-  width:calc(var(--idx-w) - 8px);height:calc(var(--idx-w) - 8px);
+  width:calc(var(--w) * .68);height:calc(var(--w) * .68);
   flex:none;color:var(--tcg-plate-ink);
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.8));
 }
@@ -547,16 +685,20 @@ body:not(.br-arena) .tcg-card--arena-size .tcg-card__idx--br{display:none}
 }
 .idx__cost .seg--hi{background:var(--pomo-hi)}
 .idx__cost .seg--half{opacity:.55}
+/* Segmenttimitat skaalautuvat samalla kertoimella kuin palsta. */
+.idx__cost{--sh:calc(var(--seg-h) * var(--idx-k));
+           --sw:calc(var(--seg-w) * var(--idx-k));
+           --sg:max(1px, calc(var(--seg-gap) * var(--idx-k)))}
 /* pysty (oletus): segmentit pinoutuvat */
-body.meter-v .idx__cost{flex-direction:column-reverse;gap:var(--seg-gap)}
-body.meter-v .idx__cost .seg{width:var(--seg-w);height:var(--seg-h)}
-body.meter-v .idx__cost .seg--half{height:calc(var(--seg-h) / 2)}
+body.meter-v .idx__cost{flex-direction:column-reverse;gap:var(--sg)}
+body.meter-v .idx__cost .seg{width:var(--sw);height:var(--sh)}
+body.meter-v .idx__cost .seg--half{height:calc(var(--sh) / 2)}
 /* vaaka: volume slider -tyyli */
-body.meter-h .idx__cost{flex-direction:row;gap:var(--seg-gap)}
-body.meter-h .idx__cost .seg{width:var(--seg-h);height:var(--seg-w)}
-body.meter-h .idx__cost .seg--half{width:calc(var(--seg-h) / 2)}
+body.meter-h .idx__cost{flex-direction:row;gap:var(--sg)}
+body.meter-h .idx__cost .seg{width:var(--sh);height:var(--sw)}
+body.meter-h .idx__cost .seg--half{width:calc(var(--sh) / 2)}
 /* Pikatehtävä: ei palkkia vaan salama */
-.idx__quick{width:calc(var(--idx-w) - 10px);height:calc(var(--idx-w) - 10px);
+.idx__quick{width:calc(var(--w) * .6);height:calc(var(--w) * .6);
   color:var(--accent);filter:drop-shadow(0 1px 2px rgba(0,0,0,.8))}
 .idx__quick svg{width:100%;height:100%;display:block}
 
@@ -570,14 +712,15 @@ body.idx-a .tcg-card__idx{background:none}
    täyttö. Erottuu vaaleastakin q3-taiteesta ilman drop-shadowia. */
 body.idx-b .tcg-card__idx{
   background:rgba(6,12,9,.55);
-  border-radius:calc(var(--idx-w) / 2);
-  padding:calc(var(--idx-gut) / 2) 0;
+  border-radius:calc(var(--w) / 2);
+  /* Pelkkä pystypehmuste — leveyttä EI kasvateta. Aiempi
+     `width:calc(var(--idx-w) + 4px)` söi radan syvimmän kortin pelivaran
+     nollaan, ja 4px on lisäksi skaalaamaton vakio joka olisi kädessä
+     suhteessa kaksinkertainen. */
+  padding:calc(var(--w) * .16) 0;
   box-shadow:inset 0 0 0 1px rgba(0,0,0,.5),
              inset 0 1px 1px rgba(255,255,255,.07);
-  width:calc(var(--idx-w) + 4px);
 }
-body.idx-b .tcg-card__idx--tl{left:calc(var(--idx-gut) - 2px)}
-body.idx-b .tcg-card__idx--br{right:calc(var(--idx-gut) - 2px)}
 
 /* ── Variantti C: kvadranttinauha ────────────────────────────
    Palsta saa kvadranttivärisen selkänauhan, joka ulottuu kortin
@@ -588,16 +731,15 @@ body.idx-c .tcg-card__idx{
     color-mix(in srgb,var(--qc) 88%,black),
     color-mix(in srgb,var(--qc) 62%,black));
   box-shadow:inset 0 0 0 1px rgba(0,0,0,.45), 0 0 12px rgba(0,0,0,.5);
-  padding:calc(var(--idx-gut) / 2) 0;
-  width:calc(var(--idx-w) + 4px);
+  padding:calc(var(--w) * .16) 0;
 }
 body.idx-c .tcg-card__idx--tl{
-  top:0;left:0;border-radius:0 0 calc(var(--idx-w) / 2) 0;
-  padding-top:var(--idx-gut);
+  top:0;left:0;border-radius:0 0 calc(var(--w) / 2) 0;
+  padding-top:calc(var(--g) * 2);
 }
 body.idx-c .tcg-card__idx--br{
-  bottom:0;right:0;border-radius:calc(var(--idx-w) / 2) 0 0 0;
-  padding-bottom:var(--idx-gut);
+  bottom:0;right:0;border-radius:calc(var(--w) / 2) 0 0 0;
+  padding-bottom:calc(var(--g) * 2);
 }
 body.idx-c .idx__quad{color:var(--tcg-plate-ink);opacity:.9}
 
@@ -606,7 +748,7 @@ body.idx-c .idx__quad{color:var(--tcg-plate-ink);opacity:.9}
    25px sinetti ei mahtuisi 26px palstaan. */
 .tcg-card--frog .tcg-card__idx{
   box-shadow:0 0 0 1.5px var(--gold), 0 0 10px color-mix(in srgb,var(--gold) 45%,transparent);
-  border-radius:calc(var(--idx-w) / 2);
+  border-radius:calc(var(--w) / 2);
 }
 body.idx-c .tcg-card--frog .tcg-card__idx{border-radius:0}
 
@@ -652,7 +794,7 @@ body.idx-c .tcg-card--frog .tcg-card__idx{border-radius:0}
 }
 </style>
 </head>
-<body class="idx-a meter-v show-crop show-veil">
+<body class="idx-b meter-v br-rotate radial show-crop show-veil">
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 
@@ -714,6 +856,44 @@ body.idx-c .tcg-card--frog .tcg-card__idx{border-radius:0}
           stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
     <path d="M4.5 15c0-4.1 3.4-7.5 7.5-7.5s7.5 3.4 7.5 7.5c0 2.5-2 4.5-4.5 4.5H9c-2.5 0-4.5-2-4.5-4.5z"/>
     <circle cx="8.8" cy="6.8" r="2.3"/><circle cx="15.2" cy="6.8" r="2.3"/>
+  </symbol>
+
+  <!-- ═══ TOIMINTOGLYFIT — korvaavat emojit ⏳🔗✏✓×↑ ═══
+       Luonnos vaiheen 2 settiä varten. Aloita/Seis ovat täytettyjä:
+       ne ovat toimintapainikkeita, eivät tilamerkkejä. -->
+  <symbol id="g-aloita" viewBox="0 0 24 24">
+    <path d="M9 6.2v11.6c0 .8.9 1.3 1.6.9l9.2-5.8c.6-.4.6-1.4 0-1.8L10.6 5.3c-.7-.4-1.6.1-1.6.9z"
+          fill="currentColor"/>
+  </symbol>
+  <symbol id="g-seis" viewBox="0 0 24 24">
+    <rect x="6.5" y="6.5" width="11" height="11" rx="1.8" fill="currentColor"/>
+  </symbol>
+  <symbol id="g-tehty" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4.5 12.5 9.5 17.5 19.5 6.5"/>
+  </symbol>
+  <symbol id="g-odottaa" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7 3.5h10M7 20.5h10"/>
+    <path d="M8.5 3.5v3.1c0 1 .4 1.9 1.1 2.6L12 11.7l2.4-2.5c.7-.7 1.1-1.6 1.1-2.6V3.5"/>
+    <path d="M8.5 20.5v-3.1c0-1 .4-1.9 1.1-2.6L12 12.3l2.4 2.5c.7.7 1.1 1.6 1.1 2.6v3.1"/>
+  </symbol>
+  <symbol id="g-jonoon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 20V4.5"/><path d="M5.5 11 12 4.5 18.5 11"/>
+  </symbol>
+  <symbol id="g-muokkaa" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16.5 3.8 20.2 7.5 8.7 19H5v-3.7z"/><path d="M14 6.3l3.7 3.7"/>
+  </symbol>
+  <symbol id="g-poista" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round">
+    <path d="M6 6 18 18M18 6 6 18"/>
+  </symbol>
+  <symbol id="g-linkki" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 13.5a4 4 0 0 0 5.7 0l3-3a4 4 0 1 0-5.7-5.7l-1.7 1.7"/>
+    <path d="M14 10.5a4 4 0 0 0-5.7 0l-3 3a4 4 0 1 0 5.7 5.7l1.7-1.7"/>
   </symbol>
 
   <!-- ═══ KVADRANTTIMERKIT — muoto värin pariksi ═══ -->
@@ -790,8 +970,8 @@ body.idx-c .tcg-card--frog .tcg-card__idx{border-radius:0}
 <aside id="ctl" class="open">
   <h2>Indeksivariantti</h2>
   <div class="cbtns" id="c-idx">
-    <button class="cbtn on" data-v="idx-a">A palsta</button>
-    <button class="cbtn" data-v="idx-b">B upotus</button>
+    <button class="cbtn" data-v="idx-a">A palsta</button>
+    <button class="cbtn on" data-v="idx-b">B upotus</button>
     <button class="cbtn" data-v="idx-c">C nauha</button>
     <button class="cbtn" data-v="idx-none">Pois</button>
   </div>
@@ -834,10 +1014,19 @@ body.idx-c .tcg-card--frog .tcg-card__idx{border-radius:0}
   <div class="cbtns">
     <button class="cbtn on" id="c-crop">Rajausviiva</button>
     <button class="cbtn on" id="c-veil">Himmennys</button>
-    <button class="cbtn" id="c-brrot">BR 180°</button>
+    <button class="cbtn on" id="c-brrot">BR 180°</button>
     <button class="cbtn" id="c-brarena">BR myös areenalla</button>
     <button class="cbtn" id="c-titlec">Nimi keskitetty</button>
   </div>
+  <div class="cbtns" style="margin-top:.3rem">
+    <button class="cbtn on" id="c-radial">Radiaalinapit</button>
+    <button class="cbtn" id="c-radopen">Rypäs auki</button>
+    <button class="cbtn" id="c-timer">Ajastin käy</button>
+  </div>
+  <p class="chint">Aloita-nappi siirtyy kortin keskelle pyöreäksi. Muut
+    toiminnot tulevat esiin sen päällä hoverilla, <b>mobiilin
+    ele-järjestyksessä</b>: oikea = valmis, vasen = odottaa, ylös = seuraava.
+    Alas = muokkaa, yläoikea = poista. Alarivi poistuu.</p>
   <p class="chint">Areenakortin oikea alanurkka on toimintonappien paikka —
     BR-indeksi peittäisi ne. Indeksi palvelee <b>radan</b> rajausta, joten
     areenalla se on oletuksena pois.</p>
@@ -848,6 +1037,10 @@ body.idx-c .tcg-card--frog .tcg-card__idx{border-radius:0}
   <div class="crow"><label for="s-segh">Segmentin pituus</label><output id="o-segh"></output><input type="range" id="s-segh" min="2" max="14" step="1"></div>
   <div class="crow"><label for="s-segw">Segmentin paksuus</label><output id="o-segw"></output><input type="range" id="s-segw" min="2" max="14" step="1"></div>
   <div class="crow"><label for="s-seggap">Segmenttiväli</label><output id="o-seggap"></output><input type="range" id="s-seggap" min="0" max="6" step="1"></div>
+  <div class="crow"><label for="s-radmain">Keskinappi</label><output id="o-radmain"></output><input type="range" id="s-radmain" min="40" max="110" step="2"></div>
+  <div class="crow"><label for="s-radsat">Satelliitti</label><output id="o-radsat"></output><input type="range" id="s-radsat" min="24" max="60" step="2"></div>
+  <div class="crow"><label for="s-radr">Rypään säde</label><output id="o-radr"></output><input type="range" id="s-radr" min="36" max="110" step="2"></div>
+  <div class="crow"><label for="s-rady">Rypään korkeus</label><output id="o-rady"></output><input type="range" id="s-rady" min="35" max="88" step="1"></div>
 
   <h2>Tokenit index.html:ään</h2>
   <pre id="c-out"></pre>
@@ -932,6 +1125,23 @@ function indexCol(t, pos){
          '</div>';
 }
 
+/* Radiaalirypäs. Suunnat = mobiilin eleet (oikea tehty, vasen odottaa,
+   ylös seuraava), alas muokkaa, yläoikea poista. */
+function radial(){
+  const sat = (cls, glyph, label) =>
+    '<button class="rad rad--sat rad--' + cls + '" title="' + label +
+    '" aria-label="' + label + '">' + svgUse(glyph) + '</button>';
+  return '<div class="tcg-card__radial">' +
+    sat('tehty',   'g-tehty',   'Valmis') +
+    sat('odottaa', 'g-odottaa', 'Odottaa') +
+    sat('jonoon',  'g-jonoon',  'Seuraava') +
+    sat('muokkaa', 'g-muokkaa', 'Muokkaa') +
+    sat('poista',  'g-poista',  'Poista') +
+    '<button class="rad rad--main" title="Aloita" aria-label="Aloita">' +
+      svgUse('g-aloita') + svgUse('g-seis') + '</button>' +
+  '</div>';
+}
+
 /* ── Kortti ──────────────────────────────────────────────────
    mode: 'arena' | 'hand' | 'lane'. Sama jako kuin renderArenaCard:
    'hand' ja 'lane' jakavat kompaktin rungon. */
@@ -974,19 +1184,23 @@ function card(t, mode){
          plate.appendChild(stats) + plate.appendChild(acts)). Ilman niitä
          mockup väittäisi Frankensteinin mahtuvan, vaikka sovelluksessa se
          ylivuotaa 23px — juuri se rivi jonka tämä työ korjaa. */
-      (compact ? '' :
+      (compact ? '' : radial() +
+        /* Stats-rivi jää: se on tehtävän OMINAISUUKSIA (tärkeä, kiireinen,
+           sammakko, linkki), ei toimintoja. Rypääseen siirtyivät ⏳ ja ✎,
+           joten ne poistuvat oikealta. */
         '<div class="tcg-card__stats">' +
           '<div class="tcg-card__stats-left">' +
             '<span class="cbadge">!</span><span class="cbadge">⏱</span>' +
             '<span class="cbadge">' + svgUse('g-sammakko') + '</span>' +
           '</div>' +
           '<div class="tcg-card__stats-right">' +
-            '<span class="cbadge">⏳</span><span class="cbadge">✏</span>' +
+            '<span class="cbadge">' + svgUse('g-linkki') + '</span>' +
           '</div>' +
         '</div>' +
         '<div class="tcg-card__actions-tcg">' +
           '<button class="act-start">▶ Aloita</button>' +
-          '<button>✓</button><button>×</button>' +
+          '<button>' + svgUse('g-tehty') + '</button>' +
+          '<button>' + svgUse('g-poista') + '</button>' +
         '</div>') +
     '</div></div>';
 }
@@ -1073,11 +1287,17 @@ function measure(){
        Kaistalemitta (out[]) sen sijaan on luotettava: se on saman kortin
        ja edellisen kortin rectien erotus, joten inflaatio kumoutuu. */
     const cs  = getComputedStyle(document.documentElement);
-    const gut = parseFloat(cs.getPropertyValue('--idx-gut')) || 0;
-    const iw  = parseFloat(cs.getPropertyValue('--idx-w'))   || 0;
     const PAD = 3;                       /* .tcg-card padding */
+    /* Kerroin on luettava RATAKORTILTA, ei :rootista: --idx-w ja --idx-gut
+       ovat areenakortin mittoja ja rata skaalaa ne --idx-k:llä. Ilman tätä
+       mittari raportoi 2px siinä missä todellinen vara on 10px. */
+    const lastIdx = lanes[lanes.length-1].querySelector('.tcg-card__idx--br');
+    const k   = lastIdx
+      ? (parseFloat(getComputedStyle(lastIdx).getPropertyValue('--idx-k')) || 1) : 1;
+    const gut = (parseFloat(cs.getPropertyValue('--idx-gut')) || 0) * k;
+    const iw  = (parseFloat(cs.getPropertyValue('--idx-w'))   || 0) * k;
     const slack = ' · BR-pelivara ' +
-      (out[out.length-1] - (gut + iw + PAD)) + ' kortin px';
+      Math.round(out[out.length-1] - (gut + iw + PAD)) + ' kortin px (k=' + k + ')';
     $('meas-lane').textContent = 'näkyvä kaistale ' + out.join('/') +
       ' kortin px' + slack;
   }
@@ -1102,14 +1322,19 @@ function measure(){
    hiljaa — ja mittausluku selittyy sitten "väärin" ilman että CSS:ssä
    näkyy mitään outoa. (Maksoi yhden kierroksen: gutter luki 6px, toimi
    8px:llä.) */
-const DEFAULTS = {idxw:26, idxg:6, segh:5, segw:5, seggap:2};
+const DEFAULTS = {idxw:34, idxg:3, segh:6, segw:7, seggap:2,
+                  radmain:66, radsat:38, radr:62, rady:70};
 let vals = Object.assign({}, DEFAULTS);
 const SLIDERS = [
   ['idxw','--idx-w','px','o-idxw','s-idxw'],
   ['idxg','--idx-gut','px','o-idxg','s-idxg'],
   ['segh','--seg-h','px','o-segh','s-segh'],
   ['segw','--seg-w','px','o-segw','s-segw'],
-  ['seggap','--seg-gap','px','o-seggap','s-seggap']
+  ['seggap','--seg-gap','px','o-seggap','s-seggap'],
+  ['radmain','--rad-main','px','o-radmain','s-radmain'],
+  ['radsat','--rad-sat','px','o-radsat','s-radsat'],
+  ['radr','--rad-r','px','o-radr','s-radr'],
+  ['rady','--rad-y','%','o-rady','s-rady']
 ];
 function applyVals(){
   SLIDERS.forEach(([k, prop, unit, oid, sid]) => {
@@ -1131,6 +1356,11 @@ function writeTokens(){
     '--seg-h:'   + vals.segh   + 'px;    /* kustannussegmentin pituus */\n' +
     '--seg-w:'   + vals.segw   + 'px;    /* kustannussegmentin paksuus */\n' +
     '--seg-gap:' + vals.seggap + 'px;    /* segmenttiväli */\n' +
+    '--rad-main:' + vals.radmain + 'px;  /* radiaalirypään keskinappi */\n' +
+    '--rad-sat:'  + vals.radsat  + 'px;   /* satelliitti */\n' +
+    '--rad-r:'    + vals.radr    + 'px;   /* etäisyys keskeltä */\n' +
+    '--rad-y:'    + vals.rady    + '%;    /* pystysijainti kortilla */\n' +
+    '/* moodikertoimet: --idx-k 1 areena / .78 rata / .62 kasi */\n' +
     '\n/* variantti: ' + [...document.body.classList]
       .filter(c => c.startsWith('idx-') || c.startsWith('meter-')).join(' ') +
     (document.body.classList.contains('br-rotate') ? ' + BR 180°' : '') + ' */';
@@ -1172,6 +1402,13 @@ toggle('c-hand-open', 'Viuhka: auki', 'Viuhka: lepo',
          setTimeout(measure, 340); });
 toggle('c-brrot', 'BR 180°', 'BR 180°',
   v => document.body.classList.toggle('br-rotate', v));
+toggle('c-radial', 'Radiaalinapit', 'Radiaalinapit',
+  v => { document.body.classList.toggle('radial', v);
+         requestAnimationFrame(measure); });
+toggle('c-radopen', 'Rypäs auki', 'Rypäs auki',
+  v => document.body.classList.toggle('rad-open', v));
+toggle('c-timer', 'Ajastin käy', 'Ajastin käy',
+  v => document.body.classList.toggle('timer-on', v));
 toggle('c-brarena', 'BR myös areenalla', 'BR myös areenalla',
   v => { document.body.classList.toggle('br-arena', v);
          requestAnimationFrame(measure); });
