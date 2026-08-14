@@ -532,6 +532,44 @@ body.timer-on .rad--main svg + svg{width:40%;height:40%;margin-left:0}
    pääsyylliseksi MacBook Pro 2010:n hitauteen. html[data-perf="lite"]
    nollaa sen automaattisesti (sääntö on jo ylempänä), joten nopeassa
    tilassa jää pelkkä tummennus. */
+/* ── Osuma-alue ─────────────────────────────────────────────
+   Rypäs pysyy auki `.tcg-card__radial:hover`illa, ja se laukeaa vain
+   lapsesta jolla on pointer-events:auto — eli VAIN napista. Nappien
+   välissä on kuollutta tilaa, joten osoitin keskinapista satelliittiin
+   ylittää aukon: hover katkeaa, rypäs romahtaa, osoitin on taas tyhjän
+   päällä, rypäs avautuu — silmukka. Sama vikaluokka kuin radan hoverissa
+   (CLAUDE.md: "osoitin rakoon → hover katkeaa → kortti palaa → silmukka").
+
+   Korjaus: läpinäkyvä kiekko joka kattaa koko rypään ja pitää hoverin
+   yllä. Se on pointer-events:none LEVOSSA — muuten kortin keskusta olisi
+   pysyvä osumakenttä ja rypäs avautuisi mistä tahansa lähialueen
+   liikkeestä. Auki-tilassa se muuttuu auto:ksi, jolloin ketju on jatkuva:
+   osoitin napissa → rypäs auki → kiekko elää → osoitin siirtyy kiekolle
+   → hover ei katkea.
+
+   Erillinen elementti eikä .rad-veil, koska tummennus on VALINNAINEN
+   (veil-none) — osuma-alue ei saa kadota tyylivalinnan mukana. Säde on
+   myös isompi: uloimman napin ulkoreuna on r2 + sat*.43 päässä, ja
+   kiekon on ylitettävä se selvästi tai napin ulkolaita jää aukon
+   puolelle ja välkkyy juuri siellä. */
+.rad-hit{
+  position:absolute;left:0;top:0;z-index:-3;
+  width:calc((var(--rad-r2) + var(--rad-sat)) * 2);
+  height:calc((var(--rad-r2) + var(--rad-sat)) * 2);
+  margin:calc((var(--rad-r2) + var(--rad-sat)) * -1) 0 0
+         calc((var(--rad-r2) + var(--rad-sat)) * -1);
+  border-radius:50%;
+  pointer-events:none;
+}
+.tcg-card__radial:hover .rad-hit,
+.tcg-card__radial:focus-within .rad-hit,
+body.rad-open .rad-hit{pointer-events:auto}
+/* Tarkastelutila: osuma-alue näkyviin */
+body.show-hit .rad-hit{
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 55%,transparent);
+  background:color-mix(in srgb,var(--accent) 7%,transparent);
+}
+
 .rad-veil{
   position:absolute;left:0;top:0;z-index:-2;
   width:calc(var(--rad-r2) * 2 + var(--rad-sat));
@@ -1143,6 +1181,7 @@ body.idx-c .tcg-card--frog .tcg-card__idx{border-radius:0}
   <div class="cbtns" style="margin-top:.3rem">
     <button class="cbtn on" id="c-radial">Radiaalinapit</button>
     <button class="cbtn" id="c-radopen">Rypäs auki</button>
+    <button class="cbtn" id="c-showhit">Osuma-alue</button>
     <button class="cbtn" id="c-timer">Ajastin käy</button>
   </div>
   <p class="chint">Kaksi kehää. <b>Sisärengas</b> = mobiilin eleet (oikea
@@ -1277,6 +1316,7 @@ function radial(t){
     label + '" aria-label="' + label + '">' + svgUse(glyph) + '</button>';
   const on = c => c ? ' is-on' : '';
   return '<div class="tcg-card__radial">' +
+    '<span class="rad-hit"></span>' +
     '<span class="rad-veil"></span>' +
     /* Sisärengas — mobiilin eleet, jotta lihasmuisti on sama laitteesta
        riippumatta (DESIGN.md The Gesture Rule). */
@@ -1576,6 +1616,8 @@ toggle('c-radial', 'Radiaalinapit', 'Radiaalinapit',
          requestAnimationFrame(measure); });
 toggle('c-radopen', 'Rypäs auki', 'Rypäs auki',
   v => document.body.classList.toggle('rad-open', v));
+toggle('c-showhit', 'Osuma-alue', 'Osuma-alue',
+  v => document.body.classList.toggle('show-hit', v));
 toggle('c-timer', 'Ajastin käy', 'Ajastin käy',
   v => document.body.classList.toggle('timer-on', v));
 toggle('c-brarena', 'BR myös areenalla', 'BR myös areenalla',
