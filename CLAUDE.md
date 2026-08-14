@@ -69,6 +69,8 @@ Testit: `python3 tests/run.py` (ks. `tests/README.md`). Ei lintteriä, ei CI:tä
 - **Klikkaus ja `textContent`-luku samassa tikissä antaa vanhentuneen arvon** — `requestAnimationFrame`iin sidottu mittaus ei ole ehtinyt ajaa. Sondi: klikkaukset yhteen `setTimeout`iin, luku toiseen ~1s myöhemmin
 - `backdrop-filter` raportoituu `none` headlessissa (`--disable-gpu`) vaikka sääntö on voimassa — sumennusta ei voi todentaa headlessilla, vain oikeassa selaimessa
 - Ad hoc -sondi mitä tahansa sivua vastaan ilman uutta suitea: scratchpad-skripti joka tekee `sys.path.insert(0,'tests')` + `from harness import build, run, report`
+- **`build()` kelpaa myös kuvakaappauksen pohjaksi**, ei vain mittaukseen: anna `body`-JS:ssä tilan avaava kutsu (`openInventory()`) + animaatiojäädytys, sitten `google-chrome --screenshot` tuloksena syntyneelle tiedostolle. Näin pääsee modaalien sisään, jotka eivät muuten näy kuvassa
+- **Kuvakaappaus löytää sen mitä väitteet eivät osaa kysyä.** Ikonirekisterin fallback osui yhteen kategoriaan (`Odottava` → väärä ikoni), ja 33 vihreää väitettä meni silti läpi: testi tarkisti että ikoni on SVG, ei että se on *oikea*. Vrt. vastakkainen tapaus aurinkoteemassa, jossa kuva ei todentanut mitään — kysy kumpi vika on kyseessä ennen kuin valitset työkalun
 
 ## File structure
 
@@ -139,6 +141,7 @@ Jokainen tiedosto on itsenäinen: kaikki CSS ja JS sisäänrakennettu HTML-tiedo
 - `startTmr()` ei kutsu `render()` — kutsu manuaalisesti heti perään jos UI pitää päivittää (esim. nappi-teksti)
 - Mobiilikaappaus headlessilla: `google-chrome --headless=new --no-sandbox --disable-gpu --window-size=390,844 --screenshot=/tmp/out.png "http://localhost:8765/file.html"`
 - Impeccable-detektori: `node /home/jaakko/.agents/skills/impeccable/scripts/detect.mjs --json index.html`
+  — **`--json` tulostaa listan, ei objektia**: `json.load(...)` → `[{...}]`, ei `.get('findings')`. Delta lasketaan vertaamalla pituutta ja `line`-kenttiä baseline-puun ajoon
 - Impeccable-baseline: **4 osumaa / 3 kategoriaa** jotka EIVÄT ole bugeja — bounce-easing ×2 (M1:n tarkoituksellinen overshoot), em-dash-overuse (suomen välimerkki), dark-glow (aurinko-chip-token, väärä positiivi) — älä "korjaa", vertaa vain deltaa. Rivinumerot liikkuvat, vertaa mergeä edeltäneeseen commitiin (`git show <sha>:index.html`), ei `HEAD`iin.
   - **Vahvistettu 2026-08-09 suuren merge-kierroksen jälkeen** (PR #6/#7/#8 + mobiili + PWA, index.html +2600 riviä). Ajettu molemmille puille — `19b5f69` (ennen) ja merge-tulos — ja tulos on **identtinen**: 4 warningia, 0 erroria, samat kategoriat, vain rivinumerot siirtyneet (82→109, 754→788, 668→708). Delta **0**.
   - Osumat: `--ease-out-back` `:root`issa, `.card-entering`in `card-enter`, aurinkoteeman `.eise-card:hover` -pehmeä varjo (detektori lukee sen "dark-glowksi" vaikka teema on vaalea), ja **18 em-dashia — sama luku molemmissa**. Uudet suomenkieliset UI-tekstit ("☕ Tauko — nouse ylös") EIVÄT kasvattaneet lukua, eli detektorin "bodyteksti" ei tarkoita JS:stä generoituja merkkijonoja. Älä oleta em-dash-luvun seuraavan UI-tekstien määrää.
@@ -289,6 +292,7 @@ CSS custom properties: `--ink`, `--surface-xs`, `--surface`, `--surface-md`, `--
 - **Lue vain relevantti osa** suunnitteludokumenteista — ei koko tiedostoa.
 - **Validoi ennen toimitusta:** `node --check` syntaksille; `sed -n` kontekstin lukemiseen ennen korvausta.
 - **Massamuutokset:** sed tai Python-skriptit, ei manuaalisia rivirivi-muutoksia.
+- **Muotovaihtoehdot rinnakkain yhteen generoituun sivuun, ei yksi kerrallaan.** SVG-variantit kannattaa tuottaa Python-skriptillä (parametrit funktioargumentteina) yhdeksi scratchpad-HTML:ksi, jossa jokainen variantti on useassa koossa — yksi kaappaus näyttää sekä muodon että sen missä koossa se hajoaa. Yksittäin katsottuna variantit näyttävät kaikki kelvollisilta.
 - DOM-haut: käytä aina id-pohjaisia selektoreja. Style-attribuuttiselektorit (`closest('div[style*="display:flex"]')`) ovat hauraita.
 
 ## Parannuskierros 2026-06-12 — valmis
