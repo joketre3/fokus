@@ -131,7 +131,7 @@
   --rad-main:66px;   /* keskinapin halkaisija */
   --rad-sat:38px;    /* satelliitin halkaisija */
   --rad-r:62px;      /* etäisyys keskeltä */
-  --rad-y:70%;       /* pystysijainti kortilla */
+  --rad-y:44%;       /* pystysijainti = typelinen keskikohta */
 }
 html[data-theme="havu"]{
   --ink:rgba(255,255,255,.97); --muted:rgba(255,255,255,.72);
@@ -467,10 +467,12 @@ body:not(.title-center) .tcg-card__title{text-align:left}
    muutenkin vain aktiiviselle kortille (renderArenaCard palaa ennen
    .tcg-card__actions-tcg -lohkoa kompakteissa moodeissa). */
 .tcg-card__radial{
-  /* Pystysijainti on säädettävä: 50% osuu kortin NIMEN päälle. Rungon
-     alaosa on Frankenstein-korttiakin ajatellen se ainoa alue joka on
-     luotettavasti tyhjä. */
-  position:absolute;left:50%;top:var(--rad-y,70%);z-index:6;
+  /* Nappi istuu TYPELINEN päällä — taiteen ja rungon jakoviivalla, kuten
+     korttikehysten keskimedaljonki. Taide on flex 0 0 40% (166px / 414px),
+     typeline ~24px + 6px marginaali → keskikohta 184px = 44 %.
+     50 % osuisi kortin nimeen, 70 % kelluisi rungon tyhjässä alaosassa
+     ilman ankkuria mihinkään. */
+  position:absolute;left:50%;top:var(--rad-y,44%);z-index:6;
   width:0;height:0;
   /* Kontaineri ei saa napata osumia: se peittäisi kortin muun sisällön.
      :hover propagoituu silti lapsen kautta — sama idiomi kuin
@@ -550,6 +552,11 @@ body.rad-open .rad--poista{
 .rad--tehty:hover  {background:color-mix(in srgb,var(--q2) 70%,black);border-color:var(--q2-bright,#4a8a4a)}
 .rad--poista:hover {background:color-mix(in srgb,#7a2020 80%,black);border-color:#a33}
 .rad--sat:hover    {color:var(--ink-on-art)}
+
+/* Nappi ulottuu typelineltä rungon puolelle, joten nimi on työnnettävä sen
+   alta pois — muuten opaakki kultanappi leikkaa ensimmäisen rivin. Pehmuste
+   mitoitetaan napin säteestä, ei kiinteänä lukuna. */
+body.radial .tcg-card__body{padding-top:calc(var(--rad-main) * .36)}
 
 /* Radiaalirypäs korvaa alarivin: Aloita, ✓ ja × siirtyivät sinne. */
 body.radial .tcg-card__actions-tcg{display:none}
@@ -1323,7 +1330,7 @@ function measure(){
    näkyy mitään outoa. (Maksoi yhden kierroksen: gutter luki 6px, toimi
    8px:llä.) */
 const DEFAULTS = {idxw:34, idxg:3, segh:6, segw:7, seggap:2,
-                  radmain:66, radsat:38, radr:62, rady:70};
+                  radmain:66, radsat:38, radr:62, rady:44};
 let vals = Object.assign({}, DEFAULTS);
 const SLIDERS = [
   ['idxw','--idx-w','px','o-idxw','s-idxw'],
