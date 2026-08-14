@@ -128,10 +128,10 @@
   --seg-h:6px; --seg-gap:2px; --seg-w:7px;
 
   /* Radiaalirypäs */
-  --rad-main:66px;   /* keskinapin halkaisija */
-  --rad-sat:38px;    /* satelliitin halkaisija */
+  --rad-main:62px;   /* keskinapin halkaisija */
+  --rad-sat:42px;    /* satelliitin halkaisija */
   --rad-r:62px;      /* sisärenkaan etäisyys keskeltä */
-  --rad-r2:106px;    /* ulkorenkaan etäisyys keskeltä */
+  --rad-r2:102px;    /* ulkorenkaan etäisyys keskeltä */
   --rad-y:44%;       /* pystysijainti = typelinen keskikohta */
 }
 html[data-theme="havu"]{
@@ -1526,7 +1526,7 @@ function measure(){
    näkyy mitään outoa. (Maksoi yhden kierroksen: gutter luki 6px, toimi
    8px:llä.) */
 const DEFAULTS = {idxw:34, idxg:3, segh:6, segw:7, seggap:2,
-                  radmain:66, radsat:38, radr:62, radr2:106, rady:44};
+                  radmain:62, radsat:42, radr:62, radr2:102, rady:44};
 let vals = Object.assign({}, DEFAULTS);
 const SLIDERS = [
   ['idxw','--idx-w','px','o-idxw','s-idxw'],
@@ -1552,6 +1552,18 @@ SLIDERS.forEach(([k,,, , sid]) => {
   $(sid).addEventListener('input', e => { vals[k] = +e.target.value; applyVals(); });
 });
 
+/* Lukee todelliset --idx-k -arvot kustakin moodista. */
+function readK(){
+  const k = sel => {
+    const el = document.querySelector(sel);
+    if(!el) return '?';
+    const v = getComputedStyle(el).getPropertyValue('--idx-k').trim();
+    return v || '1';
+  };
+  return '1 areena / ' + k('#queue-lane .tcg-card--lane') + ' rata / ' +
+         k('#fan .tcg-card--hand') + ' kasi';
+}
+
 function writeTokens(){
   $('c-out').textContent =
     '/* Kortin kaksoisindeksi — mockup-kortti-v2.html */\n' +
@@ -1565,7 +1577,11 @@ function writeTokens(){
     '--rad-r:'    + vals.radr    + 'px;   /* sisärenkaan säde */\n' +
     '--rad-r2:'   + vals.radr2   + 'px;  /* ulkorenkaan säde */\n' +
     '--rad-y:'    + vals.rady    + '%;    /* pystysijainti kortilla */\n' +
-    '/* moodikertoimet: --idx-k 1 areena / .78 rata / .62 kasi */\n' +
+    /* Kertoimet LUETAAN elementeiltä, ei kirjoiteta literaalina. Aiempi
+       kovakoodattu rivi jäi .78:aan kun CSS oli jo .85 — ja koska lukema
+       on juuri se teksti joka kopioidaan index.html:ään, virhe olisi
+       matkannut sinne asti. Sama vikaluokka kuin DEFAULTS vs :root. */
+    '/* moodikertoimet: --idx-k ' + readK() + ' */\n' +
     '\n/* variantti: ' + [...document.body.classList]
       .filter(c => c.startsWith('idx-') || c.startsWith('meter-')).join(' ') +
     (document.body.classList.contains('br-rotate') ? ' + BR 180°' : '') + ' */';
