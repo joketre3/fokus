@@ -57,17 +57,19 @@
       ok('tier s putoaa glyfiin nimelle jolla ei ole sigilia',
          verbIcon('Soita', 's') === '#g-soita', verbIcon('Soita', 's'));
 
-      // Sovi on ainoa jolla on molemmat tiheydet. Ne ovat samasta
-      // mitatusta geometriasta: taysi 7 sormea sigiliksi, karsittu 4
-      // glyfiksi — taydella maaralla sormiraot umpeutuvat jo 20px:ssa.
-      ok('sovi: tier s antaa sigilin', verbIcon('Sovi', 's') === '#s-sovi',
-         verbIcon('Sovi', 's'));
-      ok('sovi: oletus on yha glyfi', verbIcon('Sovi') === '#g-sovi', verbIcon('Sovi'));
-      ok('#s-sovi on defsissa', !!document.getElementById('s-sovi'),
-         document.getElementById('s-sovi') ? 'on' : 'puuttuu');
+      // Sovi kokeiltiin kahtena tiheytena, mutta mittaus osoitti yhden
+      // riittavan: karsitun etu <=20px:ssa oli 1-3 erottuvaa osaa
+      // (kohinaa) ja >=28px:ssa taysi voitti selvasti. Sigil kannattaa
+      // vain jos se oikeasti eroaa glyfista.
+      ok('sovi: sama symboli kaikissa kokoluokissa',
+         verbIcon('Sovi') === '#g-sovi' && verbIcon('Sovi', 's') === '#g-sovi',
+         verbIcon('Sovi') + ' / ' + verbIcon('Sovi', 's'));
+
+      // ICON_S saa olla tyhja, mutta jos siina on nimi, symbolin on oltava
+      // olemassa — muuten tier 's' tuottaa rikkinaisen <use href>:n.
       ok('jokaiselle ICON_S-nimelle loytyy #s-symboli',
          Object.keys(ICON_S).every(function(n){ return !!document.getElementById('s-' + n); }),
-         Object.keys(ICON_S).join(', '));
+         Object.keys(ICON_S).length ? Object.keys(ICON_S).join(', ') : 'tyhja (vaihe 3 tayttaa)');
 
       // ── Jokainen alias osoittaa olemassa olevaan symboliin ───────────
       // Kirjoitusvirhe aliaskartassa tuottaisi rikkinäisen <use href>:n,

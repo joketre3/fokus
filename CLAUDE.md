@@ -69,6 +69,8 @@ Testit: `python3 tests/run.py` (ks. `tests/README.md`). Ei lintteriä, ei CI:tä
 - **Klikkaus ja `textContent`-luku samassa tikissä antaa vanhentuneen arvon** — `requestAnimationFrame`iin sidottu mittaus ei ole ehtinyt ajaa. Sondi: klikkaukset yhteen `setTimeout`iin, luku toiseen ~1s myöhemmin
 - `backdrop-filter` raportoituu `none` headlessissa (`--disable-gpu`) vaikka sääntö on voimassa — sumennusta ei voi todentaa headlessilla, vain oikeassa selaimessa
 - Ad hoc -sondi mitä tahansa sivua vastaan ilman uutta suitea: scratchpad-skripti joka tekee `sys.path.insert(0,'tests')` + `from harness import build, run, report`
+- **Pikselitason vertailu ilman PIL:iä:** renderöi kukin koko omaksi PNG:kseen (`--window-size=N,N`, ikoni ainoana elementtinä), lue ne `zlib`+`struct`illa (~40 riviä: IHDR, IDAT, scanline-suodattimet 0–4) ja laske rivi- ja sarakekohtaiset tausta→muoto-vaihdokset. Näin "erottuuko yksityiskohta koossa N" on luku, ei mielipide. Zoomaus silmälle: `<img>` + `image-rendering:pixelated` — **`<svg>`:lle se ei toimi**, vektori skaalautuu sileäksi
+- **`sed 's/.*_//'` on ahne.** Tiedostonimestä `full_16_7.html` se poimii `7`, ei `16_7` — mittaus ajettiin 7×7 px kuvasta ja tulos näytti uskottavalta rivillä muiden joukossa. Tarkista mitatun kuvan koko (`struct.unpack('>II', d[16:24])`) ennen kuin luet lukuja
 - **`build()` kelpaa myös kuvakaappauksen pohjaksi**, ei vain mittaukseen: anna `body`-JS:ssä tilan avaava kutsu (`openInventory()`) + animaatiojäädytys, sitten `google-chrome --screenshot` tuloksena syntyneelle tiedostolle. Näin pääsee modaalien sisään, jotka eivät muuten näy kuvassa
 - **Kuvakaappaus löytää sen mitä väitteet eivät osaa kysyä.** Ikonirekisterin fallback osui yhteen kategoriaan (`Odottava` → väärä ikoni), ja 33 vihreää väitettä meni silti läpi: testi tarkisti että ikoni on SVG, ei että se on *oikea*. Vrt. vastakkainen tapaus aurinkoteemassa, jossa kuva ei todentanut mitään — kysy kumpi vika on kyseessä ennen kuin valitset työkalun
 
@@ -187,9 +189,13 @@ asti glyfiin. Referenssi ja muokkauspaikka: `mockup-ikonit.html`.
   ne ovat yhtenäistä massaa, jossa sormet ovat tummia rakoja; tämä
   koostuu irrallisista paloista. Tämä meni kerran pieleen, älä "korjaa"
   sitä kirjastoikoniksi. Älä myöskään pyöristele mitattuja lukuja.
-- **Sama ikoni kahtena tiheytenä** on setin ainoa tapa selvitä
-  14px:stä: `#g-sovi` on 4 sormea (raot pysyvät auki), `#s-sovi` 7
-  (täyspiirto ≥28px). Täydellä sormimäärällä raot umpeutuvat 20px:ssä.
+- **Kahta tiheyttä samasta ikonista kokeiltiin ja se hylättiin
+  mittauksen perusteella.** Karsitun 4-sormisen etu ≤20px:ssä oli 1–3
+  erottuvaa osaa (kohinaa), ja ≥28px:ssä täysi voitti selvästi
+  (43/84/150 vs. 41/58/92). Alle 20px:ssä sormet eivät erotu
+  kummassakaan — jäljelle jää siluetti, ja siinä täysi on rikkaampi.
+  **Sigil kannattaa vain jos se oikeasti eroaa glyfistä**; `ICON_S` on
+  siksi yhä tyhjä.
 - Vanhat `verb-i-*` (8 kpl) ovat yhä `<defs>`issä; ne poistuvat
   vaiheessa 3.
 
