@@ -6,11 +6,15 @@ Impeccable-analyysi tehty 2026-06-07. Raportti: `docs/impeccable-kritiikki.md`.
 PRODUCT.md luotu 2026-06-10. P0 valmis.
 
 **🔶 Kesken (2026-08-14): kortin kaksoisindeksi + ikonisetti.** Haara
-`kortti-indeksi-ikonit`. Vaiheet 0–1b valmiit, seuraavana vaihe 2
-(glyfitaso). **Suunnitelma:**
+`kortti-indeksi-ikonit`. Vaiheet 0–2 valmiit (`c0f3fcf`), seuraavana
+vaihe 3 (sigil-taso). **Suunnitelma:**
 `~/.claude/plans/home-jaakko-claude-uploads-dea0ecee-9cf-tidy-phoenix.md`
 — itsenäinen dokumentti, sisältää lukitut päätökset, tokenit ja vaiheet.
-Kaikki ratkaisut ovat valmiina `mockup-kortti-v2.html`:ssä; kopioi sieltä.
+Kaikki kortin ratkaisut ovat valmiina `mockup-kortti-v2.html`:ssä ja
+ikonit `mockup-ikonit.html`:ssä; kopioi sieltä, älä piirrä uudestaan.
+**Uusi glyfi on katsottava rinnakkain lähisukulaistensa kanssa** —
+vaiheessa 2 löytyi neljä kollisiota, joista kolme oli jo hyväksytyissä
+glyfeissä (`kirjaa`=`muokkaa`, `varaa`=`odottaa`, `kiire`≈`pomodoro`).
 Mitattu lähtötilanne: käsi näyttää kortista 63–79px × 98px vasemmasta
 yläkulmasta, rata 41–50 kortin px oikeasta laidasta — ja pomodoro-hinta
 (`top:9px;right:9px`) on kädessä kokonaan piilossa.
@@ -85,6 +89,7 @@ Testit: `python3 tests/run.py` (ks. `tests/README.md`). Ei lintteriä, ei CI:tä
 | `mockup-eise-placement.html` | Eisenhower-peekin sijoitteluvaihtoehdot |
 | `mockup-jono.html` | Tehtäväjonon rata areenan lattialla — 3 varianttia + elävät geometrialiu'ut (`?v=v2`) |
 | `mockup-kortti-v2.html` | Kortin kaksoisindeksi — kolme rajausta rinnakkain (areena/viuhka/rata), 3 indeksivarianttia, kustannusmittari pysty/vaaka, Frankenstein-kytkin |
+| `mockup-ikonit.html` | Ikonisetin referenssi — 32 glyfiä + 4 kvadranttimerkkiä, kollisioparit, teemakytkin, koot 56/28/16,7/14 px |
 | `manifest.json` | PWA-manifesti — asennettava sovellus, standalone-tila |
 | `sw.js` | Service worker — navigointi verkosta ensin, muu välimuistista (offline) |
 | `icon-192.png`, `icon-512.png`, `icon-180.png` | Sovellusikonit (512 myös maskable) |
@@ -148,6 +153,32 @@ Jokainen tiedosto on itsenäinen: kaikki CSS ja JS sisäänrakennettu HTML-tiedo
 - `.tcg-card.tcg-card--hand{width:130px}` ja `.lane-card .tcg-card{width:100%}` ovat samaa spesifisyyttä (0-2-0) → lähdejärjestys ratkaisee. Jos se kääntyy, ratakortti renderöityy 130px levyisenä 214px kääreen sisään: **kääreen mitat pysyvät oikeina**, joten kaistalemittaus menee läpi ja vain kortin oikea laita on 64px väärässä. Käytä kaksoisluokkaa
 - **Ryhmä nappeja tarvitsee yhtenäisen osumakentän.** `:hover` säilyy vain lapsesta jolla on `pointer-events:auto`; nappien välinen tyhjä tila katkaisee sen → ryhmä romahtaa, osoitin on tyhjän päällä, ryhmä avautuu — silmukka. Läpinäkyvä kiekko/laatikko koko ryhmän päälle, `pointer-events:none` levossa ja `auto` auki-tilassa (sama vikaluokka kuin radan hoverin sillassa)
 - **Kovakoodattu luku joka kuvaa CSS:ää ajautuu erilleen siitä.** Liukusäätimen `DEFAULTS` ylikirjoitti `:root`in inline-tyylillä, ja mockupin "Kopioi tokenit" tulosti kertoimen `.78` kun CSS oli jo `.85` — vietävä arvo olisi kulkeutunut väärin `index.html`:ään asti. Lue arvot `getComputedStyle`lla, älä toista niitä merkkijonossa
+
+## Ikonisetti (vaihe 2, 2026-08-14)
+
+Yksi rekisteri: `ICON` (32 nimeä), `VERB_ALIAS`, `verbName()`,
+`iconId(name,tier)`, `verbIcon(verbi,tier)`. Symbolit `<defs>`issä
+muodossa `#g-<nimi>` (glyfi) ja `#q-q1…q4` (kvadranttimerkit).
+`ICON_S` on tyhjä kunnes vaihe 3 tuo sigilit; `tier:'s'` putoaa siihen
+asti glyfiin. Referenssi ja muokkauspaikka: `mockup-ikonit.html`.
+
+- **`<use href>` ei varoita puuttuvasta symbolista** — se renderöityy
+  hiljaa tyhjänä. Siksi ääkköset normalisoidaan lookupissa (`Selvitä` →
+  `#g-selvita`) ja `icon_registry`-suite väittää että jokainen alias
+  osoittaa olemassa olevaan symboliin.
+- **Kolme rinnakkaista ikonikarttaa ajautui erilleen**: `VERB_ICONS` oli
+  kuollut (56 riviä, 0 lukupaikkaa) ja sama verbi näytti kortilla
+  SVG:ltä, pakassa emojilta. Uusi kartta pitää molemmat kirjoitusasut
+  (`Soita` / `soittaminen`) avaimina.
+- **Osittainen täsmäys kattaa vain prefiksit** — `soitto` ei ole
+  `soita`n prefiksi kumpaankaan suuntaan, joten substantiivimuodot ovat
+  omina aliaksinaan.
+- **Täytetty siluetti kestää 14px:n paremmin kuin viivapiirros.** Kaksi
+  samanväristä muotoa erotetaan `<mask>`illa (laajennettu polku
+  `stroke-width`illä), ei taustavärillä — maskin `#fff`/`#000` ovat
+  luminanssia, eivät teemavärejä.
+- Vanhat `verb-i-*` (8 kpl) ovat yhä `<defs>`issä; ne poistuvat
+  vaiheessa 3.
 
 ## Core data model
 
