@@ -182,7 +182,14 @@ asti glyfiin. Referenssi ja muokkauspaikka: `mockup-ikonit.html`.
   samanväristä muotoa erotetaan `<mask>`illa (laajennettu polku
   `stroke-width`illä), ei taustavärillä — maskin `#fff`/`#000` ovat
   luminanssia, eivät teemavärejä.
-- **`g-sovi` / `s-sovi` (kädenpuristus) on mitattu, ei piirretty.** Lähde:
+- **Uusi ikoni: mittaa tai hae, älä jäljennä silmällä.** Toimiva ketju on
+  referenssikuva → komponentit eroteltuna → kullekin keskipiste, kulma,
+  pituus, paksuus → parametrit sovitettuna numeerisesti → SVG suoraan
+  niistä luvuista. `~/kadenpuristus-ikoni` tekee tämän ja varmentaa
+  tuloksen IoU:lla referenssiin. Vertaa lopputulos referenssiin
+  **rinnakkain samassa kuvassa** — erillisinä katsottuna ne näyttävät
+  aina samalta.
+- **`g-sovi` (kädenpuristus) on mitattu, ei piirretty.** Lähde:
   erillinen ikoniprojekti `~/kadenpuristus-ikoni` (`kokoportaikko.py`:n
   `CUFF_L`, `CUFF_R`, `THUMB`, `FINGERS`; IoU-tarkistus referenssikuvaan).
   **Se ei ole Material Symbols "handshake" eikä muu kirjastoikoni** —
@@ -305,6 +312,30 @@ CSS custom properties: `--ink`, `--surface-xs`, `--surface`, `--surface-md`, `--
 
 (Yleiset säännöt globaalissa CLAUDE.md:ssä — tässä vain projektikohtaiset.)
 
+- **Kysy onko aihetta jo työstetty muualla ennen kuin alat iteroida.**
+  Kädenpuristusikoni vei 13 piirtokierrosta arvaillen; Jaakolla oli siitä
+  valmis projekti (`~/kadenpuristus-ikoni`), jossa geometria oli mitattu
+  referenssistä numeerisesti. Sen kääntäminen SVG:ksi kesti minuutteja.
+  Aina kun aihe tuntuu siltä että sitä on saatettu pohtia aiemmin —
+  kysy ensin.
+- **Iterointibudjetti: 2–3 kierrosta.** Jos kolmas yritys ei ole
+  lähempänä kuin ensimmäinen, vika ei ole seuraavassa yrityksessä vaan
+  menetelmässä. Pysähdy ja vaihda: hae referenssi, mittaa, tai kysy.
+  Silmämääräinen jäljentäminen referenssikuvasta ei konvergoi — mitattu
+  geometria konvergoi kerralla.
+- **Katso isona ennen kuin uskot pikkukuvaa.** Kättely näytti toimivalta
+  ikonisivun 40px:n ruudussa; 300px:iin suurennettuna se oli "kaksi
+  timanttia ja möykky". Silmä täydentää tutun muodon vaikka sitä ei ole.
+- **Lue lähdedokumentti sanatarkasti, älä sen seurauksia.** Ikoniprojektin
+  "sormiraot katoavat 28px:ssä" kuvaa *milloin sormet lakkaavat
+  erottumasta* — siitä ei seuraa että karsittu versio olisi silloin
+  parempi. Tämä lukuvirhe tuotti turhan toisen symbolin, jonka mittaus
+  sitten kumosi.
+- **Käyttäjän antama koodi kannattaa korjata, ei hylätä.** Kättelyluonnos
+  näytti vasaralta kahden bugin takia (`rotate(45 x y)` kiersi rectin
+  kulman ympäri, ja sormien siirtymä oli sormen omansuuntainen eikä
+  kohtisuora). Rakenne oli oikea; korjaus vei kaksi minuuttia ja ohitti
+  kaikki omat yritykset.
 - **Lue vain relevantti osa** suunnitteludokumenteista — ei koko tiedostoa.
 - **Validoi ennen toimitusta:** `node --check` syntaksille; `sed -n` kontekstin lukemiseen ennen korvausta.
 - **Massamuutokset:** sed tai Python-skriptit, ei manuaalisia rivirivi-muutoksia.
