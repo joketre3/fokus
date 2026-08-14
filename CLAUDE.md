@@ -5,6 +5,16 @@
 Impeccable-analyysi tehty 2026-06-07. Raportti: `docs/impeccable-kritiikki.md`.
 PRODUCT.md luotu 2026-06-10. P0 valmis.
 
+**🔶 Kesken (2026-08-14): kortin kaksoisindeksi + ikonisetti.** Haara
+`kortti-indeksi-ikonit`. Vaiheet 0–1b valmiit, seuraavana vaihe 2
+(glyfitaso). **Suunnitelma:**
+`~/.claude/plans/home-jaakko-claude-uploads-dea0ecee-9cf-tidy-phoenix.md`
+— itsenäinen dokumentti, sisältää lukitut päätökset, tokenit ja vaiheet.
+Kaikki ratkaisut ovat valmiina `mockup-kortti-v2.html`:ssä; kopioi sieltä.
+Mitattu lähtötilanne: käsi näyttää kortista 63–79px × 98px vasemmasta
+yläkulmasta, rata 41–50 kortin px oikeasta laidasta — ja pomodoro-hinta
+(`top:9px;right:9px`) on kädessä kokonaan piilossa.
+
 **⬜ Avoin (kirjattu 2026-08-12, Jaakon havainto):** pitäisikö korttien
 (areenakortti, ratakortit, käsikortit) skaalautua ikkunan koon mukaan? Nyt
 mitat ovat kiinteitä pikseleitä — `--lane-card-w:214px`, `--hand-card-w:130px`,
