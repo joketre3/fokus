@@ -60,6 +60,11 @@ Testit: `python3 tests/run.py` (ks. `tests/README.md`). Ei lintteriä, ei CI:tä
 - **Mittaa asettelu DOM:sta, älä kuvakaappauksesta.** `tests/harness.py`:n `build()`+`run()` ajaa mitä tahansa JS:ää sivun sisällä. `getBoundingClientRect` paljasti napin alle jääneen tekstin, jonka kaappaus hukkasi — ja mittauksen saa jätettyä pysyväksi testiksi.
 - Oma siemendata: `seed_js(tasks=TASKS+extra)` + `mk()` (`tests/seed.py`). `extra=`-parametri on raakaa JS:ää joka ajetaan **ennen** sovelluksen skriptejä — `tasks`-globaalia ei siellä vielä ole, joten `tasks.push` menee hiljaa try/catchiin.
 - Zoomattu kaappaus popupista: `--force-device-scale-factor=2` + pieni `--window-size`
+- Suite valitsee siemenen rivillä `// seed: <nimi>` heti `// target:`-rivin jälkeen (`tests/run.py:SEEDS`). `frank` = Frankenstein-kortti: jokainen kenttä äärimmillään viitenä kappaleena, jotta maksimikortti osuu areenalle, radalle JA käteen. Uusi korttikenttä lisätään myös `frank()`iin tai ylivuoto löytyy vasta käyttäjän datasta
+- **Kierretyn tai skaalatun elementin `getBoundingClientRect` on akselinsuuntainen bbox, ei elementti.** Viuhka (±11°) ja rata (1,5° + `scale`) levittävät sen — 300px korkea laatikko 1,5 asteessa on ~8px leveämpi. Laske suhteet kortin OMASSA koordinaatistossa (tokeneista tai `offsetWidth`illa); kahden rectin erotus on ok vain kun molemmat ovat samassa mittakaavassa
+- **Klikkaus ja `textContent`-luku samassa tikissä antaa vanhentuneen arvon** — `requestAnimationFrame`iin sidottu mittaus ei ole ehtinyt ajaa. Sondi: klikkaukset yhteen `setTimeout`iin, luku toiseen ~1s myöhemmin
+- `backdrop-filter` raportoituu `none` headlessissa (`--disable-gpu`) vaikka sääntö on voimassa — sumennusta ei voi todentaa headlessilla, vain oikeassa selaimessa
+- Ad hoc -sondi mitä tahansa sivua vastaan ilman uutta suitea: scratchpad-skripti joka tekee `sys.path.insert(0,'tests')` + `from harness import build, run, report`
 
 ## File structure
 
@@ -138,6 +143,11 @@ Jokainen tiedosto on itsenäinen: kaikki CSS ja JS sisäänrakennettu HTML-tiedo
 - Piilotettava sisältö: `.wrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows .18s}` + sisältö `min-height:0;overflow:hidden` — ei max-height-animaatiota
 - Absoluuttisen napin (esim. `.inv-card__star-btn`) väistäminen: `margin-right`, **ei** `padding-right`. Padding jättää laatikon geometrian napin päälle, jolloin `getBoundingClientRect`-päällekkäisyysväite kaatuu vaikka teksti näyttää oikealta — ja z-indexin varaan jäävä klikkaus on hauras. Marginilla geometria vastaa näkyvää.
 - `git stash` tarvitaan ennen `git checkout main` jos working treessä on muutoksia muissa tiedostoissa
+- **Flex-kontin `scrollHeight` ei näytä lapsen ylivuotoa** — Chrome laskee flex-itemien border-boxit, joten kutistuneen lapsen yli valuva teksti ei näy vanhemman luvussa. Mittaa ylivuoto siitä lapsesta jolla on `flex:1` (kortilla `.tcg-card__body`), ei `.tcg-card__plate`ista
+- **SVG flex-rivissä tarvitsee `flex:none`** — muuten se venyy: `.tcg-card__typeline` kasvoi 218px korkeaksi ja runko litistyi 24px:ään
+- `.tcg-card.tcg-card--hand{width:130px}` ja `.lane-card .tcg-card{width:100%}` ovat samaa spesifisyyttä (0-2-0) → lähdejärjestys ratkaisee. Jos se kääntyy, ratakortti renderöityy 130px levyisenä 214px kääreen sisään: **kääreen mitat pysyvät oikeina**, joten kaistalemittaus menee läpi ja vain kortin oikea laita on 64px väärässä. Käytä kaksoisluokkaa
+- **Ryhmä nappeja tarvitsee yhtenäisen osumakentän.** `:hover` säilyy vain lapsesta jolla on `pointer-events:auto`; nappien välinen tyhjä tila katkaisee sen → ryhmä romahtaa, osoitin on tyhjän päällä, ryhmä avautuu — silmukka. Läpinäkyvä kiekko/laatikko koko ryhmän päälle, `pointer-events:none` levossa ja `auto` auki-tilassa (sama vikaluokka kuin radan hoverin sillassa)
+- **Kovakoodattu luku joka kuvaa CSS:ää ajautuu erilleen siitä.** Liukusäätimen `DEFAULTS` ylikirjoitti `:root`in inline-tyylillä, ja mockupin "Kopioi tokenit" tulosti kertoimen `.78` kun CSS oli jo `.85` — vietävä arvo olisi kulkeutunut väärin `index.html`:ään asti. Lue arvot `getComputedStyle`lla, älä toista niitä merkkijonossa
 
 ## Core data model
 
