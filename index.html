@@ -1746,6 +1746,246 @@ html[data-theme="aurinko"][data-perf="lite"]{
     <circle cx="16.5" cy="8.2" r="0.5" fill="#f4f0e0"/>
     <path d="M8 16.5 Q12 19.5 16 16.5" stroke="#1d3a28" stroke-width="1.1" fill="none" stroke-linecap="round"/>
   </symbol>
+  <!-- ═══════════════════════════════════════════════════════════════
+       GLYFISETTI (vaihe 2) — lahde: mockup-ikonit.html
+       Yksi viivapaino 1.75 @ 24, currentColor, ei kovakoodattuja
+       hexeja. Vanhat verb-i-* jaavat viereen kunnes vaihe 3
+       (sigil-taso) korvaa ne. ALA muokkaa naita vain toisessa
+       tiedostossa — mockup-ikonit.html on referenssi.
+       ═══════════════════════════════════════════════════════════════ -->
+
+
+  <!-- ═══ VERBIGLYFIT — mockup-kortti-v2.html:stä sellaisenaan ═══ -->
+  <symbol id="g-soita" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7.6 4.5 5 6c-1 .6-1.3 1.9-.9 3 .9 2.6 2.4 5 4.4 7s4.4 3.5 7 4.4c1.1.4 2.4.1 3-.9l1.5-2.6-3.8-2.2-2 2c-1.8-.9-3.3-2.4-4.2-4.2l2-2z"/>
+  </symbol>
+  <!-- ═══ SOVI — kaksi kättä, check-suhteet (lukittu 2026-08-14) ═══
+       Kaksi kättä kohtaavat: lyhyt haara täytettynä on etummainen käsi
+       (isompi nyrkki), pitkä ääriviivakäsi sen takana. Kättelyn realistinen
+       piirros ei kestä 14px:ää — sormiväli on siinä alle pikselin — joten
+       tunnistus tulee muodosta: check-suhde + kaksi erillistä kättä.
+       Rako on maski, ei tyylivalinta: samanvärisinä muodot sulautuisivat.
+       Maskin #fff/#000 ovat luminanssiarvoja, eivät teemavärejä. -->
+  <symbol id="g-sovi" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+    <mask id="g-sovi-mask">
+      <rect width="24" height="24" fill="#fff"/>
+      <path d="M2.11 12.76A2.3 2.3 0 0 1 5.09 9.24L10.67 13.97A2.3 2.3 0 0 1 7.7 17.48ZM7.25 18.02A3.0 3.0 0 0 1 11.12 13.44L13.34 15.31A3.0 3.0 0 0 1 9.46 19.89Z" fill="#000" stroke="#000" stroke-width="1.7"/>
+    </mask>
+    <path d="M18.89 3.46A2.3 2.3 0 0 1 22.31 6.54L12.65 17.22A2.3 2.3 0 0 1 9.24 14.13ZM8.72 13.66A3.0 3.0 0 0 1 13.17 17.68L11.42 19.61A3.0 3.0 0 0 1 6.98 15.59Z" fill="none" stroke="currentColor" stroke-width="1.75" mask="url(#g-sovi-mask)"/>
+    <path d="M2.11 12.76A2.3 2.3 0 0 1 5.09 9.24L10.67 13.97A2.3 2.3 0 0 1 7.7 17.48ZM7.25 18.02A3.0 3.0 0 0 1 11.12 13.44L13.34 15.31A3.0 3.0 0 0 1 9.46 19.89Z" fill="currentColor"/>
+  </symbol>
+  <symbol id="g-tee" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M13.5 3.5 20.5 10.5 17 14 10 7z"/>
+    <path d="M11.5 8.5 4 16v4h4l7.5-7.5"/>
+  </symbol>
+
+  <symbol id="g-selvita" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="10.5" cy="10.5" r="6.5"/>
+    <path d="M15.3 15.3 20.5 20.5"/>
+  </symbol>
+  <symbol id="g-vie" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20.5 3.5 3.5 10l7 3.5 3.5 7z"/>
+    <path d="M20.5 3.5 10.5 13.5"/>
+  </symbol>
+  <symbol id="g-tarkista" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 3.5 4.5 6.3v5.4c0 4.4 3 8.4 7.5 9.8 4.5-1.4 7.5-5.4 7.5-9.8V6.3z"/>
+    <path d="M9 11.8 11.3 14 15 10"/>
+  </symbol>
+  <!-- g-varaa UUSITTU: oli tiimalasi = identtinen g-odottaan kanssa.
+       Varaa on ICS-kalenteriverbi (kuten Sovi ja Aikatauluta), joten se
+       kuuluu kalenterimuotoon; täytetty lohko = varattu aika. -->
+  <symbol id="g-varaa" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3.5" y="5.5" width="17" height="15" rx="2.5"/>
+    <path d="M3.5 10h17M8 3.5v4M16 3.5v4"/>
+    <rect x="6.5" y="12.5" width="8" height="5.5" rx="1.2" fill="currentColor" stroke="none"/>
+  </symbol>
+  <symbol id="g-aikatauluta" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12.5" r="8.5"/>
+    <path d="M12 7.5v5l3.2 2"/>
+  </symbol>
+
+  <!-- g-kirjaa UUSITTU: oli kynä = identtinen g-muokkaan kanssa.
+       Nyt lomake + kynänkärki: kirjaaminen on tiedon tallentamista
+       järjestelmään, muokkaaminen on kortin editointia. -->
+  <symbol id="g-kirjaa" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18.5 12.5V19a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 19V6A1.5 1.5 0 0 1 6 4.5h6.5"/>
+    <path d="M8.5 9.5h4M8.5 13h3"/>
+    <path d="M18.2 3.4 20.6 5.8 14.4 12H12V9.6z"/>
+  </symbol>
+
+  <!-- ═══ UUDET VERBIGLYFIT (vaihe 2) ═══ -->
+
+  <!-- Lähetä: kirjekuori. g-vie on paperilennokki (toimittaminen
+       fyysisesti tai eteenpäin); kirjekuori on viestin lähettämistä. -->
+  <symbol id="g-laheta" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3.5" y="5.5" width="17" height="13" rx="2"/>
+    <path d="M4.2 7 12 12.8 19.8 7"/>
+  </symbol>
+
+  <!-- Lue: avoin kirja, keskitaite erottaa sen g-kirjoitan arkista. -->
+  <symbol id="g-lue" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 6.8C10.2 5.3 7.4 4.5 3.8 4.5v12.8c3.6 0 6.4.8 8.2 2.2"/>
+    <path d="M12 6.8c1.8-1.5 4.6-2.3 8.2-2.3v12.8c-3.6 0-6.4.8-8.2 2.2"/>
+    <path d="M12 6.8v12.7"/>
+  </symbol>
+
+  <!-- Etsi: tähtäin. Tarkoituksella eri muotokieli kuin g-selvitan
+       suurennuslasi — ks. kollisiopari alempana, tämä on päätettävä. -->
+  <symbol id="g-etsi" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="7.5"/>
+    <path d="M12 1.8v3.4M12 18.8v3.4M1.8 12h3.4M18.8 12h3.4"/>
+    <circle cx="12" cy="12" r="1.6"/>
+  </symbol>
+
+  <!-- Kirjoita: arkki + tekstirivit. Ei kynää — kynä on g-muokkaa. -->
+  <symbol id="g-kirjoita" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 3.5h7.5L19 9v11.5H6z"/>
+    <path d="M13.2 3.5V9H19"/>
+    <path d="M9 13h6.5M9 16.5h4.5"/>
+  </symbol>
+
+  <!-- Vastaa: puhekupla + paluunuoli. -->
+  <symbol id="g-vastaa" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20.5 15.5a2 2 0 0 1-2 2H8l-4.5 3.5v-15a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/>
+    <path d="M12.5 8.2 9.5 11l3 2.8"/>
+    <path d="M9.5 11h5.5"/>
+  </symbol>
+
+  <!-- Tapaa: kaksi henkilöä. -->
+  <symbol id="g-tapaa" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="9.2" cy="8" r="3.4"/>
+    <path d="M3 20.2c0-3.2 2.8-5.4 6.2-5.4s6.2 2.2 6.2 5.4"/>
+    <path d="M16.4 5.2a3.4 3.4 0 0 1 0 6.4"/>
+    <path d="M17.6 15.2c2.1.7 3.4 2.6 3.4 5"/>
+  </symbol>
+
+  <!-- Valmistele: jakoavain. Työn tekeminen valmiiksi etukäteen. -->
+  <symbol id="g-valmistele" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 4.6 16.8 7.8l-.6 2.6-2.6.6-3.2 3.2"/>
+    <path d="M14.4 3.9a5.4 5.4 0 0 0-4.6 8.2L4 17.9a1.9 1.9 0 0 0 2.7 2.7l5.8-5.8a5.4 5.4 0 0 0 7.6-6.3"/>
+  </symbol>
+
+  <!-- ═══ TOIMINTOGLYFIT — mockupista ═══ -->
+  <symbol id="g-pika" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M13.5 2.5 5 13.5h5.5L9.5 21.5 19 10.5h-5.5z"/>
+  </symbol>
+  <symbol id="g-sammakko" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4.5 15c0-4.1 3.4-7.5 7.5-7.5s7.5 3.4 7.5 7.5c0 2.5-2 4.5-4.5 4.5H9c-2.5 0-4.5-2-4.5-4.5z"/>
+    <circle cx="8.8" cy="6.8" r="2.3"/><circle cx="15.2" cy="6.8" r="2.3"/>
+  </symbol>
+  <symbol id="g-aloita" viewBox="0 0 24 24">
+    <path d="M9 6.2v11.6c0 .8.9 1.3 1.6.9l9.2-5.8c.6-.4.6-1.4 0-1.8L10.6 5.3c-.7-.4-1.6.1-1.6.9z"
+          fill="currentColor"/>
+  </symbol>
+  <symbol id="g-seis" viewBox="0 0 24 24">
+    <rect x="6.5" y="6.5" width="11" height="11" rx="1.8" fill="currentColor"/>
+  </symbol>
+  <symbol id="g-tehty" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4.5 12.5 9.5 17.5 19.5 6.5"/>
+  </symbol>
+  <symbol id="g-odottaa" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7 3.5h10M7 20.5h10"/>
+    <path d="M8.5 3.5v3.1c0 1 .4 1.9 1.1 2.6L12 11.7l2.4-2.5c.7-.7 1.1-1.6 1.1-2.6V3.5"/>
+    <path d="M8.5 20.5v-3.1c0-1 .4-1.9 1.1-2.6L12 12.3l2.4 2.5c.7.7 1.1 1.6 1.1 2.6v3.1"/>
+  </symbol>
+  <symbol id="g-jonoon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 20V4.5"/><path d="M5.5 11 12 4.5 18.5 11"/>
+  </symbol>
+  <symbol id="g-muokkaa" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16.5 3.8 20.2 7.5 8.7 19H5v-3.7z"/><path d="M14 6.3l3.7 3.7"/>
+  </symbol>
+  <symbol id="g-poista" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round">
+    <path d="M6 6 18 18M18 6 6 18"/>
+  </symbol>
+  <symbol id="g-tarkea" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 3.2 5 5.6v5.1c0 4.1 2.8 7.9 7 9.2 4.2-1.3 7-5.1 7-9.2V5.6z"/>
+    <path d="M12 8v4.4"/><path d="M12 15.6v.1"/>
+  </symbol>
+  <!-- g-kiire UUSITTU (Jaakon referenssi): sekuntikello + vauhtiviivat.
+       Vauhtiviivat ovat se ero joka kantaa 14px:ään asti — pelkkä
+       kruunu+nappi ei riittänyt erottamaan tätä g-pomodorosta. Kolme
+       viivaa, ei kahdeksaa: tiheämpi hajoaa radan syvimmällä kortilla. -->
+  <symbol id="g-kiire" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="15.4" cy="14.2" r="6.2"/>
+    <path d="M13.1 3.4h4.6"/><path d="M15.4 3.4v3.6"/>
+    <path d="M20.3 8.8 21.7 7.4"/>
+    <path d="M15.4 10.8v3.4"/>
+    <path d="M1.6 10.2h6.4M2.8 14.2h5.2M4 18.2h4"/>
+  </symbol>
+  <symbol id="g-linkki" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 13.5a4 4 0 0 0 5.7 0l3-3a4 4 0 1 0-5.7-5.7l-1.7 1.7"/>
+    <path d="M14 10.5a4 4 0 0 0-5.7 0l-3 3a4 4 0 1 0 5.7 5.7l1.7-1.7"/>
+  </symbol>
+
+  <!-- ═══ UUDET TOIMINTOGLYFIT (vaihe 2) ═══ -->
+
+  <!-- Aamu: nouseva aurinko horisontin takaa. Korvaa ☀ -->
+  <symbol id="g-aamu" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7 14.5a5 5 0 0 1 10 0"/>
+    <path d="M12 3.2v3.3M5.1 6.6l2.3 2.3M18.9 6.6l-2.3 2.3"/>
+    <path d="M2.5 14.5h19"/>
+    <path d="M6 19.5h12"/>
+  </symbol>
+
+  <!-- Pomodoro: tomaatti varsineen. Korvaa 🍅. Erottuu
+       g-aikatauluta-kellosta ja g-kiire-sekuntikellosta varren takia. -->
+  <symbol id="g-pomodoro" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 8.5c4.1 0 7.5 3 7.5 6.6S16.1 21.5 12 21.5s-7.5-2.8-7.5-6.4S7.9 8.5 12 8.5z"/>
+    <path d="M12 8.5V6"/>
+    <path d="M12 6c-1-2-3.4-2.4-3.4-2.4M12 6c1-2 3.4-2.4 3.4-2.4"/>
+  </symbol>
+
+  <!-- Ajastettu: herätyskello. Kello + kaksi soittokelloa erottaa sen
+       g-aikatauluta-seinäkellosta: tämä laukeaa itsestään. -->
+  <symbol id="g-ajastettu" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="13.8" r="7.3"/>
+    <path d="M12 9.8v4h3"/>
+    <path d="M3.6 5.2A3.6 3.6 0 0 1 8.4 3.6M20.4 5.2a3.6 3.6 0 0 0-4.8-1.6"/>
+  </symbol>
+
+  <!-- Jatkokortti: kaksi limittäistä korttia + nuoli. EI ketjulenkkiä —
+       se on g-linkki (ulkoinen URL). -->
+  <symbol id="g-jatkokortti" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2.8" y="6.2" width="9.5" height="13" rx="1.8"/>
+    <path d="M15.5 6.2h4.2a1.8 1.8 0 0 1 1.8 1.8v9.4a1.8 1.8 0 0 1-1.8 1.8h-4.2"/>
+    <path d="M13.5 12.7h5.2M16.6 10.4l2.3 2.3-2.3 2.3"/>
+  </symbol>
+
+  <!-- ═══ KVADRANTTIMERKIT ═══ -->
+  <symbol id="q-q1" viewBox="0 0 24 24"><path d="M12 3 22 20H2z" fill="currentColor"/></symbol>
+  <symbol id="q-q2" viewBox="0 0 24 24"><path d="M12 2 22 12 12 22 2 12z" fill="currentColor"/></symbol>
+  <symbol id="q-q3" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="currentColor"/></symbol>
+  <symbol id="q-q4" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="2" fill="currentColor"/></symbol>
+
 </defs>
 </svg>
 <div class="wrap">
@@ -9567,66 +9807,14 @@ window._useCardUI = true; // vaihe 6a: uusi korttinäkymä oletuksena
 
 // Vaihe 9.6: helper joka palauttaa SVG-stringin verbi-spritestä
 // Käyttää 1em-kokoa → perii parent-elementin font-sizen, ei CSS-muutoksia.
-function svgVerbIcon(id){
-  return '<svg viewBox="0 0 24 24" aria-hidden="true" style="width:1em;height:1em;display:block"><use href="#'+id+'"/></svg>';
+function svgVerbIcon(ref){
+  /* ref on joko valmis '#g-soita' (verbIcon) tai paljas id. Merkkijono
+     tulee aina rekisterista, ei kayttajan syotteesta — innerHTML on
+     siksi turvallinen tassa. */
+  var href = ref.charAt(0)==='#' ? ref : '#'+ref;
+  return '<svg viewBox="0 0 24 24" aria-hidden="true" style="width:1em;height:1em;display:block"><use href="'+href+'"/></svg>';
 }
 
-var VERB_ICONS = {
-  // Pääverbit (UI:n napit, käskymuoto) — Vaihe 9.6: custom SVG-ikonit
-  'Soita':svgVerbIcon('verb-i-soita'),
-  'Sovi':svgVerbIcon('verb-i-sovi'),
-  'Kirjaa':svgVerbIcon('verb-i-kirjaa'),
-  'Tee':svgVerbIcon('verb-i-tee'),
-  'Selvitä':svgVerbIcon('verb-i-selvita'),
-  'Vie':svgVerbIcon('verb-i-vie'),
-  'Tarkista':svgVerbIcon('verb-i-tarkista'),
-  'Aikatauluta':svgVerbIcon('verb-i-sovi'),
-  'Varaa':svgVerbIcon('verb-i-varaa'),
-  'Lue':'📖',
-  'Lähetä':svgVerbIcon('verb-i-vie'),
-  'Muu':'✦',
-  // Yleisiä custom-verbejä (käskymuoto)
-  'Etsi':svgVerbIcon('verb-i-selvita'),
-  'Vahvista':svgVerbIcon('verb-i-tarkista'),
-  'Kirjoita':svgVerbIcon('verb-i-kirjaa'),
-  'Vastaa':'💬',
-  'Kysy':'❓',
-  'Neuvo':'💡',
-  'Ohjaa':'🤝',
-  'Suunnittele':'🗺️',
-  'Valmistele':'🛠️',
-  'Tapaa':'👥',
-  'Osallistu':'🎟️',
-  'Pidä':'🎤',
-  'Esitä':'📊',
-  'Päätä':'✔️',
-  'Hyväksy':'👍',
-  'Maksa':'💳',
-  'Tilaa':'🛒',
-  'Osta':'🛍️',
-  'Korjaa':'🔧',
-  'Asenna':'⚙️',
-  'Päivitä':'🔄',
-  'Siivoa':'🧹',
-  'Pakkaa':'📦',
-  'Toimita':'🚚',
-  'Hae':'🥾',
-  'Käy':'🚶',
-  'Aja':'🚗',
-  'Lataa':'⬇️',
-  'Tallenna':'💾',
-  'Jaa':'🔗',
-  'Lue läpi':'📖',
-  'Mieti':'🤔',
-  'Arvioi':'⚖️',
-  'Ilmoita':'📣',
-  'Muistuta':'⏰',
-  'Peruuta':'🚫',
-  'Sulje':'🔒',
-  'Avaa':'🔓',
-  'Aloita':'▶️',
-  'Lopeta':'⏹️'
-};
 
 // Joustava verbi→ikoni-haku: case-insensitive + perusmuotojen tunnistus
 
@@ -9696,12 +9884,91 @@ function mkUrgBadge(active){
   return btn;
 }
 
-/* ── TCG-kortin verb→sprite-id -kartta ─────────────────────── */
-var _TCG_VERB_ID = {
-  'Soita':'verb-i-soita','Sovi':'verb-i-sovi','Kirjaa':'verb-i-kirjaa',
-  'Tee':'verb-i-tee','Selvitä':'verb-i-selvita','Vie':'verb-i-vie',
-  'Tarkista':'verb-i-tarkista','Varaa':'verb-i-varaa'
+/* ── Ikonirekisteri (vaihe 2) ────────────────────────────────
+   Yksi kartta korvaa kolme. Aiemmin sama verbi tarvitsi merkinnan
+   kolmeen paikkaan eri kirjoitusasuissa — _TCG_VERB_ID kaskymuodolla
+   ('Soita'), INV_VERB_ICONS nominalisaatiolla ('soittaminen') ja
+   VERB_ICONS omallaan — eivatka ne pysyneet synkassa: VERB_ICONS oli
+   ehtinyt kuolla kokonaan (maaritelty, ei yhtaan lukupaikkaa).
+   VERB_ALIAS pitaa molemmat kirjoitusasut avaimina.
+
+   Avaimet ovat aakkosettomia ja lookup normalisoi syotteen: 'Selvita'
+   ja 'selvita' osuvat samaan glyfiin (#g-selvita), joten aakkoset
+   eivat voi karata id:hen. */
+var ICON = {};
+('soita sovi kirjaa tee selvita vie tarkista laheta lue etsi kirjoita '
++'vastaa tapaa valmistele aikatauluta varaa tehty odottaa linkki muokkaa '
++'poista jonoon pika sammakko aamu pomodoro ajastettu jatkokortti aloita '
++'seis tarkea kiire').split(' ').forEach(function(n){ICON[n]=1;});
+
+var ICON_FALLBACK = 'tee';
+
+var VERB_ALIAS = {
+  soita:'soita', soittaminen:'soita', yhteydenotto:'soita',
+  sovi:'sovi', sopiminen:'sovi',
+  kirjaa:'kirjaa', kirjaaminen:'kirjaa', tayttaminen:'kirjaa',
+  dokumentointi:'kirjaa',
+  tee:'tee', tekeminen:'tee', toteuttaminen:'tee', paivittaminen:'tee',
+  korjaaminen:'tee', muu:'tee',
+  selvita:'selvita', selvittaminen:'selvita', tutkiminen:'selvita',
+  vie:'vie', vieminen:'vie', toimittaminen:'vie',
+  tarkista:'tarkista', tarkistaminen:'tarkista', arvioiminen:'tarkista',
+  vahvista:'tarkista', vahvistaminen:'tarkista',
+  laheta:'laheta', lahettaminen:'laheta',
+  lue:'lue', lukeminen:'lue', perehtyminen:'lue',
+  etsi:'etsi', etsiminen:'etsi',
+  kirjoita:'kirjoita', kirjoittaminen:'kirjoita',
+  vastaa:'vastaa', vastaaminen:'vastaa', kysy:'vastaa', neuvo:'vastaa',
+  neuvominen:'vastaa', ohjaa:'vastaa', ohjaaminen:'vastaa',
+  tukeminen:'vastaa', keskusteleminen:'vastaa',
+  tapaa:'tapaa', tapaaminen:'tapaa', osallistu:'tapaa',
+  osallistuminen:'tapaa', kayminen:'tapaa', pida:'tapaa',
+  valmistele:'valmistele', valmisteleminen:'valmistele',
+  suunnittele:'valmistele', suunnitteleminen:'valmistele',
+  jarjestaminen:'valmistele', organisoiminen:'valmistele',
+  aikatauluta:'aikatauluta', aikatauluttaminen:'aikatauluta',
+  varaa:'varaa', varaaminen:'varaa',
+  /* Substantiivimuodot: kayttaja kirjoittaa usein 'Soitto Virtaselle'
+     eika 'Soita Virtaselle'. Naita ei tavoita osittainen tasmays, koska
+     'soitto' ei ole 'soita'n prefiksi kumpaankaan suuntaan. */
+  soitto:'soita', kirjaus:'kirjaa', tarkistus:'tarkista',
+  odottava:'odottaa', odottaminen:'odottaa',
+  varaus:'varaa', lahetys:'laheta', haku:'etsi', vastaus:'vastaa',
+  sopimus:'sovi', valmistelu:'valmistele'
 };
+
+/* Aakkoset pois ja pienelle — 'Lähetä' → 'laheta'. */
+function _iconNorm(s){
+  return String(s||'').trim().toLowerCase()
+    .replace(/[\u00e4\u00e5]/g,'a').replace(/\u00f6/g,'o');
+}
+
+/* Verbi → kanoninen ikoninimi. Osittainen tasmays on fallback, koska
+   kayttaja voi kirjoittaa oman verbinsa ('soitto', 'tarkistus'). */
+function verbName(verbi){
+  var v=_iconNorm(verbi);
+  if(!v) return ICON_FALLBACK;
+  /* Nimi voi olla suoraan setissa ilman aliasta — kayttaja kirjoittaa
+     'Odottava', ja #g-odottaa on olemassa. Ilman tata tarkistusta
+     jokainen toimintonimi olisi pitanyt toistaa VERB_ALIASissa. */
+  if(ICON[v]) return v;
+  if(VERB_ALIAS[v]) return VERB_ALIAS[v];
+  for(var k in VERB_ALIAS){
+    if(v.indexOf(k)===0 || k.indexOf(v)===0) return VERB_ALIAS[k];
+  }
+  return ICON_FALLBACK;
+}
+
+var ICON_S = {};   /* sigil-nimet, taytetaan vaiheessa 3 */
+
+/* tier: 'g' glyfi (14–28px, oletus) | 's' sigil (>=48px, vaihe 3).
+   Sigil-symboleja ei ole viela — tier 's' putoaa glyfiin kunnes on. */
+function iconId(name, tier){
+  var n = ICON[name] ? name : ICON_FALLBACK;
+  return (tier==='s' && ICON_S[n]) ? '#s-'+n : '#g-'+n;
+}
+function verbIcon(verbi, tier){ return iconId(verbName(verbi), tier); }
+
 /* Rarity = tärkeys (Eisenhower): kortisto opettaa metodologiaa */
 function rarityOf(t){
   if(!t)return 'common';
@@ -9710,20 +9977,15 @@ function rarityOf(t){
   if(t.quad==='q3')return 'uncommon';
   return 'common';
 }
-function _tcgIconId(verbi){
-  if(!verbi) return 'verb-i-tee';
-  if(_TCG_VERB_ID[verbi]) return _TCG_VERB_ID[verbi];
-  var low=verbi.toLowerCase();
-  for(var k in _TCG_VERB_ID){if(k.toLowerCase()===low||low.indexOf(k.toLowerCase())===0)return _TCG_VERB_ID[k];}
-  return 'verb-i-tee';
-}
 function _tcgSvgIcon(id, size){
   var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
   svg.setAttribute('viewBox','0 0 24 24');
   svg.setAttribute('aria-hidden','true');
   if(size){svg.setAttribute('width',size);svg.setAttribute('height',size);}
   var u=document.createElementNS('http://www.w3.org/2000/svg','use');
-  u.setAttribute('href','#'+id);
+  /* verbIcon palauttaa valmiin '#g-nimi'; vanhat kutsut antavat
+     paljaan id:n ('frog-glyph'). Hyvaksytaan molemmat. */
+  u.setAttribute('href', id.charAt(0)==='#' ? id : '#'+id);
   svg.appendChild(u);
   return svg;
 }
@@ -9734,7 +9996,7 @@ function renderArenaCard(t, container, anyFrog, mode){
   mode = mode || 'arena';
   var q = t.quad && {q1:'Tee heti',q2:'Aikatauluta',q3:'Delegoi',q4:'Poista'}[t.quad];
   var qc = t.quad && {'q1':'var(--q1)','q2':'var(--q2)','q3':'var(--q3)','q4':'var(--q4)'}[t.quad] || 'var(--q4)';
-  var iconId = _tcgIconId(t.verbi);
+  var vIcon = verbIcon(t.verbi);
 
   var card=document.createElement('div');
   // 'lane' = radan kortti: sama kompakti runko kuin kadessa, oma luokka
@@ -9779,13 +10041,13 @@ function renderArenaCard(t, container, anyFrog, mode){
   // Kuva-alue (verbi-rintakuva)
   var art=document.createElement('div');
   art.className='tcg-card__art';
-  art.appendChild(_tcgSvgIcon(iconId,'56%'));
+  art.appendChild(_tcgSvgIcon(vIcon,'56%'));
   plate.appendChild(art);
 
   // Tyyppipalkki
   var tl=document.createElement('div');
   tl.className='tcg-card__typeline';
-  tl.appendChild(_tcgSvgIcon(iconId));
+  tl.appendChild(_tcgSvgIcon(vIcon));
   if(t.verbi){var vs=document.createElement('span');vs.textContent=t.verbi;tl.appendChild(vs);}
   if(q){var qs=document.createElement('span');qs.className='tl-quad';qs.textContent=q;tl.appendChild(qs);}
   var setEl=document.createElement('span');
@@ -13915,23 +14177,7 @@ var invState = {
   search: ''
 };
 
-var INV_VERB_ICONS = {
-  // Vaihe 9.6: pääverbit custom SVG, muut emojeina
-  'etsiminen':svgVerbIcon('verb-i-selvita'),'selvittäminen':svgVerbIcon('verb-i-selvita'),'tutkiminen':'🔬',
-  'kirjaaminen':svgVerbIcon('verb-i-kirjaa'),'kirjoittaminen':svgVerbIcon('verb-i-kirjaa'),'täyttäminen':svgVerbIcon('verb-i-kirjaa'),'dokumentointi':svgVerbIcon('verb-i-kirjaa'),
-  'soittaminen':svgVerbIcon('verb-i-soita'),'yhteydenotto':svgVerbIcon('verb-i-soita'),
-  'sopiminen':svgVerbIcon('verb-i-sovi'),'aikatauluttaminen':svgVerbIcon('verb-i-sovi'),
-  'ohjaaminen':'🤝','neuvominen':'💬','tukeminen':'💬','keskusteleminen':'💬',
-  'suunnitteleminen':'🗓️','järjestäminen':'🗂️','organisoiminen':'🗂️',
-  'varaaminen':svgVerbIcon('verb-i-varaa'),
-  'lähettäminen':svgVerbIcon('verb-i-vie'),'toimittaminen':svgVerbIcon('verb-i-vie'),'vieminen':svgVerbIcon('verb-i-vie'),
-  'lukeminen':'📖','perehtyminen':'📖',
-  'tekeminen':svgVerbIcon('verb-i-tee'),'toteuttaminen':svgVerbIcon('verb-i-tee'),
-  'tarkistaminen':svgVerbIcon('verb-i-tarkista'),'arvioiminen':svgVerbIcon('verb-i-tarkista'),'vahvistaminen':svgVerbIcon('verb-i-tarkista'),
-  'päivittäminen':'🔄','korjaaminen':'🔧',
-  'osallistuminen':'🎯','käyminen':'🚶'
-};
-var INV_VERB_FALLBACK = '📋';
+
 
 function getVerbFromTask(t){
   if(t.verbi && t.verbi.trim()) return t.verbi.trim();
@@ -13940,15 +14186,14 @@ function getVerbFromTask(t){
   return m ? m[1].toLowerCase() : '';
 }
 
-function getVerbIconFromText(verb){
-  if(!verb) return INV_VERB_FALLBACK;
-  var v = verb.toLowerCase();
-  if(INV_VERB_ICONS[v]) return INV_VERB_ICONS[v];
-  // osittainen täsmäytys
-  for(var k in INV_VERB_ICONS){
-    if(v.indexOf(k)===0 || k.indexOf(v)===0) return INV_VERB_ICONS[k];
-  }
-  return INV_VERB_FALLBACK;
+function getVerbIconFromText(verb, tier){
+  /* Pakan ikoni tulee nyt samasta rekisterista kuin kortin. Aiemmin
+     tassa oli oma kartta nominalisaatioavaimilla ('soittaminen') ja
+     puolet arvoista oli emojeja — sama verbi saattoi nayttaa kortilla
+     SVG:lta ja pakassa emojilta.
+     tier 's' = sigil-kokoluokka (verb-bg on 80px); se putoaa glyfiin
+     kunnes ICON_S taytetaan vaiheessa 3. */
+  return svgVerbIcon(verbIcon(verb, tier));
 }
 
 function getAllVerbs(taskList){
@@ -14148,7 +14393,7 @@ function renderInventory(){
   var frag = document.createDocumentFragment();
   sorted.forEach(function(t){
     var verb = getVerbFromTask(t);
-    var icon = getVerbIconFromText(verb);
+    var icon = getVerbIconFromText(verb, 's');   /* .inv-card__verb-bg on 80px */
     var isActive = isTaskActive(t);
     var safeQuad = ['q1','q2','q3','q4'].indexOf(t.quad) !== -1 ? t.quad : 'q4';
     var qLabel = safeQuad.toUpperCase();
