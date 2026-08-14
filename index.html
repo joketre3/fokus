@@ -1760,21 +1760,25 @@ html[data-theme="aurinko"][data-perf="lite"]{
           stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
     <path d="M7.6 4.5 5 6c-1 .6-1.3 1.9-.9 3 .9 2.6 2.4 5 4.4 7s4.4 3.5 7 4.4c1.1.4 2.4.1 3-.9l1.5-2.6-3.8-2.2-2 2c-1.8-.9-3.3-2.4-4.2-4.2l2-2z"/>
   </symbol>
-  <!-- ═══ SOVI — kaksi kättä, check-suhteet (lukittu 2026-08-14) ═══
-       Kaksi kättä kohtaavat: lyhyt haara täytettynä on etummainen käsi
-       (isompi nyrkki), pitkä ääriviivakäsi sen takana. Kättelyn realistinen
-       piirros ei kestä 14px:ää — sormiväli on siinä alle pikselin — joten
-       tunnistus tulee muodosta: check-suhde + kaksi erillistä kättä.
-       Rako on maski, ei tyylivalinta: samanvärisinä muodot sulautuisivat.
-       Maskin #fff/#000 ovat luminanssiarvoja, eivät teemavärejä. -->
-  <symbol id="g-sovi" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-    <mask id="g-sovi-mask">
-      <rect width="24" height="24" fill="#fff"/>
-      <path d="M2.11 12.76A2.3 2.3 0 0 1 5.09 9.24L10.67 13.97A2.3 2.3 0 0 1 7.7 17.48ZM7.25 18.02A3.0 3.0 0 0 1 11.12 13.44L13.34 15.31A3.0 3.0 0 0 1 9.46 19.89Z" fill="#000" stroke="#000" stroke-width="1.7"/>
-    </mask>
-    <path d="M18.89 3.46A2.3 2.3 0 0 1 22.31 6.54L12.65 17.22A2.3 2.3 0 0 1 9.24 14.13ZM8.72 13.66A3.0 3.0 0 0 1 13.17 17.68L11.42 19.61A3.0 3.0 0 0 1 6.98 15.59Z" fill="none" stroke="currentColor" stroke-width="1.75" mask="url(#g-sovi-mask)"/>
-    <path d="M2.11 12.76A2.3 2.3 0 0 1 5.09 9.24L10.67 13.97A2.3 2.3 0 0 1 7.7 17.48ZM7.25 18.02A3.0 3.0 0 0 1 11.12 13.44L13.34 15.31A3.0 3.0 0 0 1 9.46 19.89Z" fill="currentColor"/>
-  </symbol>
+  <!-- ═══ SOVI — kadenpuristus (lukittu 2026-08-14) ═══
+       Geometria on MITATTU erillisen ikoniprojektin referenssikuvasta
+       (~/kadenpuristus-ikoni: CUFF_L, CUFF_R, THUMB, FINGERS) ja
+       muunnettu tahan SVG:ksi. Luvut eivat ole arvauksia — ala pyorista
+       niita "siistimmiksi".
+
+       EI ole Material Symbols "handshake" eika muukaan kirjastoikoni:
+       ne ovat yhtenaista massaa, jossa sormet ovat ohuita tummia rakoja.
+       Tama koostuu irrallisista paloista — kaksi hihansuuta, peukalokaari
+       ja sormikapselit — joiden valissa nakyy tausta. Tama meni kerran
+       pieleen; ala "korjaa" sita kirjastoikoniksi.
+
+       Kaksi tiheytta samasta geometriasta:
+       #g-sovi  4 sormea, kapeat — raot pysyvat auki 16,7px:aan (indeksi,
+                typeline, napit)
+       #s-sovi  7 sormea — tayspiirto >=28px (kortin taide, verbivalikko).
+                Taydella sormimaaralla raot umpeutuvat jo 20px:ssa. -->
+  <symbol id="g-sovi" viewBox="0 0 24 24" fill="currentColor"><rect x="1.82" y="6.13" width="7.34" height="4.04" rx="1.1" transform="rotate(-45 5.49 8.15)"/><rect x="15.12" y="6.22" width="6.42" height="5.32" rx="1.28" transform="rotate(45 18.33 8.88)"/><path d="M10.26 10.41A0.825 0.825 0 0 1 9.16 9.19L9.98 8.45A0.825 0.825 0 0 1 11.08 9.67Z"/><path d="M11.11 9.65A0.825 0.825 0 0 1 9.95 8.47L10.69 7.74A0.825 0.825 0 0 1 11.85 8.92Z"/><path d="M11.77 8.99A0.825 0.825 0 0 1 10.77 7.67L11.5 7.12A0.825 0.825 0 0 1 12.5 8.44Z"/><path d="M12.3 8.55A0.825 0.825 0 0 1 11.7 7.01L12.43 6.73A0.825 0.825 0 0 1 13.03 8.27Z"/><path d="M12.83 8.32A0.825 0.825 0 0 1 12.63 6.68L13.37 6.59A0.825 0.825 0 0 1 13.57 8.23Z"/><path d="M13.3 8.22A0.825 0.825 0 0 1 13.64 6.6L14.56 6.79A0.825 0.825 0 0 1 14.22 8.41Z"/><path d="M14.07 8.36A0.825 0.825 0 0 1 14.71 6.84L15.81 7.3A0.825 0.825 0 0 1 15.17 8.82Z"/><path d="M7.29 12.46A0.735 0.735 0 0 1 8.33 13.5L6.71 15.12A0.735 0.735 0 0 1 5.67 14.08Z"/><path d="M10.41 15.37A0.735 0.735 0 0 1 11.43 16.43L9.92 17.89A0.735 0.735 0 0 1 8.9 16.83Z"/><path d="M18.51 13.44A0.735 0.735 0 0 1 17.47 14.48L14.29 11.3A0.735 0.735 0 0 1 15.33 10.26Z"/><path d="M15.12 16.19A0.735 0.735 0 0 1 14.08 17.23L11.17 14.32A0.735 0.735 0 0 1 12.21 13.28Z"/></symbol>
+  <symbol id="s-sovi" viewBox="0 0 24 24" fill="currentColor"><rect x="1.82" y="6.13" width="7.34" height="4.04" rx="1.1" transform="rotate(-45 5.49 8.15)"/><rect x="15.12" y="6.22" width="6.42" height="5.32" rx="1.28" transform="rotate(45 18.33 8.88)"/><path d="M10.26 10.41A0.825 0.825 0 0 1 9.16 9.19L9.98 8.45A0.825 0.825 0 0 1 11.08 9.67Z"/><path d="M11.11 9.65A0.825 0.825 0 0 1 9.95 8.47L10.69 7.74A0.825 0.825 0 0 1 11.85 8.92Z"/><path d="M11.77 8.99A0.825 0.825 0 0 1 10.77 7.67L11.5 7.12A0.825 0.825 0 0 1 12.5 8.44Z"/><path d="M12.3 8.55A0.825 0.825 0 0 1 11.7 7.01L12.43 6.73A0.825 0.825 0 0 1 13.03 8.27Z"/><path d="M12.83 8.32A0.825 0.825 0 0 1 12.63 6.68L13.37 6.59A0.825 0.825 0 0 1 13.57 8.23Z"/><path d="M13.3 8.22A0.825 0.825 0 0 1 13.64 6.6L14.56 6.79A0.825 0.825 0 0 1 14.22 8.41Z"/><path d="M14.07 8.36A0.825 0.825 0 0 1 14.71 6.84L15.81 7.3A0.825 0.825 0 0 1 15.17 8.82Z"/><path d="M7.09 12.46A0.87 0.87 0 0 1 8.33 13.7L6.91 15.12A0.87 0.87 0 0 1 5.67 13.88Z"/><path d="M8.56 13.95A0.87 0.87 0 0 1 9.82 15.15L8.46 16.56A0.87 0.87 0 0 1 7.2 15.36Z"/><path d="M10.21 15.38A0.87 0.87 0 0 1 11.43 16.62L10.12 17.89A0.87 0.87 0 0 1 8.9 16.65Z"/><path d="M11.69 16.93A0.87 0.87 0 0 1 12.89 18.19L11.94 19.09A0.87 0.87 0 0 1 10.74 17.83Z"/><path d="M18.52 13.24A0.87 0.87 0 0 1 17.28 14.48L14.29 11.49A0.87 0.87 0 0 1 15.53 10.25Z"/><path d="M16.96 14.8A0.87 0.87 0 0 1 15.72 16.04L12.73 13.05A0.87 0.87 0 0 1 13.97 11.81Z"/><path d="M15.12 15.99A0.87 0.87 0 0 1 13.88 17.23L11.17 14.52A0.87 0.87 0 0 1 12.41 13.28Z"/></symbol>
   <symbol id="g-tee" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
     <path d="M13.5 3.5 20.5 10.5 17 14 10 7z"/>
@@ -9959,7 +9963,10 @@ function verbName(verbi){
   return ICON_FALLBACK;
 }
 
-var ICON_S = {};   /* sigil-nimet, taytetaan vaiheessa 3 */
+/* Sigil-nimet: naille on olemassa #s-<nimi>. Vaihe 3 tayttaa loput.
+   Sovi on taalla jo nyt, koska sen kaksi tiheytta syntyivat samasta
+   mitatusta geometriasta samalla kertaa. */
+var ICON_S = { sovi:1 };
 
 /* tier: 'g' glyfi (14–28px, oletus) | 's' sigil (>=48px, vaihe 3).
    Sigil-symboleja ei ole viela — tier 's' putoaa glyfiin kunnes on. */
