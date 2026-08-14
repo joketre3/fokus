@@ -180,6 +180,16 @@ asti glyfiin. Referenssi ja muokkauspaikka: `mockup-ikonit.html`.
   samanväristä muotoa erotetaan `<mask>`illa (laajennettu polku
   `stroke-width`illä), ei taustavärillä — maskin `#fff`/`#000` ovat
   luminanssia, eivät teemavärejä.
+- **`g-sovi` / `s-sovi` (kädenpuristus) on mitattu, ei piirretty.** Lähde:
+  erillinen ikoniprojekti `~/kadenpuristus-ikoni` (`kokoportaikko.py`:n
+  `CUFF_L`, `CUFF_R`, `THUMB`, `FINGERS`; IoU-tarkistus referenssikuvaan).
+  **Se ei ole Material Symbols "handshake" eikä muu kirjastoikoni** —
+  ne ovat yhtenäistä massaa, jossa sormet ovat tummia rakoja; tämä
+  koostuu irrallisista paloista. Tämä meni kerran pieleen, älä "korjaa"
+  sitä kirjastoikoniksi. Älä myöskään pyöristele mitattuja lukuja.
+- **Sama ikoni kahtena tiheytenä** on setin ainoa tapa selvitä
+  14px:stä: `#g-sovi` on 4 sormea (raot pysyvät auki), `#s-sovi` 7
+  (täyspiirto ≥28px). Täydellä sormimäärällä raot umpeutuvat 20px:ssä.
 - Vanhat `verb-i-*` (8 kpl) ovat yhä `<defs>`issä; ne poistuvat
   vaiheessa 3.
 
