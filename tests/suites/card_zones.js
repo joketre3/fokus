@@ -41,10 +41,23 @@
       var aR = arena ? R(arena) : null;
 
       if (arena) {
+        // Platen scrollHeight EI kelpaa mittariksi. Se lukee mukaan kaksi
+        // tarkoituksella yli menevaa koristetta, jotka overflow:hidden
+        // leikkaa: q-taiteen full-bleed SVG:n (scale 1.06 -> 448px kun
+        // plate on 414) ja kuva-alueen halo-pseudon (bottom:-8%). Mitattu
+        // 2026-08-15: halo pois -> 426 pysyy, taide selittaa loput.
+        // Sisaltovirta on se mika voi oikeasti ylivuotaa, joten se
+        // lasketaan platen omista flex-lapsista.
         var plate = arena.querySelector('.tcg-card__plate');
+        var flow = 0;
+        [].slice.call(plate.children).forEach(function(ch){
+          var cs = getComputedStyle(ch);
+          if (cs.position === 'absolute' || cs.display === 'none') return;
+          flow += ch.offsetHeight + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom);
+        });
         ok('Frankenstein: plate ei ylivuoda',
-           plate.scrollHeight <= plate.clientHeight + 1,
-           'scroll ' + plate.scrollHeight + ' vs client ' + plate.clientHeight);
+           flow <= plate.clientHeight + 1,
+           'sisalto ' + Math.round(flow) + ' vs client ' + plate.clientHeight);
 
         var body = arena.querySelector('.tcg-card__body');
         ok('Frankenstein: runko ei ylivuoda',
@@ -118,24 +131,28 @@
          laneVis.map(function(v){ return v.cardPx; }).join(' -> '));
 
       // ── Slot-raportti: mitka tunnisteet jaavat rajauksen ulkopuolelle ──
-      var SLOTS = ['.tcg-card__cost', '.tcg-card__frog-seal',
-                   '.tcg-card__typeline', '.tcg-card__typeline .tl-quad',
+      var SLOTS = ['.tcg-card__idx--tl', '.tcg-card__idx--br',
+                   '.tcg-card__frog-seal',
+                   '.tcg-card__typeline',
                    '.tcg-card__set', '.tcg-card__art', '.tcg-card__title',
                    '.tcg-card__meta-tcg'];
 
+      // Kuinka monta prosenttia elementista jaa nakyvaan kaistaleeseen.
+      // -1 = elementtia ei ole, -2 = display:none (tarkoituksellinen).
+      function visPct(el, visL, visR, visT, visB){
+        if (!el) return -1;
+        if (getComputedStyle(el).display === 'none') return -2;
+        var r = R(el);
+        var ovW = Math.max(0, Math.min(r.r, visR) - Math.max(r.l, visL));
+        var ovH = Math.max(0, Math.min(r.b, visB) - Math.max(r.t, visT));
+        return (r.w && r.h) ? Math.round(100 * (ovW*ovH) / (r.w*r.h)) : 0;
+      }
+
       function slotReport(label, cardEl, visL, visR, visT, visB){
         SLOTS.forEach(function(sel){
-          var el = cardEl.querySelector(sel);
-          if (!el) { ok(label + ' ' + sel, true, 'ei elementtia'); return; }
-          // display:none antaisi 0x0-rectin ja lukeutuisi peittyneeksi
-          // vaikka kyse on tarkoituksellisesta piilotuksesta.
-          if (getComputedStyle(el).display === 'none') {
-            ok(label + ' ' + sel, true, 'display:none'); return;
-          }
-          var r = R(el);
-          var ovW = Math.max(0, Math.min(r.r, visR) - Math.max(r.l, visL));
-          var ovH = Math.max(0, Math.min(r.b, visB) - Math.max(r.t, visT));
-          var pct = (r.w && r.h) ? Math.round(100 * (ovW*ovH) / (r.w*r.h)) : 0;
+          var pct = visPct(cardEl.querySelector(sel), visL, visR, visT, visB);
+          if (pct === -1) { ok(label + ' ' + sel, true, 'ei elementtia'); return; }
+          if (pct === -2) { ok(label + ' ' + sel, true, 'display:none'); return; }
           ok(label + ' ' + sel, true,
              pct === 0 ? 'PIILOSSA' : (pct >= 99 ? 'kokonaan' : pct + '%'));
         });
@@ -153,4 +170,151 @@
         var ln = laneVis[laneVis.length-1], lp = laneVis[laneVis.length-2];
         slotReport('RATA[syvin]', laneCards[laneCards.length-1],
                    Math.max(lp.r.r, ln.r.l), ln.r.r, ln.r.t, ln.r.b);
+      }
+
+      // ══ TAVOITEVAITTEET (vaihe 4 — kaksoisindeksi) ═════════════════════
+      // Indeksin koko tarkoitus on olla nakyvissa rajauksessa. Nakyvyytta EI
+      // voi mitata bboxeista: viuhka on kierretty (±8°) ja rata kierretty +
+      // skaalattu, joten getBoundingClientRect antaa akselinsuuntaisen
+      // laatikon eika elementtia — kaden TL "vuoti" 9 % pelkasta kierrosta.
+      // Osumatesti (elementFromPoint) vastaa oikeaan kysymykseen: onko tama
+      // merkki paallimmaisena ruudulla. Se huomioi kierron, limityksen,
+      // z-indeksin ja PAKKA-palkin yhdella kertaa.
+      //
+      // Indeksi on pointer-events:none (kortin klikkaus ei saa osua siihen),
+      // joten osumatestin ajaksi se tehdaan osuttavaksi. Vain hit-testaus
+      // muuttuu, ei asettelu.
+      var _hitStyle = document.createElement('style');
+      _hitStyle.textContent = '.tcg-card__idx{pointer-events:auto!important}';
+      document.head.appendChild(_hitStyle);
+
+      function symbolsVisible(idxEl){
+        var parts = [].slice.call(idxEl.querySelectorAll(
+          '.idx__quad, .idx__cost, .idx__verb, .idx__quick'));
+        var miss = [];
+        parts.forEach(function(pEl){
+          var r = pEl.getBoundingClientRect();
+          // Keskipiste on kierrosta riippumaton: kierretyn suorakaiteen
+          // bboxin keskipiste on sama piste kuin elementin oma keskipiste.
+          var n = document.elementFromPoint(Math.round((r.left + r.right) / 2),
+                                            Math.round((r.top + r.bottom) / 2));
+          if (!(n && (n === idxEl || idxEl.contains(n)))) {
+            miss.push(pEl.className.replace('idx__','') +
+                      (n ? '(' + (n.className || n.tagName) + ')' : '(tyhja)'));
+          }
+        });
+        return { n: parts.length, miss: miss };
+      }
+
+      if (handCards.length > 1) {
+        var hHit = symbolsVisible(handCards[0].querySelector('.tcg-card__idx--tl'));
+        ok('TAVOITE kasi: TL-indeksin merkit nakyvat limitetylla kortilla',
+           hHit.miss.length === 0,
+           hHit.n + ' merkkia, peitossa: ' + (hHit.miss.join(',') || '-'));
+      }
+
+      if (laneCards.length > 1) {
+        var lastI = laneVis.length - 1, lCard = laneCards[lastI], lv = laneVis[lastI];
+        var lHit = symbolsVisible(lCard.querySelector('.tcg-card__idx--br'));
+        ok('TAVOITE rata: BR-indeksin merkit nakyvat syvimmalla kortilla',
+           lHit.miss.length === 0,
+           lHit.n + ' merkkia, peitossa: ' + (lHit.miss.join(',') || '-'));
+
+        // Jalanjalki kortin OMISSA pikseleissa: kortin padding 3px +
+        // turva-alue + palstan leveys. Verrataan mitattuun kaistaleeseen.
+        var innerL = lCard.querySelector('.tcg-card');
+        var csL = getComputedStyle(innerL);
+        var kL  = parseFloat(csL.getPropertyValue('--idx-k')) || 1;
+        var foot = 3 + (parseFloat(csL.getPropertyValue('--idx-gut')) || 0) * kL
+                     + (parseFloat(csL.getPropertyValue('--idx-w'))   || 0) * kL;
+        ok('BR-jalanjalki kortin px', true,
+           foot.toFixed(1) + ' vs kaistale ' + lv.cardPx);
+
+        // Glyfin viiva ruudulla: stroke-width 1.75 / viewBox 24. Alle 1px on
+        // tasmalleen vanhojen verb-i-ikonien vika (stroke .3 → 0,14px).
+        var vSvg = lCard.querySelector('.tcg-card__idx--br .idx__verb svg');
+        var vw = vSvg ? vSvg.getBoundingClientRect().width : 0;
+        var stroke = vw * (1.75 / 24);
+        ok('TAVOITE rata: verbiglyfin viiva >= 1px syvimmalla kortilla',
+           stroke >= 1, stroke.toFixed(2) + 'px (glyfi ' + vw.toFixed(1) + 'px)');
+      }
+
+      _hitStyle.remove();
+
+      // ══ TAVOITEVAITTEET (vaihe 4b — radiaalirypas) ═════════════════════
+      if (arena) {
+        var rad = arena.querySelector('.tcg-card__radial');
+        ok('TAVOITE rypas: renderoityy areenakortille', !!rad);
+
+        ok('TAVOITE rypas: vanhat nappirivit poissa',
+           !arena.querySelector('.tcg-card__stats') &&
+           !arena.querySelector('.tcg-card__actions-tcg'));
+
+        if (rad) {
+          // Avataan luokalla: headlessissa ei ole hiirta, joten :hover ei
+          // laukea. is-open on sama tila jota kosketuslaite kayttaa.
+          // Satelliittien sijainti tulee `translate`-propertysta, jota
+          // animoidaan 300ms — ilman transition-katkaisua mittaus osuu
+          // valitilaan ja kaikki napit ovat viela keskipisteessa.
+          var _noAnim = document.createElement('style');
+          _noAnim.textContent = '.rad{transition:none!important}';
+          document.head.appendChild(_noAnim);
+          rad.classList.add('is-open');
+          void rad.offsetWidth;   // pakota uudelleenlaskenta
+          var btns = [].slice.call(rad.querySelectorAll('.rad'));
+          ok('TAVOITE rypas: 8 nappia (keskus + 7 satelliittia)',
+             btns.length === 8, btns.length + ' nappia');
+
+          var aRect = R(arena);
+          var outside = btns.filter(function(b){
+            var r = R(b);
+            return r.l < aRect.l || r.r > aRect.r || r.t < aRect.t || r.b > aRect.b;
+          });
+          ok('TAVOITE rypas: yksikaan nappi ei mene kortin ulkopuolelle',
+             outside.length === 0, outside.length + ' ulkona');
+
+          // Tormays: kahden napin keskipiste-etaisyys vs. sateiden summa.
+          var cs = btns.map(function(b){ var r = R(b);
+            return { x:(r.l+r.r)/2, y:(r.t+r.b)/2, rad:r.w/2,
+                     cls:(b.className.match(/rad--[a-z]+/)||['?'])[0] }; });
+          var hits = [];
+          for (var a2 = 0; a2 < cs.length; a2++) {
+            for (var b2 = a2+1; b2 < cs.length; b2++) {
+              var dx = cs[a2].x - cs[b2].x, dy = cs[a2].y - cs[b2].y;
+              var d = Math.sqrt(dx*dx + dy*dy);
+              if (d < cs[a2].rad + cs[b2].rad - 1) {
+                hits.push(cs[a2].cls + '/' + cs[b2].cls + ' ' + Math.round(d));
+              }
+            }
+          }
+          ok('TAVOITE rypas: napit eivat tormaa auki-tilassa',
+             hits.length === 0, hits.join(', ') || 'ei tormayksia');
+
+          // Osuma-alue on koko rypaan paalla: ilman sita osoitin putoaa
+          // nappien valiseen kuolleeseen tilaan ja rypas romahtaa —
+          // silmukka, jonka mockup jo kerran tuotti.
+          var hitEl = rad.querySelector('.rad-hit');
+          var hR = hitEl ? R(hitEl) : null;
+          var worst = 0, worstCls = '-';
+          cs.forEach(function(c){
+            var cx = hR ? (hR.l+hR.r)/2 : 0, cy = hR ? (hR.t+hR.b)/2 : 0;
+            var reach = Math.sqrt((c.x-cx)*(c.x-cx) + (c.y-cy)*(c.y-cy)) + c.rad;
+            if (reach > worst) { worst = reach; worstCls = c.cls; }
+          });
+          ok('TAVOITE rypas: osuma-alue kattaa uloimman napin',
+             hR && (hR.w/2) >= worst, hR ?
+             ('sade ' + Math.round(hR.w/2) + ' vs ' + worstCls + ' ' + Math.round(worst)) : 'ei osuma-aluetta');
+
+          rad.classList.remove('is-open');
+          _noAnim.remove();
+        }
+
+        ok('TAVOITE areena: BR-indeksi piilossa (nurkka on toimintojen)',
+           getComputedStyle(arena.querySelector('.tcg-card__idx--br')).display === 'none');
+
+        // Frankenstein on est 8 → 8 segmenttia. Vanha mkCostPips romautti yli
+        // neljan arvot muotoon "1 pallo + ×N"; mittarissa arvo on pituus.
+        var segs = arena.querySelectorAll('.tcg-card__idx--tl .idx__cost .seg');
+        ok('TAVOITE mittari: est 8 = 8 segmenttia (ei ×N-romautusta)',
+           segs.length === 8, segs.length + ' segmenttia');
       }

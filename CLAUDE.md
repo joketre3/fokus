@@ -6,9 +6,10 @@ Impeccable-analyysi tehty 2026-06-07. Raportti: `docs/impeccable-kritiikki.md`.
 PRODUCT.md luotu 2026-06-10. P0 valmis.
 
 **🔶 Kesken (2026-08-14): kortin kaksoisindeksi + ikonisetti.** Haara
-`kortti-indeksi-ikonit`. Vaiheet 0–2 valmiit (`c0f3fcf`); vaihe 3
+`kortti-indeksi-ikonit`. Vaiheet 0–2, 3s, 4 ja **4b valmiit**; vaihe 3
 (sigil-taso) **hylättiin mittauksen perusteella 2026-08-15** ja kutistui
-siivoukseksi (vanhat `verb-i-*` pois) — seuraavana vaihe 4 (indeksi). **Suunnitelma:**
+siivoukseksi (vanhat `verb-i-*` pois) — seuraavana vaihe 5 (emojit pois
+popupeista). `card_zones` on 48/48. **Suunnitelma:**
 `~/.claude/plans/home-jaakko-claude-uploads-dea0ecee-9cf-tidy-phoenix.md`
 — itsenäinen dokumentti, sisältää lukitut päätökset, tokenit ja vaiheet.
 Kaikki kortin ratkaisut ovat valmiina `mockup-kortti-v2.html`:ssä ja
@@ -18,7 +19,8 @@ vaiheessa 2 löytyi neljä kollisiota, joista kolme oli jo hyväksytyissä
 glyfeissä (`kirjaa`=`muokkaa`, `varaa`=`odottaa`, `kiire`≈`pomodoro`).
 Mitattu lähtötilanne: käsi näyttää kortista 63–79px × 98px vasemmasta
 yläkulmasta, rata 41–50 kortin px oikeasta laidasta — ja pomodoro-hinta
-(`top:9px;right:9px`) on kädessä kokonaan piilossa.
+(`top:9px;right:9px`) oli kädessä kokonaan piilossa; **vaihe 4 siirsi sen
+indeksipalstaan** (`.tcg-card__idx--tl` / `--br`, ks. oma osio alempana).
 
 **⬜ Avoin (kirjattu 2026-08-12, Jaakon havainto):** pitäisikö korttien
 (areenakortti, ratakortit, käsikortit) skaalautua ikkunan koon mukaan? Nyt
@@ -235,6 +237,61 @@ viivaa kuva-alueelle: molemmat kokeiltiin ja mittaus kaatoi ne.
 - Vanhat `verb-i-*` (8 kpl) **poistettu 2026-08-15**. Ne olivat
   ainoat kovakoodattuja hexejä käyttäneet ikonit; mikään ei viitannut
   niihin enää.
+
+## Kortin kaksoisindeksi (vaihe 4, 2026-08-15)
+
+`.tcg-card__idx--tl` ja `--br` `plate`n sisällä heti `qart`in jälkeen,
+sisältö ylhäältä alas: kvadranttimerkki → kustannusmittari → verbiglyfi.
+Rakentajat `mkIndexCol(t,pos)` ja `mkCostMeter(est)`; tokenit `:root`issa
+(`--idx-w/gut`, `--seg-h/w/gap`) ja moodikerroin `--idx-k` sääntöinä
+(areena 1, käsi .62, rata .85 — `--lane` on aina myös `--hand`, joten sen
+on tultava jäljempänä). Poistuivat: `mkCostPips`, `.tcg-card__cost`,
+`.tcg-card__pip*`, `.tl-quad`.
+
+- **Sammakko-sinetti vain areenakortilla.** Kädessä ja radalla se peittäisi
+  TL-indeksin; siellä sammakon merkki on palstan kultakehys (25px sinetti
+  ei mahtuisi 21px palstaan).
+- **Näkyvyyttä ei voi mitata `getBoundingClientRect`ista.** Viuhka on
+  kierretty ±8° ja rata 1,5° + `scale`, joten peittoprosentti bboxeista
+  antoi käden TL:lle 91 % ja radan BR-pelivaraksi 1px — molemmat pelkkää
+  kiertoartefaktia. Mittaa osumatestillä: `document.elementFromPoint`
+  symbolin **keskipisteessä** (keskipiste on kierrosta riippumaton) ja
+  `idxEl.contains(n)`. Indeksi on `pointer-events:none`, joten testin
+  ajaksi tarvitaan tilapäinen `<style>` joka tekee siitä osuttavan.
+  Aja aina kontrolli elementillä jonka pitäisi olla piilossa — muuten et
+  tiedä onko mittari herkkä vai aina vihreä.
+- **Kortin oma padding syö BR-pelivaran.** Suunnitelman laskelma `PAD 3 +
+  gut·k + w·k` ≈ 31,8 piti paikkansa, mutta kaistale on radan syvimmällä
+  kortilla 41 kortin px, joten pelivaraa jää ~7. Älä kasvata `--idx-w`:tä
+  tai palstan omaa leveyttä ilman että mittaat kaistaleen uudestaan.
+
+## Radiaalinen toimintorypäs (vaihe 4b, 2026-08-15)
+
+`.tcg-card__radial` areenakortin platessa: keskinappi (aloita/lopeta,
+aamukortilla velho) + 7 satelliittia kahdella kehällä. Korvasi
+`.tcg-card__stats`- ja `.tcg-card__actions-tcg` -rivit, ja niiden mukana
+poistuivat kuolleet `mkImpBadge`, `mkUrgBadge`, `svgFrogOutline`.
+Suunnat = mobiilin eleet: oikea tehty (`doneActive`, EI `markDone`),
+vasen odottaa (`waitActive`/`clearWaiting`), ylös seuraava (`doNext`),
+alas muokkaa. Ulkokehä: sammakko, linkki, poista.
+
+- **Osuma-aluetta (`.rad-hit`) ei saa poistaa.** Hover laukeaa vain
+  napista; nappien välinen kuollut tila katkaisee sen → rypäs romahtaa →
+  osoitin on tyhjän päällä → avautuu → silmukka. Sama vikaluokka kuin
+  radan hoverin sillassa. Levossa `pointer-events:none`.
+- **Kosketuslaitteella ei ole hoveria.** Napautus kortin taustaan togglaa
+  `.is-open` (ele vaatii liikettä yli `LOCK`in, joten se ei varasta
+  pyyhkäisyä). Mobiilissa `--rad-sat:52px` → ulkorengas .86 × 52 = 45px ≥
+  `--tap`; 42px olisi jättänyt ulkokehän 36px:ään.
+- **`translate`-property animoituu 300ms.** Geometrian mittaus heti
+  `is-open`in jälkeen näyttää kaikki napit keskipisteessä. Testin ajaksi
+  `<style>.rad{transition:none!important}` + `void el.offsetWidth`.
+  Sijainti on `translate` ja painallus `transform` nimenomaan siksi, että
+  samassa transformissa `:active` kumoaisi sijoituksen.
+- **`plate.scrollHeight` ei mittaa ylivuotoa tällä kortilla.** Se lukee
+  mukaan q-taiteen full-bleed SVG:n (`scale(1.06)` → 448px kun plate on
+  414) ja kuva-alueen halo-pseudon (`bottom:-8%`), jotka `overflow:hidden`
+  leikkaa tarkoituksella. Mittaa platen omien flex-lasten summa.
 
 ## Core data model
 
