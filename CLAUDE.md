@@ -6,8 +6,9 @@ Impeccable-analyysi tehty 2026-06-07. Raportti: `docs/impeccable-kritiikki.md`.
 PRODUCT.md luotu 2026-06-10. P0 valmis.
 
 **🔶 Kesken (2026-08-14): kortin kaksoisindeksi + ikonisetti.** Haara
-`kortti-indeksi-ikonit`. Vaiheet 0–2 valmiit (`c0f3fcf`), seuraavana
-vaihe 3 (sigil-taso). **Suunnitelma:**
+`kortti-indeksi-ikonit`. Vaiheet 0–2 valmiit (`c0f3fcf`); vaihe 3
+(sigil-taso) **hylättiin mittauksen perusteella 2026-08-15** ja kutistui
+siivoukseksi (vanhat `verb-i-*` pois) — seuraavana vaihe 4 (indeksi). **Suunnitelma:**
 `~/.claude/plans/home-jaakko-claude-uploads-dea0ecee-9cf-tidy-phoenix.md`
 — itsenäinen dokumentti, sisältää lukitut päätökset, tokenit ja vaiheet.
 Kaikki kortin ratkaisut ovat valmiina `mockup-kortti-v2.html`:ssä ja
@@ -97,7 +98,7 @@ Testit: `python3 tests/run.py` (ks. `tests/README.md`). Ei lintteriä, ei CI:tä
 | `manifest.json` | PWA-manifesti — asennettava sovellus, standalone-tila |
 | `sw.js` | Service worker — navigointi verkosta ensin, muu välimuistista (offline) |
 | `icon-192.png`, `icon-512.png`, `icon-180.png` | Sovellusikonit (512 myös maskable) |
-| `dev-seed.html`, `testdata.html` | Testidatan siemennys localStorageen (kehitystyökaluja) |
+| `dev-seed.html`, `testdata.html` | Testidatan siemennys localStorageen. `dev-seed`issä 2 nappia: 12 tehtävän demosetti (8 verbiä) ja ikonikattaus (16 verbiä + tilaglyfit) |
 
 Pääsovellus avaa `swipe.html` ja `aamu.html` popup-ikkunoina (`window.open`). Timer aukeaa JS:llä generoituna popuppina. Kaikki ikkunat jakavat datan `localStorage`n kautta.
 
@@ -133,8 +134,11 @@ Jokainen tiedosto on itsenäinen: kaikki CSS ja JS sisäänrakennettu HTML-tiedo
 - Yläpalkki on `.hdr` (`grid-area:topbar`), mutta `#hdr-timer` EI ole sen sisällä — se on oma `position:fixed` -elementti (z:90) oikeassa yläkulmassa. Yläpalkkiin kohdistuvat kuuntelijat eivät tavoita ajastinwidgettiä
 - `position:fixed` lapsi-elementti transformatun vanhemman sisällä positionoituu vanhempaan eikä viewporttiin — toggle-napit yms. sijoitetaan transformatun elementin ULKOPUOLELLE DOM:issa
 - `node --check` ei toimi `.html`-tiedostoille — extractaa ensin: `python3 -c "import re; open('/tmp/chk.js','w').write('\n'.join(s[1] for s in re.findall(r'<script(?! type=[\"\'](module)[\"\']*[^>]*>)(?:[^>]*)>(.*?)</script>', open('index.html').read(), re.DOTALL)))"` → `node --check /tmp/chk.js`
+- **`node --check` ei näe paritonta SVG-tagia.** Symboleja poistaessa validoi sprite-lohko erikseen: `xml.dom.minidom.parseString(re.search(r'<svg style="position:absolute;width:0.*?</svg>', h, re.S).group())`
 - Headless Chrome `--screenshot` ei renderöi CSS transformeja luotettavasti — testaa aina oikeassa selaimessa, älä luota headless-kuvakaappauksiin CSS-animaatioiden todentamiseen
 - Headless Chrome ei jaa `localStorage`:a eri origineista — modaaleja ja onboardingia ei voi testata automaattisesti headless-tilassa (eri portti = eri origin)
+- **`--user-data-dir=/tmp/prof` säilyttää `localStorage`n headless-ajojen välillä.** Ajo 1 kylvää (`dev-seed.html` + `click()`), ajo 2 avaa `index.html` samasta portista ja näkee datan. Yllä oleva origin-rajoitus koskee vain eri porttia
+- **Tarkista kattaako siemendata sen mitä testaat.** `dev-seed.html`in demosetti kylvi tasan ne 8 verbiä joilla oli vanha `verb-i-*`-ikoni → kahdeksaa uutta glyfiä ei olisi nähnyt lainkaan. Toinen nappi "Kylvä ikonikattaus" kylvää 16 verbiä + tilaglyfit (sammakko, odottaa, ajastettu, pika, linkki, jatkokortti)
 - `checkMorningTask()` lisää tehtävän heti startup:ssa ja kutsuu `render()` — vaikuttaa `tasks.length`-pohjaisiin tarkistuksiin; suodata `aamusuunnittelu`-tagi pois ennen laskentaa
 - CSS hover-bounce: kun elementti liikkuu `:hover`-tilassa ylös, lisää `::after { position:absolute; bottom:-64px; left:-8px; right:-8px; height:64px; }` laajentamaan hit-aluetta — muuten elementti pomputtaa itseään
 - `position:fixed` lapsielementti grid-rivin sisällä positionoituu viewporttiin kun vanhemmalla ei ole `transform`ia — käytä tätä viuhkan kaltaisiin fixed-overlayhin gridin sisällä
@@ -164,8 +168,33 @@ Jokainen tiedosto on itsenäinen: kaikki CSS ja JS sisäänrakennettu HTML-tiedo
 Yksi rekisteri: `ICON` (32 nimeä), `VERB_ALIAS`, `verbName()`,
 `iconId(name,tier)`, `verbIcon(verbi,tier)`. Symbolit `<defs>`issä
 muodossa `#g-<nimi>` (glyfi) ja `#q-q1…q4` (kvadranttimerkit).
-`ICON_S` on tyhjä kunnes vaihe 3 tuo sigilit; `tier:'s'` putoaa siihen
-asti glyfiin. Referenssi ja muokkauspaikka: `mockup-ikonit.html`.
+`ICON_S` on tyhjä **pysyvästi** — sigil-taso hylättiin mittauksen
+perusteella (ks. alla); `tier:'s'` putoaa aina glyfiin. Referenssi ja
+muokkauspaikka: `mockup-ikonit.html`.
+
+**Yksi viivapaino kaikkialla — päätetty 2026-08-15.** Kortin kuva-alue
+(168 px) ja pakkakortin `verb-bg` (80 px) käyttävät samaa glyfiä samalla
+painolla kuin 14 px:n typeline. Älä lisää sigil-symboleja äläkä paksunna
+viivaa kuva-alueelle: molemmat kokeiltiin ja mittaus kaatoi ne.
+- **Täyttö tuhoaa 8/15 verbiglyfistä.** Ontto muoto on niissä merkitys:
+  täytetty `aikatauluta` on musta ympyrä, `tarkista` menettää checkin
+  kilven sisältä, `laheta` on suorakaide. Osat 2–3 → 1.
+- **Ei ole kokoa jossa glyfi pettäisi.** Muste-% ja osamäärä ovat
+  vakioita 40→80 px jokaisella ikonilla. Sigil ei siis tuonut isossa
+  koossa yhtään uutta erottuvaa osaa — vain massaa.
+- **Paksunnus (×1,5) säilytti kaikki osat mutta hylättiin silti:** se on
+  massaa ilman informaatiota, kuva-alue saa aikanaan omat piirretyt
+  ikoninsa, ja `sovi` ei liikkuisi mukana (täytetty, ei strokea).
+- **Jos paino joskus palaa:** CSS `stroke-width` `<use>`-elementillä EI
+  ohita symbolin presentation-attribuuttia (mitattu). Toimiva muoto on
+  symbolin oma inline-tyyli
+  `stroke-width:calc(<perus>px * var(--gw,1))` — `--gw` periytyy `<use>`:n
+  varjopuuhun, joten yksi muuttuja skaalaa setin ja kunkin symbolin
+  perusleveys säilyy suhteessa (1.75 / `tehty` 2.2 / `poista` 2).
+- **Mittauskehikko kannattaa rakentaa uudelleen samalla tavalla:**
+  serialisoi symboli standalone-SVG:ksi → data-URI → `<img>` → canvas →
+  `getImageData`. Ei tainttaannu, ei tarvita PIL:iä eikä 96:ta
+  Chrome-käynnistystä; yksi sivulataus riittää.
 
 - **`<use href>` ei varoita puuttuvasta symbolista** — se renderöityy
   hiljaa tyhjänä. Siksi ääkköset normalisoidaan lookupissa (`Selvitä` →
@@ -203,8 +232,9 @@ asti glyfiin. Referenssi ja muokkauspaikka: `mockup-ikonit.html`.
   kummassakaan — jäljelle jää siluetti, ja siinä täysi on rikkaampi.
   **Sigil kannattaa vain jos se oikeasti eroaa glyfistä**; `ICON_S` on
   siksi yhä tyhjä.
-- Vanhat `verb-i-*` (8 kpl) ovat yhä `<defs>`issä; ne poistuvat
-  vaiheessa 3.
+- Vanhat `verb-i-*` (8 kpl) **poistettu 2026-08-15**. Ne olivat
+  ainoat kovakoodattuja hexejä käyttäneet ikonit; mikään ei viitannut
+  niihin enää.
 
 ## Core data model
 
@@ -360,6 +390,11 @@ CSS custom properties: `--ink`, `--surface-xs`, `--surface`, `--surface-md`, `--
 - Z-index-skaala dokumentoitu DESIGN.md:ssä
 
 ## Nykyinen kehitystila
+
+- **Mockupissa hyväksytty ≠ sovelluksessa.** Kortin kaksoisindeksi ja
+  radiaalivalikko ovat vain `mockup-kortti-v2.html`:ssä — viisi committia,
+  0 riviä `index.html`:ään. Ennen kuin epäilet regressiota localhostissa,
+  `grep -c` että ominaisuus on oikeasti viety.
 
 ### Modernization-prosessi (2026-05-28) — valmis
 
@@ -718,6 +753,7 @@ Mobiili oli jäänyt paikkaustasolle: kaikki 2026 tehty työ on `min-width:900px
 - **`window.close()` ei sulje välilehteä jota se ei avannut** — samassa välilehdessä paluu on `history.back()`, fallback `location.href`.
 - **Areenan hehkuanimaatio antaa ~16 % pikselikohinaa.** Regressiovertailu on tehtävä animaatiot jäädytettynä (`*,*::before,*::after{animation:none!important;transition:none!important}`), muuten diffi on lukukelvoton. Jäädytettynä 1440×900 ja 1920×1080 antoivat **0,0000 %** jokaisessa vaiheessa. Portti on skriptinä: `scratchpad/regress.sh` (seedaus + jäädytys + `pngdiff.py`, joka on riippuvuudeton PNG-lukija — PIL:iä ei ole).
 - **`pkill -f "chrome-linux/chrome"` tappaa oman kutsuvan shellinsä** (komentorivi täsmää kuvioon) → exit 144. Käytä `pkill -f "[c]hrome-linux/chrome"`.
+- Hakasulkeutus ei riitä jos sama teksti esiintyy komentorivillä toisaalla: `pkill -f "[h]ttp.server 8781"; python3 -m http.server 8781 …` tappaa silti kutsuvan shellin — pkill osuu jälkimmäiseen esiintymään. Tapa erillisessä komennossa
 - **`--dump-dom` ei näe `location.href`-navigointia** — se palaa ensimmäisen latauksen DOM:illa. Samaan välilehteen navigointia ei voi todentaa näin; testaa määränpääsivu suoraan.
 - **Firebase-SDK ei lataudu hiekkalaatikossa** (ei pääsyä `gstatic.com`iin) → `window._firebaseApp` on `undefined` ja kaikki `window._*`-moduulifunktiot puuttuvat. Firestore-riippuvainen koodi on testattava tyngillä (`window._sessionPush=...`). Sivutuote: kuvakaappaukset todistavat että sovellus toimii ilman Firebasea.
 - Ikonit voi renderöidä ilman PIL:iä: inline-SVG HTML-kääreessä + `--screenshot` halutulla `--window-size`illa, `file://`-URL (http-palvelin kuolee shellin mukana).
