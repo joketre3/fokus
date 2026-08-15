@@ -397,6 +397,30 @@ vasten 14 punaista).
   `☀ Päivän suunnittelu` ja se on localStoragessa olevaa dataa, ei
   UI-kuorta.
 
+## ⚠ Kortti + ikonisetti: käsintestit tekemättä (2026-08-15)
+
+Haara `kortti-indeksi-ikonit` mergettiin mainiin, mutta **näitä ei ole
+todennettu oikeassa selaimessa** — headless ei aja CSS-siirtymiä, ei tunne
+hoveria eikä kosketusta, eikä `backdrop-filter` raportoidu siellä lainkaan.
+Automaattitestit ovat vihreät (21 suitea, `card_zones` 48/48, `list_icons`
+25/25, detektoridelta 0), mutta ne mittaavat rakennetta, eivät liikettä.
+
+Palautus vaiheittain: `git revert` — jokainen vaihe on oma committinsa.
+
+| # | Testi | Mitä katsotaan | Miksi headless ei kata |
+|---|---|---|---|
+| 1 | Käsiviuhka, hover | Kortti nousee, indeksipalsta näkyy limitetyn kortin alta, viuhka ei värise | Virtuaaliaika ei aja CSS-siirtymiä |
+| 2 | Rata, hover kortista toiseen | Kortti liukuu oikealle ja palaa; osoitin naapuriin ei jätä korttia jumiin | Sama |
+| 3 | **Radiaalirypäs, hover keskinapista satelliittiin** | Rypäs EI romahda matkalla (`.rad-hit`-kiekko kantaa) | Ei osoitinta headlessissa |
+| 4 | Rypään 8 nappia | Aloita/lopeta, tehty, odottaa, seuraava, muokkaa, sammakko, linkki, poista tekevät oikean asian | Vaatii tilasiirtymiä + ajastimen |
+| 5 | Kosketus puhelimella | Napautus kortin taustaan avaa rypään; pyyhkäisyeleet (oikea/vasen/ylös) toimivat yhä; napit ≥44px | Ei kosketusta |
+| 6 | Aurinkoteema, indeksipalsta | Kvadranttimerkki, kustannussegmentit ja verbiglyfi erottuvat — **kontrastisondilla, ei kuvakaappauksella** | Teemat vaativat oman ajon; kuva ei todenna kontrastia |
+| 7 | Pakka | Kvadranttimerkit 4 muotona, tähtinappi togglaa (väri vaihtuu, ei merkki), Käteen + Tyhjennä, Palauta tehdyllä kortilla | Napit toimivat, mutta ulkoasu hoverissa/aktiivisena vain selaimessa |
+| 8 | Matriisirivi | `cost-bar`: kirkkaat segmentit = tehdyt, himmeät = jäljellä. Erottuvatko himmeät (.28) tummassa teemassa | Silmäkysymys |
+| 9 | Odottavat + siirtovalikko | Palauta-glyfi, kvadranttimerkit valikossa | — |
+| 10 | Nopea tila + reduced-motion | Rypäs, viuhka ja rata toimivat ilman animaatioita | `data-perf="lite"` vaatii oman ajon |
+| 11 | Mobiili | Pakka aukeaa `#mnav`ista, matriisin rivit ja mittari mahtuvat kapealle | Kapea viewport vaatii oikean ikkunan (CSP estää iframen) |
+
 ## Core data model
 
 Kaikki tehtävädata `localStorage`-avaimessa `eis_v5_<wsId>` (oletus: `eis_v5_work`):
