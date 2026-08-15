@@ -46,6 +46,13 @@ SHARED_BLOCKS = [
     ("sched",
      "/* BEGIN fokus:sched v1", "/* END fokus:sched v1 */",
      ["index.html", "aamu.html", "swipe.html"]),
+    # Ikonilohko on vain popupeissa: index.html:ssä sama sprite on osa
+    # isompaa <defs>iä (qart, logo, kvadranttimerkit), eikä sitä voi
+    # rajata samaksi merkkijonoksi. Symbolien yhtenevyys index.html:ään
+    # varmistetaan erikseen (check_icon_sync).
+    ("icons",
+     "<!-- BEGIN fokus:icons v1", "<!-- END fokus:icons v1 -->",
+     ["aamu.html", "swipe.html"]),
 ]
 
 
@@ -80,9 +87,41 @@ def check_one_block(tree, label, begin, end, names):
     return 0
 
 
+def check_icon_sync(tree):
+    """Popupien symbolit ovat kopio index.html:n <defs>istä.
+
+    Kopio ajautuu erilleen hiljaa: <use href> ei varoita puuttuvasta eikä
+    vanhentuneesta symbolista, se renderöi tyhjää tai vanhaa muotoa. Siksi
+    jokainen popupin g-* verrataan merkki merkiltä index.html:n vastaavaan.
+    """
+    src = open(os.path.join(tree, "index.html"), encoding="utf-8").read()
+    master = {m.group(1): re.sub(r"\s+", " ", m.group(0))
+              for m in re.finditer(r'<symbol id="(g-[a-z0-9]+)".*?</symbol>', src, re.S)}
+    bad = 0
+    for name in ("aamu.html", "swipe.html"):
+        s = open(os.path.join(tree, name), encoding="utf-8").read()
+        i = s.find("<!-- BEGIN fokus:icons v1")
+        j = s.find("<!-- END fokus:icons v1 -->", i)
+        if i < 0 or j < 0:
+            print(f"  [FAIL] {name}: ikonilohko puuttuu")
+            bad += 1
+            continue
+        syms = {m.group(1): re.sub(r"\s+", " ", m.group(0))
+                for m in re.finditer(r'<symbol id="(g-[a-z0-9]+)".*?</symbol>', s[i:j], re.S)}
+        eri = [k for k, v in syms.items() if master.get(k) != v]
+        if eri:
+            print(f"  [FAIL] {name}: {len(eri)} symbolia eroaa index.html:stä: "
+                  + ", ".join(sorted(eri)))
+            bad += 1
+        else:
+            print(f"  [PASS] {name}: {len(syms)} symbolia = index.html")
+    return bad
+
+
 def check_shared_block(tree):
     bad = sum(check_one_block(tree, *b) for b in SHARED_BLOCKS)
-    n = len(SHARED_BLOCKS)
+    bad += check_icon_sync(tree)
+    n = len(SHARED_BLOCKS) + 2
     if bad:
         print("  == shared_block: EPÄONNISTUI")
     else:

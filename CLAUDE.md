@@ -6,10 +6,10 @@ Impeccable-analyysi tehty 2026-06-07. Raportti: `docs/impeccable-kritiikki.md`.
 PRODUCT.md luotu 2026-06-10. P0 valmis.
 
 **🔶 Kesken (2026-08-14): kortin kaksoisindeksi + ikonisetti.** Haara
-`kortti-indeksi-ikonit`. Vaiheet 0–2, 3s, 4 ja **4b valmiit**; vaihe 3
+`kortti-indeksi-ikonit`. Vaiheet 0–2, 3s, 4, 4b ja **5 valmiit**; vaihe 3
 (sigil-taso) **hylättiin mittauksen perusteella 2026-08-15** ja kutistui
-siivoukseksi (vanhat `verb-i-*` pois) — seuraavana vaihe 5 (emojit pois
-popupeista). `card_zones` on 48/48. **Suunnitelma:**
+siivoukseksi (vanhat `verb-i-*` pois) — seuraavana vaihe 6 (pakka,
+listat, kvadranttimerkit). `card_zones` on 48/48. **Suunnitelma:**
 `~/.claude/plans/home-jaakko-claude-uploads-dea0ecee-9cf-tidy-phoenix.md`
 — itsenäinen dokumentti, sisältää lukitut päätökset, tokenit ja vaiheet.
 Kaikki kortin ratkaisut ovat valmiina `mockup-kortti-v2.html`:ssä ja
@@ -75,6 +75,27 @@ Testit: `python3 tests/run.py` (ks. `tests/README.md`). Ei lintteriä, ei CI:tä
 - **Pikselitason vertailu ilman PIL:iä:** renderöi kukin koko omaksi PNG:kseen (`--window-size=N,N`, ikoni ainoana elementtinä), lue ne `zlib`+`struct`illa (~40 riviä: IHDR, IDAT, scanline-suodattimet 0–4) ja laske rivi- ja sarakekohtaiset tausta→muoto-vaihdokset. Näin "erottuuko yksityiskohta koossa N" on luku, ei mielipide. Zoomaus silmälle: `<img>` + `image-rendering:pixelated` — **`<svg>`:lle se ei toimi**, vektori skaalautuu sileäksi
 - **`sed 's/.*_//'` on ahne.** Tiedostonimestä `full_16_7.html` se poimii `7`, ei `16_7` — mittaus ajettiin 7×7 px kuvasta ja tulos näytti uskottavalta rivillä muiden joukossa. Tarkista mitatun kuvan koko (`struct.unpack('>II', d[16:24])`) ennen kuin luet lukuja
 - **`build()` kelpaa myös kuvakaappauksen pohjaksi**, ei vain mittaukseen: anna `body`-JS:ssä tilan avaava kutsu (`openInventory()`) + animaatiojäädytys, sitten `google-chrome --screenshot` tuloksena syntyneelle tiedostolle. Näin pääsee modaalien sisään, jotka eivät muuten näy kuvassa
+- **Aja `tests/run.py` repon juuresta.** Taustakomento muualta kaatuu
+  `can't open file '/home/jaakko/tests/run.py'` — ja koko sarja kestää
+  ~5 min, joten aja se taustalla ja yksittäiset suitet nimellä.
+- **Merkkijonoon sidotut väitteet kaatuvat kun UI-merkki vaihtuu.**
+  `fe(0)==='⚡'`, `fmtSchedule(...)==='📅 …'` — kun emoji korvattiin
+  glyfillä, viisi väitettä kolmessa suitessa piti päivittää samassa
+  muutoksessa. `grep -n "[emoji]" tests/suites/` ennen kuin vaihdat merkin.
+- **Hoverin varassa oleva tila kuvakaappaukseen luokalla, ei hiirellä** —
+  headlessissa ei ole osoitinta. Luokka on asetettava `setInterval`illa:
+  `render()` voi rakentaa elementin uudelleen skriptin ja kaappauksen
+  välissä, jolloin kertaalleen asetettu luokka katoaa (kävi mobiiliajossa).
+  Animoidun geometrian mittaus vaatii lisäksi `transition:none`-tyylin.
+- **PNG-rajaus ja -suurennos ilman PIL:iä:** `python3 tests/pngcrop.py
+  sisaan.png ulos.png x y w h [kerroin]`. Ilman rajausta 1440px:n
+  kaappauksesta ei näe 21px:n indeksipalstaa.
+- **Uusi glyfi mitataan ennen kuin se lisätään settiin:**
+  `python3 tests/glyfimittari.py` (luonnokset `tests/uudet-glyfit.svg`).
+  Katso tulos aina myös silmällä rinnakkain lähisukulaisten kanssa.
+- **JS-merkkijono ei ole CSS-selektori.** `s.index('.tcg-card__actions-tcg')`
+  ei löydä riviä `acts.className='tcg-card__actions-tcg'` — piste kuuluu
+  vain selektoriin. Python-korvausskriptin assertio pelasti tämän.
 - **Kuvakaappaus löytää sen mitä väitteet eivät osaa kysyä.** Ikonirekisterin fallback osui yhteen kategoriaan (`Odottava` → väärä ikoni), ja 33 vihreää väitettä meni silti läpi: testi tarkisti että ikoni on SVG, ei että se on *oikea*. Vrt. vastakkainen tapaus aurinkoteemassa, jossa kuva ei todentanut mitään — kysy kumpi vika on kyseessä ennen kuin valitset työkalun
 
 ## File structure
@@ -292,6 +313,35 @@ alas muokkaa. Ulkokehä: sammakko, linkki, poista.
   mukaan q-taiteen full-bleed SVG:n (`scale(1.06)` → 448px kun plate on
   414) ja kuva-alueen halo-pseudon (`bottom:-8%`), jotka `overflow:hidden`
   leikkaa tarkoituksella. Mittaa platen omien flex-lasten summa.
+
+## Popupien ikonit (vaihe 5, 2026-08-15)
+
+`aamu.html` ja `swipe.html` eivät sisällä enää yhtään UI-emojia — vain
+brändin 🌲 (logo, valmis-ruutu) ja typografiset merkit (◆ · ← →).
+ICON-setti 32 → 37: uudet `g-paiva`, `g-ilta`, `g-lisatiedot`,
+`g-palauta`, `g-toistuva`.
+
+- **Jaettu lohko `fokus:icons v1`** (aamu ↔ swipe identtisenä): sprite +
+  `_ico(nimi)`, `_icoHtml(nimi)`, `_icoLabel(el,nimi,teksti)`. Yksi lähde
+  on `index.html`in `<defs>`; `tests/run.py:check_icon_sync` vertaa
+  jokaisen popup-symbolin **merkki merkiltä** sinne. Kopio ajautuisi
+  muuten hiljaa erilleen: `<use href>` ei varoita vanhentuneesta
+  muodosta, se piirtää vanhan.
+- **`fmtSchedule` ei sisällä enää merkkiä.** Se palauttaa tekstin, joka
+  menee `textContent`iin, eikä SVG kulje siinä. Ikonin nimen antaa uusi
+  `schedIcon(t)` (`ajastettu` | `toistuva`) ja kutsuja lisää glyfin.
+  Sama koskee `fe(0)`:aa: se palauttaa `'0'`, ei salamaa.
+- **Uusi glyfi: mittaa pienessä koossa.** IoU 28px:ssä päästi läpi
+  `g-paiva`n, joka oli 14px:ssä sama merkki kuin `g-etsi` (tähtäin) —
+  kollisio syntyy siellä missä yksityiskohdat sulautuvat. Mittari vertaa
+  `max(8px, 14px, 28px)`, ja kynnys on hyväksyttyjen glyfien pahin pari
+  pl. `aloita|seis`. Skripti: `glyfimittari.py`-resepti CLAUDE.md:n
+  ikonisetti-osiossa (serialisoi → data-URI → canvas → `getImageData`).
+- **Silmä ja mittari löytävät eri asiat.** Mittari kaatoi `g-lisatiedot`in
+  ensimmäisen version, silmä `g-paiva`n. Aja molemmat.
+- **`<svg>` ilman kokoa venyy.** Kortin ajastusrivillä se kasvatti rungon
+  441px:iin (client 218). `.tcg-card__sched svg{width:1em;height:1em;
+  flex:none}` — sama vikaluokka kuin typelinen SVG:llä.
 
 ## Core data model
 

@@ -1930,6 +1930,45 @@ html[data-theme="aurinko"][data-perf="lite"]{
   </symbol>
 
   <!-- ═══ KVADRANTTIMERKIT ═══ -->
+  <!--  Iltapäivä: aurinko korkeimmillaan horisontin yllä. Täysi ympyrä ja
+       säteet vain ylöspäin erottavat sen g-aamun puolikaaresta; yksi
+       horisonttiviiva erottaa sen g-etsin tähtäimestä ja sitoo sen
+       slot-sarjaan (aamu / iltapäivä / päätös). -->
+  <symbol id="g-paiva" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="10.4" r="4"/>
+    <path d="M12 1.6v2.7M3.4 10.4h2.7M17.9 10.4h2.7"/>
+    <path d="M5.9 4.3 7.8 6.2M18.1 4.3 16.2 6.2"/>
+    <path d="M3 19.4h18"/>
+  </symbol>
+  <!--  Päätös: kuunsirppi. Päivän lopetus. Sirppi on ainoa ontto,
+       kaareva massa setissä — ei osu aurinkoihin eikä ympyröihin. -->
+  <symbol id="g-ilta" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20.2 15.4A8.6 8.6 0 0 1 8.6 3.8a8.6 8.6 0 1 0 11.6 11.6z"/>
+  </symbol>
+  <!--  Lisätiedot: puhekupla häntineen. Kaksi tekstiriviä erottaa sen
+       g-kirjaan lomakkeesta, jossa on kynä. -->
+  <symbol id="g-lisatiedot" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6.2 5.4h12.2A2.4 2.4 0 0 1 20.8 7.8v5.6a2.4 2.4 0 0 1-2.4 2.4h-6.6l-5.2 4.2v-4.2A2.4 2.4 0 0 1 4.2 13.4V7.8a2.4 2.4 0 0 1 2-2.4z"/>
+  </symbol>
+  <!--  Palauta: U-käännös takaisin vasemmalle. Yksi kaari + kärki,
+       vastakohta g-jonoon-nuolelle. -->
+  <symbol id="g-palauta" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6.5 8.2h9.3a4.8 4.8 0 0 1 0 9.6H8"/>
+    <path d="M10 4.4 6.2 8.2 10 12"/>
+  </symbol>
+  <!--  Toistuva: kaksi vastakkaista kaarinuolta. Erottuu g-ajastetusta,
+       jossa on kellotaulu ja viisarit. -->
+  <symbol id="g-toistuva" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4.8 12a7.2 7.2 0 0 1 12.3-5.1l2.1 2.1"/>
+    <path d="M19.2 12a7.2 7.2 0 0 1-12.3 5.1l-2.1-2.1"/>
+    <path d="M19.2 4.6v4.4h-4.4M4.8 19.4V15h4.4"/>
+  </symbol>
+
   <symbol id="q-q1" viewBox="0 0 24 24"><path d="M12 3 22 20H2z" fill="currentColor"/></symbol>
   <symbol id="q-q2" viewBox="0 0 24 24"><path d="M12 2 22 12 12 22 2 12z" fill="currentColor"/></symbol>
   <symbol id="q-q3" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="currentColor"/></symbol>
@@ -5141,6 +5180,11 @@ body.focus-mode #arena-slot-hint{
   text-transform:uppercase;text-align:center;
   line-height:1.3;color:var(--tcg-plate-ink);text-shadow:0 2px 5px rgba(0,0,0,.75);
 }
+/* Ajastusrivin glyfi: kiinteä koko. Ilman tätä 24px:n viewBox venyy
+   flex-rivillä koko leveyteen ja runko ylivuotaa (mitattu 441/218). */
+.tcg-card__sched svg,#edit-sched-text svg{
+  width:1em;height:1em;flex:none;vertical-align:-.12em;
+}
 .tcg-card__notes-tcg{
   font-size:.7rem;color:rgba(255,255,255,.5);line-height:1.4;
   font-style:italic;padding-left:.75rem;
@@ -7870,7 +7914,13 @@ function openEditModal(id){
   if(schedRow&&schedTxt){
     var st=fmtSchedule(t);
     schedRow.style.display=st?'flex':'none';
-    schedTxt.textContent=st;
+    /* Merkki tulee glyfina eika emojina (vaihe 5): fmtSchedule palauttaa
+       pelkan tekstin, ikonin nimi luetaan schedIconista. */
+    schedTxt.textContent='';
+    if(st){
+      schedTxt.appendChild(_tcgSvgIcon(iconId(schedIcon(t))));
+      schedTxt.appendChild(document.createTextNode(' '+st));
+    }
   }
   document.getElementById('edit-link').value=t.linkki||'';
 
@@ -10057,8 +10107,9 @@ function mkIndexCol(t, pos){
 var ICON = {};
 ('soita sovi kirjaa tee selvita vie tarkista laheta lue etsi kirjoita '
 +'vastaa tapaa valmistele aikatauluta varaa tehty odottaa linkki muokkaa '
-+'poista jonoon pika sammakko aamu pomodoro ajastettu jatkokortti aloita '
-+'seis tarkea kiire').split(' ').forEach(function(n){ICON[n]=1;});
++'poista jonoon pika sammakko aamu paiva ilta pomodoro ajastettu toistuva '
++'lisatiedot palauta jatkokortti aloita seis tarkea kiire').split(' ')
+  .forEach(function(n){ICON[n]=1;});
 
 var ICON_FALLBACK = 'tee';
 
@@ -10255,7 +10306,8 @@ function renderArenaCard(t, container, anyFrog, mode){
     if(schedTxt){
       var sline=document.createElement('em');
       sline.className='tcg-card__sched';
-      sline.textContent=schedTxt;
+      sline.appendChild(_tcgSvgIcon(iconId(schedIcon(t))));
+      sline.appendChild(document.createTextNode(' '+schedTxt));
       notes.appendChild(sline);
     }
     if(t.lisatiedot&&t.lisatiedot.trim()){
@@ -11519,6 +11571,15 @@ function fmtSchedDays(days){
           .map(function(x){return SCHED_DAY_NAMES[x===7?0:x];}).join(', ');
 }
 
+// Ikonin NIMI erikseen tekstistä: fmtSchedule palauttaa merkkijonon, joka
+// menee textContentiin, eikä SVG kulje siinä. Kutsuja päättää näyttääkö se
+// ikonin — sillä on eri keinot eri paikoissa (kortin sched-rivi, pakan
+// tiivis rivi, aamun lista). Aiemmin merkki oli emojina tekstin seassa.
+function schedIcon(t){
+  if(!t||!t.schedule)return '';
+  return t.schedule.type==='repeat' ? 'toistuva' : 'ajastettu';
+}
+
 // short=true pakkakortille, jossa rivi on 8px ja ~125px leveä.
 function fmtSchedule(t,short){
   if(!t||!t.schedule)return '';
@@ -11526,14 +11587,14 @@ function fmtSchedule(t,short){
   if(s.type==='once'){
     var pvm=fmtSchedDate(s.date);
     var when=pvm+' klo '+s.time;
-    if(s.triggered)return '📅 Ilmestyi '+(short?pvm:when);
+    if(s.triggered)return 'Ilmestyi '+(short?pvm:when);
     // Erääntynyt mutta yhä piilossa: minuuttitarkistus ei ole vielä ehtinyt
     // ajaa. Kerrotaan se, ettei kortti näytä syyttä jumittavan.
     var myohassa=t.scheduled_hidden&&scheduleDue(s,new Date(),t.schedLast||null);
-    return '📅 '+(short?'':'Ajastettu ')+when+(myohassa?' — myöhässä':'');
+    return (short?'':'Ajastettu ')+when+(myohassa?' — myöhässä':'');
   }
   if(s.type==='repeat'){
-    return '🔁 '+fmtSchedDays(s.days)+' klo '+s.time;
+    return fmtSchedDays(s.days)+' klo '+s.time;
   }
   return '';
 }
@@ -14595,7 +14656,11 @@ function renderInventory(){
     // Pakka on ainoa n\u00e4kym\u00e4 jossa piilotettu ajastettu kortti n\u00e4kyy, joten
     // sen on kerrottava my\u00f6s milloin kortti ilmestyy.
     var invSched = fmtSchedule(t, true);
-    if(invSched) html += '<div class="inv-card__sched">'+esc(invSched)+'</div>';
+    /* Glyfi emojin tilalle (vaihe 5). Koko on kiinteä 9px: rivi on
+       pakassa 8px korkea, eikä em-mitoitus osuisi siihen. */
+    if(invSched) html += '<div class="inv-card__sched"><svg width="9" height="9" '
+      + 'style="vertical-align:-1px;margin-right:2px" aria-hidden="true"><use href="#g-'
+      + schedIcon(t) + '"/></svg>'+esc(invSched)+'</div>';
     if(!t.done){
       html += '<button class="inv-card__star-btn" title="'+(t.handForced?'Poista käden tähtikortti':'Nosta käteen tähtikorttina')+'">'+(t.handForced?'⭐':'☆')+'</button>';
     }

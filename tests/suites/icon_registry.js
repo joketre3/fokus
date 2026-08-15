@@ -6,8 +6,10 @@
       // MOLEMMAT kirjoitusasut päätyvät samaan glyfiin.
 
       // ── Rekisteri on olemassa ────────────────────────────────────────
+      // 32 vaiheessa 2, +5 vaiheessa 5 (paiva, ilta, toistuva, lisatiedot,
+      // palauta) kun popupien emojit korvattiin glyfeilla.
       ok('ICON-setti on taytetty', typeof ICON === 'object' &&
-         Object.keys(ICON).length === 32, Object.keys(ICON).length + ' nimea');
+         Object.keys(ICON).length === 37, Object.keys(ICON).length + ' nimea');
       ok('vanhat kartat poistettu',
          typeof window._TCG_VERB_ID === 'undefined' &&
          typeof window.VERB_ICONS === 'undefined', 'ei _TCG_VERB_ID / VERB_ICONS');

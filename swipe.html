@@ -185,20 +185,20 @@ html[data-theme="aurinko"] .tint.yes{background:rgba(196,104,30,.08)}
       <span class="hdr-logo">Fokus</span>
       <div style="display:flex;align-items:center;gap:.5rem">
         <span class="hdr-count" id="counter">—</span>
-        <button onclick="finishSwipe()" style="font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;padding:.35rem .8rem;border-radius:6px;border:1.5px solid var(--accent);color:var(--accent);background:white;cursor:pointer">Valmis ✓</button>
+        <button onclick="finishSwipe()" style="font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;padding:.35rem .8rem;border-radius:6px;border:1.5px solid var(--accent);color:var(--accent);background:white;cursor:pointer">Valmis <svg class="ico" aria-hidden="true" focusable="false"><use href="#g-tehty"/></svg></button>
       </div>
     </div>
     <div class="progress"><div class="progress-fill" id="prog" style="width:0%"></div></div>
     <div class="hints" id="hints">
-      <div class="hint left" id="hintLeft">✕ Ohita</div>
+      <div class="hint left" id="hintLeft"><svg class="ico" aria-hidden="true" focusable="false"><use href="#g-poista"/></svg> Ohita</div>
       <div style="font-size:.62rem;color:var(--muted);font-weight:300">pyyhkäise tai vedä</div>
-      <div class="hint right" id="hintRight">Jonoon ✓</div>
+      <div class="hint right" id="hintRight">Jonoon <svg class="ico" aria-hidden="true" focusable="false"><use href="#g-jonoon"/></svg></div>
     </div>
     <div class="stack" id="stack"></div>
     <div class="actions" id="actions">
-      <div class="act-wrap"><button class="act-btn skip" onclick="swipeLeft()">✕</button><div class="act-label">Ohita</div></div>
-      <div class="act-wrap"><button class="act-btn fbtn" id="frogBtn" onclick="swipeFrog()">🐸</button><div class="act-label">Sammakko</div></div>
-      <div class="act-wrap"><button class="act-btn qbtn" onclick="swipeRight()">✓</button><div class="act-label">Jonoon</div></div>
+      <div class="act-wrap"><button class="act-btn skip" onclick="swipeLeft()" aria-label="Ohita"><svg class="ico ico--lg" aria-hidden="true" focusable="false"><use href="#g-poista"/></svg></button><div class="act-label">Ohita</div></div>
+      <div class="act-wrap"><button class="act-btn fbtn" id="frogBtn" onclick="swipeFrog()" aria-label="Sammakko"><svg class="ico ico--lg" aria-hidden="true" focusable="false"><use href="#g-sammakko"/></svg></button><div class="act-label">Sammakko</div></div>
+      <div class="act-wrap"><button class="act-btn qbtn" onclick="swipeRight()" aria-label="Jonoon"><svg class="ico ico--lg" aria-hidden="true" focusable="false"><use href="#g-jonoon"/></svg></button><div class="act-label">Jonoon</div></div>
     </div>
     <div id="done-screen">
       <div style="font-size:2rem">🌲</div>
@@ -216,6 +216,156 @@ html[data-theme="aurinko"] .tint.yes{background:rgba(196,104,30,.08)}
 </div>
 
 <div class="nt" id="nt"></div>
+
+<!-- BEGIN fokus:icons v1 — jaettu lohko. PIDÄ IDENTTISENÄ aamu.html <-> swipe.html.
+     Symbolit ovat kopio index.html:n <defs>istä — tests/run.py vertaa ne
+     sinne merkki merkiltä. Yksi lähde on index.html; jos glyfi muuttuu,
+     muuta se siellä ja aja `python3 tests/run.py shared_block`.
+
+     Popupit eivät tarvitse koko rekisteriä (VERB_ALIAS, tier, verbIcon):
+     ne näyttävät kiinteitä UI-ikoneja, eivät verbikohtaisia kortti-
+     glyfejä. Siksi tässä on vain nimilista ja kaksi apuria. -->
+<style>
+.ico{width:1.05em;height:1.05em;flex:none;vertical-align:-.15em;display:inline-block}
+.ico--lg{width:1.6em;height:1.6em;vertical-align:-.3em}
+</style>
+<svg style="position:absolute;width:0;height:0" aria-hidden="true" focusable="false"><defs>
+  <symbol id="g-sammakko" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4.5 15c0-4.1 3.4-7.5 7.5-7.5s7.5 3.4 7.5 7.5c0 2.5-2 4.5-4.5 4.5H9c-2.5 0-4.5-2-4.5-4.5z"/>
+      <circle cx="8.8" cy="6.8" r="2.3"/><circle cx="15.2" cy="6.8" r="2.3"/>
+    </symbol>
+  <symbol id="g-aamu" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 14.5a5 5 0 0 1 10 0"/>
+      <path d="M12 3.2v3.3M5.1 6.6l2.3 2.3M18.9 6.6l-2.3 2.3"/>
+      <path d="M2.5 14.5h19"/>
+      <path d="M6 19.5h12"/>
+    </symbol>
+  <symbol id="g-paiva" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="10.4" r="4"/>
+      <path d="M12 1.6v2.7M3.4 10.4h2.7M17.9 10.4h2.7"/>
+      <path d="M5.9 4.3 7.8 6.2M18.1 4.3 16.2 6.2"/>
+      <path d="M3 19.4h18"/>
+    </symbol>
+  <symbol id="g-ilta" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20.2 15.4A8.6 8.6 0 0 1 8.6 3.8a8.6 8.6 0 1 0 11.6 11.6z"/>
+    </symbol>
+  <symbol id="g-tehty" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4.5 12.5 9.5 17.5 19.5 6.5"/>
+    </symbol>
+  <symbol id="g-poista" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round">
+      <path d="M6 6 18 18M18 6 6 18"/>
+    </symbol>
+  <symbol id="g-kirjaa" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18.5 12.5V19a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 19V6A1.5 1.5 0 0 1 6 4.5h6.5"/>
+      <path d="M8.5 9.5h4M8.5 13h3"/>
+      <path d="M18.2 3.4 20.6 5.8 14.4 12H12V9.6z"/>
+    </symbol>
+  <symbol id="g-pomodoro" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 8.5c4.1 0 7.5 3 7.5 6.6S16.1 21.5 12 21.5s-7.5-2.8-7.5-6.4S7.9 8.5 12 8.5z"/>
+      <path d="M12 8.5V6"/>
+      <path d="M12 6c-1-2-3.4-2.4-3.4-2.4M12 6c1-2 3.4-2.4 3.4-2.4"/>
+    </symbol>
+  <symbol id="g-lisatiedot" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6.2 5.4h12.2A2.4 2.4 0 0 1 20.8 7.8v5.6a2.4 2.4 0 0 1-2.4 2.4h-6.6l-5.2 4.2v-4.2A2.4 2.4 0 0 1 4.2 13.4V7.8a2.4 2.4 0 0 1 2-2.4z"/>
+    </symbol>
+  <symbol id="g-linkki" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 13.5a4 4 0 0 0 5.7 0l3-3a4 4 0 1 0-5.7-5.7l-1.7 1.7"/>
+      <path d="M14 10.5a4 4 0 0 0-5.7 0l-3 3a4 4 0 1 0 5.7 5.7l1.7-1.7"/>
+    </symbol>
+  <symbol id="g-pika" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M13.5 2.5 5 13.5h5.5L9.5 21.5 19 10.5h-5.5z"/>
+    </symbol>
+  <symbol id="g-palauta" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6.5 8.2h9.3a4.8 4.8 0 0 1 0 9.6H8"/>
+      <path d="M10 4.4 6.2 8.2 10 12"/>
+    </symbol>
+  <symbol id="g-odottaa" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 3.5h10M7 20.5h10"/>
+      <path d="M8.5 3.5v3.1c0 1 .4 1.9 1.1 2.6L12 11.7l2.4-2.5c.7-.7 1.1-1.6 1.1-2.6V3.5"/>
+      <path d="M8.5 20.5v-3.1c0-1 .4-1.9 1.1-2.6L12 12.3l2.4 2.5c.7.7 1.1 1.6 1.1 2.6v3.1"/>
+    </symbol>
+  <symbol id="g-ajastettu" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="13.8" r="7.3"/>
+      <path d="M12 9.8v4h3"/>
+      <path d="M3.6 5.2A3.6 3.6 0 0 1 8.4 3.6M20.4 5.2a3.6 3.6 0 0 0-4.8-1.6"/>
+    </symbol>
+  <symbol id="g-toistuva" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4.8 12a7.2 7.2 0 0 1 12.3-5.1l2.1 2.1"/>
+      <path d="M19.2 12a7.2 7.2 0 0 1-12.3 5.1l-2.1-2.1"/>
+      <path d="M19.2 4.6v4.4h-4.4M4.8 19.4V15h4.4"/>
+    </symbol>
+  <symbol id="g-muokkaa" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M16.5 3.8 20.2 7.5 8.7 19H5v-3.7z"/><path d="M14 6.3l3.7 3.7"/>
+    </symbol>
+  <symbol id="g-kiire" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="15.4" cy="14.2" r="6.2"/>
+      <path d="M13.1 3.4h4.6"/><path d="M15.4 3.4v3.6"/>
+      <path d="M20.3 8.8 21.7 7.4"/>
+      <path d="M15.4 10.8v3.4"/>
+      <path d="M1.6 10.2h6.4M2.8 14.2h5.2M4 18.2h4"/>
+    </symbol>
+  <symbol id="g-jonoon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 20V4.5"/><path d="M5.5 11 12 4.5 18.5 11"/>
+    </symbol>
+  <symbol id="g-tee" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M13.5 3.5 20.5 10.5 17 14 10 7z"/>
+      <path d="M11.5 8.5 4 16v4h4l7.5-7.5"/>
+    </symbol>
+</defs></svg>
+<script>
+/* _ico(nimi) -> SVG-elementti, _icoHtml(nimi) -> sama merkkijonona.
+   Merkkijonoversio on innerHTML-polkuja varten; se ei sisällä
+   pakotettuja lainausmerkkejä eikä template-literaaleja, jotka
+   rikkovat mobiili-Edgen (ks. index.html:n arkkitehtuuriperiaatteet). */
+var POPUP_ICONS = ('sammakko aamu paiva ilta tehty poista kirjaa pomodoro '
+  + 'lisatiedot linkki pika palauta odottaa ajastettu toistuva muokkaa '
+  + 'kiire jonoon').split(' ');
+function _ico(nimi, lisaLuokka){
+  var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('class','ico' + (lisaLuokka ? ' ' + lisaLuokka : ''));
+  svg.setAttribute('aria-hidden','true');
+  svg.setAttribute('focusable','false');
+  var u = document.createElementNS('http://www.w3.org/2000/svg','use');
+  /* Tuntematon nimi renderöityisi hiljaa tyhjänä — <use href> ei varoita
+     puuttuvasta symbolista. Fallback tekee virheen näkyväksi. */
+  u.setAttribute('href','#g-' + (POPUP_ICONS.indexOf(nimi) < 0 ? 'tee' : nimi));
+  svg.appendChild(u);
+  return svg;
+}
+function _icoHtml(nimi, lisaLuokka){
+  var n = POPUP_ICONS.indexOf(nimi) < 0 ? 'tee' : nimi;
+  return '<svg class="ico' + (lisaLuokka ? ' ' + lisaLuokka : '') +
+         '" aria-hidden="true" focusable="false"><use href="#g-' + n + '"/></svg>';
+}
+/* Nappi tai label jossa on ikoni + teksti. textContent staattiselle
+   tekstille, ikoni erillisenä elementtinä — ei innerHTML-yhdistelmää. */
+function _icoLabel(el, nimi, teksti){
+  el.textContent = '';
+  el.appendChild(_ico(nimi));
+  el.appendChild(document.createTextNode(' ' + teksti));
+  return el;
+}
+</script>
+<!-- END fokus:icons v1 -->
 
 <!-- BEGIN fokus:edit-modal v1 — jaettu lohko. PIDÄ IDENTTISENÄ aamu.html <-> swipe.html.
      tests/run.py vertaa lohkot merkki merkiltä; ero kaataa ajon.
@@ -261,16 +411,16 @@ html[data-theme="aurinko"] .tint.yes{background:rgba(196,104,30,.08)}
   <div class="fem-hd">Muokkaa korttia</div>
   <div class="fem-bd">
     <div>
-      <label class="fem-lbl" for="edit-text">📝 Tehtävän teksti</label>
+      <label class="fem-lbl" for="edit-text"><svg class="ico" aria-hidden="true" focusable="false"><use href="#g-kirjaa"/></svg> Tehtävän teksti</label>
       <input id="edit-text" class="fem-in" type="text" placeholder="Tehtävän teksti">
     </div>
     <div class="fem-row">
       <button type="button" id="edit-important" class="fem-btn fem-tog">Tärkeä</button>
       <button type="button" id="edit-urgent" class="fem-btn fem-tog">Kiireinen</button>
-      <button type="button" id="edit-frog" class="fem-btn" title="Aseta sammakoksi (tärkein tehtävä)">🐸 Sammakko</button>
+      <button type="button" id="edit-frog" class="fem-btn" title="Aseta sammakoksi (tärkein tehtävä)"><svg class="ico" aria-hidden="true" focusable="false"><use href="#g-sammakko"/></svg> Sammakko</button>
     </div>
     <div class="fem-est">
-      <span style="font-size:.68rem;color:var(--muted);font-weight:300">🍅 Arvio</span>
+      <span style="font-size:.68rem;color:var(--muted);font-weight:300"><svg class="ico" aria-hidden="true" focusable="false"><use href="#g-pomodoro"/></svg> Arvio</span>
       <button type="button" class="fem-step" id="edit-est-dn" aria-label="Vähennä arviota">‹</button>
       <input type="range" id="edit-esl" min="0" max="8" step="0.5" value="1" aria-label="Pomodoro-arvio">
       <button type="button" class="fem-step" id="edit-est-up" aria-label="Lisää arviota">›</button>
@@ -279,11 +429,11 @@ html[data-theme="aurinko"] .tint.yes{background:rgba(196,104,30,.08)}
     </div>
     <div id="edit-proj-btns" style="display:flex;gap:.3rem;flex-wrap:wrap"></div>
     <div>
-      <label class="fem-lbl" for="edit-notes">💬 Lisätiedot</label>
+      <label class="fem-lbl" for="edit-notes"><svg class="ico" aria-hidden="true" focusable="false"><use href="#g-lisatiedot"/></svg> Lisätiedot</label>
       <textarea id="edit-notes" class="fem-in" rows="2" placeholder="Taustaa, muistiinpanoja..."></textarea>
     </div>
     <div>
-      <label class="fem-lbl" for="edit-link">🔗 Linkki</label>
+      <label class="fem-lbl" for="edit-link"><svg class="ico" aria-hidden="true" focusable="false"><use href="#g-linkki"/></svg> Linkki</label>
       <input id="edit-link" class="fem-in" type="url" placeholder="https://...">
     </div>
     <div class="fem-row">
@@ -307,7 +457,7 @@ html[data-theme="aurinko"] .tint.yes{background:rgba(196,104,30,.08)}
          return (s.work>=5&&s.work<=90)?s.work:25; }catch(e){ return 25; }
   }());
   function q(id){ return document.getElementById(id); }
-  function fe(v){ if(v===0)return'⚡'; if(v===.5)return'½';
+  function fe(v){ if(v===0)return'0'; if(v===.5)return'½';
     var w=Math.floor(v),h=v%1!==0; return h?(w>0?w+'½':'½'):String(w); }
   function isQuick(t){ return !!t && t.est===0; }
   function note(msg){ if(H&&H.notify)try{H.notify(msg);}catch(e){} }
@@ -327,7 +477,12 @@ html[data-theme="aurinko"] .tint.yes{background:rgba(196,104,30,.08)}
     if(m){ t.verbi=m[1]; t.kuvaus=m[2]; } else { t.verbi=t.text||''; t.kuvaus=''; }
   }
   function setEstUI(v){
-    q('edit-ev').textContent=fe(v);
+    /* Pikatehtava (est 0) nayttaa salamaglyfin, ei numeroa. Ikoni on
+       oma elementtinsa eika merkkijono: fe() palauttaa pelkkaa tekstia. */
+    var ev=q('edit-ev');
+    ev.textContent='';
+    if(v===0){ ev.appendChild(_ico('pika')); }
+    else { ev.textContent=fe(v); }
     q('edit-esl-unit').textContent=(v===0)?'alle 2 min — tee heti':'× '+POMO+' min';
   }
   function trapFocus(modal){
@@ -416,23 +571,23 @@ html[data-theme="aurinko"] .tint.yes{background:rgba(196,104,30,.08)}
     // Tilanapit: teksti ja toiminto riippuvat kortin tilasta
     var dnB=q('edit-done-btn'), wtB=q('edit-wait-btn');
     if(t.done){
-      dnB.textContent='↩ Palauta tekemättömiin';
+      _icoLabel(dnB,'palauta','Palauta tekemättömiin');
       dnB.setAttribute('aria-label','Palauta tekemättömiin');
       dnB.onclick=function(){ action(actRestore); };
       // Tehty kortti ei odota: odottavat-nakyma suodattaa done-kortit pois,
       // joten waiting jaisi tilaksi jota mikaan nakyma ei nayta
       wtB.style.display='none';
     }else{
-      dnB.textContent='✓ Merkitse tehdyksi';
+      _icoLabel(dnB,'tehty','Merkitse tehdyksi');
       dnB.setAttribute('aria-label','Merkitse tehdyksi');
       dnB.onclick=function(){ action(actDone); };
       wtB.style.display='';
       if(t.waiting){
-        wtB.textContent='↩ Palauta vuoroon';
+        _icoLabel(wtB,'palauta','Palauta vuoroon');
         wtB.setAttribute('aria-label','Palauta vuoroon');
         wtB.onclick=function(){ action(actUnwait); };
       }else{
-        wtB.textContent='⏳ Siirrä odottamaan';
+        _icoLabel(wtB,'odottaa','Siirrä odottamaan');
         wtB.setAttribute('aria-label','Siirrä odottamaan');
         wtB.onclick=function(){ action(actWait); };
       }
@@ -472,7 +627,7 @@ html[data-theme="aurinko"] .tint.yes{background:rgba(196,104,30,.08)}
     if(isQuick(t)){
       dropFromQueue(t.id);
       t.frog=false;
-      note('⚡ Siirretty pikatehtäviin — tee se heti.');
+      note('Siirretty pikatehtäviin — tee se heti.');
     }
     var wantFrog=q('edit-frog').classList.contains('on');
     if(wantFrog&&!t.frog){ tasksOf().forEach(function(x){ x.frog=false; }); }
@@ -505,11 +660,11 @@ html[data-theme="aurinko"] .tint.yes{background:rgba(196,104,30,.08)}
   function actDone(t){
     t.done=true; t.doneAt=new Date().toISOString();
     dropFromQueue(t.id);
-    commit(t,'✓ Merkitty tehdyksi');
+    commit(t,'Merkitty tehdyksi');
   }
   function actRestore(t){
     t.done=false; t.doneAt=null;
-    commit(t,'↩ Palautettu tekemättömiin');
+    commit(t,'Palautettu tekemättömiin');
   }
   function actWait(t){
     t.waiting=true;
@@ -560,7 +715,7 @@ var QC={q1:'Tärkeä + kiireinen',q2:'Tärkeä, ei kiireinen',q3:'Kiireinen, ei 
 var tasks=[],queue=[],active=null,turn=[],idx=0,total=0,budgetMin=0;
 var projects=[];  // vain muokkausmodaalin projektisiruja varten
 var POMO_MIN=(function(){try{var s=JSON.parse(localStorage.getItem('fap_timer_settings')||'{}');return(s.work>=5&&s.work<=90)?s.work:25;}catch(e){return 25;}}());
-function fe(v){if(v===0)return'⚡';if(v===0.5)return'½';if(v%1!==0)return Math.floor(v)+'½';return String(v);}
+function fe(v){if(v===0)return'0';if(v===0.5)return'½';if(v%1!==0)return Math.floor(v)+'½';return String(v);}
 // 2 min -saanto: est 0 = pikatehtava, ei kuulu tehtavajonoon
 function isQuick(t){ return !!t && t.est===0; }
 
@@ -648,6 +803,15 @@ function fmtSchedDays(days){
           .map(function(x){return SCHED_DAY_NAMES[x===7?0:x];}).join(', ');
 }
 
+// Ikonin NIMI erikseen tekstistä: fmtSchedule palauttaa merkkijonon, joka
+// menee textContentiin, eikä SVG kulje siinä. Kutsuja päättää näyttääkö se
+// ikonin — sillä on eri keinot eri paikoissa (kortin sched-rivi, pakan
+// tiivis rivi, aamun lista). Aiemmin merkki oli emojina tekstin seassa.
+function schedIcon(t){
+  if(!t||!t.schedule)return '';
+  return t.schedule.type==='repeat' ? 'toistuva' : 'ajastettu';
+}
+
 // short=true pakkakortille, jossa rivi on 8px ja ~125px leveä.
 function fmtSchedule(t,short){
   if(!t||!t.schedule)return '';
@@ -655,14 +819,14 @@ function fmtSchedule(t,short){
   if(s.type==='once'){
     var pvm=fmtSchedDate(s.date);
     var when=pvm+' klo '+s.time;
-    if(s.triggered)return '📅 Ilmestyi '+(short?pvm:when);
+    if(s.triggered)return 'Ilmestyi '+(short?pvm:when);
     // Erääntynyt mutta yhä piilossa: minuuttitarkistus ei ole vielä ehtinyt
     // ajaa. Kerrotaan se, ettei kortti näytä syyttä jumittavan.
     var myohassa=t.scheduled_hidden&&scheduleDue(s,new Date(),t.schedLast||null);
-    return '📅 '+(short?'':'Ajastettu ')+when+(myohassa?' — myöhässä':'');
+    return (short?'':'Ajastettu ')+when+(myohassa?' — myöhässä':'');
   }
   if(s.type==='repeat'){
-    return '🔁 '+fmtSchedDays(s.days)+' klo '+s.time;
+    return fmtSchedDays(s.days)+' klo '+s.time;
   }
   return '';
 }
@@ -841,18 +1005,24 @@ function buildCard(t,shadow){
   hdr.appendChild(badge);hdr.appendChild(crit);card.appendChild(hdr);
   var name=document.createElement('div');name.className='task-name';name.textContent=t.text;card.appendChild(name);
   var meta=document.createElement('div');meta.className='meta';
-  var pi=document.createElement('div');pi.className='meta-item';pi.textContent='🍅 '+fe(t.est||1)+' pomodoro'+((t.est||1)>1?'a':'');meta.appendChild(pi);
+  var pi=document.createElement('div');pi.className='meta-item';
+  pi.appendChild(_ico(isQuick(t)?'pika':'pomodoro'));
+  pi.appendChild(document.createTextNode(isQuick(t)?' alle 2 min':(' '+fe(t.est||1)+' pomodoro'+((t.est||1)>1?'a':''))));
+  meta.appendChild(pi);
   if(queue.indexOf(t.id)>=0){var c=document.createElement('span');c.className='chip inq';c.textContent='Jonossa';meta.appendChild(c);}
-  if(t.frog){var c2=document.createElement('span');c2.className='chip frog';c2.textContent='🐸';meta.appendChild(c2);}
-  if(t.waiting){var c3=document.createElement('span');c3.className='chip wait';c3.textContent='⏳';meta.appendChild(c3);}
+  if(t.frog){var c2=document.createElement('span');c2.className='chip frog';c2.appendChild(_ico('sammakko'));meta.appendChild(c2);}
+  if(t.waiting){var c3=document.createElement('span');c3.className='chip wait';c3.appendChild(_ico('odottaa'));meta.appendChild(c3);}
   // Ajastettu, ei vielä ilmestynyt: siru kertoo tilan, rivi kertoo milloin.
   if(t.scheduled_hidden&&t.schedule){
-    var c4=document.createElement('span');c4.className='chip sched';c4.textContent='🕐 Ajastettu';meta.appendChild(c4);
+    var c4=document.createElement('span');c4.className='chip sched';
+    c4.appendChild(_ico(schedIcon(t)));c4.appendChild(document.createTextNode(' Ajastettu'));meta.appendChild(c4);
   }
   card.appendChild(meta);
   var schedTxt=fmtSchedule(t);
   if(schedTxt){
-    var sl=document.createElement('div');sl.className='card-sched';sl.textContent=schedTxt;
+    var sl=document.createElement('div');sl.className='card-sched';
+    sl.appendChild(_ico(schedIcon(t)));
+    sl.appendChild(document.createTextNode(' '+schedTxt));
     card.appendChild(sl);
   }
   // Tags row
@@ -872,7 +1042,7 @@ function buildCard(t,shadow){
   if(!shadow){
     var editBtn=document.createElement('button');
     editBtn.style.cssText='font-family:\'DM Sans\',sans-serif;font-size:.65rem;font-weight:400;padding:.2rem .55rem;border-radius:4px;border:1px solid var(--light);color:var(--muted);background:white;cursor:pointer;margin-top:.35rem;align-self:flex-start';
-    editBtn.textContent='✎ Muokkaa';
+    _icoLabel(editBtn,'muokkaa','Muokkaa');
     editBtn.onclick=function(e){e.stopPropagation();FokusEdit.open(t.id);};
     card.appendChild(editBtn);
   }
@@ -941,8 +1111,11 @@ function renderQueuePanel(){
     if(!t)return;
     var item=document.createElement('div');item.className='qp-item';
     var dot=document.createElement('div');dot.className='qp-dot '+(t.quad||'q4');
-    var nm=document.createElement('div');nm.className='qp-name';nm.textContent=(t.frog?'🐸 ':'')+t.text;
-    var est=document.createElement('div');est.className='qp-est';est.textContent=fe(t.est||1)+'🍅';
+    var nm=document.createElement('div');nm.className='qp-name';
+    if(t.frog)nm.appendChild(_ico('sammakko'));
+    nm.appendChild(document.createTextNode((t.frog?' ':'')+t.text));
+    var est=document.createElement('div');est.className='qp-est';
+    est.appendChild(document.createTextNode(fe(t.est||1)+' '));est.appendChild(_ico('pomodoro'));
     var rm=document.createElement('button');rm.className='qp-rm';rm.textContent='×';
     rm.onclick=(function(tid){return function(){
       queue=queue.filter(function(i){return i!==tid});
@@ -960,7 +1133,7 @@ function checkBudget(){return budgetMin>0&&queueTotalMin()>=budgetMin;}
 function swipeRight(){
   var t=tasks[idx];if(!t)return;
   if(checkBudget()){notify('Jono täynnä! Poista ensin tai ohita.');return;}
-  if(queue.indexOf(t.id)<0){queue.push(t.id);saveQueue();notify('✓ Lisätty jonoon');}
+  if(queue.indexOf(t.id)<0){queue.push(t.id);saveQueue();notify('Lisätty jonoon');}
   else notify('Jo jonossa');
   renderQueuePanel();animateCard('right');
 }
@@ -972,7 +1145,7 @@ function swipeFrog(){
   tasks.forEach(function(u){u.frog=false;});t.frog=true;
   if(queue.indexOf(t.id)<0)queue.unshift(t.id);
   else{queue=queue.filter(function(i){return i!==t.id});queue.unshift(t.id);}
-  saveQueue();renderQueuePanel();notify('🐸 Sammakko — jonon kärkeen');animateCard('right');
+  saveQueue();renderQueuePanel();notify('Sammakko — jonon kärkeen');animateCard('right');
 }
 
 function animateCard(dir){
