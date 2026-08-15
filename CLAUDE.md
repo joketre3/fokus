@@ -36,7 +36,7 @@ kierroksensa, koska koskee kaikkia kolmea korttikokoa yhtä aikaa.
 
 **Tuottavuustavat ✅ valmis (2026-08-08):** 2 min -sääntö (pikakortit), 1-3-5 päivän budjetti, keskeytysparkki — ks. oma osio alempana
 
-**Tehtäväjonon rata 🔶 haarassa (2026-08-11):** jono saa fyysisen paikan areenan lattialla. Haara `claude/task-queue-visibility-ymx47m`, PR #10, **ei mergeä mainiin** — ks. oma osio alempana. Kerrosskaala `#arena`n sisällä muuttui (areenakortti z:3→9, banneri z:5→12).
+**Tehtäväjonon rata ✅ mainissa (merge `4a1c953`):** jono saa fyysisen paikan areenan lattialla. Alun perin haara `claude/task-queue-visibility-ymx47m` / PR #10 — ks. oma osio alempana. Kerrosskaala `#arena`n sisällä muuttui (areenakortti z:3→9, banneri z:5→12).
 
 **P2 ✅ valmis (2026-06-11) — Eisenhower-peek + navigaatio:**
 - Eisenhower-matriisi yhdistetty: vanha full-screen modaali poistettu → uusi `#eise-peek` areenan yläreunassa
@@ -1319,10 +1319,10 @@ Opit:
 mobiili näe sitä, mutta mobiilin `nth-child`-nollaus tiivistyi yhdeksi
 `transform:none`-riviksi — tarkista hylly puhelimella.
 
-### Tehtäväjonon rata areenan lattialla (2026-08-11) — haarassa, ei mergeä mainiin
+### Tehtäväjonon rata areenan lattialla (2026-08-11) — mainissa
 
-Haara `claude/task-queue-visibility-ymx47m`, PR #10. **Ei mergeä** — tämä on
-testiversio jota ajetaan omalla datalla.
+Alun perin haara `claude/task-queue-visibility-ymx47m` / PR #10; **mergetty
+mainiin** commitissa `4a1c953`.
 
 **Vika:** käsiviuhka lepää areenakortin alapuolella, joten käsikortin napautus
 *näyttää* kortin lyömiseltä areenalle. `promoteToHand` tekee kuitenkin
@@ -1365,7 +1365,8 @@ kortin **oikeassa laidassa** ja vasen alanurkka jää tyhjäksi.
 `--lane-max` on siksi enintään **4**: viides kortti saisi `--qz:4` ja törmäisi
 `.lane-more`en, kuudes `#arena-label`iin. Mockup käytti arvoja rata 20 /
 areenakortti 30 / hover 60 — **ne olisivat nostaneet areenakortin Eisenhower-
-matriisin peekin (z:20) päälle.** DESIGN.md §6 -taulukko on päivittämättä.
+matriisin peekin (z:20) päälle.** DESIGN.md §6 -taulukko on päivitetty
+2026-08-15 (luettu koodista, ei suunnitelmasta).
 
 **Opit:**
 - **`#queue-lane` on `z-index:auto` TARKOITUKSELLA.** Positioitu elementti ei luo
@@ -1464,9 +1465,10 @@ Impeccable-deltaa **ei ajettu** — detektori on Jaakon koneella. Aja
 
 **Palautus:** `git revert 6113618 1715fdb` (C-korjaukset ja rata erikseen).
 
-### Ajastetut kortit (2026-08-12) — haarassa, manuaalitestit tekemättä
+### Ajastetut kortit (2026-08-12) — mainissa, manuaalitestit tekemättä
 
-Haara `claude/ajastetut-kortit-korjaus`, PR #11. Spec:
+Alun perin haara `claude/ajastetut-kortit-korjaus` / PR #11, **mergetty mainiin**
+commitissa `c223435`. Spec:
 `docs/superpowers/specs/2026-08-12-ajastetut-kortit-design.md`.
 
 **Vika:** ajastettu tehtävä näkyi vain pakassa. Tähden sai laitettua mutta
