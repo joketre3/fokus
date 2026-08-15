@@ -36,9 +36,18 @@
 selaintallennukseen. <span class="warn">Korvaa kyseisen työtilan nykyisen
 sisällön.</span></p>
 
-<button id="seedBtn" type="button">Kylvä 12 tehtävää</button>
+<button id="seedBtn" type="button">Kylvä 12 tehtävää (demo)</button>
+<button id="iconBtn" type="button">Kylvä ikonikattaus (16 verbiä + tilat)</button>
 <div id="out"></div>
 <a class="btn" href="index.html">Avaa Fokus →</a>
+
+<p style="font-size:.8rem;opacity:.75;max-width:60ch">
+  <b>Ikonikattaus</b> on ikonisetin katselmointia varten: yksi tehtävä jokaista
+  16&nbsp;verbiä kohti plus tilat jotka laukaisevat toimintoglyfit (sammakko,
+  odottaa, ajastettu, pikatehtävä, linkki, jatkokortti). Demosetti kattaa vain
+  8&nbsp;verbiä — samat 8 joilla oli vanha <code>verb-i-*</code>-ikoni — joten
+  uusia glyfejä ei näe sillä lainkaan.
+</p>
 
 <script>
 // Paikallinen päivämäärä: toISOString() siirtäisi päivän UTC+2/+3:ssa
@@ -127,7 +136,84 @@ function seed(){
   }
 }
 
+/* ── Ikonikattaus ────────────────────────────────────────────────────
+   Yksi tehtävä jokaista 16 verbiglyfiä kohti + tilat jotka laukaisevat
+   toimintoglyfit. Kvadrantit on jaettu niin että areena, rata JA käsi
+   täyttyvät yhtä aikaa: käsi rakentuu q1/q2-tehtävistä jotka EIVÄT ole
+   aktiivisena eivätkä jonossa (buildHandQueue), joten vapaita q1/q2:ta
+   on jätettävä yli. Rata näyttää enintään 4 (--lane-max). */
+function write(state, label){
+  try{
+    localStorage.setItem('fap_onboarded','1');
+    localStorage.setItem('fap_active_ws','work');
+    localStorage.setItem('eis_v5_work', JSON.stringify(state));
+    document.getElementById('out').textContent =
+      '✓ ' + label + ' (' + localDate() + '). Avaa Fokus alta.';
+  }catch(e){
+    document.getElementById('out').textContent = '✗ Kirjoitus epäonnistui: ' + e.message;
+  }
+}
+
+function seedIcons(){
+  var yesterday = new Date(Date.now()-864e5).toISOString();
+  /* [verbi, kuvaus, quad, est, lisäkentät] — verbin kirjoitusasu on se
+     jonka VERB_ALIAS tuntee; ääkköset normalisoidaan lookupissa. */
+  var rows = [
+    ['Soita',       'Virtaselle takaisin',            'q1', 1,   {frog:true, important:true, urgent:true}],
+    ['Kirjaa',      'asiakaskäynti Lifecareen',       'q1', 2,   {important:true, urgent:true}],
+    ['Tarkista',    'laskun liitteet',                'q1', 1,   {important:true, urgent:true}],
+    ['Vie',         'raportti esihenkilölle',         'q1', 0.5, {important:true, urgent:true}],
+    ['Tee',         'kuukausiraportti',               'q2', 4,   {important:true}],
+    ['Sovi',        'kehityskeskustelu',              'q2', 0.5, {important:true, linkki:'https://www.luvn.fi'}],
+    ['Selvitä',     'kuntoutustuen hakuprosessi',     'q2', 3,   {important:true}],
+    ['Valmistele',  'tiimipalaverin materiaali',      'q2', 2,   {important:true}],
+    ['Tapaa',       'uusi asiakas vastaanotolla',     'q2', 1,   {important:true}],
+    ['Lue',         'uusi soveltamisohje',            'q2', 1,   {important:true}],
+    ['Kirjoita',    'lausunto kuntoutushakemukseen',  'q2', 2,   {important:true}],
+    ['Vastaa',      'esihenkilön viestiin',           'q3', 0.5, {urgent:true}],
+    ['Lähetä',      'liitteet taloushallintoon',      'q3', 0.5, {urgent:true}],
+    ['Etsi',        'vanha päätös arkistosta',        'q3', 1,   {urgent:true, waiting:true}],
+    ['Aikatauluta', 'seuraava kotikäynti',            'q4', 1,   {}],
+    ['Varaa',       'kokoushuone torstaille',         'q4', 0.5, {}]
+  ];
+  var t = rows.map(function(r, i){
+    return task(Object.assign({
+      id:i+1, verbi:r[0], kuvaus:r[1], text:r[0]+' '+r[1],
+      quad:r[2], est:r[3]
+    }, r[4]));
+  });
+
+  /* Tilaglyfit joita verbirivit eivät kata */
+  t.push(task({id:17, verbi:'Kirjaa', kuvaus:'kuitit matkalaskuun', text:'Kirjaa kuitit matkalaskuun',
+               quad:'q3', est:0}));                       // pika (est 0 → salama)
+  t.push(task({id:18, verbi:'Soita', kuvaus:'ajanvaraus hammashoitoon', text:'Soita ajanvaraus hammashoitoon',
+               quad:'q2', est:0.5, important:true,
+               schedule:{type:'weekly', days:[1,2,3,4,5], time:'08:15'}}));   // ajastettu
+  t.push(task({id:19, verbi:'Tee', kuvaus:'esiselvitys — osa 1', text:'Tee esiselvitys — osa 1',
+               quad:'q2', est:1, important:true,
+               chainId:900, chainPosition:1, chainTotal:2, isChained:true}));  // jatkokortti
+  t.push(task({id:20, verbi:'Tee', kuvaus:'esiselvitys — osa 2', text:'Tee esiselvitys — osa 2',
+               quad:'q2', est:1, important:true,
+               chainId:900, chainPosition:2, chainTotal:2, isChained:true}));
+  t.push(task({id:21, verbi:'Tarkista', kuvaus:'edellisen viikon kirjaukset', text:'Tarkista edellisen viikon kirjaukset',
+               quad:'q2', est:1, important:true, pomos:2, done:true, doneAt:yesterday}));
+
+  write({
+    tasks:t,
+    nid:22,
+    active:1,             // sammakko areenalle
+    turn:[2,3,4,5],       // rata täyteen (--lane-max 4)
+    pomoDone:2, totalPomos:9,
+    date:localDate(),
+    projects:[{id:1,name:'Asiakastyö',color:'#a84c28'},
+              {id:2,name:'Raportointi',color:'#2d5a3d'}],
+    pnid:3,
+    updatedAt:Date.now()
+  }, 'Kylvetty ' + t.length + ' tehtävää — 16 verbiglyfiä + tilat');
+}
+
 document.getElementById('seedBtn').addEventListener('click', seed);
+document.getElementById('iconBtn').addEventListener('click', seedIcons);
 </script>
 </body>
 </html>
