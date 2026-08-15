@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="fi" data-theme="usva">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Listamittari — pipit vs. segmentit (vaihe 6)</title>
+<style>
+:root{
+  --pomo:#a84c28; --pomo-hi:#e8623a;
+  --seg-h:6px; --seg-w:7px; --seg-gap:2px;
+  --ink:rgba(255,255,255,.95); --muted:rgba(255,255,255,.72);
+  --faint:rgba(255,255,255,.55); --subtle:rgba(255,255,255,.2);
+  --border:rgba(255,255,255,.25);
+  --surface:rgba(30,55,40,.42); --page:#0b1a12;
+  --q2-bright:#4a8a4a; --accent:#c49a3a; --text-xs:.72rem;
+}
+html[data-theme="aurinko"]{
+  --pomo:#a84c28; --pomo-hi:#c4551f;
+  --ink:#2d2417; --muted:#5f5334; --faint:#7a6a4a;
+  --subtle:rgba(120,80,30,.25); --border:rgba(180,130,70,.35);
+  --surface:rgba(255,255,255,.95); --page:#e9dfc8;
+  --q2-bright:#2d6a3d; --accent:#c4681e;
+}
+body{margin:0;padding:1.5rem;background:var(--page);color:var(--ink);
+  font-family:'DM Sans',system-ui,sans-serif;font-weight:300}
+h1{font-size:1.05rem;font-weight:500;margin:0 0 .3rem}
+p.lead{color:var(--muted);font-size:.8rem;max-width:62ch;margin:0 0 1.2rem;line-height:1.5}
+.bar{display:flex;gap:.5rem;margin-bottom:1.2rem;flex-wrap:wrap}
+button{font:inherit;font-size:.75rem;padding:.3rem .7rem;border-radius:4px;
+  border:1.5px solid var(--border);background:none;color:var(--muted);cursor:pointer}
+button.on{border-color:var(--accent);color:var(--accent)}
+table{border-collapse:collapse;width:100%;max-width:1000px}
+th,td{text-align:left;padding:.5rem .7rem;border-bottom:1px dashed var(--subtle);
+  font-size:var(--text-xs);vertical-align:middle}
+th{color:var(--faint);font-weight:500;letter-spacing:.06em;text-transform:uppercase;font-size:.62rem}
+td.case{color:var(--muted);white-space:nowrap}
+.row-demo{display:flex;align-items:center;gap:.4rem;background:var(--surface);
+  border:1px solid var(--border);border-radius:4px;padding:.28rem .5rem}
+.row-demo .nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.note{color:var(--faint);font-size:.68rem;line-height:1.5;max-width:70ch;margin-top:1.4rem}
+.note b{color:var(--muted);font-weight:500}
+
+/* ── Nykytila: pipit (svgTomatoOutline / Half / Done) ───────────── */
+.pips{display:flex;gap:2px;align-items:center;flex-shrink:0}
+
+/* ── A: vaakasegmentit, tehdyt taytettyna ──────────────────────── */
+/* Kortin mittari kaannettyna: pituus = est, tummempi osa = tehdyt.  */
+.cost-a{display:flex;gap:var(--seg-gap);align-items:center;flex-shrink:0}
+.cost-a i{width:var(--seg-h);height:var(--seg-w);border-radius:1.5px;
+  background:var(--pomo);box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+.cost-a i.todo{background:none;box-shadow:inset 0 0 0 1.2px var(--pomo);opacity:.55}
+.cost-a i.half{width:calc(var(--seg-h) / 2)}
+
+/* ── B: sama, mutta tehdyt korostettuna ja jaljella himmea taytto ─ */
+.cost-b{display:flex;gap:var(--seg-gap);align-items:center;flex-shrink:0}
+.cost-b i{width:var(--seg-h);height:var(--seg-w);border-radius:1.5px;
+  background:var(--pomo);opacity:.28}
+.cost-b i.done{background:var(--pomo-hi);opacity:1}
+.cost-b i.half{width:calc(var(--seg-h) / 2)}
+
+/* ── C: yhtenainen palkki, pituus = est, tayttoosuus = tehdyt ───── */
+.cost-c{position:relative;display:inline-block;height:var(--seg-w);border-radius:2px;flex-shrink:0;
+  background:none;box-shadow:inset 0 0 0 1.2px var(--pomo);overflow:hidden}
+.cost-c span{position:absolute;inset:0 auto 0 0;background:var(--pomo)}
+
+.quick{color:var(--accent);display:flex;align-items:center;flex-shrink:0}
+.quick svg{width:12px;height:12px}
+</style>
+</head>
+<body>
+<h1>Listamittari — matriisin ja pakan pomodoro-luku</h1>
+<p class="lead">
+  Vaihe 6, avoin kohta: matriisirivin <code>mkPips</code> on viimeinen oma
+  piirtäjä listoissa (kolme SVG:tä, kovakoodatut hexit). Kortin
+  indeksipalsta ratkaisi saman asian jo vaiheessa 4 segmenttipalkilla —
+  mutta kortti näyttää vain arvion, listarivi näyttää <b>arvion ja
+  tehdyt</b>. Kysymys on siis: mikä muoto kantaa molemmat 12&nbsp;px
+  korkealla rivillä.
+</p>
+
+<div class="bar">
+  <button id="t-usva" class="on" onclick="setTheme('usva')">Usva</button>
+  <button id="t-aurinko" onclick="setTheme('aurinko')">Aurinko</button>
+  <button id="zoom" onclick="toggleZoom()">Suurenna 3×</button>
+</div>
+
+<table id="tbl"></table>
+
+<p class="note">
+  <b>Testitapaukset</b> ovat samat kuin Frankenstein-kortissa: est 0
+  (pikatehtävä, 2&nbsp;min -sääntö), puolikas, tavallinen, kesken oleva ja
+  est&nbsp;8 (liukusäätimen maksimi). <b>Pipit romahtavat kahdesti:</b> est 8
+  on kahdeksan tomaattia peräkkäin (~110&nbsp;px rivillä jossa on jo nimi ja
+  napit), ja puolikas piirretään erillisellä clip-pathilla, jonka id
+  arvotaan <code>Math.random()</code>illa joka renderissä.
+</p>
+
+<script>
+var CASES = [
+  {est:0,   pomos:0, txt:'Tee pikajuttu G'},
+  {est:0.5, pomos:0, txt:'Tarkista raportti D'},
+  {est:1,   pomos:0, txt:'Kirjaa muistio B'},
+  {est:2,   pomos:1, txt:'Soita asiakkaalle A'},
+  {est:2.5, pomos:2, txt:'Selvitä asia F'},
+  {est:3,   pomos:3, txt:'Sovi tapaaminen C'},
+  {est:8,   pomos:3, txt:'Aikatauluta verkostopalaveri'}
+];
+
+function svgNs(){ return 'http://www.w3.org/2000/svg'; }
+
+/* Nykytilan piirtajat sellaisenaan index.html:sta (hexit mukana —
+   ne ovat osa sita mita verrataan). */
+function tomatoOutline(size){
+  var s=document.createElementNS(svgNs(),'svg');
+  s.setAttribute('width',size);s.setAttribute('height',Math.round(size*1.1));
+  s.setAttribute('viewBox','0 0 28 30');
+  s.innerHTML='<ellipse cx="14" cy="18" rx="11" ry="10" fill="none" stroke="#a84c28" stroke-width="2.5"/>'
+    +'<path d="M11,8 Q14,3 17,8" fill="none" stroke="#2d5a3d" stroke-width="2.2" stroke-linecap="round"/>'
+    +'<line x1="14" y1="3" x2="14" y2="8" stroke="#2d5a3d" stroke-width="1.8" stroke-linecap="round"/>';
+  return s;
+}
+function tomatoDone(size){
+  var s=document.createElementNS(svgNs(),'svg');
+  s.setAttribute('width',size);s.setAttribute('height',Math.round(size*1.1));
+  s.setAttribute('viewBox','0 0 28 30');
+  s.innerHTML='<ellipse cx="14" cy="18" rx="11" ry="10" fill="#a84c28" opacity=".85"/>'
+    +'<ellipse cx="14" cy="18" rx="11" ry="10" fill="none" stroke="#8a3a1e" stroke-width="1.5"/>'
+    +'<path d="M11,8 Q14,3 17,8" fill="none" stroke="#2d5a3d" stroke-width="2.2" stroke-linecap="round"/>'
+    +'<line x1="14" y1="3" x2="14" y2="8" stroke="#2d5a3d" stroke-width="1.8" stroke-linecap="round"/>';
+  return s;
+}
+function tomatoHalf(size){
+  var s=document.createElementNS(svgNs(),'svg');
+  s.setAttribute('width',Math.round(size/2));s.setAttribute('height',Math.round(size*1.1));
+  s.setAttribute('viewBox','0 0 14 30');
+  var id='h'+Math.random().toString(36).slice(2,7);
+  s.innerHTML='<defs><clipPath id="'+id+'"><rect width="14" height="30"/></clipPath></defs>'
+    +'<g clip-path="url(#'+id+')">'
+    +'<ellipse cx="14" cy="18" rx="11" ry="10" fill="none" stroke="#a84c28" stroke-width="2.5"/>'
+    +'<path d="M11,8 Q14,3 17,8" fill="none" stroke="#2d5a3d" stroke-width="2.2" stroke-linecap="round"/>'
+    +'<line x1="14" y1="3" x2="14" y2="8" stroke="#2d5a3d" stroke-width="1.8" stroke-linecap="round"/></g>'
+    +'<line x1="13.5" y1="8" x2="13.5" y2="28" stroke="#a84c28" stroke-width="1.2" stroke-dasharray="2,2" opacity=".5"/>';
+  return s;
+}
+function pikaGlyph(){
+  var s=document.createElementNS(svgNs(),'svg');
+  s.setAttribute('viewBox','0 0 24 24');
+  s.innerHTML='<path d="M13 2 4 14h6l-1 8 9-12h-6z" fill="none" stroke="currentColor"'
+    + ' stroke-width="1.75" stroke-linejoin="round"/>';
+  return s;
+}
+function pikaWrap(){
+  var w=document.createElement('span'); w.className='quick'; w.title='Pikatehtävä';
+  w.appendChild(pikaGlyph()); return w;
+}
+
+/* Nykytila */
+function mkPips(e,d){
+  if(!e) return pikaWrap();
+  var div=document.createElement('div'); div.className='pips';
+  var w=Math.floor(e), h=e%1!==0, i;
+  for(i=0;i<w;i++) div.appendChild(i<d ? tomatoDone(12) : tomatoOutline(12));
+  if(h) div.appendChild(d>w ? tomatoDone(12) : tomatoHalf(12));
+  return div;
+}
+/* A: tehdyt taytettyna, jaljella aariviiva */
+function mkA(e,d){
+  if(!e) return pikaWrap();
+  var w=document.createElement('span'); w.className='cost-a';
+  var full=Math.floor(e), half=(e%1)>=0.5, i;
+  for(i=0;i<full;i++){ var s=document.createElement('i');
+    if(i>=d) s.className='todo'; w.appendChild(s); }
+  if(half){ var hh=document.createElement('i');
+    hh.className='half'+(d>full?'':' todo'); w.appendChild(hh); }
+  return w;
+}
+/* B: tehdyt korostettuna, jaljella himmea taytto */
+function mkB(e,d){
+  if(!e) return pikaWrap();
+  var w=document.createElement('span'); w.className='cost-b';
+  var full=Math.floor(e), half=(e%1)>=0.5, i;
+  for(i=0;i<full;i++){ var s=document.createElement('i');
+    if(i<d) s.className='done'; w.appendChild(s); }
+  if(half){ var hh=document.createElement('i');
+    hh.className='half'+(d>full?' done':''); w.appendChild(hh); }
+  return w;
+}
+/* C: yhtenainen palkki */
+function mkC(e,d){
+  if(!e) return pikaWrap();
+  var UNIT=7, GAP=0;
+  var w=document.createElement('span'); w.className='cost-c';
+  w.style.width=(e*UNIT+(e-1)*GAP)+'px';
+  var f=document.createElement('span');
+  f.style.width=Math.min(100,(d/e)*100)+'%';
+  w.appendChild(f);
+  return w;
+}
+
+var COLS=[['Nyt (pipit)',mkPips],['A tayttö',mkA],['B korostus',mkB],['C palkki',mkC]];
+
+function build(){
+  var t=document.getElementById('tbl');
+  t.innerHTML='';
+  var hr=document.createElement('tr');
+  hr.innerHTML='<th>Tapaus</th>'+COLS.map(function(c){return '<th>'+c[0]+'</th>';}).join('')
+    +'<th>Rivillä (A)</th>';
+  t.appendChild(hr);
+  CASES.forEach(function(c){
+    var tr=document.createElement('tr');
+    var td=document.createElement('td'); td.className='case';
+    td.textContent='est '+c.est+' · tehty '+c.pomos;
+    tr.appendChild(td);
+    COLS.forEach(function(col){
+      var cell=document.createElement('td');
+      cell.appendChild(col[1](c.est,c.pomos));
+      tr.appendChild(cell);
+    });
+    var rowCell=document.createElement('td');
+    var demo=document.createElement('div'); demo.className='row-demo';
+    var nm=document.createElement('span'); nm.className='nm'; nm.textContent=c.txt;
+    demo.appendChild(nm); demo.appendChild(mkA(c.est,c.pomos));
+    rowCell.appendChild(demo);
+    tr.appendChild(rowCell);
+    t.appendChild(tr);
+  });
+}
+function setTheme(n){
+  document.documentElement.setAttribute('data-theme',n);
+  document.getElementById('t-usva').classList.toggle('on',n==='usva');
+  document.getElementById('t-aurinko').classList.toggle('on',n==='aurinko');
+}
+var zoomed=false;
+function toggleZoom(){
+  zoomed=!zoomed;
+  document.getElementById('tbl').style.zoom=zoomed?3:1;
+  document.getElementById('zoom').classList.toggle('on',zoomed);
+}
+build();
+/* ?t=aurinko&zoom=1 — kuvakaappaus paasee teemaan ilman klikkausta */
+(function(){
+  var p=new URLSearchParams(location.search);
+  if(p.get('t')) setTheme(p.get('t'));
+  if(p.get('zoom')) toggleZoom();
+})();
+</script>
+</body>
+</html>

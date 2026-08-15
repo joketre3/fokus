@@ -6,10 +6,10 @@ Impeccable-analyysi tehty 2026-06-07. Raportti: `docs/impeccable-kritiikki.md`.
 PRODUCT.md luotu 2026-06-10. P0 valmis.
 
 **🔶 Kesken (2026-08-14): kortin kaksoisindeksi + ikonisetti.** Haara
-`kortti-indeksi-ikonit`. Vaiheet 0–2, 3s, 4, 4b ja **5 valmiit**; vaihe 3
+`kortti-indeksi-ikonit`. Vaiheet 0–2, 3s, 4, 4b, 5 ja **6 valmiit**; vaihe 3
 (sigil-taso) **hylättiin mittauksen perusteella 2026-08-15** ja kutistui
-siivoukseksi (vanhat `verb-i-*` pois) — seuraavana vaihe 6 (pakka,
-listat, kvadranttimerkit). `card_zones` on 48/48. **Suunnitelma:**
+siivoukseksi (vanhat `verb-i-*` pois) — seuraavana vaihe 7 (DESIGN.md +
+regressio). `card_zones` on 48/48, `list_icons` 25/25. **Suunnitelma:**
 `~/.claude/plans/home-jaakko-claude-uploads-dea0ecee-9cf-tidy-phoenix.md`
 — itsenäinen dokumentti, sisältää lukitut päätökset, tokenit ja vaiheet.
 Kaikki kortin ratkaisut ovat valmiina `mockup-kortti-v2.html`:ssä ja
@@ -118,6 +118,7 @@ Testit: `python3 tests/run.py` (ks. `tests/README.md`). Ei lintteriä, ei CI:tä
 | `mockup-jono.html` | Tehtäväjonon rata areenan lattialla — 3 varianttia + elävät geometrialiu'ut (`?v=v2`) |
 | `mockup-kortti-v2.html` | Kortin kaksoisindeksi — kolme rajausta rinnakkain (areena/viuhka/rata), 3 indeksivarianttia, kustannusmittari pysty/vaaka, Frankenstein-kytkin |
 | `mockup-ikonit.html` | Ikonisetin referenssi — 32 glyfiä + 4 kvadranttimerkkiä, kollisioparit, teemakytkin, koot 56/28/16,7/14 px |
+| `mockup-listamittari.html` | Listarivin pomodoro-mittari — pipit vs. 3 segmenttivarianttia, 7 testitapausta, `?t=aurinko&zoom=1` |
 | `manifest.json` | PWA-manifesti — asennettava sovellus, standalone-tila |
 | `sw.js` | Service worker — navigointi verkosta ensin, muu välimuistista (offline) |
 | `icon-192.png`, `icon-512.png`, `icon-180.png` | Sovellusikonit (512 myös maskable) |
@@ -342,6 +343,45 @@ ICON-setti 32 → 37: uudet `g-paiva`, `g-ilta`, `g-lisatiedot`,
 - **`<svg>` ilman kokoa venyy.** Kortin ajastusrivillä se kasvatti rungon
   441px:iin (client 218). `.tcg-card__sched svg{width:1em;height:1em;
   flex:none}` — sama vikaluokka kuin typelinen SVG:llä.
+
+## Pakan ja listojen ikonit (vaihe 6, 2026-08-15)
+
+Tehtäväpakka, Eisenhower-peek, matriisin listarivit ja odottavat käyttävät
+samaa settiä kuin kortti. ICON 37 → 39: uudet `g-tahti`, `g-pakka`.
+Mittari: `tests/suites/list_icons.js` (25 väitettä, kontrolliajo `main`ia
+vasten 14 punaista).
+
+- **Kvadrantti on muoto, ei väri.** `quadMarkHtml()` / `mkQuadMark()`
+  piirtää `#q-q1…#q-q4` pakkaan, odottaviin ja siirtovalikkoon. Pakassa
+  oli 8px kirjainlappu 'Q1', kahdessa muussa väripallo — molemmat katoavat
+  harmaatulosteesta ja värisokealta.
+- **Neljäs ikonirekisteri poistettu.** `svgFrogFilled`, `svgHourglass`,
+  `svgTomatoFilled` ja `svgTomatoFilledHalf` (69 riviä) piirsivät listojen
+  tilamerkit omalla kädenjäljellään ja omilla hexeillään. Tilalla
+  `mkListMark(name, kind, size, title)` → sprite + väri luokasta.
+- **Sama merkki kahdessa merkityksessä.** Pakassa ★ oli aktiivinen ja ⭐
+  tähtikortti. Aktiivinen = jonossa → `#g-pomodoro`, sama kuin matriisin
+  jononapissa. Tähtikortin ⭐/☆ on nyt yksi `g-tahti`, jonka tila on väri
+  (`.inv-card--star`) — sama sopimus kuin radiaalirypään sammakolla.
+- **Listarivin mittari on `mkCostBar(est, pomos)`**, ei `mkPips`.
+  Vaakasegmentit: pituus = arvio, kirkkaat = tehdyt. est 8 vei pipeillä
+  ~110px, vie nyt 62px. Variantit `mockup-listamittari.html` (valittu B).
+  `mkPips` jäi ajastinwidgetin `pdots`-riville.
+- **`<use>`-varjopuuhun ei pääse selektorilla.** `.qqb.on svg ellipse`
+  väritti vanhan piirtäjän sisäosia; spritellä sääntö on kuollut ja väri
+  kuuluu elementille (`color` napille, `currentColor` symbolille).
+- **`.list-mark` on `inline-flex`.** Matriisirivillä merkki lisätään
+  `.qtin`in sisään, ja `flex` pudotti sen omalle rivilleen. Kuva paljasti,
+  testi ei.
+- **Ikoni ilman vastinetta setissä on teksti.** 🧹 "Tyhjennä käsi" ei saanut
+  glyfiä: harja ei lue 24px:ssä, eikä samaa tähteä voi antaa kahdelle
+  vastakkaiselle toiminnolle.
+- **Hexiä ei voi etsiä hexinä.** `style.background='#c49a3a'` normalisoituu
+  Chromessa muotoon `rgb(196, 154, 58)` — inline-tyylin väriliteraalia
+  etsivän mittarin on haettava `rgb(`, ei `#`.
+- **Emojiskannaus ohittaa tehtävän nimen.** Aamukortin teksti on
+  `☀ Päivän suunnittelu` ja se on localStoragessa olevaa dataa, ei
+  UI-kuorta.
 
 ## Core data model
 

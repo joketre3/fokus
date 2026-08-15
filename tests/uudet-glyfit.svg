@@ -1,44 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
-  <!-- Iltapäivä: aurinko korkeimmillaan horisontin yllä. Täysi ympyrä ja
-       säteet vain ylöspäin erottavat sen g-aamun puolikaaresta; yksi
-       horisonttiviiva erottaa sen g-etsin tähtäimestä ja sitoo sen
-       slot-sarjaan (aamu / iltapäivä / päätös). -->
-  <symbol id="g-paiva" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+  <!-- Tähtikortti (handForced): kortti joka pakotetaan käteen. Viisisakarainen
+       tähti on setin ainoa terävä säteittäinen muoto — lähin sukulainen on
+       g-pika (salama), joka on epäsymmetrinen ja kulkee kulmasta kulmaan. -->
+  <symbol id="g-tahti" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="10.4" r="4"/>
-    <path d="M12 1.6v2.7M3.4 10.4h2.7M17.9 10.4h2.7"/>
-    <path d="M5.9 4.3 7.8 6.2M18.1 4.3 16.2 6.2"/>
-    <path d="M3 19.4h18"/>
+    <path d="M12 3.2l2.72 5.51 6.08.89-4.4 4.29 1.04 6.06L12 17.09l-5.44 2.86 1.04-6.06-4.4-4.29 6.08-.89z"/>
   </symbol>
 
-  <!-- Päätös: kuunsirppi. Päivän lopetus. Sirppi on ainoa ontto,
-       kaareva massa setissä — ei osu aurinkoihin eikä ympyröihin. -->
-  <symbol id="g-ilta" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+  <!-- Tehtäväpakka: kolme päällekkäistä korttia sivusta. Erottuu
+       g-jatkokortista siten, että pino on umpinainen suorakaide eikä
+       nuolella yhdistetty pari. -->
+  <symbol id="g-pakka" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M20.2 15.4A8.6 8.6 0 0 1 8.6 3.8a8.6 8.6 0 1 0 11.6 11.6z"/>
-  </symbol>
-
-  <!-- Lisätiedot: puhekupla häntineen. Kaksi tekstiriviä erottaa sen
-       g-kirjaan lomakkeesta, jossa on kynä. -->
-  <symbol id="g-lisatiedot" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M6.2 5.4h12.2A2.4 2.4 0 0 1 20.8 7.8v5.6a2.4 2.4 0 0 1-2.4 2.4h-6.6l-5.2 4.2v-4.2A2.4 2.4 0 0 1 4.2 13.4V7.8a2.4 2.4 0 0 1 2-2.4z"/>
-  </symbol>
-
-  <!-- Palauta: U-käännös takaisin vasemmalle. Yksi kaari + kärki,
-       vastakohta g-jonoon-nuolelle. -->
-  <symbol id="g-palauta" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M6.5 8.2h9.3a4.8 4.8 0 0 1 0 9.6H8"/>
-    <path d="M10 4.4 6.2 8.2 10 12"/>
-  </symbol>
-
-  <!-- Toistuva: kaksi vastakkaista kaarinuolta. Erottuu g-ajastetusta,
-       jossa on kellotaulu ja viisarit. -->
-  <symbol id="g-toistuva" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M4.8 12a7.2 7.2 0 0 1 12.3-5.1l2.1 2.1"/>
-    <path d="M19.2 12a7.2 7.2 0 0 1-12.3 5.1l-2.1-2.1"/>
-    <path d="M19.2 4.6v4.4h-4.4M4.8 19.4V15h4.4"/>
+    <rect x="5.5" y="8.5" width="13" height="12" rx="1.8"/>
+    <path d="M6.7 5.8h10.6"/>
+    <path d="M8.1 3.2h7.8"/>
   </symbol>
 </svg>
