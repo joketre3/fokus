@@ -90,6 +90,12 @@ Testit: `python3 tests/run.py` (ks. `tests/README.md`). Ei lintteriä, ei CI:tä
 - **PNG-rajaus ja -suurennos ilman PIL:iä:** `python3 tests/pngcrop.py
   sisaan.png ulos.png x y w h [kerroin]`. Ilman rajausta 1440px:n
   kaappauksesta ei näe 21px:n indeksipalstaa.
+- **Teemasuite: `// theme: aurinko` suiten alkuun.** `tests/run.py` kylvää
+  silloin sekä `data-theme`-attribuutin että `fap_theme`in — pelkkä
+  attribuutti ei riitä, koska `initTheme` ylikirjoittaa sen localStoragen
+  arvolla ja suite ajaisi hiljaa oletusteemaa. Kirjoita teemasuiteen aina
+  kontrolliväite (`bodyn muste ei ole valkoinen`), joka kaatuu jos teema ei
+  vaihtunut; muuten koko suite on aina vihreä. Malli: `card_theme.js`.
 - **Uusi glyfi mitataan ennen kuin se lisätään settiin:**
   `python3 tests/glyfimittari.py` (luonnokset `tests/uudet-glyfit.svg`).
   Katso tulos aina myös silmällä rinnakkain lähisukulaisten kanssa.
@@ -420,6 +426,29 @@ Palautus vaiheittain: `git revert` — jokainen vaihe on oma committinsa.
 | 9 | Odottavat + siirtovalikko | Palauta-glyfi, kvadranttimerkit valikossa | — |
 | 10 | Nopea tila + reduced-motion | Rypäs, viuhka ja rata toimivat ilman animaatioita | `data-perf="lite"` vaatii oman ajon |
 | 11 | Mobiili | Pakka aukeaa `#mnav`ista, matriisin rivit ja mittari mahtuvat kapealle | Kapea viewport vaatii oikean ikkunan (CSP estää iframen) |
+
+## Pysyvästi tummat pinnat ja teeman muste (2026-08-15)
+
+TCG-kortin `plate` on tumma **kaikissa** teemoissa (aurinko asettaa tumman
+`--plate-top`in tarkoituksella). Siksi sen sisältö ei saa periä teeman
+`--ink`iä — aurinkoteemassa se on mustaa mustalla.
+
+`.tcg-card__art svg` oli ainoa joka peri: kortilla ei ole `color`-sääntöä,
+joten `currentColor` tuli bodylta. Aurinkoteemassa kuva-alueen glyfi
+renderöityi kontrastilla **1,06:1** eli käytännössä näkymättömänä. Muut
+kortin osat oli jo tokenoitu (`--tcg-plate-ink`, `--tcg-plate-ink-dim`,
+`--qc`). Korjaus: `color:var(--ink-on-art)`.
+
+- **Löytyi käyttäjältä, ei testeistä.** Kolmas samaa vikaluokkaa (ks. The
+  Theme Scope Rule) — siksi siitä tehtiin pysyvä mittari `card_theme.js`,
+  joka laskee WCAG-kontrastin kortin sisällölle `--plate-bot`ia vasten.
+  Kontrolliajo korjaamatonta puuta vasten kaatuu tasan siihen yhteen
+  väitteeseen.
+- **Kuvakaappaus ei olisi löytänyt tätä ilman että joku katsoo oikeaa
+  teemaa.** Automaattitestit olivat vihreät ja detektoridelta 0.
+- **Plate-tausta on gradientti**, joten sitä ei voi lukea
+  `backgroundColor`ista. Mittari lukee kortin oman `--plate-bot`-tokenin ja
+  resolvoi sen probe-elementillä.
 
 ## Core data model
 

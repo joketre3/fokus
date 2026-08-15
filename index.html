@@ -5234,6 +5234,11 @@ body.focus-mode #arena-slot-hint{
   background:radial-gradient(circle,rgba(6,12,8,.52) 0%,rgba(6,12,8,.28) 45%,transparent 70%);
 }
 .tcg-card__art svg{
+  /* Plate on tumma KAIKISSA teemoissa, joten kuva-alueen muste on kortin
+     oma tokeni eika teeman --ink. Ilman tata glyfi peri bodyn varin ja oli
+     aurinkoteemassa musta mustalla: kontrasti 1.06:1. Sama vikaluokka kuin
+     glass-mixinissa, toisin pain — ks. The Theme Scope Rule. */
+  color:var(--ink-on-art);
   width:56%;height:auto;aspect-ratio:1;position:relative;z-index:1;
   filter:drop-shadow(0 10px 16px rgba(0,0,0,.65)) drop-shadow(0 2px 4px rgba(0,0,0,.5));
 }

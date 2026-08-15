@@ -11,6 +11,7 @@ Suite on `tests/suites/*.js`. Ensimmäinen rivi kertoo kohdetiedoston
 ja päättyy `return;`iin — ks. timer_break.js.
 
 Testien tila siemenetään `tests/seed.py`:llä ennen sovelluksen skriptejä.
+Teema valitaan rivillä `// theme: aurinko` (oletus usva).
 """
 import sys, os, re, glob
 
@@ -143,7 +144,18 @@ def load(path):
         if seed not in SEEDS:
             raise SystemExit(f"{path}: tuntematon siemen '{seed}' "
                              f"(tunnetut: {', '.join(SEEDS)})")
-    return TARGETS[target], seed, src
+    # Teema rivilla `// theme: aurinko`. Attribuutti EI yksin riita:
+    # initTheme lukee localStoragen ja ylikirjoittaa sen, joten `fap_theme`
+    # on kylvettava samalla. Ilman tata teemasuite ajaa hiljaa oletusteemaa
+    # ja on aina vihrea.
+    t = re.match(r"//\s*theme:\s*(\w+)\s*\n", src)
+    theme = "usva"
+    if t:
+        theme = t.group(1)
+        src = src[t.end():]
+        if theme not in ("usva", "havu", "aurinko"):
+            raise SystemExit(f"{path}: tuntematon teema '{theme}'")
+    return TARGETS[target], seed, theme, src
 
 
 def main(argv):
@@ -172,15 +184,17 @@ def main(argv):
 
     for f in files:
         name = os.path.basename(f)[:-3]
-        page, seed, body = load(f)
+        page, seed, theme, body = load(f)
         src = os.path.join(tree, page)
         if not os.path.exists(src):
             print(f"\n### {name}: OHITETTU (puuttuu {src})"); continue
-        print(f"\n### {name}  [{page}]" + ("" if seed == "default" else f"  seed={seed}"))
+        print(f"\n### {name}  [{page}]" + ("" if seed == "default" else f"  seed={seed}")
+              + ("" if theme == "usva" else f"  theme={theme}"))
         out_page = os.path.join(out, f"page_{name}.html")
         delay = 1200 if name in SLOW else 2500
         budget = 26000 if name in SLOW else 12000
-        build(src, out_page, SEEDS[seed](), body, delay=delay)
+        seed_src = SEEDS[seed]() + f"localStorage.setItem('fap_theme','{theme}');\n"
+        build(src, out_page, seed_src, body, theme=theme, delay=delay)
         res, err, _ = run(out_page, budget=budget)
         if res is None:
             print("  !! ei probe-tulostetta"); print("  " + err[-600:].replace("\n", "\n  "))
