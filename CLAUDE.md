@@ -376,6 +376,20 @@ vasten 14 punaista).
 - **Ikoni ilman vastinetta setissä on teksti.** 🧹 "Tyhjennä käsi" ei saanut
   glyfiä: harja ei lue 24px:ssä, eikä samaa tähteä voi antaa kahdelle
   vastakkaiselle toiminnolle.
+- **`g-pakka`: samankokoinen kortti eri kulmassa ei voi pilkistää vain
+  yhdeltä sivulta.** Kierretty suorakaide ei mahdu samankokoisen sisään
+  millään siirrolla, joten takakortti työntyy aina kahdesta vastakkaisesta
+  nurkasta ylimmän yli. Parametriskannaus (kulma × dx × dy) palautti nolla
+  kelvollista sijoittelua — vasta kun korttien välinen kulmaero pudotettiin
+  nollaan ja **koko pino** kallistettiin 16°, päällimmäinen pysyi ehjänä.
+  Rako on `<mask>` kuten `g-sovi`ssa. Kaksi samankokoista suorakaidetta
+  lukee helposti "kopioi"-ikonina; korttimaisuus vaatisi yksityiskohdan,
+  joka ei mahdu 24px:n ruudukkoon.
+- **`#inv-btn` on kuollut nappi** — `display:none` sekä `min-width:900`- että
+  `max-width:899.98`-lohkossa, eli kaikilla leveyksillä (sama kuvio kuin
+  `#hand-toggle`illa). Pakka avataan mobiilissa `#mnav`ista ja desktopilla
+  `#deck-rail`istä. `g-pakka` on nyt siinä napissa; jos nappi siivotaan,
+  glyfi siirtyy tai poistuu sen mukana.
 - **Hexiä ei voi etsiä hexinä.** `style.background='#c49a3a'` normalisoituu
   Chromessa muotoon `rgb(196, 154, 58)` — inline-tyylin väriliteraalia
   etsivän mittarin on haettava `rgb(`, ei `#`.
