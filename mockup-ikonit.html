@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="fi" data-theme="usva">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ikonisetti — glyfitaso (vaihe 2)</title>
+<style>
+:root{
+  --ink:#f4f0e0; --muted:#a8a290; --faint:#7d7869;
+  --bg:#0b1410; --surface:#141d18; --surface-2:#1b2620;
+  --border:rgba(255,255,255,.10); --accent:#c49a3a;
+  --q1:#a84c28; --q2:#2d5a3d; --q3:#8a7f63; --q4:#9a9a8e;
+  --new:#4a8a4a;
+}
+html[data-theme="havu"]{
+  --ink:#e8ead8; --muted:#9aa08c; --faint:#6f7563;
+  --bg:#010402; --surface:#0a1109; --surface-2:#111a10;
+  --accent:#c49a3a;
+}
+html[data-theme="aurinko"]{
+  --ink:#2b2519; --muted:#5f5334; --faint:#857a5e;
+  --bg:#d8c6a4; --surface:#fff; --surface-2:#f3ead8;
+  --border:rgba(0,0,0,.14); --accent:#c4681e;
+  --new:#2d5a3d;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; padding:1.5rem 1.5rem 5rem; background:var(--bg); color:var(--ink);
+  font:15px/1.5 "DM Sans",system-ui,sans-serif;
+}
+h1{font-size:1.25rem; margin:0 0 .25rem; letter-spacing:.02em}
+.lead{color:var(--muted); margin:0 0 1.5rem; max-width:62ch; font-size:.9rem}
+h2{
+  font-size:.72rem; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--faint); margin:2rem 0 .75rem; font-weight:600;
+  border-bottom:1px solid var(--border); padding-bottom:.4rem;
+}
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(148px,1fr)); gap:.5rem}
+.cell{
+  background:var(--surface); border:1px solid var(--border); border-radius:10px;
+  padding:.7rem .6rem .55rem; text-align:center; position:relative;
+}
+.cell.is-new{border-color:var(--new)}
+.cell.is-new::after{
+  content:"UUSI"; position:absolute; top:5px; right:6px; font-size:.5rem;
+  letter-spacing:.1em; color:var(--new); font-weight:700;
+}
+.sizes{display:flex; align-items:flex-end; justify-content:center; gap:.7rem; min-height:60px}
+.sizes svg{color:var(--ink); display:block}
+.s56{width:56px;height:56px} .s28{width:28px;height:28px}
+.s17{width:16.7px;height:16.7px} .s14{width:14px;height:14px}
+.nm{font-size:.7rem; color:var(--muted); margin-top:.55rem; font-family:ui-monospace,monospace}
+.note{font-size:.66rem; color:var(--faint); margin-top:.2rem; line-height:1.35}
+
+/* Kollisioparit — vierekkäin isona */
+.pairs{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:.6rem}
+.pair{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:.7rem .8rem}
+.pair--bad{border-color:var(--q1)}
+.pair__row{display:flex; gap:1.1rem; align-items:center; justify-content:center; padding:.3rem 0 .5rem}
+.pair__one{text-align:center}
+.pair__one svg{width:40px;height:40px;color:var(--ink);display:block;margin:0 auto}
+.pair__one span{font-size:.62rem;color:var(--muted);font-family:ui-monospace,monospace}
+.pair__v{font-size:.68rem;color:var(--faint);text-align:center;line-height:1.4}
+.pair--bad .pair__v{color:var(--q1)}
+html[data-theme="aurinko"] .pair--bad .pair__v{color:#8f3a1c}
+
+/* Käyttökonteksti: oikea plate-tausta */
+.ctx{display:flex; gap:.6rem; flex-wrap:wrap}
+.plate{
+  background:linear-gradient(180deg,#232a24,#161c18); border:1px solid rgba(255,255,255,.14);
+  border-radius:8px; padding:.55rem .7rem; display:flex; align-items:center; gap:.45rem;
+  color:#f4f0e0; font-size:.78rem;
+}
+.plate svg{width:14px;height:14px;color:currentColor;flex:none}
+.plate--idx{flex-direction:column; width:34px; padding:.4rem .2rem; gap:.35rem}
+.plate--idx svg{width:20px;height:20px}
+
+.bar{
+  position:fixed; left:0; right:0; bottom:0; background:var(--surface-2);
+  border-top:1px solid var(--border); padding:.55rem .9rem; display:flex;
+  gap:.4rem; align-items:center; flex-wrap:wrap; z-index:10;
+}
+button{
+  font:inherit; font-size:.75rem; padding:.35rem .7rem; border-radius:6px; cursor:pointer;
+  background:transparent; color:var(--muted); border:1px solid var(--border);
+}
+button.on{background:var(--accent); color:#1a1408; border-color:transparent; font-weight:600}
+html[data-theme="aurinko"] button.on{color:#fff}
+.bar__lbl{font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; color:var(--faint); margin-right:.2rem}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+
+  <!-- ═══ VERBIGLYFIT — mockup-kortti-v2.html:stä sellaisenaan ═══ -->
+  <symbol id="g-soita" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7.6 4.5 5 6c-1 .6-1.3 1.9-.9 3 .9 2.6 2.4 5 4.4 7s4.4 3.5 7 4.4c1.1.4 2.4.1 3-.9l1.5-2.6-3.8-2.2-2 2c-1.8-.9-3.3-2.4-4.2-4.2l2-2z"/>
+  </symbol>
+  <!-- ═══ SOVI — kadenpuristus (lukittu 2026-08-14) ═══
+       Geometria on MITATTU erillisen ikoniprojektin referenssikuvasta
+       (~/kadenpuristus-ikoni: CUFF_L, CUFF_R, THUMB, FINGERS) ja
+       muunnettu tahan SVG:ksi. Luvut eivat ole arvauksia — ala pyorista
+       niita "siistimmiksi".
+
+       EI ole Material Symbols "handshake" eika muukaan kirjastoikoni:
+       ne ovat yhtenaista massaa, jossa sormet ovat ohuita tummia rakoja.
+       Tama koostuu irrallisista paloista — kaksi hihansuuta, peukalokaari
+       ja seitseman sormikapselia — joiden valissa nakyy tausta. Tama meni
+       kerran pieleen; ala "korjaa" sita kirjastoikoniksi.
+
+       Yksi tiheys kaikkiin kokoihin. Kokeilin karsittua 4 sormen versiota
+       pieniin kokoihin, mutta mittaus ei tukenut sita: erottuvia osia
+       14-20px:ssa 1-3 enemman (ero on kohinaa), ja 28px:sta ylospain
+       taysi voittaa selvasti (43/84/150 vs 41/58/92). Alle 20px:ssa
+       sormet eivat erotu kummassakaan — jaljelle jaa siluetti, ja siina
+       taysi on rikkaampi. -->
+  <symbol id="g-sovi" viewBox="0 0 24 24" fill="currentColor"><rect x="1.82" y="6.13" width="7.34" height="4.04" rx="1.1" transform="rotate(-45 5.49 8.15)"/><rect x="15.12" y="6.22" width="6.42" height="5.32" rx="1.28" transform="rotate(45 18.33 8.88)"/><path d="M10.26 10.41A0.825 0.825 0 0 1 9.16 9.19L9.98 8.45A0.825 0.825 0 0 1 11.08 9.67Z"/><path d="M11.11 9.65A0.825 0.825 0 0 1 9.95 8.47L10.69 7.74A0.825 0.825 0 0 1 11.85 8.92Z"/><path d="M11.77 8.99A0.825 0.825 0 0 1 10.77 7.67L11.5 7.12A0.825 0.825 0 0 1 12.5 8.44Z"/><path d="M12.3 8.55A0.825 0.825 0 0 1 11.7 7.01L12.43 6.73A0.825 0.825 0 0 1 13.03 8.27Z"/><path d="M12.83 8.32A0.825 0.825 0 0 1 12.63 6.68L13.37 6.59A0.825 0.825 0 0 1 13.57 8.23Z"/><path d="M13.3 8.22A0.825 0.825 0 0 1 13.64 6.6L14.56 6.79A0.825 0.825 0 0 1 14.22 8.41Z"/><path d="M14.07 8.36A0.825 0.825 0 0 1 14.71 6.84L15.81 7.3A0.825 0.825 0 0 1 15.17 8.82Z"/><path d="M7.09 12.46A0.87 0.87 0 0 1 8.33 13.7L6.91 15.12A0.87 0.87 0 0 1 5.67 13.88Z"/><path d="M8.56 13.95A0.87 0.87 0 0 1 9.82 15.15L8.46 16.56A0.87 0.87 0 0 1 7.2 15.36Z"/><path d="M10.21 15.38A0.87 0.87 0 0 1 11.43 16.62L10.12 17.89A0.87 0.87 0 0 1 8.9 16.65Z"/><path d="M11.69 16.93A0.87 0.87 0 0 1 12.89 18.19L11.94 19.09A0.87 0.87 0 0 1 10.74 17.83Z"/><path d="M18.52 13.24A0.87 0.87 0 0 1 17.28 14.48L14.29 11.49A0.87 0.87 0 0 1 15.53 10.25Z"/><path d="M16.96 14.8A0.87 0.87 0 0 1 15.72 16.04L12.73 13.05A0.87 0.87 0 0 1 13.97 11.81Z"/><path d="M15.12 15.99A0.87 0.87 0 0 1 13.88 17.23L11.17 14.52A0.87 0.87 0 0 1 12.41 13.28Z"/></symbol>
+  <symbol id="g-tee" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M13.5 3.5 20.5 10.5 17 14 10 7z"/>
+    <path d="M11.5 8.5 4 16v4h4l7.5-7.5"/>
+  </symbol>
+
+  <symbol id="g-selvita" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="10.5" cy="10.5" r="6.5"/>
+    <path d="M15.3 15.3 20.5 20.5"/>
+  </symbol>
+  <symbol id="g-vie" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20.5 3.5 3.5 10l7 3.5 3.5 7z"/>
+    <path d="M20.5 3.5 10.5 13.5"/>
+  </symbol>
+  <symbol id="g-tarkista" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 3.5 4.5 6.3v5.4c0 4.4 3 8.4 7.5 9.8 4.5-1.4 7.5-5.4 7.5-9.8V6.3z"/>
+    <path d="M9 11.8 11.3 14 15 10"/>
+  </symbol>
+  <!-- g-varaa UUSITTU: oli tiimalasi = identtinen g-odottaan kanssa.
+       Varaa on ICS-kalenteriverbi (kuten Sovi ja Aikatauluta), joten se
+       kuuluu kalenterimuotoon; täytetty lohko = varattu aika. -->
+  <symbol id="g-varaa" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3.5" y="5.5" width="17" height="15" rx="2.5"/>
+    <path d="M3.5 10h17M8 3.5v4M16 3.5v4"/>
+    <rect x="6.5" y="12.5" width="8" height="5.5" rx="1.2" fill="currentColor" stroke="none"/>
+  </symbol>
+  <symbol id="g-aikatauluta" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12.5" r="8.5"/>
+    <path d="M12 7.5v5l3.2 2"/>
+  </symbol>
+
+  <!-- g-kirjaa UUSITTU: oli kynä = identtinen g-muokkaan kanssa.
+       Nyt lomake + kynänkärki: kirjaaminen on tiedon tallentamista
+       järjestelmään, muokkaaminen on kortin editointia. -->
+  <symbol id="g-kirjaa" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18.5 12.5V19a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 19V6A1.5 1.5 0 0 1 6 4.5h6.5"/>
+    <path d="M8.5 9.5h4M8.5 13h3"/>
+    <path d="M18.2 3.4 20.6 5.8 14.4 12H12V9.6z"/>
+  </symbol>
+
+  <!-- ═══ UUDET VERBIGLYFIT (vaihe 2) ═══ -->
+
+  <!-- Lähetä: kirjekuori. g-vie on paperilennokki (toimittaminen
+       fyysisesti tai eteenpäin); kirjekuori on viestin lähettämistä. -->
+  <symbol id="g-laheta" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3.5" y="5.5" width="17" height="13" rx="2"/>
+    <path d="M4.2 7 12 12.8 19.8 7"/>
+  </symbol>
+
+  <!-- Lue: avoin kirja, keskitaite erottaa sen g-kirjoitan arkista. -->
+  <symbol id="g-lue" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 6.8C10.2 5.3 7.4 4.5 3.8 4.5v12.8c3.6 0 6.4.8 8.2 2.2"/>
+    <path d="M12 6.8c1.8-1.5 4.6-2.3 8.2-2.3v12.8c-3.6 0-6.4.8-8.2 2.2"/>
+    <path d="M12 6.8v12.7"/>
+  </symbol>
+
+  <!-- Etsi: tähtäin. Tarkoituksella eri muotokieli kuin g-selvitan
+       suurennuslasi — ks. kollisiopari alempana, tämä on päätettävä. -->
+  <symbol id="g-etsi" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="7.5"/>
+    <path d="M12 1.8v3.4M12 18.8v3.4M1.8 12h3.4M18.8 12h3.4"/>
+    <circle cx="12" cy="12" r="1.6"/>
+  </symbol>
+
+  <!-- Kirjoita: arkki + tekstirivit. Ei kynää — kynä on g-muokkaa. -->
+  <symbol id="g-kirjoita" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 3.5h7.5L19 9v11.5H6z"/>
+    <path d="M13.2 3.5V9H19"/>
+    <path d="M9 13h6.5M9 16.5h4.5"/>
+  </symbol>
+
+  <!-- Vastaa: puhekupla + paluunuoli. -->
+  <symbol id="g-vastaa" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20.5 15.5a2 2 0 0 1-2 2H8l-4.5 3.5v-15a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/>
+    <path d="M12.5 8.2 9.5 11l3 2.8"/>
+    <path d="M9.5 11h5.5"/>
+  </symbol>
+
+  <!-- Tapaa: kaksi henkilöä. -->
+  <symbol id="g-tapaa" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="9.2" cy="8" r="3.4"/>
+    <path d="M3 20.2c0-3.2 2.8-5.4 6.2-5.4s6.2 2.2 6.2 5.4"/>
+    <path d="M16.4 5.2a3.4 3.4 0 0 1 0 6.4"/>
+    <path d="M17.6 15.2c2.1.7 3.4 2.6 3.4 5"/>
+  </symbol>
+
+  <!-- Valmistele: jakoavain. Työn tekeminen valmiiksi etukäteen. -->
+  <symbol id="g-valmistele" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 4.6 16.8 7.8l-.6 2.6-2.6.6-3.2 3.2"/>
+    <path d="M14.4 3.9a5.4 5.4 0 0 0-4.6 8.2L4 17.9a1.9 1.9 0 0 0 2.7 2.7l5.8-5.8a5.4 5.4 0 0 0 7.6-6.3"/>
+  </symbol>
+
+  <!-- ═══ TOIMINTOGLYFIT — mockupista ═══ -->
+  <symbol id="g-pika" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M13.5 2.5 5 13.5h5.5L9.5 21.5 19 10.5h-5.5z"/>
+  </symbol>
+  <symbol id="g-sammakko" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4.5 15c0-4.1 3.4-7.5 7.5-7.5s7.5 3.4 7.5 7.5c0 2.5-2 4.5-4.5 4.5H9c-2.5 0-4.5-2-4.5-4.5z"/>
+    <circle cx="8.8" cy="6.8" r="2.3"/><circle cx="15.2" cy="6.8" r="2.3"/>
+  </symbol>
+  <symbol id="g-aloita" viewBox="0 0 24 24">
+    <path d="M9 6.2v11.6c0 .8.9 1.3 1.6.9l9.2-5.8c.6-.4.6-1.4 0-1.8L10.6 5.3c-.7-.4-1.6.1-1.6.9z"
+          fill="currentColor"/>
+  </symbol>
+  <symbol id="g-seis" viewBox="0 0 24 24">
+    <rect x="6.5" y="6.5" width="11" height="11" rx="1.8" fill="currentColor"/>
+  </symbol>
+  <symbol id="g-tehty" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4.5 12.5 9.5 17.5 19.5 6.5"/>
+  </symbol>
+  <symbol id="g-odottaa" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7 3.5h10M7 20.5h10"/>
+    <path d="M8.5 3.5v3.1c0 1 .4 1.9 1.1 2.6L12 11.7l2.4-2.5c.7-.7 1.1-1.6 1.1-2.6V3.5"/>
+    <path d="M8.5 20.5v-3.1c0-1 .4-1.9 1.1-2.6L12 12.3l2.4 2.5c.7.7 1.1 1.6 1.1 2.6v3.1"/>
+  </symbol>
+  <symbol id="g-jonoon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 20V4.5"/><path d="M5.5 11 12 4.5 18.5 11"/>
+  </symbol>
+  <symbol id="g-muokkaa" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16.5 3.8 20.2 7.5 8.7 19H5v-3.7z"/><path d="M14 6.3l3.7 3.7"/>
+  </symbol>
+  <symbol id="g-poista" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round">
+    <path d="M6 6 18 18M18 6 6 18"/>
+  </symbol>
+  <symbol id="g-tarkea" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 3.2 5 5.6v5.1c0 4.1 2.8 7.9 7 9.2 4.2-1.3 7-5.1 7-9.2V5.6z"/>
+    <path d="M12 8v4.4"/><path d="M12 15.6v.1"/>
+  </symbol>
+  <!-- g-kiire UUSITTU (Jaakon referenssi): sekuntikello + vauhtiviivat.
+       Vauhtiviivat ovat se ero joka kantaa 14px:ään asti — pelkkä
+       kruunu+nappi ei riittänyt erottamaan tätä g-pomodorosta. Kolme
+       viivaa, ei kahdeksaa: tiheämpi hajoaa radan syvimmällä kortilla. -->
+  <symbol id="g-kiire" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="15.4" cy="14.2" r="6.2"/>
+    <path d="M13.1 3.4h4.6"/><path d="M15.4 3.4v3.6"/>
+    <path d="M20.3 8.8 21.7 7.4"/>
+    <path d="M15.4 10.8v3.4"/>
+    <path d="M1.6 10.2h6.4M2.8 14.2h5.2M4 18.2h4"/>
+  </symbol>
+  <symbol id="g-linkki" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 13.5a4 4 0 0 0 5.7 0l3-3a4 4 0 1 0-5.7-5.7l-1.7 1.7"/>
+    <path d="M14 10.5a4 4 0 0 0-5.7 0l-3 3a4 4 0 1 0 5.7 5.7l1.7-1.7"/>
+  </symbol>
+
+  <!-- ═══ UUDET TOIMINTOGLYFIT (vaihe 2) ═══ -->
+
+  <!-- Aamu: nouseva aurinko horisontin takaa. Korvaa ☀ -->
+  <symbol id="g-aamu" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7 14.5a5 5 0 0 1 10 0"/>
+    <path d="M12 3.2v3.3M5.1 6.6l2.3 2.3M18.9 6.6l-2.3 2.3"/>
+    <path d="M2.5 14.5h19"/>
+    <path d="M6 19.5h12"/>
+  </symbol>
+
+  <!-- Pomodoro: tomaatti varsineen. Korvaa 🍅. Erottuu
+       g-aikatauluta-kellosta ja g-kiire-sekuntikellosta varren takia. -->
+  <symbol id="g-pomodoro" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 8.5c4.1 0 7.5 3 7.5 6.6S16.1 21.5 12 21.5s-7.5-2.8-7.5-6.4S7.9 8.5 12 8.5z"/>
+    <path d="M12 8.5V6"/>
+    <path d="M12 6c-1-2-3.4-2.4-3.4-2.4M12 6c1-2 3.4-2.4 3.4-2.4"/>
+  </symbol>
+
+  <!-- Ajastettu: herätyskello. Kello + kaksi soittokelloa erottaa sen
+       g-aikatauluta-seinäkellosta: tämä laukeaa itsestään. -->
+  <symbol id="g-ajastettu" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="13.8" r="7.3"/>
+    <path d="M12 9.8v4h3"/>
+    <path d="M3.6 5.2A3.6 3.6 0 0 1 8.4 3.6M20.4 5.2a3.6 3.6 0 0 0-4.8-1.6"/>
+  </symbol>
+
+  <!-- Jatkokortti: kaksi limittäistä korttia + nuoli. EI ketjulenkkiä —
+       se on g-linkki (ulkoinen URL). -->
+  <symbol id="g-jatkokortti" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2.8" y="6.2" width="9.5" height="13" rx="1.8"/>
+    <path d="M15.5 6.2h4.2a1.8 1.8 0 0 1 1.8 1.8v9.4a1.8 1.8 0 0 1-1.8 1.8h-4.2"/>
+    <path d="M13.5 12.7h5.2M16.6 10.4l2.3 2.3-2.3 2.3"/>
+  </symbol>
+
+  <!-- ═══ KVADRANTTIMERKIT ═══ -->
+  <symbol id="q-q1" viewBox="0 0 24 24"><path d="M12 3 22 20H2z" fill="currentColor"/></symbol>
+  <symbol id="q-q2" viewBox="0 0 24 24"><path d="M12 2 22 12 12 22 2 12z" fill="currentColor"/></symbol>
+  <symbol id="q-q3" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="currentColor"/></symbol>
+  <symbol id="q-q4" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="2" fill="currentColor"/></symbol>
+</defs></svg>
+
+<h1>Ikonisetti — glyfitaso</h1>
+<p class="lead">
+  Vaihe 2:n hyväksyntäportti. 32 glyfiä + 4 kvadranttimerkkiä, yksi viivapaino
+  (1.75 @ 24), <code>currentColor</code>. Koot vasemmalta: 56 / 28 / 16,7 / 14&nbsp;px.
+  <strong>16,7&nbsp;px on radan syvin kortti</strong> (28 × --idx-k .85 × scale .7) —
+  jos glyfi hajoaa jossain, se hajoaa siinä.
+</p>
+
+<h2>Kollisioparit — päätettävä</h2>
+<div class="pairs" id="pairs"></div>
+
+<h2>Verbit (16)</h2>
+<div class="grid" id="g-verbit"></div>
+
+<h2>Toiminnot (16)</h2>
+<div class="grid" id="g-toiminnot"></div>
+
+<h2>Kvadranttimerkit (4)</h2>
+<div class="grid" id="g-quads"></div>
+
+<h2>Oikealla pinnalla — kortin plate ja indeksipalsta</h2>
+<div class="ctx" id="ctx"></div>
+
+<div class="bar">
+  <span class="bar__lbl">Teema</span>
+  <button class="cbtn on" data-th="usva">Usva</button>
+  <button class="cbtn" data-th="havu">Havu</button>
+  <button class="cbtn" data-th="aurinko">Aurinko</button>
+  <span class="bar__lbl" style="margin-left:1rem">Näyttö</span>
+  <button class="cbtn" id="c-only-new">Vain uudet</button>
+  <button class="cbtn" id="c-grid">Pikseliruudukko</button>
+</div>
+
+<script>
+var NEW = ['laheta','lue','etsi','kirjoita','vastaa','tapaa','valmistele',
+           'aamu','pomodoro','ajastettu','jatkokortti','kirjaa','varaa','kiire','sovi'];
+
+var VERBIT = [
+  ['soita',''],['sovi','mitattu geometria; #s-sovi = 7 sormea'],['kirjaa','uusittu — oli kynä'],['tee',''],
+  ['selvita',''],['vie','paperilennokki'],['tarkista',''],['laheta','kirjekuori'],
+  ['lue',''],['etsi','tähtäin'],['kirjoita',''],['vastaa',''],
+  ['tapaa',''],['valmistele','jakoavain'],['aikatauluta','seinäkello'],['varaa','uusittu — oli tiimalasi']
+];
+
+var TOIMINNOT = [
+  ['tehty',''],['odottaa',''],['linkki','ulkoinen URL'],['muokkaa','kynä'],
+  ['poista',''],['jonoon',''],['pika','est 0'],['sammakko',''],
+  ['aamu',''],['pomodoro',''],['ajastettu','herätyskello'],['jatkokortti',''],
+  ['aloita','täytetty'],['seis','täytetty'],['tarkea','modaali+listat'],['kiire','uusittu — vauhtiviivat']
+];
+
+var QUADS = [['q-q1','q1 · kolmio'],['q-q2','q2 · vinoneliö'],
+             ['q-q3','q3 · ympyrä'],['q-q4','q4 · neliö']];
+
+var PAIRS = [
+  ['selvita','etsi','Erilliset glyfit — ero todettu riittäväksi 2026-08-14. VERB_ALIAS ei yhdistä näitä.', false],
+  ['kirjaa','muokkaa','Olivat identtiset kynät. Kirjaa on nyt lomake + kynänkärki.', false],
+  ['vie','laheta','Lennokki = toimita eteenpäin, kirjekuori = lähetä viesti.', false],
+  ['aikatauluta','ajastettu','Seinäkello (käyttäjä ajoittaa) vs. herätyskello (laukeaa itsestään).', false],
+  ['kiire','pomodoro','Kiire uusittu Jaakon referenssin mukaan: sekuntikello + vauhtiviivat. Tomaatilla on varsi, ei viivoja.', false],
+  ['linkki','jatkokortti','Ketju = ulkoinen URL, kortit + nuoli = tehtäväketju.', false],
+  ['varaa','odottaa','Olivat identtiset tiimalasit. Varaa on nyt kalenteri + varattu lohko.', false],
+  ['sovi','tehty','Sovi on kädenpuristus (mitattu geometria), tehty on check. Ei enää samaa muotoperhettä.', false]
+];
+
+function svg(id, cls){
+  return '<svg class="'+cls+'" viewBox="0 0 24 24" aria-hidden="true"><use href="#'+id+'"/></svg>';
+}
+function cell(name, note, prefix){
+  prefix = prefix || 'g-';
+  var id = prefix + name;
+  var isNew = NEW.indexOf(name) >= 0;
+  return '<div class="cell'+(isNew?' is-new':'')+'" data-new="'+isNew+'">'
+    + '<div class="sizes">'+svg(id,'s56')+svg(id,'s28')+svg(id,'s17')+svg(id,'s14')+'</div>'
+    + '<div class="nm">'+id+'</div>'
+    + (note ? '<div class="note">'+note+'</div>' : '')
+    + '</div>';
+}
+function fill(elId, list, prefix){
+  document.getElementById(elId).innerHTML =
+    list.map(function(r){ return cell(r[0], r[1], prefix); }).join('');
+}
+fill('g-verbit', VERBIT);
+fill('g-toiminnot', TOIMINNOT);
+document.getElementById('g-quads').innerHTML =
+  QUADS.map(function(r){
+    return '<div class="cell"><div class="sizes">'+svg(r[0],'s56')+svg(r[0],'s28')
+      + svg(r[0],'s17')+svg(r[0],'s14')+'</div><div class="nm">'+r[0]+'</div>'
+      + '<div class="note">'+r[1]+'</div></div>';
+  }).join('');
+document.getElementById('pairs').innerHTML = PAIRS.map(function(p){
+  return '<div class="pair'+(p[3]?' pair--bad':'')+'">'
+    + '<div class="pair__row">'
+    +   '<div class="pair__one">'+svg('g-'+p[0],'')+'<span>'+p[0]+'</span></div>'
+    +   '<div class="pair__one">'+svg('g-'+p[1],'')+'<span>'+p[1]+'</span></div>'
+    + '</div><div class="pair__v">'+p[2]+'</div></div>';
+}).join('');
+
+document.getElementById('ctx').innerHTML =
+  '<div class="plate">'+svg('g-soita','')+'Soita Virtaselle ajanvarauksesta</div>'
+  + '<div class="plate">'+svg('g-tehty','')+'Valmis</div>'
+  + '<div class="plate">'+svg('g-odottaa','')+'Odottaa</div>'
+  + '<div class="plate">'+svg('g-pomodoro','')+'3 pom</div>'
+  + '<div class="plate">'+svg('g-ajastettu','')+'ma–pe 8:00</div>'
+  + '<div class="plate plate--idx">'+svg('q-q1','')+svg('g-soita','')+'</div>'
+  + '<div class="plate plate--idx">'+svg('q-q2','')+svg('g-valmistele','')+'</div>';
+
+document.querySelectorAll('[data-th]').forEach(function(b){
+  b.onclick = function(){
+    document.documentElement.dataset.theme = b.dataset.th;
+    document.querySelectorAll('[data-th]').forEach(function(o){ o.classList.remove('on'); });
+    b.classList.add('on');
+  };
+});
+document.getElementById('c-only-new').onclick = function(){
+  var on = this.classList.toggle('on');
+  document.querySelectorAll('.cell').forEach(function(c){
+    c.style.display = (on && c.dataset.new !== 'true') ? 'none' : '';
+  });
+};
+document.getElementById('c-grid').onclick = function(){
+  var on = this.classList.toggle('on');
+  document.querySelectorAll('.sizes').forEach(function(s){
+    s.style.backgroundImage = on
+      ? 'repeating-linear-gradient(0deg,transparent 0 3px,rgba(196,154,58,.22) 3px 4px),'
+        + 'repeating-linear-gradient(90deg,transparent 0 3px,rgba(196,154,58,.22) 3px 4px)'
+      : '';
+  });
+};
+</script>
+</body>
+</html>

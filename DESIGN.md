@@ -244,26 +244,45 @@ Järjestelmä on **litteä lepotilassa, nostettu vuorovaikutuksessa**. Pintojen 
 
 ### Signature Component: TCG-areennakortti
 
-Fokuksen selkein identiteettielementti. Kun ajastin käynnistyy, aktiivinen tehtävä täyttää areenan MTG-kortin muodossa: kultainen kehys, usvapinta, Cinzel-kirjasinlinja tyyppiriville, kustannuspisteet Pomodoro-arviolle. Otsikko käyttää DM Serif Display:tä, runko DM Sansia — kaksi perhettä rinnakkain samassa elementissä. Ei esiinny muissa konteksteissa.
+Fokuksen selkein identiteettielementti. Kun ajastin käynnistyy, aktiivinen tehtävä täyttää areenan MTG-kortin muodossa: kultainen kehys, usvapinta, Cinzel-kirjasinlinja tyyppiriville. Otsikko käyttää DM Serif Display:tä, runko DM Sansia — kaksi perhettä rinnakkain samassa elementissä. Ei esiinny muissa konteksteissa.
+
+Kortti renderöityy kolmessa rajauksessa (areena 300×420, rata 214×300, käsi 130×182) ja on suunniteltu kaikkiin kolmeen — ks. **The Index Rule**. Tunnistetieto asuu indeksipalstoissa `.tcg-card__idx--tl` / `--br`: kvadranttimerkki → kustannusmittari → verbiglyfi. Kustannus on **segmentoitu palkki** (`mkCostMeter`), ei pisteitä: pituus kasvaa arvon mukaan, joten "montako pomodoroa" luetaan pituudesta eikä laskemalla, eikä `est>4` tarvitse romautusta. Toiminnot ovat radiaalirypäässä (`.tcg-card__radial`, keskinappi + 7 satelliittia kahdella kehällä) — erillisiä nappirivejä ei ole.
 
 ### Pomodoro-widget
 
 Kaksi tilaa: **täysi** (130×130px SVG-ring, iso kellonaika DM Serif Display 2.2rem) ja **mini** (kiinnitetty yläpalkkiin, 42px ring, 1.2rem aika). Tila vaihtuu kun ajastin käynnistyy. Ring: `stroke: var(--pomo)` (terracotta tai teeman mukainen). Transitio: vain `opacity`, ei width/height (näkymän muutos on välitön, ei animoitu).
 
+### Named Rules
+
+**The Index Rule.** Kortin **rajaus on turva-alue**. Käsiviuhkassa kortista näkyy vasen yläkulma ja radalla oikea laita, joten kaikki tunnistetieto (kvadrantti, kustannus, verbi) asuu TL- ja BR-indeksipalstassa — ei keskellä eikä vapaassa kulmassa. BR on 180° käännetty palsta, jonka symbolit ovat oikein päin, ja se jätetään pois areenakortilta (oikea alanurkka on toimintojen aluetta). Palstan sisämitat johdetaan `--idx-w`:stä **suhdelukuina**, ei kiinteillä vähennyksillä, ja moodikerroin `--idx-k` (areena 1, käsi .62, rata .85) pitää glyfin viivan yli pikselin myös radan syvimmällä kortilla. `--idx-k` ei ole korttileveyden suhde: .43 antaisi 0,73px viivan, mikä on täsmälleen vanhojen ikonien vika.
+
+**The One Weight Rule.** Koko ikonisetti on yhtä viivapainoa (`stroke-width:1.75` / 24-ruudukko) kokoluokasta riippumatta — 14px:n typelinestä 168px:n kuva-alueeseen. Kaksitasoinen setti (glyfi + täytetty sigil) kokeiltiin ja **mittaus kaatoi sen**: täyttö tuhosi 8/15 verbiglyfistä (ontto muoto *oli* merkitys), eikä yhtäkään kokoa löytynyt jossa glyfi olisi pettänyt. Myös paksunnus hylättiin — se on massaa ilman informaatiota. Uusi glyfi mitataan ennen settiin lisäämistä (`tests/glyfimittari.py`: muste-%, komponenttimäärä, parittainen IoU kokoina 8/14/28) ja katsotaan **rinnakkain lähisukulaistensa kanssa**; mittari ja silmä löytävät eri asiat.
+
+**The Shape-With-Color Rule.** Kvadrantti kannetaan **muodolla** — kolmio q1, vinoneliö q2, ympyrä q3, neliö q4 (`#q-q1`…`#q-q4`) — ja väri vain vahvistaa sitä. Väripallo tai kirjainlappu ("Q1") katoaa värisokealta ja harmaatulosteesta, ja q3/q4 ovat molemmat harmaita, joten muoto on niiden ainoa erottaja. Sama sarja kortilla, pakassa, odottavissa ja siirtovalikossa.
+
+**The One Symbol Per State Rule.** Yksi tila = yksi symboli; päällä/pois on **väri**, ei toinen merkki. ⭐/☆ oli kaksi merkkiä samasta tilasta ja ★/⭐ sama merkki kahdesta eri tilasta (aktiivinen vs. tähtikortti) — molemmat luettiin väärin. Radiaalirypään sammakko on malli: sama glyfi, täyttö kertoo tilan.
+
 ## 6. Z-index-skaala
+
+Luettu koodista 2026-08-15 (rata ja radiaalirypäs muuttivat areenan sisäisen asteikon).
 
 | Taso | Käyttö |
 |---|---|
-| 0–9 | Komponentin sisäiset kerrostumat (arena-room seinät/pöly 2, areenakortti + areenalabelit 3) |
-| 10–39 | Areenan sisäinen chrome (eise-handle 10, eise-peek 20, done-check 30) |
-| **40–69** | **Lavastekerros** — full-bleed-areenan päällä kelluvat: sivupaneelit 40, pomo-mini/sticky 50, käsiviuhka 60, pöydän kehys 65 |
-| 90–99 | Kiinteä chrome (hdr-timer 90) |
-| 100–199 | Notifikaatiot (`.notif`, `#nt`) |
-| 200–399 | Paneelit ja perusmodaalit (overlay 200, modaali 201, eise-move-menu 210, verb-pop 300) |
-| 400–499 | Pinotut modaalit (jatko 401, wiz 401) |
-| 500–599 | Ylin perusmodaali (edit-modal 500) |
+| −3…−1 | Radiaalirypään sisäiset: osumakiekko `.rad-hit` −3, tummennus `.rad-veil` −2, satelliitit levossa −1 |
+| 0–9 | Areenan lattiataso ja komponenttien sisäiset kerrokset: arena-room seinä/lattia/pöly/valo 0–2, ratakortin varjo 1, haamupaikka + `#arena-slot-hint` 2, `#arena-label`/`#arena-empty` 3, `.lane-more` 4, **ratakortit 5–8** (`--qz` = 8 − indeksi), `.tcg-card__radial` 6 kortin sisällä, **areenakortti 9** |
+| 10–39 | Areenan chrome: `#eise-handle` 10, `#break-banner` 12, `#eise-peek` 20, käsikortin hover 20, done-ring 29, done-check 30 |
+| 40–69 | **Lavastekerros** — full-bleed-areenan päällä kelluvat: sivupaneelit 40, kortin partikkelit 40, pomo-mini/sticky 50, käsiviuhka 55–60, pöydän kehys 65. `body.eise-open` nostaa areenan 62:een ja oikean paneelin 63:een, jotta matriisi peittää käden mutta kehys jää eteen |
+| 90–99 | Kiinteä chrome (`#hdr-timer` 90) |
+| 100–199 | Notifikaatiot 100, kelluvat napit (`#ham-btn`, `#inv-btn`) 150 |
+| 200–399 | Paneelit ja perusmodaalit: eise-overlay 200, eise-modal 201, `.eise-move-menu` 210, `.verb-pop` + `#ham-overlay` 300, `#ham-sheet` 301, tehtäväpakka `#inv-modal` 350 |
+| 400–499 | Pinotut modaalit: overlayt 400, jatko/wiz/done/pika 401 |
+| 500–599 | Ylin perusmodaali (`#edit-modal` 500, inline-tyylissä) |
 | 600 | Lisätiedot-popup (voi avautua edit-modalin päältä) |
-| 700 | Undo-banner (aina päällimmäinen) |
+| 700 | Undo-banner (JS:n inline-tyylissä, aina päällimmäinen) |
+
+**`#queue-lane` on `z-index:auto` tarkoituksella.** Positioitu elementti ei luo stacking-kontekstia ilman `z-index`iä. Jos rata olisi oma konteksti, sen sisäiset arvot eivät kilpailisi areenakortin kanssa lainkaan eikä yhtäkään ratakorttia voisi järjestää suhteessa siihen. Samasta syystä ratakortin hover on puhdas liuku eikä kerrosnosto: `z-index` ei ole animoituva, joten sen vaihtaminen hoverissa näyttäisi siltä että kortti ilmestyy tyhjästä.
+
+**`--lane-max` on enintään 4.** Viides ratakortti saisi `--qz:4` ja törmäisi `.lane-more`en, kuudes `#arena-label`iin.
 
 ## 7. TCG-rarity
 
@@ -271,12 +290,12 @@ Rarity = **tärkeys** (Eisenhower) — väri-identiteetti = kvadrantti, manakust
 
 | Tier | Ehto | Visuaali |
 |---|---|---|
-| mythic | `frog` | kultakehysgradientti + holo + 🐸-sinetti |
+| mythic | `frog` | kultakehysgradientti + holo + sammakkosinetti (vain areenakortilla) |
 | rare | q1/q2 | kultainen sisärengas + kullattu set-symboli |
 | uncommon | q3 | hopearengas + hopeinen set-symboli |
 | common | q4 | ei metallia, himmeä set-symboli |
 
-Set-symboli = työtilan alkukirjain (Cinzel) typelinen oikeassa reunassa. Holo vain mythicillä — niukkuus (yksi sammakko/päivä) on osa metodologiaa. Metallisävyt ovat neutraaleja → 60-30-10-värisääntö säilyy.
+**Sammakkosinetti on vain areenakortilla.** Kädessä ja radalla 25px sinetti peittäisi TL-indeksin eikä mahtuisi 21px palstaan, joten siellä sammakon merkki on indeksipalstan kultakehys. Set-symboli = työtilan alkukirjain (Cinzel) typelinen oikeassa reunassa. Holo vain mythicillä — niukkuus (yksi sammakko/päivä) on osa metodologiaa. Metallisävyt ovat neutraaleja → 60-30-10-värisääntö säilyy.
 
 **Metalli- ja levytokenit:** `--gold` `#c49a3a` / `--gold-hi` `#e8c66a` / `--gold-deep` `#6b4f1c` (eivät seuraa `--accent`ia), `--metal-silver` `#b8bcc0` / `--metal-silver-hi` `#e2e6ea`, `--tcg-plate-ink` `#f4f0e4` / `--tcg-plate-ink-dim` `#e8dcc0` / `--tcg-gold-ink` `#f0d9a8`, `--tcg-stop` `#7a2020`, `--ink-on-art` `#fff`, `--pomo-hi` `#e8623a`, `--q2-bright` `#4a8a4a`, `--frog-deep` `#3d7a52`. Plate pysyy tummana kaikissa teemoissa (aurinko asettaa tumman `--plate-top`in tarkoituksella).
 
@@ -378,6 +397,8 @@ Työpöytä on **pöytä**: full-bleed areena, kiskot, käsiviuhka, pöydän keh
 - **Do** lisää `html[data-perf="lite"]` -yhteensopivuus uusille animaatioille — MacBook 2010 on reaalinen käyttäjä.
 - **Do** käytä tehtävälle verbiprefixiä: "Soita", "Sovi", "Kirjaa" — toimintavalmis 2 sekunnissa.
 - **Do** näytä navigaatiossa aina aktiivinen näkymä hampurilaisnapin tekstissä.
+- **Do** mittaa uusi glyfi ennen kuin lisäät sen settiin (`tests/glyfimittari.py`) ja katso se rinnakkain lähisukulaistensa kanssa — vaiheessa 2 löytyi neljä kollisiota, joista kolme oli jo hyväksytyissä glyfeissä.
+- **Do** anna kvadrantille muoto värin pariksi kaikkialla missä se esiintyy.
 
 ### Don't
 
@@ -388,6 +409,8 @@ Työpöytä on **pöytä**: full-bleed areena, kiskot, käsiviuhka, pöydän keh
 - **Don't** animoi `width`, `height`, `max-height` tai `padding`-ominaisuuksia. Käytä `transform`, `opacity`, tai `grid-template-rows`.
 - **Don't** laita asetuksia profiilipaneeliin — käyttäjä ei löydä niitä sieltä. Kaikki asetukset hampurilaisvalikon Asetukset-osioon.
 - **Don't** käytä Eisenhower-maastokoodeja (terracotta/metsänvihreä/okra/kivi) yleisinä UI-aksentteina. Ne ovat kvadranttimerkintöjä.
+- **Don't** piirrä ikonia paikan päällä JS:llä. Kaikki symbolit tulevat `<defs>`-spritestä `#g-*` / `#q-*`, ja väri on `currentColor` + luokka — oma piirtäjä on aina neljäs rekisteri, joka ajautuu muista erilleen.
+- **Don't** anna samaa merkkiä kahdelle eri tilalle äläkä kahta merkkiä samalle tilalle.
 - **Don't** tee SaaS-tyylistä sterilliä valkoisuutta (Notion/Todoist-estetiikka). Aurinkoteema on lämmin mutta ei kliiininen.
 - **Don't** käytä feature-creep UI:ta — progressiivinen paljastaminen, ei kaikkea kerralla näkyvissä.
 - **Don't** käytä `position: fixed` elementtiä transformatun vanhemman sisällä — se positionoituu vanhempaan, ei viewporttiin.

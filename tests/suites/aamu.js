@@ -10,8 +10,11 @@
       ok('waiting task filtered from wizard (id 9)', allTasks.every(function(t){return t.id!==9;}),
          allTasks.map(function(t){return t.id;}).join(' '));
 
-      // fe(0)
-      ok('aamu fe(0)="⚡"', fe(0)==='⚡', fe(0));
+      // fe(0): pikatehtava merkittiin ennen salamaemojilla. Vaiheessa 5
+      // emojit korvattiin glyfeilla, ja koska fe() palauttaa merkkijonon
+      // joka menee textContentiin, merkki ei voi olla siina — kutsuja
+      // lisaa <use href="#g-pika"> erikseen. fe(0) on siis pelkka '0'.
+      ok('aamu fe(0)="0" (salama on nyt glyfi)', fe(0)==='0', fe(0));
 
       // 1-3-5 meter
       ok('day135 element exists', !!document.getElementById('day135'));

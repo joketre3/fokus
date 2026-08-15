@@ -5,6 +5,23 @@
 Impeccable-analyysi tehty 2026-06-07. Raportti: `docs/impeccable-kritiikki.md`.
 PRODUCT.md luotu 2026-06-10. P0 valmis.
 
+**🔶 Kesken (2026-08-14): kortin kaksoisindeksi + ikonisetti.** Haara
+`kortti-indeksi-ikonit`. Vaiheet 0–2, 3s, 4, 4b, 5 ja **6 valmiit**; vaihe 3
+(sigil-taso) **hylättiin mittauksen perusteella 2026-08-15** ja kutistui
+siivoukseksi (vanhat `verb-i-*` pois) — seuraavana vaihe 7 (DESIGN.md +
+regressio). `card_zones` on 48/48, `list_icons` 25/25. **Suunnitelma:**
+`~/.claude/plans/home-jaakko-claude-uploads-dea0ecee-9cf-tidy-phoenix.md`
+— itsenäinen dokumentti, sisältää lukitut päätökset, tokenit ja vaiheet.
+Kaikki kortin ratkaisut ovat valmiina `mockup-kortti-v2.html`:ssä ja
+ikonit `mockup-ikonit.html`:ssä; kopioi sieltä, älä piirrä uudestaan.
+**Uusi glyfi on katsottava rinnakkain lähisukulaistensa kanssa** —
+vaiheessa 2 löytyi neljä kollisiota, joista kolme oli jo hyväksytyissä
+glyfeissä (`kirjaa`=`muokkaa`, `varaa`=`odottaa`, `kiire`≈`pomodoro`).
+Mitattu lähtötilanne: käsi näyttää kortista 63–79px × 98px vasemmasta
+yläkulmasta, rata 41–50 kortin px oikeasta laidasta — ja pomodoro-hinta
+(`top:9px;right:9px`) oli kädessä kokonaan piilossa; **vaihe 4 siirsi sen
+indeksipalstaan** (`.tcg-card__idx--tl` / `--br`, ks. oma osio alempana).
+
 **⬜ Avoin (kirjattu 2026-08-12, Jaakon havainto):** pitäisikö korttien
 (areenakortti, ratakortit, käsikortit) skaalautua ikkunan koon mukaan? Nyt
 mitat ovat kiinteitä pikseleitä — `--lane-card-w:214px`, `--hand-card-w:130px`,
@@ -19,7 +36,7 @@ kierroksensa, koska koskee kaikkia kolmea korttikokoa yhtä aikaa.
 
 **Tuottavuustavat ✅ valmis (2026-08-08):** 2 min -sääntö (pikakortit), 1-3-5 päivän budjetti, keskeytysparkki — ks. oma osio alempana
 
-**Tehtäväjonon rata 🔶 haarassa (2026-08-11):** jono saa fyysisen paikan areenan lattialla. Haara `claude/task-queue-visibility-ymx47m`, PR #10, **ei mergeä mainiin** — ks. oma osio alempana. Kerrosskaala `#arena`n sisällä muuttui (areenakortti z:3→9, banneri z:5→12).
+**Tehtäväjonon rata ✅ mainissa (merge `4a1c953`):** jono saa fyysisen paikan areenan lattialla. Alun perin haara `claude/task-queue-visibility-ymx47m` / PR #10 — ks. oma osio alempana. Kerrosskaala `#arena`n sisällä muuttui (areenakortti z:3→9, banneri z:5→12).
 
 **P2 ✅ valmis (2026-06-11) — Eisenhower-peek + navigaatio:**
 - Eisenhower-matriisi yhdistetty: vanha full-screen modaali poistettu → uusi `#eise-peek` areenan yläreunassa
@@ -50,6 +67,36 @@ Testit: `python3 tests/run.py` (ks. `tests/README.md`). Ei lintteriä, ei CI:tä
 - **Mittaa asettelu DOM:sta, älä kuvakaappauksesta.** `tests/harness.py`:n `build()`+`run()` ajaa mitä tahansa JS:ää sivun sisällä. `getBoundingClientRect` paljasti napin alle jääneen tekstin, jonka kaappaus hukkasi — ja mittauksen saa jätettyä pysyväksi testiksi.
 - Oma siemendata: `seed_js(tasks=TASKS+extra)` + `mk()` (`tests/seed.py`). `extra=`-parametri on raakaa JS:ää joka ajetaan **ennen** sovelluksen skriptejä — `tasks`-globaalia ei siellä vielä ole, joten `tasks.push` menee hiljaa try/catchiin.
 - Zoomattu kaappaus popupista: `--force-device-scale-factor=2` + pieni `--window-size`
+- Suite valitsee siemenen rivillä `// seed: <nimi>` heti `// target:`-rivin jälkeen (`tests/run.py:SEEDS`). `frank` = Frankenstein-kortti: jokainen kenttä äärimmillään viitenä kappaleena, jotta maksimikortti osuu areenalle, radalle JA käteen. Uusi korttikenttä lisätään myös `frank()`iin tai ylivuoto löytyy vasta käyttäjän datasta
+- **Kierretyn tai skaalatun elementin `getBoundingClientRect` on akselinsuuntainen bbox, ei elementti.** Viuhka (±11°) ja rata (1,5° + `scale`) levittävät sen — 300px korkea laatikko 1,5 asteessa on ~8px leveämpi. Laske suhteet kortin OMASSA koordinaatistossa (tokeneista tai `offsetWidth`illa); kahden rectin erotus on ok vain kun molemmat ovat samassa mittakaavassa
+- **Klikkaus ja `textContent`-luku samassa tikissä antaa vanhentuneen arvon** — `requestAnimationFrame`iin sidottu mittaus ei ole ehtinyt ajaa. Sondi: klikkaukset yhteen `setTimeout`iin, luku toiseen ~1s myöhemmin
+- `backdrop-filter` raportoituu `none` headlessissa (`--disable-gpu`) vaikka sääntö on voimassa — sumennusta ei voi todentaa headlessilla, vain oikeassa selaimessa
+- Ad hoc -sondi mitä tahansa sivua vastaan ilman uutta suitea: scratchpad-skripti joka tekee `sys.path.insert(0,'tests')` + `from harness import build, run, report`
+- **Pikselitason vertailu ilman PIL:iä:** renderöi kukin koko omaksi PNG:kseen (`--window-size=N,N`, ikoni ainoana elementtinä), lue ne `zlib`+`struct`illa (~40 riviä: IHDR, IDAT, scanline-suodattimet 0–4) ja laske rivi- ja sarakekohtaiset tausta→muoto-vaihdokset. Näin "erottuuko yksityiskohta koossa N" on luku, ei mielipide. Zoomaus silmälle: `<img>` + `image-rendering:pixelated` — **`<svg>`:lle se ei toimi**, vektori skaalautuu sileäksi
+- **`sed 's/.*_//'` on ahne.** Tiedostonimestä `full_16_7.html` se poimii `7`, ei `16_7` — mittaus ajettiin 7×7 px kuvasta ja tulos näytti uskottavalta rivillä muiden joukossa. Tarkista mitatun kuvan koko (`struct.unpack('>II', d[16:24])`) ennen kuin luet lukuja
+- **`build()` kelpaa myös kuvakaappauksen pohjaksi**, ei vain mittaukseen: anna `body`-JS:ssä tilan avaava kutsu (`openInventory()`) + animaatiojäädytys, sitten `google-chrome --screenshot` tuloksena syntyneelle tiedostolle. Näin pääsee modaalien sisään, jotka eivät muuten näy kuvassa
+- **Aja `tests/run.py` repon juuresta.** Taustakomento muualta kaatuu
+  `can't open file '/home/jaakko/tests/run.py'` — ja koko sarja kestää
+  ~5 min, joten aja se taustalla ja yksittäiset suitet nimellä.
+- **Merkkijonoon sidotut väitteet kaatuvat kun UI-merkki vaihtuu.**
+  `fe(0)==='⚡'`, `fmtSchedule(...)==='📅 …'` — kun emoji korvattiin
+  glyfillä, viisi väitettä kolmessa suitessa piti päivittää samassa
+  muutoksessa. `grep -n "[emoji]" tests/suites/` ennen kuin vaihdat merkin.
+- **Hoverin varassa oleva tila kuvakaappaukseen luokalla, ei hiirellä** —
+  headlessissa ei ole osoitinta. Luokka on asetettava `setInterval`illa:
+  `render()` voi rakentaa elementin uudelleen skriptin ja kaappauksen
+  välissä, jolloin kertaalleen asetettu luokka katoaa (kävi mobiiliajossa).
+  Animoidun geometrian mittaus vaatii lisäksi `transition:none`-tyylin.
+- **PNG-rajaus ja -suurennos ilman PIL:iä:** `python3 tests/pngcrop.py
+  sisaan.png ulos.png x y w h [kerroin]`. Ilman rajausta 1440px:n
+  kaappauksesta ei näe 21px:n indeksipalstaa.
+- **Uusi glyfi mitataan ennen kuin se lisätään settiin:**
+  `python3 tests/glyfimittari.py` (luonnokset `tests/uudet-glyfit.svg`).
+  Katso tulos aina myös silmällä rinnakkain lähisukulaisten kanssa.
+- **JS-merkkijono ei ole CSS-selektori.** `s.index('.tcg-card__actions-tcg')`
+  ei löydä riviä `acts.className='tcg-card__actions-tcg'` — piste kuuluu
+  vain selektoriin. Python-korvausskriptin assertio pelasti tämän.
+- **Kuvakaappaus löytää sen mitä väitteet eivät osaa kysyä.** Ikonirekisterin fallback osui yhteen kategoriaan (`Odottava` → väärä ikoni), ja 33 vihreää väitettä meni silti läpi: testi tarkisti että ikoni on SVG, ei että se on *oikea*. Vrt. vastakkainen tapaus aurinkoteemassa, jossa kuva ei todentanut mitään — kysy kumpi vika on kyseessä ennen kuin valitset työkalun
 
 ## File structure
 
@@ -69,10 +116,13 @@ Testit: `python3 tests/run.py` (ks. `tests/README.md`). Ei lintteriä, ei CI:tä
 | `mockup-arena-syvyys.html` | Areenan syvyyskokeilu (varhainen, korvattu `mockup-arena-3d-plus`illa) |
 | `mockup-eise-placement.html` | Eisenhower-peekin sijoitteluvaihtoehdot |
 | `mockup-jono.html` | Tehtäväjonon rata areenan lattialla — 3 varianttia + elävät geometrialiu'ut (`?v=v2`) |
+| `mockup-kortti-v2.html` | Kortin kaksoisindeksi — kolme rajausta rinnakkain (areena/viuhka/rata), 3 indeksivarianttia, kustannusmittari pysty/vaaka, Frankenstein-kytkin |
+| `mockup-ikonit.html` | Ikonisetin referenssi — 32 glyfiä + 4 kvadranttimerkkiä, kollisioparit, teemakytkin, koot 56/28/16,7/14 px |
+| `mockup-listamittari.html` | Listarivin pomodoro-mittari — pipit vs. 3 segmenttivarianttia, 7 testitapausta, `?t=aurinko&zoom=1` |
 | `manifest.json` | PWA-manifesti — asennettava sovellus, standalone-tila |
 | `sw.js` | Service worker — navigointi verkosta ensin, muu välimuistista (offline) |
 | `icon-192.png`, `icon-512.png`, `icon-180.png` | Sovellusikonit (512 myös maskable) |
-| `dev-seed.html`, `testdata.html` | Testidatan siemennys localStorageen (kehitystyökaluja) |
+| `dev-seed.html`, `testdata.html` | Testidatan siemennys localStorageen. `dev-seed`issä 2 nappia: 12 tehtävän demosetti (8 verbiä) ja ikonikattaus (16 verbiä + tilaglyfit) |
 
 Pääsovellus avaa `swipe.html` ja `aamu.html` popup-ikkunoina (`window.open`). Timer aukeaa JS:llä generoituna popuppina. Kaikki ikkunat jakavat datan `localStorage`n kautta.
 
@@ -108,8 +158,11 @@ Jokainen tiedosto on itsenäinen: kaikki CSS ja JS sisäänrakennettu HTML-tiedo
 - Yläpalkki on `.hdr` (`grid-area:topbar`), mutta `#hdr-timer` EI ole sen sisällä — se on oma `position:fixed` -elementti (z:90) oikeassa yläkulmassa. Yläpalkkiin kohdistuvat kuuntelijat eivät tavoita ajastinwidgettiä
 - `position:fixed` lapsi-elementti transformatun vanhemman sisällä positionoituu vanhempaan eikä viewporttiin — toggle-napit yms. sijoitetaan transformatun elementin ULKOPUOLELLE DOM:issa
 - `node --check` ei toimi `.html`-tiedostoille — extractaa ensin: `python3 -c "import re; open('/tmp/chk.js','w').write('\n'.join(s[1] for s in re.findall(r'<script(?! type=[\"\'](module)[\"\']*[^>]*>)(?:[^>]*)>(.*?)</script>', open('index.html').read(), re.DOTALL)))"` → `node --check /tmp/chk.js`
+- **`node --check` ei näe paritonta SVG-tagia.** Symboleja poistaessa validoi sprite-lohko erikseen: `xml.dom.minidom.parseString(re.search(r'<svg style="position:absolute;width:0.*?</svg>', h, re.S).group())`
 - Headless Chrome `--screenshot` ei renderöi CSS transformeja luotettavasti — testaa aina oikeassa selaimessa, älä luota headless-kuvakaappauksiin CSS-animaatioiden todentamiseen
 - Headless Chrome ei jaa `localStorage`:a eri origineista — modaaleja ja onboardingia ei voi testata automaattisesti headless-tilassa (eri portti = eri origin)
+- **`--user-data-dir=/tmp/prof` säilyttää `localStorage`n headless-ajojen välillä.** Ajo 1 kylvää (`dev-seed.html` + `click()`), ajo 2 avaa `index.html` samasta portista ja näkee datan. Yllä oleva origin-rajoitus koskee vain eri porttia
+- **Tarkista kattaako siemendata sen mitä testaat.** `dev-seed.html`in demosetti kylvi tasan ne 8 verbiä joilla oli vanha `verb-i-*`-ikoni → kahdeksaa uutta glyfiä ei olisi nähnyt lainkaan. Toinen nappi "Kylvä ikonikattaus" kylvää 16 verbiä + tilaglyfit (sammakko, odottaa, ajastettu, pika, linkki, jatkokortti)
 - `checkMorningTask()` lisää tehtävän heti startup:ssa ja kutsuu `render()` — vaikuttaa `tasks.length`-pohjaisiin tarkistuksiin; suodata `aamusuunnittelu`-tagi pois ennen laskentaa
 - CSS hover-bounce: kun elementti liikkuu `:hover`-tilassa ylös, lisää `::after { position:absolute; bottom:-64px; left:-8px; right:-8px; height:64px; }` laajentamaan hit-aluetta — muuten elementti pomputtaa itseään
 - `position:fixed` lapsielementti grid-rivin sisällä positionoituu viewporttiin kun vanhemmalla ei ole `transform`ia — käytä tätä viuhkan kaltaisiin fixed-overlayhin gridin sisällä
@@ -118,6 +171,7 @@ Jokainen tiedosto on itsenäinen: kaikki CSS ja JS sisäänrakennettu HTML-tiedo
 - `startTmr()` ei kutsu `render()` — kutsu manuaalisesti heti perään jos UI pitää päivittää (esim. nappi-teksti)
 - Mobiilikaappaus headlessilla: `google-chrome --headless=new --no-sandbox --disable-gpu --window-size=390,844 --screenshot=/tmp/out.png "http://localhost:8765/file.html"`
 - Impeccable-detektori: `node /home/jaakko/.agents/skills/impeccable/scripts/detect.mjs --json index.html`
+  — **`--json` tulostaa listan, ei objektia**: `json.load(...)` → `[{...}]`, ei `.get('findings')`. Delta lasketaan vertaamalla pituutta ja `line`-kenttiä baseline-puun ajoon
 - Impeccable-baseline: **4 osumaa / 3 kategoriaa** jotka EIVÄT ole bugeja — bounce-easing ×2 (M1:n tarkoituksellinen overshoot), em-dash-overuse (suomen välimerkki), dark-glow (aurinko-chip-token, väärä positiivi) — älä "korjaa", vertaa vain deltaa. Rivinumerot liikkuvat, vertaa mergeä edeltäneeseen commitiin (`git show <sha>:index.html`), ei `HEAD`iin.
   - **Vahvistettu 2026-08-09 suuren merge-kierroksen jälkeen** (PR #6/#7/#8 + mobiili + PWA, index.html +2600 riviä). Ajettu molemmille puille — `19b5f69` (ennen) ja merge-tulos — ja tulos on **identtinen**: 4 warningia, 0 erroria, samat kategoriat, vain rivinumerot siirtyneet (82→109, 754→788, 668→708). Delta **0**.
   - Osumat: `--ease-out-back` `:root`issa, `.card-entering`in `card-enter`, aurinkoteeman `.eise-card:hover` -pehmeä varjo (detektori lukee sen "dark-glowksi" vaikka teema on vaalea), ja **18 em-dashia — sama luku molemmissa**. Uudet suomenkieliset UI-tekstit ("☕ Tauko — nouse ylös") EIVÄT kasvattaneet lukua, eli detektorin "bodyteksti" ei tarkoita JS:stä generoituja merkkijonoja. Älä oleta em-dash-luvun seuraavan UI-tekstien määrää.
@@ -127,6 +181,245 @@ Jokainen tiedosto on itsenäinen: kaikki CSS ja JS sisäänrakennettu HTML-tiedo
 - Piilotettava sisältö: `.wrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows .18s}` + sisältö `min-height:0;overflow:hidden` — ei max-height-animaatiota
 - Absoluuttisen napin (esim. `.inv-card__star-btn`) väistäminen: `margin-right`, **ei** `padding-right`. Padding jättää laatikon geometrian napin päälle, jolloin `getBoundingClientRect`-päällekkäisyysväite kaatuu vaikka teksti näyttää oikealta — ja z-indexin varaan jäävä klikkaus on hauras. Marginilla geometria vastaa näkyvää.
 - `git stash` tarvitaan ennen `git checkout main` jos working treessä on muutoksia muissa tiedostoissa
+- **Flex-kontin `scrollHeight` ei näytä lapsen ylivuotoa** — Chrome laskee flex-itemien border-boxit, joten kutistuneen lapsen yli valuva teksti ei näy vanhemman luvussa. Mittaa ylivuoto siitä lapsesta jolla on `flex:1` (kortilla `.tcg-card__body`), ei `.tcg-card__plate`ista
+- **SVG flex-rivissä tarvitsee `flex:none`** — muuten se venyy: `.tcg-card__typeline` kasvoi 218px korkeaksi ja runko litistyi 24px:ään
+- `.tcg-card.tcg-card--hand{width:130px}` ja `.lane-card .tcg-card{width:100%}` ovat samaa spesifisyyttä (0-2-0) → lähdejärjestys ratkaisee. Jos se kääntyy, ratakortti renderöityy 130px levyisenä 214px kääreen sisään: **kääreen mitat pysyvät oikeina**, joten kaistalemittaus menee läpi ja vain kortin oikea laita on 64px väärässä. Käytä kaksoisluokkaa
+- **Ryhmä nappeja tarvitsee yhtenäisen osumakentän.** `:hover` säilyy vain lapsesta jolla on `pointer-events:auto`; nappien välinen tyhjä tila katkaisee sen → ryhmä romahtaa, osoitin on tyhjän päällä, ryhmä avautuu — silmukka. Läpinäkyvä kiekko/laatikko koko ryhmän päälle, `pointer-events:none` levossa ja `auto` auki-tilassa (sama vikaluokka kuin radan hoverin sillassa)
+- **Kovakoodattu luku joka kuvaa CSS:ää ajautuu erilleen siitä.** Liukusäätimen `DEFAULTS` ylikirjoitti `:root`in inline-tyylillä, ja mockupin "Kopioi tokenit" tulosti kertoimen `.78` kun CSS oli jo `.85` — vietävä arvo olisi kulkeutunut väärin `index.html`:ään asti. Lue arvot `getComputedStyle`lla, älä toista niitä merkkijonossa
+
+## Ikonisetti (vaihe 2, 2026-08-14)
+
+Yksi rekisteri: `ICON` (32 nimeä), `VERB_ALIAS`, `verbName()`,
+`iconId(name,tier)`, `verbIcon(verbi,tier)`. Symbolit `<defs>`issä
+muodossa `#g-<nimi>` (glyfi) ja `#q-q1…q4` (kvadranttimerkit).
+`ICON_S` on tyhjä **pysyvästi** — sigil-taso hylättiin mittauksen
+perusteella (ks. alla); `tier:'s'` putoaa aina glyfiin. Referenssi ja
+muokkauspaikka: `mockup-ikonit.html`.
+
+**Yksi viivapaino kaikkialla — päätetty 2026-08-15.** Kortin kuva-alue
+(168 px) ja pakkakortin `verb-bg` (80 px) käyttävät samaa glyfiä samalla
+painolla kuin 14 px:n typeline. Älä lisää sigil-symboleja äläkä paksunna
+viivaa kuva-alueelle: molemmat kokeiltiin ja mittaus kaatoi ne.
+- **Täyttö tuhoaa 8/15 verbiglyfistä.** Ontto muoto on niissä merkitys:
+  täytetty `aikatauluta` on musta ympyrä, `tarkista` menettää checkin
+  kilven sisältä, `laheta` on suorakaide. Osat 2–3 → 1.
+- **Ei ole kokoa jossa glyfi pettäisi.** Muste-% ja osamäärä ovat
+  vakioita 40→80 px jokaisella ikonilla. Sigil ei siis tuonut isossa
+  koossa yhtään uutta erottuvaa osaa — vain massaa.
+- **Paksunnus (×1,5) säilytti kaikki osat mutta hylättiin silti:** se on
+  massaa ilman informaatiota, kuva-alue saa aikanaan omat piirretyt
+  ikoninsa, ja `sovi` ei liikkuisi mukana (täytetty, ei strokea).
+- **Jos paino joskus palaa:** CSS `stroke-width` `<use>`-elementillä EI
+  ohita symbolin presentation-attribuuttia (mitattu). Toimiva muoto on
+  symbolin oma inline-tyyli
+  `stroke-width:calc(<perus>px * var(--gw,1))` — `--gw` periytyy `<use>`:n
+  varjopuuhun, joten yksi muuttuja skaalaa setin ja kunkin symbolin
+  perusleveys säilyy suhteessa (1.75 / `tehty` 2.2 / `poista` 2).
+- **Mittauskehikko kannattaa rakentaa uudelleen samalla tavalla:**
+  serialisoi symboli standalone-SVG:ksi → data-URI → `<img>` → canvas →
+  `getImageData`. Ei tainttaannu, ei tarvita PIL:iä eikä 96:ta
+  Chrome-käynnistystä; yksi sivulataus riittää.
+
+- **`<use href>` ei varoita puuttuvasta symbolista** — se renderöityy
+  hiljaa tyhjänä. Siksi ääkköset normalisoidaan lookupissa (`Selvitä` →
+  `#g-selvita`) ja `icon_registry`-suite väittää että jokainen alias
+  osoittaa olemassa olevaan symboliin.
+- **Kolme rinnakkaista ikonikarttaa ajautui erilleen**: `VERB_ICONS` oli
+  kuollut (56 riviä, 0 lukupaikkaa) ja sama verbi näytti kortilla
+  SVG:ltä, pakassa emojilta. Uusi kartta pitää molemmat kirjoitusasut
+  (`Soita` / `soittaminen`) avaimina.
+- **Osittainen täsmäys kattaa vain prefiksit** — `soitto` ei ole
+  `soita`n prefiksi kumpaankaan suuntaan, joten substantiivimuodot ovat
+  omina aliaksinaan.
+- **Täytetty siluetti kestää 14px:n paremmin kuin viivapiirros.** Kaksi
+  samanväristä muotoa erotetaan `<mask>`illa (laajennettu polku
+  `stroke-width`illä), ei taustavärillä — maskin `#fff`/`#000` ovat
+  luminanssia, eivät teemavärejä.
+- **Uusi ikoni: mittaa tai hae, älä jäljennä silmällä.** Toimiva ketju on
+  referenssikuva → komponentit eroteltuna → kullekin keskipiste, kulma,
+  pituus, paksuus → parametrit sovitettuna numeerisesti → SVG suoraan
+  niistä luvuista. `~/kadenpuristus-ikoni` tekee tämän ja varmentaa
+  tuloksen IoU:lla referenssiin. Vertaa lopputulos referenssiin
+  **rinnakkain samassa kuvassa** — erillisinä katsottuna ne näyttävät
+  aina samalta.
+- **`g-sovi` (kädenpuristus) on mitattu, ei piirretty.** Lähde:
+  erillinen ikoniprojekti `~/kadenpuristus-ikoni` (`kokoportaikko.py`:n
+  `CUFF_L`, `CUFF_R`, `THUMB`, `FINGERS`; IoU-tarkistus referenssikuvaan).
+  **Se ei ole Material Symbols "handshake" eikä muu kirjastoikoni** —
+  ne ovat yhtenäistä massaa, jossa sormet ovat tummia rakoja; tämä
+  koostuu irrallisista paloista. Tämä meni kerran pieleen, älä "korjaa"
+  sitä kirjastoikoniksi. Älä myöskään pyöristele mitattuja lukuja.
+- **Kahta tiheyttä samasta ikonista kokeiltiin ja se hylättiin
+  mittauksen perusteella.** Karsitun 4-sormisen etu ≤20px:ssä oli 1–3
+  erottuvaa osaa (kohinaa), ja ≥28px:ssä täysi voitti selvästi
+  (43/84/150 vs. 41/58/92). Alle 20px:ssä sormet eivät erotu
+  kummassakaan — jäljelle jää siluetti, ja siinä täysi on rikkaampi.
+  **Sigil kannattaa vain jos se oikeasti eroaa glyfistä**; `ICON_S` on
+  siksi yhä tyhjä.
+- Vanhat `verb-i-*` (8 kpl) **poistettu 2026-08-15**. Ne olivat
+  ainoat kovakoodattuja hexejä käyttäneet ikonit; mikään ei viitannut
+  niihin enää.
+
+## Kortin kaksoisindeksi (vaihe 4, 2026-08-15)
+
+`.tcg-card__idx--tl` ja `--br` `plate`n sisällä heti `qart`in jälkeen,
+sisältö ylhäältä alas: kvadranttimerkki → kustannusmittari → verbiglyfi.
+Rakentajat `mkIndexCol(t,pos)` ja `mkCostMeter(est)`; tokenit `:root`issa
+(`--idx-w/gut`, `--seg-h/w/gap`) ja moodikerroin `--idx-k` sääntöinä
+(areena 1, käsi .62, rata .85 — `--lane` on aina myös `--hand`, joten sen
+on tultava jäljempänä). Poistuivat: `mkCostPips`, `.tcg-card__cost`,
+`.tcg-card__pip*`, `.tl-quad`.
+
+- **Sammakko-sinetti vain areenakortilla.** Kädessä ja radalla se peittäisi
+  TL-indeksin; siellä sammakon merkki on palstan kultakehys (25px sinetti
+  ei mahtuisi 21px palstaan).
+- **Näkyvyyttä ei voi mitata `getBoundingClientRect`ista.** Viuhka on
+  kierretty ±8° ja rata 1,5° + `scale`, joten peittoprosentti bboxeista
+  antoi käden TL:lle 91 % ja radan BR-pelivaraksi 1px — molemmat pelkkää
+  kiertoartefaktia. Mittaa osumatestillä: `document.elementFromPoint`
+  symbolin **keskipisteessä** (keskipiste on kierrosta riippumaton) ja
+  `idxEl.contains(n)`. Indeksi on `pointer-events:none`, joten testin
+  ajaksi tarvitaan tilapäinen `<style>` joka tekee siitä osuttavan.
+  Aja aina kontrolli elementillä jonka pitäisi olla piilossa — muuten et
+  tiedä onko mittari herkkä vai aina vihreä.
+- **Kortin oma padding syö BR-pelivaran.** Suunnitelman laskelma `PAD 3 +
+  gut·k + w·k` ≈ 31,8 piti paikkansa, mutta kaistale on radan syvimmällä
+  kortilla 41 kortin px, joten pelivaraa jää ~7. Älä kasvata `--idx-w`:tä
+  tai palstan omaa leveyttä ilman että mittaat kaistaleen uudestaan.
+
+## Radiaalinen toimintorypäs (vaihe 4b, 2026-08-15)
+
+`.tcg-card__radial` areenakortin platessa: keskinappi (aloita/lopeta,
+aamukortilla velho) + 7 satelliittia kahdella kehällä. Korvasi
+`.tcg-card__stats`- ja `.tcg-card__actions-tcg` -rivit, ja niiden mukana
+poistuivat kuolleet `mkImpBadge`, `mkUrgBadge`, `svgFrogOutline`.
+Suunnat = mobiilin eleet: oikea tehty (`doneActive`, EI `markDone`),
+vasen odottaa (`waitActive`/`clearWaiting`), ylös seuraava (`doNext`),
+alas muokkaa. Ulkokehä: sammakko, linkki, poista.
+
+- **Osuma-aluetta (`.rad-hit`) ei saa poistaa.** Hover laukeaa vain
+  napista; nappien välinen kuollut tila katkaisee sen → rypäs romahtaa →
+  osoitin on tyhjän päällä → avautuu → silmukka. Sama vikaluokka kuin
+  radan hoverin sillassa. Levossa `pointer-events:none`.
+- **Kosketuslaitteella ei ole hoveria.** Napautus kortin taustaan togglaa
+  `.is-open` (ele vaatii liikettä yli `LOCK`in, joten se ei varasta
+  pyyhkäisyä). Mobiilissa `--rad-sat:52px` → ulkorengas .86 × 52 = 45px ≥
+  `--tap`; 42px olisi jättänyt ulkokehän 36px:ään.
+- **`translate`-property animoituu 300ms.** Geometrian mittaus heti
+  `is-open`in jälkeen näyttää kaikki napit keskipisteessä. Testin ajaksi
+  `<style>.rad{transition:none!important}` + `void el.offsetWidth`.
+  Sijainti on `translate` ja painallus `transform` nimenomaan siksi, että
+  samassa transformissa `:active` kumoaisi sijoituksen.
+- **`plate.scrollHeight` ei mittaa ylivuotoa tällä kortilla.** Se lukee
+  mukaan q-taiteen full-bleed SVG:n (`scale(1.06)` → 448px kun plate on
+  414) ja kuva-alueen halo-pseudon (`bottom:-8%`), jotka `overflow:hidden`
+  leikkaa tarkoituksella. Mittaa platen omien flex-lasten summa.
+
+## Popupien ikonit (vaihe 5, 2026-08-15)
+
+`aamu.html` ja `swipe.html` eivät sisällä enää yhtään UI-emojia — vain
+brändin 🌲 (logo, valmis-ruutu) ja typografiset merkit (◆ · ← →).
+ICON-setti 32 → 37: uudet `g-paiva`, `g-ilta`, `g-lisatiedot`,
+`g-palauta`, `g-toistuva`.
+
+- **Jaettu lohko `fokus:icons v1`** (aamu ↔ swipe identtisenä): sprite +
+  `_ico(nimi)`, `_icoHtml(nimi)`, `_icoLabel(el,nimi,teksti)`. Yksi lähde
+  on `index.html`in `<defs>`; `tests/run.py:check_icon_sync` vertaa
+  jokaisen popup-symbolin **merkki merkiltä** sinne. Kopio ajautuisi
+  muuten hiljaa erilleen: `<use href>` ei varoita vanhentuneesta
+  muodosta, se piirtää vanhan.
+- **`fmtSchedule` ei sisällä enää merkkiä.** Se palauttaa tekstin, joka
+  menee `textContent`iin, eikä SVG kulje siinä. Ikonin nimen antaa uusi
+  `schedIcon(t)` (`ajastettu` | `toistuva`) ja kutsuja lisää glyfin.
+  Sama koskee `fe(0)`:aa: se palauttaa `'0'`, ei salamaa.
+- **Uusi glyfi: mittaa pienessä koossa.** IoU 28px:ssä päästi läpi
+  `g-paiva`n, joka oli 14px:ssä sama merkki kuin `g-etsi` (tähtäin) —
+  kollisio syntyy siellä missä yksityiskohdat sulautuvat. Mittari vertaa
+  `max(8px, 14px, 28px)`, ja kynnys on hyväksyttyjen glyfien pahin pari
+  pl. `aloita|seis`. Skripti: `glyfimittari.py`-resepti CLAUDE.md:n
+  ikonisetti-osiossa (serialisoi → data-URI → canvas → `getImageData`).
+- **Silmä ja mittari löytävät eri asiat.** Mittari kaatoi `g-lisatiedot`in
+  ensimmäisen version, silmä `g-paiva`n. Aja molemmat.
+- **`<svg>` ilman kokoa venyy.** Kortin ajastusrivillä se kasvatti rungon
+  441px:iin (client 218). `.tcg-card__sched svg{width:1em;height:1em;
+  flex:none}` — sama vikaluokka kuin typelinen SVG:llä.
+
+## Pakan ja listojen ikonit (vaihe 6, 2026-08-15)
+
+Tehtäväpakka, Eisenhower-peek, matriisin listarivit ja odottavat käyttävät
+samaa settiä kuin kortti. ICON 37 → 39: uudet `g-tahti`, `g-pakka`.
+Mittari: `tests/suites/list_icons.js` (25 väitettä, kontrolliajo `main`ia
+vasten 14 punaista).
+
+- **Kvadrantti on muoto, ei väri.** `quadMarkHtml()` / `mkQuadMark()`
+  piirtää `#q-q1…#q-q4` pakkaan, odottaviin ja siirtovalikkoon. Pakassa
+  oli 8px kirjainlappu 'Q1', kahdessa muussa väripallo — molemmat katoavat
+  harmaatulosteesta ja värisokealta.
+- **Neljäs ikonirekisteri poistettu.** `svgFrogFilled`, `svgHourglass`,
+  `svgTomatoFilled` ja `svgTomatoFilledHalf` (69 riviä) piirsivät listojen
+  tilamerkit omalla kädenjäljellään ja omilla hexeillään. Tilalla
+  `mkListMark(name, kind, size, title)` → sprite + väri luokasta.
+- **Sama merkki kahdessa merkityksessä.** Pakassa ★ oli aktiivinen ja ⭐
+  tähtikortti. Aktiivinen = jonossa → `#g-pomodoro`, sama kuin matriisin
+  jononapissa. Tähtikortin ⭐/☆ on nyt yksi `g-tahti`, jonka tila on väri
+  (`.inv-card--star`) — sama sopimus kuin radiaalirypään sammakolla.
+- **Listarivin mittari on `mkCostBar(est, pomos)`**, ei `mkPips`.
+  Vaakasegmentit: pituus = arvio, kirkkaat = tehdyt. est 8 vei pipeillä
+  ~110px, vie nyt 62px. Variantit `mockup-listamittari.html` (valittu B).
+  `mkPips` jäi ajastinwidgetin `pdots`-riville.
+- **`<use>`-varjopuuhun ei pääse selektorilla.** `.qqb.on svg ellipse`
+  väritti vanhan piirtäjän sisäosia; spritellä sääntö on kuollut ja väri
+  kuuluu elementille (`color` napille, `currentColor` symbolille).
+- **`.list-mark` on `inline-flex`.** Matriisirivillä merkki lisätään
+  `.qtin`in sisään, ja `flex` pudotti sen omalle rivilleen. Kuva paljasti,
+  testi ei.
+- **Ikoni ilman vastinetta setissä on teksti.** 🧹 "Tyhjennä käsi" ei saanut
+  glyfiä: harja ei lue 24px:ssä, eikä samaa tähteä voi antaa kahdelle
+  vastakkaiselle toiminnolle.
+- **`g-pakka`: samankokoinen kortti eri kulmassa ei voi pilkistää vain
+  yhdeltä sivulta.** Kierretty suorakaide ei mahdu samankokoisen sisään
+  millään siirrolla, joten takakortti työntyy aina kahdesta vastakkaisesta
+  nurkasta ylimmän yli. Parametriskannaus (kulma × dx × dy) palautti nolla
+  kelvollista sijoittelua — vasta kun korttien välinen kulmaero pudotettiin
+  nollaan ja **koko pino** kallistettiin 16°, päällimmäinen pysyi ehjänä.
+  Rako on `<mask>` kuten `g-sovi`ssa. Kaksi samankokoista suorakaidetta
+  lukee helposti "kopioi"-ikonina; korttimaisuus vaatisi yksityiskohdan,
+  joka ei mahdu 24px:n ruudukkoon.
+- **`#inv-btn` on kuollut nappi** — `display:none` sekä `min-width:900`- että
+  `max-width:899.98`-lohkossa, eli kaikilla leveyksillä (sama kuvio kuin
+  `#hand-toggle`illa). Pakka avataan mobiilissa `#mnav`ista ja desktopilla
+  `#deck-rail`istä. `g-pakka` on nyt siinä napissa; jos nappi siivotaan,
+  glyfi siirtyy tai poistuu sen mukana.
+- **Hexiä ei voi etsiä hexinä.** `style.background='#c49a3a'` normalisoituu
+  Chromessa muotoon `rgb(196, 154, 58)` — inline-tyylin väriliteraalia
+  etsivän mittarin on haettava `rgb(`, ei `#`.
+- **Emojiskannaus ohittaa tehtävän nimen.** Aamukortin teksti on
+  `☀ Päivän suunnittelu` ja se on localStoragessa olevaa dataa, ei
+  UI-kuorta.
+
+## ⚠ Kortti + ikonisetti: käsintestit tekemättä (2026-08-15)
+
+Haara `kortti-indeksi-ikonit` mergettiin mainiin, mutta **näitä ei ole
+todennettu oikeassa selaimessa** — headless ei aja CSS-siirtymiä, ei tunne
+hoveria eikä kosketusta, eikä `backdrop-filter` raportoidu siellä lainkaan.
+Automaattitestit ovat vihreät (21 suitea, `card_zones` 48/48, `list_icons`
+25/25, detektoridelta 0), mutta ne mittaavat rakennetta, eivät liikettä.
+
+Palautus vaiheittain: `git revert` — jokainen vaihe on oma committinsa.
+
+| # | Testi | Mitä katsotaan | Miksi headless ei kata |
+|---|---|---|---|
+| 1 | Käsiviuhka, hover | Kortti nousee, indeksipalsta näkyy limitetyn kortin alta, viuhka ei värise | Virtuaaliaika ei aja CSS-siirtymiä |
+| 2 | Rata, hover kortista toiseen | Kortti liukuu oikealle ja palaa; osoitin naapuriin ei jätä korttia jumiin | Sama |
+| 3 | **Radiaalirypäs, hover keskinapista satelliittiin** | Rypäs EI romahda matkalla (`.rad-hit`-kiekko kantaa) | Ei osoitinta headlessissa |
+| 4 | Rypään 8 nappia | Aloita/lopeta, tehty, odottaa, seuraava, muokkaa, sammakko, linkki, poista tekevät oikean asian | Vaatii tilasiirtymiä + ajastimen |
+| 5 | Kosketus puhelimella | Napautus kortin taustaan avaa rypään; pyyhkäisyeleet (oikea/vasen/ylös) toimivat yhä; napit ≥44px | Ei kosketusta |
+| 6 | Aurinkoteema, indeksipalsta | Kvadranttimerkki, kustannussegmentit ja verbiglyfi erottuvat — **kontrastisondilla, ei kuvakaappauksella** | Teemat vaativat oman ajon; kuva ei todenna kontrastia |
+| 7 | Pakka | Kvadranttimerkit 4 muotona, tähtinappi togglaa (väri vaihtuu, ei merkki), Käteen + Tyhjennä, Palauta tehdyllä kortilla | Napit toimivat, mutta ulkoasu hoverissa/aktiivisena vain selaimessa |
+| 8 | Matriisirivi | `cost-bar`: kirkkaat segmentit = tehdyt, himmeät = jäljellä. Erottuvatko himmeät (.28) tummassa teemassa | Silmäkysymys |
+| 9 | Odottavat + siirtovalikko | Palauta-glyfi, kvadranttimerkit valikossa | — |
+| 10 | Nopea tila + reduced-motion | Rypäs, viuhka ja rata toimivat ilman animaatioita | `data-perf="lite"` vaatii oman ajon |
+| 11 | Mobiili | Pakka aukeaa `#mnav`ista, matriisin rivit ja mittari mahtuvat kapealle | Kapea viewport vaatii oikean ikkunan (CSP estää iframen) |
 
 ## Core data model
 
@@ -234,9 +527,34 @@ CSS custom properties: `--ink`, `--surface-xs`, `--surface`, `--surface-md`, `--
 
 (Yleiset säännöt globaalissa CLAUDE.md:ssä — tässä vain projektikohtaiset.)
 
+- **Kysy onko aihetta jo työstetty muualla ennen kuin alat iteroida.**
+  Kädenpuristusikoni vei 13 piirtokierrosta arvaillen; Jaakolla oli siitä
+  valmis projekti (`~/kadenpuristus-ikoni`), jossa geometria oli mitattu
+  referenssistä numeerisesti. Sen kääntäminen SVG:ksi kesti minuutteja.
+  Aina kun aihe tuntuu siltä että sitä on saatettu pohtia aiemmin —
+  kysy ensin.
+- **Iterointibudjetti: 2–3 kierrosta.** Jos kolmas yritys ei ole
+  lähempänä kuin ensimmäinen, vika ei ole seuraavassa yrityksessä vaan
+  menetelmässä. Pysähdy ja vaihda: hae referenssi, mittaa, tai kysy.
+  Silmämääräinen jäljentäminen referenssikuvasta ei konvergoi — mitattu
+  geometria konvergoi kerralla.
+- **Katso isona ennen kuin uskot pikkukuvaa.** Kättely näytti toimivalta
+  ikonisivun 40px:n ruudussa; 300px:iin suurennettuna se oli "kaksi
+  timanttia ja möykky". Silmä täydentää tutun muodon vaikka sitä ei ole.
+- **Lue lähdedokumentti sanatarkasti, älä sen seurauksia.** Ikoniprojektin
+  "sormiraot katoavat 28px:ssä" kuvaa *milloin sormet lakkaavat
+  erottumasta* — siitä ei seuraa että karsittu versio olisi silloin
+  parempi. Tämä lukuvirhe tuotti turhan toisen symbolin, jonka mittaus
+  sitten kumosi.
+- **Käyttäjän antama koodi kannattaa korjata, ei hylätä.** Kättelyluonnos
+  näytti vasaralta kahden bugin takia (`rotate(45 x y)` kiersi rectin
+  kulman ympäri, ja sormien siirtymä oli sormen omansuuntainen eikä
+  kohtisuora). Rakenne oli oikea; korjaus vei kaksi minuuttia ja ohitti
+  kaikki omat yritykset.
 - **Lue vain relevantti osa** suunnitteludokumenteista — ei koko tiedostoa.
 - **Validoi ennen toimitusta:** `node --check` syntaksille; `sed -n` kontekstin lukemiseen ennen korvausta.
 - **Massamuutokset:** sed tai Python-skriptit, ei manuaalisia rivirivi-muutoksia.
+- **Muotovaihtoehdot rinnakkain yhteen generoituun sivuun, ei yksi kerrallaan.** SVG-variantit kannattaa tuottaa Python-skriptillä (parametrit funktioargumentteina) yhdeksi scratchpad-HTML:ksi, jossa jokainen variantti on useassa koossa — yksi kaappaus näyttää sekä muodon että sen missä koossa se hajoaa. Yksittäin katsottuna variantit näyttävät kaikki kelvollisilta.
 - DOM-haut: käytä aina id-pohjaisia selektoreja. Style-attribuuttiselektorit (`closest('div[style*="display:flex"]')`) ovat hauraita.
 
 ## Parannuskierros 2026-06-12 — valmis
@@ -257,6 +575,11 @@ CSS custom properties: `--ink`, `--surface-xs`, `--surface`, `--surface-md`, `--
 - Z-index-skaala dokumentoitu DESIGN.md:ssä
 
 ## Nykyinen kehitystila
+
+- **Mockupissa hyväksytty ≠ sovelluksessa.** Kortin kaksoisindeksi ja
+  radiaalivalikko ovat vain `mockup-kortti-v2.html`:ssä — viisi committia,
+  0 riviä `index.html`:ään. Ennen kuin epäilet regressiota localhostissa,
+  `grep -c` että ominaisuus on oikeasti viety.
 
 ### Modernization-prosessi (2026-05-28) — valmis
 
@@ -615,6 +938,7 @@ Mobiili oli jäänyt paikkaustasolle: kaikki 2026 tehty työ on `min-width:900px
 - **`window.close()` ei sulje välilehteä jota se ei avannut** — samassa välilehdessä paluu on `history.back()`, fallback `location.href`.
 - **Areenan hehkuanimaatio antaa ~16 % pikselikohinaa.** Regressiovertailu on tehtävä animaatiot jäädytettynä (`*,*::before,*::after{animation:none!important;transition:none!important}`), muuten diffi on lukukelvoton. Jäädytettynä 1440×900 ja 1920×1080 antoivat **0,0000 %** jokaisessa vaiheessa. Portti on skriptinä: `scratchpad/regress.sh` (seedaus + jäädytys + `pngdiff.py`, joka on riippuvuudeton PNG-lukija — PIL:iä ei ole).
 - **`pkill -f "chrome-linux/chrome"` tappaa oman kutsuvan shellinsä** (komentorivi täsmää kuvioon) → exit 144. Käytä `pkill -f "[c]hrome-linux/chrome"`.
+- Hakasulkeutus ei riitä jos sama teksti esiintyy komentorivillä toisaalla: `pkill -f "[h]ttp.server 8781"; python3 -m http.server 8781 …` tappaa silti kutsuvan shellin — pkill osuu jälkimmäiseen esiintymään. Tapa erillisessä komennossa
 - **`--dump-dom` ei näe `location.href`-navigointia** — se palaa ensimmäisen latauksen DOM:illa. Samaan välilehteen navigointia ei voi todentaa näin; testaa määränpääsivu suoraan.
 - **Firebase-SDK ei lataudu hiekkalaatikossa** (ei pääsyä `gstatic.com`iin) → `window._firebaseApp` on `undefined` ja kaikki `window._*`-moduulifunktiot puuttuvat. Firestore-riippuvainen koodi on testattava tyngillä (`window._sessionPush=...`). Sivutuote: kuvakaappaukset todistavat että sovellus toimii ilman Firebasea.
 - Ikonit voi renderöidä ilman PIL:iä: inline-SVG HTML-kääreessä + `--screenshot` halutulla `--window-size`illa, `file://`-URL (http-palvelin kuolee shellin mukana).
@@ -1019,10 +1343,10 @@ Opit:
 mobiili näe sitä, mutta mobiilin `nth-child`-nollaus tiivistyi yhdeksi
 `transform:none`-riviksi — tarkista hylly puhelimella.
 
-### Tehtäväjonon rata areenan lattialla (2026-08-11) — haarassa, ei mergeä mainiin
+### Tehtäväjonon rata areenan lattialla (2026-08-11) — mainissa
 
-Haara `claude/task-queue-visibility-ymx47m`, PR #10. **Ei mergeä** — tämä on
-testiversio jota ajetaan omalla datalla.
+Alun perin haara `claude/task-queue-visibility-ymx47m` / PR #10; **mergetty
+mainiin** commitissa `4a1c953`.
 
 **Vika:** käsiviuhka lepää areenakortin alapuolella, joten käsikortin napautus
 *näyttää* kortin lyömiseltä areenalle. `promoteToHand` tekee kuitenkin
@@ -1065,7 +1389,8 @@ kortin **oikeassa laidassa** ja vasen alanurkka jää tyhjäksi.
 `--lane-max` on siksi enintään **4**: viides kortti saisi `--qz:4` ja törmäisi
 `.lane-more`en, kuudes `#arena-label`iin. Mockup käytti arvoja rata 20 /
 areenakortti 30 / hover 60 — **ne olisivat nostaneet areenakortin Eisenhower-
-matriisin peekin (z:20) päälle.** DESIGN.md §6 -taulukko on päivittämättä.
+matriisin peekin (z:20) päälle.** DESIGN.md §6 -taulukko on päivitetty
+2026-08-15 (luettu koodista, ei suunnitelmasta).
 
 **Opit:**
 - **`#queue-lane` on `z-index:auto` TARKOITUKSELLA.** Positioitu elementti ei luo
@@ -1164,9 +1489,10 @@ Impeccable-deltaa **ei ajettu** — detektori on Jaakon koneella. Aja
 
 **Palautus:** `git revert 6113618 1715fdb` (C-korjaukset ja rata erikseen).
 
-### Ajastetut kortit (2026-08-12) — haarassa, manuaalitestit tekemättä
+### Ajastetut kortit (2026-08-12) — mainissa, manuaalitestit tekemättä
 
-Haara `claude/ajastetut-kortit-korjaus`, PR #11. Spec:
+Alun perin haara `claude/ajastetut-kortit-korjaus` / PR #11, **mergetty mainiin**
+commitissa `c223435`. Spec:
 `docs/superpowers/specs/2026-08-12-ajastetut-kortit-design.md`.
 
 **Vika:** ajastettu tehtävä näkyi vain pakassa. Tähden sai laitettua mutta

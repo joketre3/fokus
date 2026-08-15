@@ -161,8 +161,11 @@
 
       var kertaTask = { schedule:{type:'once',date:'2026-08-12',time:'08:00'},
                         scheduled_hidden:false };
+      // Vaihe 5: merkki ei ole enaa tekstissa. fmtSchedule palauttaa
+      // pelkan tekstin ja kutsuja lisaa glyfin (schedIcon) omana
+      // elementtinaan — SVG ei kulje textContentissa.
       ok('fmtSchedule once: suomalainen paivamaara',
-         window.fmtSchedule(kertaTask) === '📅 Ajastettu 12.8.2026 klo 08:00',
+         window.fmtSchedule(kertaTask) === 'Ajastettu 12.8.2026 klo 08:00',
          window.fmtSchedule(kertaTask));
 
       var laukaistu = { schedule:{type:'once',date:'2026-08-11',time:'08:00',triggered:true},
@@ -173,7 +176,7 @@
 
       var toisto = { schedule:{type:'repeat',days:[1,3],time:'08:00'} };
       ok('fmtSchedule repeat: viikonpaivat lyhenteina',
-         window.fmtSchedule(toisto) === '🔁 Ma, Ke klo 08:00',
+         window.fmtSchedule(toisto) === 'Ma, Ke klo 08:00',
          window.fmtSchedule(toisto));
 
       // Pakkakortin rivi on 8px ja ~125px levea. "Ma, Ti, Ke, To, Pe" ei
@@ -194,7 +197,7 @@
       // Lyhyt muoto jattaa "Ajastettu"-etuliitteen pois, mutta ei
       // myohassa-tietoa — se on juuri se mita kortista pitaa nahda.
       ok('fmtSchedule short: ei Ajastettu-etuliitetta',
-         window.fmtSchedule(kertaTask, true) === '📅 12.8.2026 klo 08:00',
+         window.fmtSchedule(kertaTask, true) === '12.8.2026 klo 08:00',
          window.fmtSchedule(kertaTask, true));
 
       var myohassaT = { schedule:{type:'once',date:eilenStr,time:'08:00'},
@@ -210,16 +213,20 @@
       // Ajastusrivi piirtyy korttiin myos ilman kayttajan lisatietoja.
       var kortti = renderArenaCard(t950, null, false, 'hand');
       var schedEl = kortti.querySelector('.tcg-card__sched');
+      // Merkki on nyt <use href="#g-ajastettu"> eika emoji tekstin alussa.
+      var schedUse = schedEl && schedEl.querySelector('use');
       ok('ajastusrivi piirtyy korttiin ilman omaa lisatietotekstia',
-         !!schedEl && schedEl.textContent.indexOf('📅') === 0,
-         schedEl ? schedEl.textContent : 'rivia ei ole');
+         !!schedEl && schedEl.textContent.indexOf('Ilmestyi') >= 0 &&
+         !!schedUse && schedUse.getAttribute('href') === '#g-ajastettu',
+         schedEl ? (schedEl.textContent + ' / ' +
+                    (schedUse ? schedUse.getAttribute('href') : 'ei glyfia')) : 'rivia ei ole');
 
       // Kayttajan oma teksti tulee ajastusrivin jalkeen, ei sen tilalle.
       t950.lisatiedot = 'Muista soittaa esihenkilolle';
       var kortti2 = renderArenaCard(t950, null, false, 'hand');
       var notes2 = kortti2.querySelector('.tcg-card__notes-tcg');
       ok('oma teksti sailyy ajastusrivin rinnalla',
-         !!notes2 && notes2.textContent.indexOf('📅') === 0
+         !!notes2 && notes2.textContent.indexOf('Ilmestyi') >= 0
            && notes2.textContent.indexOf('Muista soittaa') > 0,
          notes2 ? notes2.textContent : 'lohkoa ei ole');
 

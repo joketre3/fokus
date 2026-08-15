@@ -61,7 +61,6 @@
      --subtle on koriste-/rajatokeni — sitä ei käytetä color:-arvona. */
   --faint:rgba(255,255,255,.55);
 
-
   /* 10% TOIMINTO — lämmin kulta (auringonvalo)        */
   --accent:#c49a3a;
   --accent-dim:rgba(196,154,58,.15);
@@ -137,6 +136,24 @@
   --ink-on-art:#fff;
   --pomo-hi:#e8623a;
   --q2-bright:#4a8a4a;
+
+  /* Kortin kaksoisindeksi — arvot mitattu mockup-kortti-v2.html:ssa.
+     Mitat ovat AREENAKORTIN mittoja; kasi ja rata skaalaavat ne
+     --idx-k:lla (saannot .tcg-card__idx-lohkon yhteydessa). */
+  --idx-k:1;         /* moodikerroin, oletus areena */
+  --idx-w:34px;      /* indeksipalstan leveys */
+  --idx-gut:3px;     /* turva-alue plate-reunaan */
+  --seg-h:6px;       /* kustannussegmentin pituus */
+  --seg-w:7px;       /* kustannussegmentin paksuus */
+  --seg-gap:2px;     /* segmenttivali */
+
+  /* Radiaalinen toimintorypas — mitat mockup-kortti-v2.html:sta.
+     Vain areenakortilla, joten naita ei skaalata --idx-k:lla. */
+  --rad-main:62px;   /* keskinappi */
+  --rad-sat:42px;    /* satelliitti */
+  --rad-r:62px;      /* sisarenkaan sade */
+  --rad-r2:102px;    /* ulkorenkaan sade */
+  --rad-y:44%;       /* pystysijainti kortilla */
   /* 1-3-5 -budjettimittari: teksti tummalla well-paneelilla.
      --q2 (#2d5a3d) on tayttovari, kontrasti vain 2.3:1 — omat tokenit. */
   --budget-ok:#63a463;
@@ -469,8 +486,23 @@ input[type=date]{font-family:'DM Sans',sans-serif;font-size:var(--text-sm);color
 .qti{display:flex;align-items:center;gap:.4rem;padding:.3rem 0;border-bottom:1px dashed var(--subtle);font-size:var(--text-sm);font-weight:300}
 .qti:last-child{border-bottom:none}
 .qtin{flex:1}
-.qqb{font-size:var(--text-xs);width:18px;height:18px;border-radius:var(--r-full);border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.qqb.on svg ellipse,.qqb.on svg circle,.qqb.on svg path,.qqb.on svg line{opacity:1}
+.qqb{font-size:var(--text-xs);width:18px;height:18px;border-radius:var(--r-full);border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--pomo)}
+/* Listojen tilamerkit — sama sprite kuin kortilla (vaihe 6). Vari on
+   luokassa, ei piirtajan sisalla eika inline-tyylissa. */
+/* inline-flex, ei flex: matriisirivilla merkki lisataan tehtavan nimen
+   jalkeen (.qtin), ja block-tason lohko pudottaisi sen omalle rivilleen. */
+.list-mark{display:inline-flex;align-items:center;flex-shrink:0;line-height:0;vertical-align:-2px}
+.list-mark svg{display:block}
+.list-mark--frog{color:var(--q2-bright)}
+.list-mark--wait{color:var(--wait)}
+.list-mark--queue{color:var(--pomo);opacity:.7}
+/* Nappien glyfit (vaihe 6). SVG flex-rivissa venyy ilman flex:none —
+   sama vikaluokka kuin typelinessa ja kortin ajastusrivilla. */
+#inv-star-filtered svg,#inv-btn svg,.pika-chip svg,
+.eise-peek-q-btn svg,.waiting-item__restore svg{flex:none;display:block}
+.waiting-item__restore{display:flex;align-items:center}
+.inv-card__star-btn svg,.inv-card__active-badge svg,.inv-card__star-badge svg{display:block}
+
 .qbtn,.qqb,.infobtn{position:relative;}
 .qbtn::after,.qqb::after,.infobtn::after{content:'';position:absolute;inset:-10px;}
 .qdnb{font-size:var(--text-xs);padding:.12rem .38rem;border-radius:var(--r-sm);border:1px solid var(--accent);color:var(--accent);background:var(--surface);cursor:pointer;opacity:0;font-family:'DM Sans',sans-serif}
@@ -527,7 +559,12 @@ input[type=date]{font-family:'DM Sans',sans-serif;font-size:var(--text-sm);color
 .eise-move-menu{position:absolute;z-index:210;background:var(--surface-xs);border:1px solid var(--border);border-radius:var(--r-md);box-shadow:0 6px 20px rgba(0,0,0,.18);min-width:160px;padding:.3rem 0;pointer-events:auto}
 .eise-move-item{display:flex;align-items:center;gap:.5rem;padding:.45rem .85rem;font-size:var(--text-sm);font-weight:400;cursor:pointer;transition:background .1s;white-space:nowrap;color:var(--ink)}
 .eise-move-item:hover{background:var(--surface)}
-.eise-move-item .eise-move-dot{width:7px;height:7px;border-radius:var(--r-full);flex-shrink:0}
+.eise-move-item .eise-move-dot{width:10px;height:10px;flex-shrink:0;display:block}
+.eise-move-item .eise-move-dot svg{width:100%;height:100%;display:block}
+.eise-move-dot--q1{color:var(--q1)}
+.eise-move-dot--q2{color:var(--q2)}
+.eise-move-dot--q3{color:var(--q3)}
+.eise-move-dot--q4{color:var(--q4)}
 html[data-theme="aurinko"] .eise-move-menu{background:rgba(255,255,255,.98)!important;border-color:rgba(180,130,70,.3)!important}
 html[data-theme="aurinko"] .eise-move-item:hover{background:rgba(180,130,70,.1)!important}
 
@@ -1544,86 +1581,6 @@ html[data-theme="aurinko"][data-perf="lite"]{
 <!-- Vaihe 9.6: Custom verbi-ikonien SVG sprite -->
 <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
 <defs>
-  <symbol id="verb-i-soita" viewBox="0 0 24 24">
-    <path fill="#f4f0e0" d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.5 0 1 .4 1 1V20c0 .5-.5 1-1 1C10.6 21 3 13.4 3 4c0-.5.5-1 1-1H7.5c.6 0 1 .5 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1z"/>
-    <path fill="#a8a290" d="M18.5 17.7l1.5 1.5c-.2.5-.7.8-1.5.8-2.9 0-5.7-.6-8.2-1.7l-.5-1.7 1.5-1c2 1.1 4.6 2 7.2 2.1z"/>
-    <circle cx="5.8" cy="5.5" r="1.6" fill="#c49a3a"/>
-    <circle cx="5.8" cy="5.5" r="0.7" fill="#2a1f10"/>
-  </symbol>
-  <symbol id="verb-i-sovi" viewBox="0 0 24 24">
-    <rect x="3" y="6" width="18" height="15" rx="2" fill="#f4f0e0"/>
-    <rect x="3" y="6" width="18" height="4.5" fill="#c49a3a"/>
-    <rect x="3" y="9.8" width="18" height="0.7" fill="#8a6620"/>
-    <rect x="6.5" y="2.5" width="2.5" height="6" rx="1.25" fill="#8a6620"/>
-    <rect x="15" y="2.5" width="2.5" height="6" rx="1.25" fill="#8a6620"/>
-    <rect x="6" y="13" width="2" height="2" rx="0.4" fill="#a8a290"/>
-    <rect x="10.5" y="13" width="2" height="2" rx="0.4" fill="#a8a290"/>
-    <rect x="15" y="13" width="2" height="2" rx="0.4" fill="#c49a3a"/>
-    <rect x="6" y="16.5" width="2" height="2" rx="0.4" fill="#a8a290"/>
-    <rect x="10.5" y="16.5" width="2" height="2" rx="0.4" fill="#a8a290"/>
-    <rect x="15" y="16.5" width="2" height="2" rx="0.4" fill="#a8a290"/>
-  </symbol>
-  <symbol id="verb-i-kirjaa" viewBox="0 0 24 24">
-    <path fill="#f4f0e0" d="M20.5 3.5c-.8-.4-1.6-.2-2.2.4l-11.4 11.4-1.6 5 5-1.6 11.4-11.4c.6-.6.8-1.4.4-2.2-.3-.7-.9-1.3-1.6-1.6z"/>
-    <path fill="#c49a3a" d="M17.5 4.5l-9 9 1.5 1.5 9-9-1.5-1.5z"/>
-    <path fill="#2a1f10" d="M20 4l-.5-.5c-.3-.3-.7-.3-1 0L17 5l1.5 1.5L20 5c.3-.3.3-.7 0-1z"/>
-    <path fill="#a8a290" d="M5.3 20.3l1.6-5 .5.5-1.3 4z"/>
-    <circle cx="5" cy="20" r="1.4" fill="#c49a3a"/>
-    <circle cx="5" cy="20" r="0.6" fill="#2a1f10"/>
-  </symbol>
-  <symbol id="verb-i-tee" viewBox="0 0 24 24">
-    <rect x="10.5" y="11" width="4" height="11" rx="1" fill="#8a6620"/>
-    <rect x="10.5" y="11" width="4" height="11" rx="1" fill="#c49a3a" opacity="0.25"/>
-    <rect x="10.5" y="13" width="4" height="0.5" fill="#2a1f10" opacity="0.5"/>
-    <rect x="10.5" y="17" width="4" height="0.5" fill="#2a1f10" opacity="0.5"/>
-    <rect x="10.5" y="20" width="4" height="0.5" fill="#2a1f10" opacity="0.5"/>
-    <path fill="#f4f0e0" d="M4 6.5C4 5.7 4.7 5 5.5 5h14c.8 0 1.5.7 1.5 1.5v4c0 .8-.7 1.5-1.5 1.5h-14C4.7 12 4 11.3 4 10.5v-4z"/>
-    <path fill="#a8a290" d="M4 9.5h17v1c0 .8-.7 1.5-1.5 1.5h-14C4.7 12 4 11.3 4 10.5v-1z"/>
-    <rect x="18" y="5" width="3" height="7" rx="0.5" fill="#c49a3a"/>
-    <rect x="20" y="5.5" width="0.6" height="6" fill="#fff" opacity="0.6"/>
-    <rect x="4.5" y="6.5" width="0.4" height="5" fill="#fff" opacity="0.4"/>
-  </symbol>
-  <symbol id="verb-i-selvita" viewBox="0 0 24 24">
-    <circle cx="10" cy="10" r="7.5" fill="#f4f0e0"/>
-    <circle cx="10" cy="10" r="5.5" fill="#1e3a3a"/>
-    <ellipse cx="8" cy="8" rx="2" ry="1.2" fill="#fff" opacity="0.55" transform="rotate(-30 8 8)"/>
-    <rect x="13.5" y="14.5" width="3.2" height="8.5" rx="1.6" transform="rotate(-45 15.1 17)" fill="#c49a3a"/>
-    <rect x="14.3" y="15" width="1.5" height="7" rx="0.75" transform="rotate(-45 15.1 17)" fill="#8a6620"/>
-    <circle cx="19" cy="19" r="1.6" fill="#c49a3a"/>
-    <circle cx="19" cy="19" r="0.9" fill="#8a6620"/>
-  </symbol>
-  <symbol id="verb-i-vie" viewBox="0 0 24 24">
-    <polygon points="2,21 23,12 2,3 2,10 17,12 2,14" fill="#f4f0e0"/>
-    <polygon points="2,14 17,12 2,21" fill="#a8a290"/>
-    <polygon points="2,3 17,12 14,12 2,5" fill="#fff" opacity="0.3"/>
-    <path d="M2 3 L17 12" stroke="#2a1f10" stroke-width="0.4" fill="none" opacity="0.5"/>
-    <path d="M2 21 L17 12" stroke="#2a1f10" stroke-width="0.4" fill="none" opacity="0.5"/>
-    <path d="M2 14 L17 12" stroke="#2a1f10" stroke-width="0.3" fill="none" opacity="0.4"/>
-    <circle cx="14" cy="12" r="0.6" fill="#c49a3a"/>
-  </symbol>
-  <symbol id="verb-i-tarkista" viewBox="0 0 24 24">
-    <path fill="#f4f0e0" d="M12 2L4 5.5V11c0 5.2 3.4 9.9 8 11.5 4.6-1.6 8-6.3 8-11.5V5.5L12 2z"/>
-    <path fill="#a8a290" d="M12 22.5C16.6 21 20 16.2 20 11V5.5L12 2v20.5z"/>
-    <rect x="11.4" y="2.5" width="1.2" height="19.5" fill="#c49a3a"/>
-    <rect x="6" y="10.5" width="12" height="1.2" fill="#c49a3a"/>
-    <circle cx="12" cy="11" r="1.8" fill="#8a6620"/>
-    <circle cx="12" cy="11" r="1" fill="#c49a3a"/>
-    <circle cx="12" cy="11" r="0.4" fill="#fff" opacity="0.6"/>
-  </symbol>
-  <symbol id="verb-i-varaa" viewBox="0 0 24 24">
-    <rect x="3" y="2" width="18" height="2" rx="0.5" fill="#8a6620"/>
-    <rect x="3" y="20" width="18" height="2" rx="0.5" fill="#8a6620"/>
-    <rect x="3" y="2" width="18" height="0.5" fill="#c49a3a"/>
-    <rect x="3" y="21.5" width="18" height="0.5" fill="#c49a3a"/>
-    <polygon points="4.5,4 19.5,4 14.5,9.5 14.5,14.5 19.5,20 4.5,20 9.5,14.5 9.5,9.5" fill="#f4f0e0"/>
-    <polygon points="6,5 18,5 13.5,10 10.5,10" fill="#c49a3a"/>
-    <polygon points="10.5,15 13.5,15 18,19 6,19" fill="#c49a3a"/>
-    <polygon points="10.5,15 13.5,15 14,15.5 10,15.5" fill="#8a6620"/>
-    <rect x="11.7" y="10" width="0.6" height="5" fill="#c49a3a"/>
-    <polygon points="6,5 18,5 17,6 7,6" fill="#fff" opacity="0.5"/>
-    <polygon points="5,19 19,19 18,19.5 6,19.5" fill="#fff" opacity="0.2"/>
-  </symbol>
-
   <!-- ═══ Q-TAUSTATAIDE (200×280, kortin kuvasuhde) — FUT-kortin tausta ═══ -->
 
   <!-- Q1: räjähtävä kiire — terävät sirpaleet + starburst -->
@@ -1746,11 +1703,327 @@ html[data-theme="aurinko"][data-perf="lite"]{
     <circle cx="16.5" cy="8.2" r="0.5" fill="#f4f0e0"/>
     <path d="M8 16.5 Q12 19.5 16 16.5" stroke="#1d3a28" stroke-width="1.1" fill="none" stroke-linecap="round"/>
   </symbol>
+  <!-- ═══════════════════════════════════════════════════════════════
+       GLYFISETTI — lahde: mockup-ikonit.html
+       Perusviivapaino 1.75 @ 24 (poikkeukset: tehty 2.2, poista 2;
+       sovi, aloita ja seis ovat taytettyja ilman viivaa), currentColor,
+       ei kovakoodattuja hexeja.
+
+       YKSI PAINO KAIKKIALLA (paatetty 2026-08-15). Sama glyfi samalla
+       painolla kortin kuva-alueella (168px), pakan verb-bg:ssa (80px)
+       ja typelinessa (14px). Ala lisaa sigil-symboleja alaka paksunna
+       viivaa isoihin kokoihin — molemmat mitattiin ja hylattiin, ks.
+       ICON_S:n kommentti ja CLAUDE.md.
+
+       Vanhat verb-i-* (8 kpl) poistettiin talta kohtaa 2026-08-15.
+       ALA muokkaa naita vain toisessa tiedostossa — mockup-ikonit.html
+       on referenssi.
+       ═══════════════════════════════════════════════════════════════ -->
+
+  <!-- ═══ VERBIGLYFIT — mockup-kortti-v2.html:stä sellaisenaan ═══ -->
+  <symbol id="g-soita" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7.6 4.5 5 6c-1 .6-1.3 1.9-.9 3 .9 2.6 2.4 5 4.4 7s4.4 3.5 7 4.4c1.1.4 2.4.1 3-.9l1.5-2.6-3.8-2.2-2 2c-1.8-.9-3.3-2.4-4.2-4.2l2-2z"/>
+  </symbol>
+  <!-- ═══ SOVI — kadenpuristus (lukittu 2026-08-14) ═══
+       Geometria on MITATTU erillisen ikoniprojektin referenssikuvasta
+       (~/kadenpuristus-ikoni: CUFF_L, CUFF_R, THUMB, FINGERS) ja
+       muunnettu tahan SVG:ksi. Luvut eivat ole arvauksia — ala pyorista
+       niita "siistimmiksi".
+
+       EI ole Material Symbols "handshake" eika muukaan kirjastoikoni:
+       ne ovat yhtenaista massaa, jossa sormet ovat ohuita tummia rakoja.
+       Tama koostuu irrallisista paloista — kaksi hihansuuta, peukalokaari
+       ja seitseman sormikapselia — joiden valissa nakyy tausta. Tama meni
+       kerran pieleen; ala "korjaa" sita kirjastoikoniksi.
+
+       Yksi tiheys kaikkiin kokoihin. Kokeilin karsittua 4 sormen versiota
+       pieniin kokoihin, mutta mittaus ei tukenut sita: erottuvia osia
+       14-20px:ssa 1-3 enemman (ero on kohinaa), ja 28px:sta ylospain
+       taysi voittaa selvasti (43/84/150 vs 41/58/92). Alle 20px:ssa
+       sormet eivat erotu kummassakaan — jaljelle jaa siluetti, ja siina
+       taysi on rikkaampi. -->
+  <symbol id="g-sovi" viewBox="0 0 24 24" fill="currentColor"><rect x="1.82" y="6.13" width="7.34" height="4.04" rx="1.1" transform="rotate(-45 5.49 8.15)"/><rect x="15.12" y="6.22" width="6.42" height="5.32" rx="1.28" transform="rotate(45 18.33 8.88)"/><path d="M10.26 10.41A0.825 0.825 0 0 1 9.16 9.19L9.98 8.45A0.825 0.825 0 0 1 11.08 9.67Z"/><path d="M11.11 9.65A0.825 0.825 0 0 1 9.95 8.47L10.69 7.74A0.825 0.825 0 0 1 11.85 8.92Z"/><path d="M11.77 8.99A0.825 0.825 0 0 1 10.77 7.67L11.5 7.12A0.825 0.825 0 0 1 12.5 8.44Z"/><path d="M12.3 8.55A0.825 0.825 0 0 1 11.7 7.01L12.43 6.73A0.825 0.825 0 0 1 13.03 8.27Z"/><path d="M12.83 8.32A0.825 0.825 0 0 1 12.63 6.68L13.37 6.59A0.825 0.825 0 0 1 13.57 8.23Z"/><path d="M13.3 8.22A0.825 0.825 0 0 1 13.64 6.6L14.56 6.79A0.825 0.825 0 0 1 14.22 8.41Z"/><path d="M14.07 8.36A0.825 0.825 0 0 1 14.71 6.84L15.81 7.3A0.825 0.825 0 0 1 15.17 8.82Z"/><path d="M7.09 12.46A0.87 0.87 0 0 1 8.33 13.7L6.91 15.12A0.87 0.87 0 0 1 5.67 13.88Z"/><path d="M8.56 13.95A0.87 0.87 0 0 1 9.82 15.15L8.46 16.56A0.87 0.87 0 0 1 7.2 15.36Z"/><path d="M10.21 15.38A0.87 0.87 0 0 1 11.43 16.62L10.12 17.89A0.87 0.87 0 0 1 8.9 16.65Z"/><path d="M11.69 16.93A0.87 0.87 0 0 1 12.89 18.19L11.94 19.09A0.87 0.87 0 0 1 10.74 17.83Z"/><path d="M18.52 13.24A0.87 0.87 0 0 1 17.28 14.48L14.29 11.49A0.87 0.87 0 0 1 15.53 10.25Z"/><path d="M16.96 14.8A0.87 0.87 0 0 1 15.72 16.04L12.73 13.05A0.87 0.87 0 0 1 13.97 11.81Z"/><path d="M15.12 15.99A0.87 0.87 0 0 1 13.88 17.23L11.17 14.52A0.87 0.87 0 0 1 12.41 13.28Z"/></symbol>
+  <symbol id="g-tee" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M13.5 3.5 20.5 10.5 17 14 10 7z"/>
+    <path d="M11.5 8.5 4 16v4h4l7.5-7.5"/>
+  </symbol>
+
+  <symbol id="g-selvita" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="10.5" cy="10.5" r="6.5"/>
+    <path d="M15.3 15.3 20.5 20.5"/>
+  </symbol>
+  <symbol id="g-vie" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20.5 3.5 3.5 10l7 3.5 3.5 7z"/>
+    <path d="M20.5 3.5 10.5 13.5"/>
+  </symbol>
+  <symbol id="g-tarkista" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 3.5 4.5 6.3v5.4c0 4.4 3 8.4 7.5 9.8 4.5-1.4 7.5-5.4 7.5-9.8V6.3z"/>
+    <path d="M9 11.8 11.3 14 15 10"/>
+  </symbol>
+  <!-- g-varaa UUSITTU: oli tiimalasi = identtinen g-odottaan kanssa.
+       Varaa on ICS-kalenteriverbi (kuten Sovi ja Aikatauluta), joten se
+       kuuluu kalenterimuotoon; täytetty lohko = varattu aika. -->
+  <symbol id="g-varaa" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3.5" y="5.5" width="17" height="15" rx="2.5"/>
+    <path d="M3.5 10h17M8 3.5v4M16 3.5v4"/>
+    <rect x="6.5" y="12.5" width="8" height="5.5" rx="1.2" fill="currentColor" stroke="none"/>
+  </symbol>
+  <symbol id="g-aikatauluta" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12.5" r="8.5"/>
+    <path d="M12 7.5v5l3.2 2"/>
+  </symbol>
+
+  <!-- g-kirjaa UUSITTU: oli kynä = identtinen g-muokkaan kanssa.
+       Nyt lomake + kynänkärki: kirjaaminen on tiedon tallentamista
+       järjestelmään, muokkaaminen on kortin editointia. -->
+  <symbol id="g-kirjaa" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18.5 12.5V19a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 19V6A1.5 1.5 0 0 1 6 4.5h6.5"/>
+    <path d="M8.5 9.5h4M8.5 13h3"/>
+    <path d="M18.2 3.4 20.6 5.8 14.4 12H12V9.6z"/>
+  </symbol>
+
+  <!-- ═══ UUDET VERBIGLYFIT (vaihe 2) ═══ -->
+
+  <!-- Lähetä: kirjekuori. g-vie on paperilennokki (toimittaminen
+       fyysisesti tai eteenpäin); kirjekuori on viestin lähettämistä. -->
+  <symbol id="g-laheta" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3.5" y="5.5" width="17" height="13" rx="2"/>
+    <path d="M4.2 7 12 12.8 19.8 7"/>
+  </symbol>
+
+  <!-- Lue: avoin kirja, keskitaite erottaa sen g-kirjoitan arkista. -->
+  <symbol id="g-lue" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 6.8C10.2 5.3 7.4 4.5 3.8 4.5v12.8c3.6 0 6.4.8 8.2 2.2"/>
+    <path d="M12 6.8c1.8-1.5 4.6-2.3 8.2-2.3v12.8c-3.6 0-6.4.8-8.2 2.2"/>
+    <path d="M12 6.8v12.7"/>
+  </symbol>
+
+  <!-- Etsi: tähtäin. Tarkoituksella eri muotokieli kuin g-selvitan
+       suurennuslasi — ks. kollisiopari alempana, tämä on päätettävä. -->
+  <symbol id="g-etsi" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="7.5"/>
+    <path d="M12 1.8v3.4M12 18.8v3.4M1.8 12h3.4M18.8 12h3.4"/>
+    <circle cx="12" cy="12" r="1.6"/>
+  </symbol>
+
+  <!-- Kirjoita: arkki + tekstirivit. Ei kynää — kynä on g-muokkaa. -->
+  <symbol id="g-kirjoita" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 3.5h7.5L19 9v11.5H6z"/>
+    <path d="M13.2 3.5V9H19"/>
+    <path d="M9 13h6.5M9 16.5h4.5"/>
+  </symbol>
+
+  <!-- Vastaa: puhekupla + paluunuoli. -->
+  <symbol id="g-vastaa" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20.5 15.5a2 2 0 0 1-2 2H8l-4.5 3.5v-15a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/>
+    <path d="M12.5 8.2 9.5 11l3 2.8"/>
+    <path d="M9.5 11h5.5"/>
+  </symbol>
+
+  <!-- Tapaa: kaksi henkilöä. -->
+  <symbol id="g-tapaa" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="9.2" cy="8" r="3.4"/>
+    <path d="M3 20.2c0-3.2 2.8-5.4 6.2-5.4s6.2 2.2 6.2 5.4"/>
+    <path d="M16.4 5.2a3.4 3.4 0 0 1 0 6.4"/>
+    <path d="M17.6 15.2c2.1.7 3.4 2.6 3.4 5"/>
+  </symbol>
+
+  <!-- Valmistele: jakoavain. Työn tekeminen valmiiksi etukäteen. -->
+  <symbol id="g-valmistele" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 4.6 16.8 7.8l-.6 2.6-2.6.6-3.2 3.2"/>
+    <path d="M14.4 3.9a5.4 5.4 0 0 0-4.6 8.2L4 17.9a1.9 1.9 0 0 0 2.7 2.7l5.8-5.8a5.4 5.4 0 0 0 7.6-6.3"/>
+  </symbol>
+
+  <!-- ═══ TOIMINTOGLYFIT — mockupista ═══ -->
+  <symbol id="g-pika" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M13.5 2.5 5 13.5h5.5L9.5 21.5 19 10.5h-5.5z"/>
+  </symbol>
+  <symbol id="g-sammakko" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4.5 15c0-4.1 3.4-7.5 7.5-7.5s7.5 3.4 7.5 7.5c0 2.5-2 4.5-4.5 4.5H9c-2.5 0-4.5-2-4.5-4.5z"/>
+    <circle cx="8.8" cy="6.8" r="2.3"/><circle cx="15.2" cy="6.8" r="2.3"/>
+  </symbol>
+  <symbol id="g-aloita" viewBox="0 0 24 24">
+    <path d="M9 6.2v11.6c0 .8.9 1.3 1.6.9l9.2-5.8c.6-.4.6-1.4 0-1.8L10.6 5.3c-.7-.4-1.6.1-1.6.9z"
+          fill="currentColor"/>
+  </symbol>
+  <symbol id="g-seis" viewBox="0 0 24 24">
+    <rect x="6.5" y="6.5" width="11" height="11" rx="1.8" fill="currentColor"/>
+  </symbol>
+  <symbol id="g-tehty" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4.5 12.5 9.5 17.5 19.5 6.5"/>
+  </symbol>
+  <symbol id="g-odottaa" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7 3.5h10M7 20.5h10"/>
+    <path d="M8.5 3.5v3.1c0 1 .4 1.9 1.1 2.6L12 11.7l2.4-2.5c.7-.7 1.1-1.6 1.1-2.6V3.5"/>
+    <path d="M8.5 20.5v-3.1c0-1 .4-1.9 1.1-2.6L12 12.3l2.4 2.5c.7.7 1.1 1.6 1.1 2.6v3.1"/>
+  </symbol>
+  <symbol id="g-jonoon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 20V4.5"/><path d="M5.5 11 12 4.5 18.5 11"/>
+  </symbol>
+  <symbol id="g-muokkaa" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16.5 3.8 20.2 7.5 8.7 19H5v-3.7z"/><path d="M14 6.3l3.7 3.7"/>
+  </symbol>
+  <symbol id="g-poista" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round">
+    <path d="M6 6 18 18M18 6 6 18"/>
+  </symbol>
+  <symbol id="g-tarkea" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 3.2 5 5.6v5.1c0 4.1 2.8 7.9 7 9.2 4.2-1.3 7-5.1 7-9.2V5.6z"/>
+    <path d="M12 8v4.4"/><path d="M12 15.6v.1"/>
+  </symbol>
+  <!-- g-kiire UUSITTU (Jaakon referenssi): sekuntikello + vauhtiviivat.
+       Vauhtiviivat ovat se ero joka kantaa 14px:ään asti — pelkkä
+       kruunu+nappi ei riittänyt erottamaan tätä g-pomodorosta. Kolme
+       viivaa, ei kahdeksaa: tiheämpi hajoaa radan syvimmällä kortilla. -->
+  <symbol id="g-kiire" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="15.4" cy="14.2" r="6.2"/>
+    <path d="M13.1 3.4h4.6"/><path d="M15.4 3.4v3.6"/>
+    <path d="M20.3 8.8 21.7 7.4"/>
+    <path d="M15.4 10.8v3.4"/>
+    <path d="M1.6 10.2h6.4M2.8 14.2h5.2M4 18.2h4"/>
+  </symbol>
+  <symbol id="g-linkki" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 13.5a4 4 0 0 0 5.7 0l3-3a4 4 0 1 0-5.7-5.7l-1.7 1.7"/>
+    <path d="M14 10.5a4 4 0 0 0-5.7 0l-3 3a4 4 0 1 0 5.7 5.7l1.7-1.7"/>
+  </symbol>
+
+  <!-- ═══ UUDET TOIMINTOGLYFIT (vaihe 2) ═══ -->
+
+  <!-- Aamu: nouseva aurinko horisontin takaa. Korvaa ☀ -->
+  <symbol id="g-aamu" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7 14.5a5 5 0 0 1 10 0"/>
+    <path d="M12 3.2v3.3M5.1 6.6l2.3 2.3M18.9 6.6l-2.3 2.3"/>
+    <path d="M2.5 14.5h19"/>
+    <path d="M6 19.5h12"/>
+  </symbol>
+
+  <!-- Pomodoro: tomaatti varsineen. Korvaa 🍅. Erottuu
+       g-aikatauluta-kellosta ja g-kiire-sekuntikellosta varren takia. -->
+  <symbol id="g-pomodoro" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 8.5c4.1 0 7.5 3 7.5 6.6S16.1 21.5 12 21.5s-7.5-2.8-7.5-6.4S7.9 8.5 12 8.5z"/>
+    <path d="M12 8.5V6"/>
+    <path d="M12 6c-1-2-3.4-2.4-3.4-2.4M12 6c1-2 3.4-2.4 3.4-2.4"/>
+  </symbol>
+
+  <!-- Ajastettu: herätyskello. Kello + kaksi soittokelloa erottaa sen
+       g-aikatauluta-seinäkellosta: tämä laukeaa itsestään. -->
+  <symbol id="g-ajastettu" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="13.8" r="7.3"/>
+    <path d="M12 9.8v4h3"/>
+    <path d="M3.6 5.2A3.6 3.6 0 0 1 8.4 3.6M20.4 5.2a3.6 3.6 0 0 0-4.8-1.6"/>
+  </symbol>
+
+  <!-- Jatkokortti: kaksi limittäistä korttia + nuoli. EI ketjulenkkiä —
+       se on g-linkki (ulkoinen URL). -->
+  <symbol id="g-jatkokortti" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2.8" y="6.2" width="9.5" height="13" rx="1.8"/>
+    <path d="M15.5 6.2h4.2a1.8 1.8 0 0 1 1.8 1.8v9.4a1.8 1.8 0 0 1-1.8 1.8h-4.2"/>
+    <path d="M13.5 12.7h5.2M16.6 10.4l2.3 2.3-2.3 2.3"/>
+  </symbol>
+
+  <!-- ═══ KVADRANTTIMERKIT ═══ -->
+  <!--  Iltapäivä: aurinko korkeimmillaan horisontin yllä. Täysi ympyrä ja
+       säteet vain ylöspäin erottavat sen g-aamun puolikaaresta; yksi
+       horisonttiviiva erottaa sen g-etsin tähtäimestä ja sitoo sen
+       slot-sarjaan (aamu / iltapäivä / päätös). -->
+  <symbol id="g-paiva" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="10.4" r="4"/>
+    <path d="M12 1.6v2.7M3.4 10.4h2.7M17.9 10.4h2.7"/>
+    <path d="M5.9 4.3 7.8 6.2M18.1 4.3 16.2 6.2"/>
+    <path d="M3 19.4h18"/>
+  </symbol>
+  <!--  Päätös: kuunsirppi. Päivän lopetus. Sirppi on ainoa ontto,
+       kaareva massa setissä — ei osu aurinkoihin eikä ympyröihin. -->
+  <symbol id="g-ilta" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20.2 15.4A8.6 8.6 0 0 1 8.6 3.8a8.6 8.6 0 1 0 11.6 11.6z"/>
+  </symbol>
+  <!--  Lisätiedot: puhekupla häntineen. Kaksi tekstiriviä erottaa sen
+       g-kirjaan lomakkeesta, jossa on kynä. -->
+  <symbol id="g-lisatiedot" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6.2 5.4h12.2A2.4 2.4 0 0 1 20.8 7.8v5.6a2.4 2.4 0 0 1-2.4 2.4h-6.6l-5.2 4.2v-4.2A2.4 2.4 0 0 1 4.2 13.4V7.8a2.4 2.4 0 0 1 2-2.4z"/>
+  </symbol>
+  <!--  Palauta: U-käännös takaisin vasemmalle. Yksi kaari + kärki,
+       vastakohta g-jonoon-nuolelle. -->
+  <symbol id="g-palauta" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6.5 8.2h9.3a4.8 4.8 0 0 1 0 9.6H8"/>
+    <path d="M10 4.4 6.2 8.2 10 12"/>
+  </symbol>
+  <!--  Toistuva: kaksi vastakkaista kaarinuolta. Erottuu g-ajastetusta,
+       jossa on kellotaulu ja viisarit. -->
+  <symbol id="g-toistuva" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4.8 12a7.2 7.2 0 0 1 12.3-5.1l2.1 2.1"/>
+    <path d="M19.2 12a7.2 7.2 0 0 1-12.3 5.1l-2.1-2.1"/>
+    <path d="M19.2 4.6v4.4h-4.4M4.8 19.4V15h4.4"/>
+  </symbol>
+
+  <!-- Vaihe 6: pakan ja listojen viimeiset emojit. -->
+  <!-- Tahtikortti (handForced): setin ainoa sateittainen terava muoto.
+       Lahin naapuri g-pika on epasymmetrinen ja kulkee kulmasta kulmaan
+       (mitattu IoU .500). Tila (paalla / pois) tulee varista, ei toisesta
+       symbolista — sama sopimus kuin radiaalirypaan sammakolla. -->
+  <symbol id="g-tahti" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 3.2l2.72 5.51 6.08.89-4.4 4.29 1.04 6.06L12 17.09l-5.44 2.86 1.04-6.06-4.4-4.29 6.08-.89z"/>
+  </symbol>
+  <!-- Tehtavapakka: kaksi IDENTTISTA korttia (8.6x12.0, suhde .714 = 5:7
+       kuten Fokuksen kortit) samassa 16 asteen kulmassa, pino siirrettyna
+       3.5 yksikkoa. Kulmaero korttien valilla oli umpikuja: samankokoinen
+       suorakaide eri kulmassa ei mahdu toisen sisaan milla tahansa
+       siirrolla, joten takakortti tyontyi aina kahdesta vastakkaisesta
+       nurkasta ylimman yli. Viistous kuuluu siis koko pinolle.
+       Rako maskilla, sama tekniikka kuin g-sovissa. -->
+  <symbol id="g-pakka" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <mask id="pakka-rako" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+      <rect width="24" height="24" fill="#fff" stroke="none"/>
+      <rect x="9.86" y="7.20" width="8.6" height="12.0" rx="1.6" transform="rotate(-16 14.16 13.20)" fill="#000" stroke="#000" stroke-width="3.3"/>
+    </mask>
+    <rect x="5.54" y="4.80" width="8.6" height="12.0" rx="1.6" transform="rotate(-16 9.84 10.80)" mask="url(#pakka-rako)"/>
+    <rect x="9.86" y="7.20" width="8.6" height="12.0" rx="1.6" transform="rotate(-16 14.16 13.20)"/>
+  </symbol>
+
+  <symbol id="q-q1" viewBox="0 0 24 24"><path d="M12 3 22 20H2z" fill="currentColor"/></symbol>
+  <symbol id="q-q2" viewBox="0 0 24 24"><path d="M12 2 22 12 12 22 2 12z" fill="currentColor"/></symbol>
+  <symbol id="q-q3" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="currentColor"/></symbol>
+  <symbol id="q-q4" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="2" fill="currentColor"/></symbol>
+
 </defs>
 </svg>
 <div class="wrap">
     
-
 
   <!-- Background tree decoration -->
   <div style="position:fixed;right:-40px;top:40px;opacity:.06;pointer-events:none;z-index:-1">
@@ -2446,6 +2719,7 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
 #inv-close:hover{color:var(--ink);background:var(--surface)}
 
 #inv-star-filtered, #inv-clear-hand{
+  display:inline-flex;align-items:center;gap:.25rem;
   background:var(--surface);border:1px solid var(--border);
   color:var(--muted);font-family:'DM Sans',sans-serif;
   font-size:var(--text-xs);padding:.3rem .55rem;
@@ -2527,10 +2801,14 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   font-size:80px;opacity:.12;pointer-events:none;z-index:0;
   line-height:1;
 }
+/* Kvadranttimerkki (vaihe 6). Oli 8px kirjainlappu 'Q1' — merkki on nyt
+   muoto, jotta tieto ei kanna pelkalla varilla. 10px riittaa: sarja on
+   valittu erottumaan siluetista (kolmio/vinonelio/ympyra/nelio), ei
+   yksityiskohdasta. */
 .inv-card__q{
-  font-size:8px;letter-spacing:.09em;text-transform:uppercase;
-  font-weight:600;opacity:.65;z-index:1;
+  width:10px;height:10px;opacity:.65;z-index:1;flex-shrink:0;
 }
+.inv-card__q svg{width:100%;height:100%;display:block}
 .inv-card__q--q1{color:var(--pomo)}
 .inv-card__q--q2{color:var(--q2-bright)}
 .inv-card__q--q3{color:var(--muted)}
@@ -2560,28 +2838,35 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
   overflow:hidden;
 }
+/* Merkit olivat emojeja (★ aktiivinen, ⭐ tahtikortti, 🍅 tehdyt, ↩
+   palauta, ☆/⭐ tahtinappi) — glyfeina ne perivat teeman varin ja
+   skaalautuvat samalla viivapainolla kuin kortti. Kokoluokat ovat
+   kiinteita px:eja: pakkakortin rivit ovat 8px, eika em-mitoitus osuisi. */
 .inv-card__active-badge{
   position:absolute;top:.35rem;right:.4rem;
-  font-size:8px;color:var(--accent-dim,var(--accent));z-index:2;
-  font-weight:500;letter-spacing:.05em;
+  color:var(--pomo);z-index:2;line-height:0;opacity:.85;
 }
 .inv-card__star-badge{
   position:absolute;top:.3rem;right:.35rem;
-  font-size:11px;z-index:2;
+  z-index:2;line-height:0;color:var(--accent);
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));
 }
+.inv-card__pom{vertical-align:-1px;margin-right:1px}
+.inv-card__restore-ico{vertical-align:-2px}
 .inv-card--star{
   border-color:#c49a3a !important;
   box-shadow:0 0 0 1px rgba(196,154,58,.35), 0 0 12px rgba(196,154,58,.2) !important;
 }
 .inv-card__star-btn{
   position:absolute;bottom:.3rem;right:.35rem;
-  font-size:13px;background:transparent;border:none;
+  background:transparent;border:none;color:var(--muted);
   cursor:pointer;padding:.15rem .25rem;
-  border-radius:4px;line-height:1;opacity:.55;
-  transition:opacity .15s,background .15s,transform .15s;
+  border-radius:4px;line-height:0;opacity:.55;
+  transition:opacity .15s,background .15s,transform .15s,color .15s;
   z-index:3;
 }
+/* Paalla-tila on vari, ei toinen symboli. */
+.inv-card--star .inv-card__star-btn{color:var(--accent)}
 .inv-card__star-btn:hover{
   opacity:1;background:rgba(196,154,58,.2);
   transform:scale(1.15);
@@ -2979,11 +3264,19 @@ html[data-theme="aurinko"] #inv-modal{background:rgba(255,248,235,.99)}
   opacity:.82;
 }
 .waiting-item__quad{
-  width:.45rem;
-  height:.45rem;
-  border-radius:50%;
+  width:.6rem;
+  height:.6rem;
   flex-shrink:0;
+  display:block;
 }
+.waiting-item__quad svg{width:100%;height:100%;display:block}
+/* Varit olivat tassa kovakoodattuja hexeja (#c49a3a / #2d8a52) — sama
+   vikaluokka kuin glass-mixinissa: teematon literaali on aina vaarin
+   jossakin teemassa. */
+.waiting-item__quad--q1{color:var(--accent)}
+.waiting-item__quad--q2{color:var(--q2-bright)}
+.waiting-item__quad--q3{color:var(--muted)}
+.waiting-item__quad--q4{color:var(--faint)}
 .waiting-item__text{
   flex:1;
   overflow:hidden;
@@ -3130,7 +3423,6 @@ body.hand-open #hand-toggle{bottom:calc(var(--hand-card-h,182px) + 12px);}
 .tcg-card--hand .tcg-card__art{flex-basis:36%;}
 .tcg-card--hand .tcg-card__art svg{width:50%;}
 .tcg-card--hand .tcg-card__meta-tcg{font-size:.65rem;}
-.tcg-card--hand .tcg-card__pip{width:12px;height:12px;}
 .tcg-card--hand .tcg-card__frog-seal{width:20px;height:20px;}
 .tcg-card--hand .tcg-card__frog-seal svg{width:12px;height:12px;}
 .card-new__star-mark{
@@ -4632,23 +4924,298 @@ body.focus-mode #arena-slot-hint{
     linear-gradient(180deg,transparent 36%,rgba(24,22,16,.7) 58%,rgba(18,16,12,.94) 100%);
 }
 /* Platen sisältö qartin päälle */
-.tcg-card__typeline,.tcg-card__body,.tcg-card__stats,.tcg-card__actions-tcg{position:relative;z-index:1;}
-.tcg-card__cost{
-  position:absolute;top:9px;right:9px;z-index:4;
-  display:flex;gap:3px;align-items:center;
+.tcg-card__typeline,.tcg-card__body{position:relative;z-index:1;}
+/* ═══ Kaksoisindeksi (vaihe 4) ═══════════════════════════════════
+   Kortti nakyy kolmessa rajauksessa: areenalla kokonaan, kadessa
+   vasen ylakulma, radalla oikea laita. Tunnistetieto asuu siksi
+   kahdessa kulmassa — TL kattaa viuhkan, BR radan.
+   Oma ELEMENTTI, ei pseudo: .tcg-card--hand::after on varattu hoverin
+   osumakentalle ja .tcg-card--lane::after hoverin sillalle. */
+.tcg-card__idx{
+  /* Kaikki sisamitat johdetaan --w:sta suhdelukuina. Kiintea vahennys
+     (calc(var(--idx-w) - 8px)) antaisi kadessa 13px palstalle 5px
+     symbolin — juuri se joka menee yli. */
+  --w:calc(var(--idx-w) * var(--idx-k,1));
+  --g:calc(var(--idx-gut) * var(--idx-k,1));
+  position:absolute;z-index:4;
+  display:flex;flex-direction:column;align-items:center;
+  gap:calc(var(--w) * .12);
+  width:var(--w);
+  pointer-events:none;
+  /* Variantti B — upotettu well-palsta (DESIGN.md The Well Rule).
+     Erottuu vaaleastakin q3-taiteesta ilman drop-shadowia.
+     Leveytta EI kasvateta: se soi radan syvimman kortin pelivaran. */
+  background:rgba(6,12,9,.55);
+  border-radius:calc(var(--w) / 2);
+  padding:calc(var(--w) * .16) 0;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.5),
+             inset 0 1px 1px rgba(255,255,255,.07);
 }
-.tcg-card__pip{
-  width:17px;height:17px;border-radius:50%;
-  background:radial-gradient(circle at 35% 30%,var(--pomo-hi),var(--pomo) 72%);
-  box-shadow:inset 0 1px 1px rgba(255,255,255,.5),0 1px 2px rgba(0,0,0,.55);
+.tcg-card__idx--tl{top:var(--g);left:var(--g);}
+/* Pelikortin kaksoisindeksi on 180° kaannetty, koska korttia voi pidella
+   kummin pain tahansa. Fokuksen kortti on aina samoin pain, joten
+   symbolit vastakierretaan: palstan JARJESTYS kaantyy (verbi ylos,
+   kvadrantti alas) mutta jokainen merkki jaa oikein pain. */
+.tcg-card__idx--br{
+  bottom:var(--g);right:var(--g);justify-content:flex-end;
+  transform:rotate(180deg);
 }
-.tcg-card__pip--half{
-  background:linear-gradient(90deg,var(--pomo-hi) 50%,color-mix(in srgb,var(--pomo) 25%,transparent) 50%);
+.tcg-card__idx--br > *{transform:rotate(180deg);}
+/* Areenakortin oikea alanurkka on VARATTU toiminnoille (✓ / × / Aloita).
+   Indeksi on olemassa radan rajausta varten — areenalla koko kortti
+   nakyy, joten toinen palsta on siella koriste jonka hinta on tormays. */
+.tcg-card--arena-size .tcg-card__idx--br{display:none;}
+
+/* Moodikerroin. Suhde korttileveyteen olisi 130/300 = .43 ja
+   214/300 = .71, mutta glyfin viivapaino on 1,75/24: .43 antaisi 0,73px
+   viivan eli alle pikselin — tasmalleen vanhojen verb-i-ikonien vika.
+   Radalla .85 eika .71, koska syvin kortti on lisaksi scale(.7) ja suhde
+   kertautuu (.78 jatti viivan 0,94px:aan, .85 nostaa 1,0px:aan).
+   .tcg-card--lane on AINA myos --hand → taman on tultava jalkeen. */
+.tcg-card--hand{--idx-k:.62}
+.tcg-card--lane{--idx-k:.85}
+
+/* Kvadranttimerkki: muoto varin pariksi — vari ei saa olla ainoa
+   tiedon kantaja. */
+.idx__quad{
+  width:calc(var(--w) * .68);height:calc(var(--w) * .68);
+  flex:none;color:var(--qc);
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.7));
 }
-.tcg-card__pip-x{
-  font-family:'Cinzel',serif;font-weight:700;font-size:.7rem;
-  color:var(--tcg-gold-ink);text-shadow:0 1px 2px rgba(0,0,0,.7);
+.idx__quad svg{width:100%;height:100%;display:block;}
+/* Verbiglyfi */
+.idx__verb{
+  width:calc(var(--w) * .68);height:calc(var(--w) * .68);
+  flex:none;color:var(--tcg-plate-ink);
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.8));
 }
+.idx__verb svg{width:100%;height:100%;display:block;}
+
+/* Kustannusmittari: pallot → segmentoitu palkki. Pituus kasvaa arvon
+   mukaan, joten "montako pomodoroa" luetaan pituudesta eika laskemalla
+   — ja est>4 -romautus (1 pallo + ×N) jaa siksi pois. */
+.idx__cost{
+  display:flex;flex:none;flex-direction:column-reverse;
+  --sh:calc(var(--seg-h) * var(--idx-k,1));
+  --sw:calc(var(--seg-w) * var(--idx-k,1));
+  --sg:max(1px, calc(var(--seg-gap) * var(--idx-k,1)));
+  gap:var(--sg);
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.8));
+}
+.idx__cost .seg{
+  width:var(--sw);height:var(--sh);
+  background:var(--pomo);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35);
+  border-radius:1.5px;
+}
+.idx__cost .seg--hi{background:var(--pomo-hi);}
+.idx__cost .seg--half{height:calc(var(--sh) / 2);opacity:.55;}
+/* Listarivin kustannusmittari (vaihe 6). Sama segmentti kuin kortin
+   palstassa mutta vaakaan: rivilla on tilaa pituudelle, ei korkeudelle.
+   Kaksi lukua yhdessa muodossa — pituus on arvio, kirkkaat segmentit
+   tehdyt pomodorot. Korvasi mkPipsin, joka piirsi kolmella omalla
+   SVG:lla (kovakoodatut hexit) ja vei est 8 -rivilla ~110px; tama vie
+   62px. Variantit A/B/C: mockup-listamittari.html, valittu B. */
+.cost-bar{display:inline-flex;gap:var(--seg-gap);align-items:center;flex-shrink:0;vertical-align:-1px}
+.cost-bar i{width:var(--seg-h);height:var(--seg-w);border-radius:1.5px;
+  background:var(--pomo);opacity:.28}
+.cost-bar i.done{background:var(--pomo-hi);opacity:1}
+.cost-bar i.half{width:calc(var(--seg-h) / 2)}
+.cost-bar__quick{color:var(--accent);display:inline-flex;align-items:center;flex-shrink:0}
+/* Pikatehtava (est 0, 2 min -saanto): salama palkin sijaan */
+.idx__quick{
+  width:calc(var(--w) * .6);height:calc(var(--w) * .6);flex:none;
+  color:var(--accent);filter:drop-shadow(0 1px 2px rgba(0,0,0,.8));
+}
+.idx__quick svg{width:100%;height:100%;display:block;}
+
+/* Sammakko: palsta saa kultareunuksen. Areenalla on lisaksi oma
+   sinettinsa, mutta kadessa ja radalla tama on ainoa merkki — 25px
+   sinetti ei mahtuisi 21px palstaan. */
+.tcg-card--frog .tcg-card__idx{
+  box-shadow:0 0 0 1.5px var(--gold),
+             0 0 10px color-mix(in srgb,var(--gold) 45%,transparent);
+}
+
+/* ═══ Radiaalinen toimintorypas (vaihe 4b) ═══════════════════════
+   Korvaa kortin kaksi nappiriviä: alarivin (Aloita / ✓ / ×) ja
+   stats-rivin (tärkeä, kiireinen, sammakko, odottaa, linkki, muokkaa).
+   Runko jää pelkäksi tiedoksi, ja Frankenstein-kortti mahtuu.
+
+   Suunnat vastaavat mobiilin eleitä (DESIGN.md The Gesture Rule:
+   oikea = tehty, vasen = odottaa, ylös = seuraava), jottei laitteiden
+   välille synny opeteltavaa eroa. Alas = muokkaa (mobiilissa alas on
+   varattu vieritykselle, joten suunta on vapaa). Poista yksin
+   yläoikealle: diagonaali erottaa ainoan peruuttamattoman.
+
+   Rypäs on olemassa vain areenakortilla — renderArenaCard palaa
+   kompakteissa moodeissa ennen sen rakentamista. */
+.tcg-card__radial{
+  /* Keskinappi istuu typelinen päällä, taiteen ja rungon jakoviivalla
+     kuten korttikehysten keskimedaljonki: taide on flex 0 0 40 %
+     (166/414) + typeline ~24px + 6px marginaali → 184px = 44 %. */
+  position:absolute;left:50%;top:var(--rad-y,44%);z-index:6;
+  width:0;height:0;
+  /* Kontaineri ei saa napata osumia: se peittäisi kortin sisällön.
+     :hover propagoituu silti lapsen kautta. */
+  pointer-events:none;
+}
+.rad{
+  position:absolute;left:0;top:0;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:50%;cursor:pointer;pointer-events:auto;
+  border:1px solid color-mix(in srgb,var(--gold) 45%,transparent);
+  background:linear-gradient(180deg,rgba(20,34,28,.96),rgba(10,20,16,.96));
+  color:var(--tcg-plate-ink);
+  box-shadow:var(--chip-shadow,0 2px 0 rgba(0,0,0,.35)), 0 4px 14px rgba(0,0,0,.45);
+  /* Sijainti tulee `translate`-propertysta ja painallus `transform`ista:
+     samassa transformissa :active kumoaisi sijoituksen ja nappi
+     hyppäisi keskelle. */
+  transition:translate var(--dur-panel) var(--ease-out),
+             opacity .18s var(--ease-out),
+             transform .1s, background .15s;
+}
+.rad svg{width:52%;height:52%;display:block;}
+.rad:active{transform:scale(.93);}
+.rad--main{
+  width:var(--rad-main);height:var(--rad-main);
+  margin:calc(var(--rad-main) / -2) 0 0 calc(var(--rad-main) / -2);
+  background:linear-gradient(180deg,var(--accent),color-mix(in srgb,var(--accent) 72%,black));
+  border-color:color-mix(in srgb,var(--accent) 70%,white);
+  color:var(--ink-on-art);
+  box-shadow:0 3px 0 color-mix(in srgb,var(--accent) 50%,black),
+             0 8px 22px rgba(0,0,0,.5);
+}
+.rad--main:active{transform:scale(.96) translateY(2px);}
+/* Play ja seis ovat molemmat DOM:issa, luokka valitsee — ajastintilan
+   vaihto ei vaadi uudelleenrenderöintiä eikä nappi katoa hetkeksi. */
+.rad--main svg{width:46%;height:46%;margin-left:6%;} /* kolmio optisesti keskelle */
+.rad--main svg + svg{display:none;}
+.rad--main.is-running svg:first-of-type{display:none;}
+.rad--main.is-running svg + svg{display:block;width:40%;height:40%;margin-left:0;}
+.rad--main.is-running{
+  background:linear-gradient(180deg,var(--tcg-stop),#4d1414);
+  border-color:#a33;
+  box-shadow:0 3px 0 #3a0f0f, 0 8px 22px rgba(0,0,0,.5);
+}
+
+/* ── Osuma-alue — ÄLÄ POISTA ────────────────────────────────────
+   Rypäs pysyy auki `:hover`illa, joka laukeaa vain lapsesta jolla on
+   pointer-events:auto — eli vain napista. Nappien välissä on kuollutta
+   tilaa: osoitin keskinapista satelliittiin ylittää aukon, hover
+   katkeaa, rypäs romahtaa, osoitin on taas tyhjän päällä, rypäs
+   avautuu — silmukka. Sama vikaluokka kuin radan hoverin sillassa.
+   Läpinäkyvä kiekko pitää ketjun ehjänä. Levossa pointer-events:none,
+   muuten kortin keskusta olisi pysyvä osumakenttä. */
+.rad-hit{
+  position:absolute;left:0;top:0;z-index:-3;
+  width:calc((var(--rad-r2) + var(--rad-sat)) * 2);
+  height:calc((var(--rad-r2) + var(--rad-sat)) * 2);
+  margin:calc((var(--rad-r2) + var(--rad-sat)) * -1) 0 0
+         calc((var(--rad-r2) + var(--rad-sat)) * -1);
+  border-radius:50%;
+  pointer-events:none;
+}
+.tcg-card__radial:hover .rad-hit,
+.tcg-card__radial:focus-within .rad-hit,
+.tcg-card__radial.is-open .rad-hit{pointer-events:auto;}
+
+/* Tausta: tummennus, EI sumennus. Sumennus on backdrop-filter, jonka
+   CLAUDE.md nimeää MacBook Pro 2010:n hitauden pääsyylliseksi. */
+.rad-veil{
+  position:absolute;left:0;top:0;z-index:-2;
+  width:calc(var(--rad-r2) * 2 + var(--rad-sat));
+  height:calc(var(--rad-r2) * 2 + var(--rad-sat));
+  margin:calc((var(--rad-r2) * 2 + var(--rad-sat)) / -2) 0 0
+         calc((var(--rad-r2) * 2 + var(--rad-sat)) / -2);
+  border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,
+    rgba(4,9,7,.88) 0%, rgba(4,9,7,.78) 55%, rgba(4,9,7,0) 78%);
+  opacity:0;transition:opacity .2s var(--ease-out);
+}
+.tcg-card__radial:hover .rad-veil,
+.tcg-card__radial:focus-within .rad-veil,
+.tcg-card__radial.is-open .rad-veil{opacity:1;}
+
+/* Satelliitit: levossa keskinapin alla, auki-tilassa ulos. */
+.rad--sat{
+  width:var(--rad-sat);height:var(--rad-sat);
+  margin:calc(var(--rad-sat) / -2) 0 0 calc(var(--rad-sat) / -2);
+  opacity:0;translate:0 0;z-index:-1;
+}
+/* Ulkorengas hieman pienempi ja porrastettu: kaksi kehää erottuvat
+   kokoerosta ilman että kumpikaan on epäselvä. */
+.rad--outer{
+  width:calc(var(--rad-sat) * .86);height:calc(var(--rad-sat) * .86);
+  margin:calc(var(--rad-sat) * -.43) 0 0 calc(var(--rad-sat) * -.43);
+  transition-delay:60ms;
+}
+.tcg-card__radial:hover .rad--sat,
+.tcg-card__radial:focus-within .rad--sat,
+.tcg-card__radial.is-open .rad--sat{opacity:1;}
+.tcg-card__radial:hover .rad--tehty,
+.tcg-card__radial:focus-within .rad--tehty,
+.tcg-card__radial.is-open .rad--tehty  {translate:var(--rad-r) 0;}
+.tcg-card__radial:hover .rad--odottaa,
+.tcg-card__radial:focus-within .rad--odottaa,
+.tcg-card__radial.is-open .rad--odottaa{translate:calc(var(--rad-r) * -1) 0;}
+.tcg-card__radial:hover .rad--jonoon,
+.tcg-card__radial:focus-within .rad--jonoon,
+.tcg-card__radial.is-open .rad--jonoon {translate:0 calc(var(--rad-r) * -1);}
+.tcg-card__radial:hover .rad--muokkaa,
+.tcg-card__radial:focus-within .rad--muokkaa,
+.tcg-card__radial.is-open .rad--muokkaa{translate:0 var(--rad-r);}
+/* Diagonaalit kertoimella .707 (cos45), jotta etäisyys keskeltä on sama
+   kuin suorilla suunnilla. */
+.tcg-card__radial:hover .rad--sammakko,
+.tcg-card__radial:focus-within .rad--sammakko,
+.tcg-card__radial.is-open .rad--sammakko{
+  translate:calc(var(--rad-r2) * -.707) calc(var(--rad-r2) * -.707);
+}
+.tcg-card__radial:hover .rad--linkki,
+.tcg-card__radial:focus-within .rad--linkki,
+.tcg-card__radial.is-open .rad--linkki{
+  translate:calc(var(--rad-r2) * -.707) calc(var(--rad-r2) * .707);
+}
+.tcg-card__radial:hover .rad--poista,
+.tcg-card__radial:focus-within .rad--poista,
+.tcg-card__radial.is-open .rad--poista{
+  translate:calc(var(--rad-r2) * .707) calc(var(--rad-r2) * -.707);
+}
+
+/* Väri- ja tilakoodaus. TOIMINNOT kantavat semanttisen värinsä
+   reunuksessa ja saavat sen täytöksi vasta hoverissa: kahdeksan täyteen
+   väriin maalattua nappia olisi meteli, ja The One Accent Rule laskee
+   kullan 10 %:iin. TILATOGGLE (sammakko) toimii toisin päin — täyttö
+   näyttää nykyisen tilan. */
+.rad--tehty   {border-color:color-mix(in srgb,var(--q2-bright) 60%,transparent);}
+.rad--odottaa {border-color:color-mix(in srgb,var(--wait) 65%,transparent);}
+.rad--jonoon  {border-color:color-mix(in srgb,var(--accent) 55%,transparent);}
+.rad--poista  {border-color:color-mix(in srgb,#a33 55%,transparent);}
+.rad--linkki  {border-color:color-mix(in srgb,var(--wait) 50%,transparent);}
+.rad--tehty:hover  {background:color-mix(in srgb,var(--q2) 78%,black);border-color:var(--q2-bright);}
+.rad--odottaa:hover{background:color-mix(in srgb,var(--wait) 70%,black);border-color:var(--wait);}
+.rad--jonoon:hover {background:color-mix(in srgb,var(--accent) 55%,black);border-color:var(--accent);}
+.rad--poista:hover {background:color-mix(in srgb,#7a2020 85%,black);border-color:#a33;}
+.rad--linkki:hover {background:color-mix(in srgb,var(--wait) 60%,black);border-color:var(--wait);}
+.rad--muokkaa:hover{background:rgba(255,255,255,.12);border-color:var(--gold);}
+.rad--sat:hover    {color:var(--ink-on-art);}
+/* Sammakko on rypään ainoa tilatoggle: päivän nimeäminen, ei
+   Eisenhower-ominaisuus, ja sitä vaihdetaan päivän mittaan. */
+.rad--sammakko.is-on{
+  background:linear-gradient(180deg,var(--frog),color-mix(in srgb,var(--frog) 55%,black));
+  border-color:color-mix(in srgb,var(--frog) 65%,white);color:#0b1405;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--frog) 40%,transparent),0 4px 14px rgba(0,0,0,.45);
+}
+/* Linkitön kortti: nappi näkyy mutta on selvästi toimimaton.
+   Piilottaminen liikuttaisi muita nappeja kortista toiseen — paikkojen
+   on pysyttävä samoina tai lihasmuisti ei synny. */
+.rad--linkki.is-off{opacity:.32;filter:grayscale(1);}
+
+/* Keskinappi ulottuu typelineltä rungon puolelle, joten nimi työnnetään
+   sen alta pois. Pehmuste mitoitetaan napin säteestä; kerroin .36 eikä
+   .42, jälkimmäinen työnsi Frankenstein-kortin 4px yli. */
+.tcg-card--arena-size .tcg-card__body{padding-top:calc(var(--rad-main) * .36);}
 .tcg-card__frog-seal{
   position:absolute;top:9px;left:9px;z-index:4;
   width:25px;height:25px;border-radius:50%;
@@ -4682,7 +5249,6 @@ body.focus-mode #arena-slot-hint{
   text-shadow:0 1px 1px rgba(0,0,0,.6);
 }
 .tcg-card__typeline svg{width:1.15em;height:1.15em;opacity:.9;flex:none;}
-.tcg-card__typeline .tl-quad{margin-left:auto;opacity:.85;letter-spacing:.1em;}
 .tcg-card__body{
   flex:1;display:flex;flex-direction:column;
   padding:.55rem .7rem;gap:.4rem;min-height:0;
@@ -4691,6 +5257,11 @@ body.focus-mode #arena-slot-hint{
   font-family:'Cinzel',serif;font-weight:700;font-size:.85rem;letter-spacing:.04em;
   text-transform:uppercase;text-align:center;
   line-height:1.3;color:var(--tcg-plate-ink);text-shadow:0 2px 5px rgba(0,0,0,.75);
+}
+/* Ajastusrivin glyfi: kiinteä koko. Ilman tätä 24px:n viewBox venyy
+   flex-rivillä koko leveyteen ja runko ylivuotaa (mitattu 441/218). */
+.tcg-card__sched svg,#edit-sched-text svg{
+  width:1em;height:1em;flex:none;vertical-align:-.12em;
 }
 .tcg-card__notes-tcg{
   font-size:.7rem;color:rgba(255,255,255,.5);line-height:1.4;
@@ -4710,31 +5281,6 @@ body.focus-mode #arena-slot-hint{
   font-size:.68rem;color:rgba(255,255,255,.6);letter-spacing:.02em;
 }
 .tcg-card__meta-tcg .dot{opacity:.4;}
-.tcg-card__actions-tcg{display:flex;gap:.3rem;padding:.4rem .55rem .55rem;}
-.tcg-card__actions-tcg button{
-  font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:600;
-  border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);border-radius:6px;cursor:pointer;
-  padding:.4rem .5rem;background:rgba(0,0,0,.25);color:var(--tcg-plate-ink-dim);
-  transition:background .15s,transform .1s;
-}
-.tcg-card__actions-tcg button:hover{background:color-mix(in srgb,var(--gold) 25%,transparent);}
-.tcg-card__actions-tcg button:active{transform:translateY(1px);}
-.tcg-card__actions-tcg .act-start{
-  flex:1;background:var(--accent);color:var(--ink-on-art);border-color:var(--accent);
-}
-.tcg-card__actions-tcg .act-start--running{
-  background:var(--tcg-stop);border-color:var(--tcg-stop);
-}
-.tcg-card__actions-tcg .act-start:hover{filter:brightness(1.1);}
-/* Stats-rivi (tärkeä/kiireinen/muokkaa-napit) */
-.tcg-card__stats{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:.35rem .55rem;gap:.3rem;flex-shrink:0;
-  border-bottom:1px solid rgba(196,154,58,.1);
-}
-.tcg-card__stats-left,.tcg-card__stats-right{
-  display:flex;align-items:center;gap:.3rem;
-}
 /* Holo-efekti: vain frog + important */
 .tcg-card--holo .tcg-card__plate::before{
   content:"";position:absolute;inset:0;z-index:3;pointer-events:none;
@@ -4759,14 +5305,11 @@ body.focus-mode #arena-slot-hint{
 .tcg-card__set{
   flex:none;margin-left:auto;font-family:'Cinzel',serif;font-weight:700;font-size:.72rem;line-height:1;letter-spacing:0;
 }
-.tcg-card__typeline .tl-quad+.tcg-card__set{margin-left:0;}
 .tcg-card__set--mythic{color:var(--gold-hi);text-shadow:0 0 5px color-mix(in srgb,var(--gold) 70%,transparent);}
 .tcg-card__set--rare{color:var(--gold);}
 .tcg-card__set--uncommon{color:var(--metal-silver-hi);}
 .tcg-card__set--common{color:var(--tcg-plate-ink-dim);opacity:.5;}
 .tcg-card--hand .tcg-card__set{font-size:.62rem;}
-/* Käsikortti 130px: kvadranttiteksti pois — väri-identiteetti näkyy kehyksessä */
-.tcg-card--hand .tcg-card__typeline .tl-quad{display:none;}
 /* Areena-kortti isompi + kultainen hehku + huone-tilt (mockup: ±8°) */
 .tcg-card.tcg-card--arena-size{
   width:100%;max-width:300px;
@@ -5599,6 +6142,12 @@ svg[aria-hidden="true"]{pointer-events:none;}
 
 @media (max-width:899.98px), (max-height:500px){
 
+  /* Radiaalirypas kosketuskokoon: --tap on 44px, ja ulkorengas on .86 x
+     satelliitti — 42px antaisi sille 36px. Sateet kasvavat mukana, jotta
+     napit eivat mene paallekkain. Uloin nappi yltaa keskelta
+     110 * .707 + 22 = 100px, kortin puolikas mobiilissa ~159px. */
+  .tcg-card--arena-size{--rad-sat:52px;--rad-r:66px;--rad-r2:110px}
+
   /* ── Sovelluskehys: yksi ruudullinen, sivu ei vierry ───────────── */
   html,body{height:100%;overflow:hidden}
   body{padding:0}
@@ -5813,10 +6362,6 @@ svg[aria-hidden="true"]{pointer-events:none;}
       0 6px 18px rgba(0,0,0,.45);
   }
   .tcg-card.tcg-card--arena-size:hover{transform:none}
-
-  /* Kortin toimintonapit kosketuskokoon. */
-  .tcg-card__actions-tcg{gap:.4rem;padding:.5rem}
-  .tcg-card__actions-tcg button{min-height:var(--tap);font-size:.8rem}
 
   /* Areenan otsikkorivi on mobiilissa turha koriste — kortti on ainoa
      asia ruudulla, eikä sitä tarvitse nimetä. */
@@ -6181,15 +6726,17 @@ function renderEisePeek(){
         var txt=document.createElement('span');txt.className='eise-peek-card-txt';txt.textContent=t.text;card.appendChild(txt);
 
         var ind=document.createElement('span');ind.className='eise-card-ind';
-        if(t.frog){var fi=document.createElement('span');fi.style.cssText='display:flex;align-items:center;flex-shrink:0';fi.appendChild(svgFrogFilled(12));ind.appendChild(fi);}
-        if(t.waiting){var wi=document.createElement('span');wi.style.cssText='color:#3a6b8a;display:flex;align-items:center';wi.appendChild(svgHourglass(10));ind.appendChild(wi);}
+        if(t.frog){ind.appendChild(mkListMark('sammakko','frog',12,'Sammakko'));}
+        if(t.waiting){ind.appendChild(mkListMark('odottaa','wait',11,'Odottaa'));}
         var isQ=t.id===active||turn.indexOf(t.id)>=0;
-        if(isQ){var ti=document.createElement('span');ti.style.cssText='display:flex;align-items:center;opacity:.7';ti.appendChild(svgTomatoFilled(11));ind.appendChild(ti);}
+        if(isQ){ind.appendChild(mkListMark('pomodoro','queue',11,'Jonossa'));}
         if(ind.childNodes.length)card.appendChild(ind);
 
         var qBtn=document.createElement('button');
         qBtn.className='eise-peek-q-btn'+(isQ?' in-queue':'');
-        qBtn.title=isQ?'Poista jonosta':'Lisää jonoon';qBtn.textContent='↑';
+        qBtn.title=isQ?'Poista jonosta':'Lisää jonoon';
+        qBtn.setAttribute('aria-label',qBtn.title);
+        qBtn.appendChild(_tcgSvgIcon('#g-jonoon',13));
         qBtn.onclick=function(e){e.stopPropagation();eisePeekToggleQueue(t.id);};
         card.appendChild(qBtn);
 
@@ -6368,20 +6915,15 @@ function eiseOpenMoveMenu(card,taskId,currentQuad){
   menu._returnFocus=card;
   _eiseMoveMenu=menu;
 
-  var quadColors={q1:'var(--q1)',q2:'var(--q2)',q3:'var(--q3)',q4:'var(--q4)'};
-  var quadLabels={q1:'TEE HETI',q2:'AIKATAULUTA',q3:'DELEGOI',q4:'POISTA'};
-
-  Object.keys(quadLabels).forEach(function(q){
+  Object.keys(QL).forEach(function(q){
     if(q===currentQuad)return; // ei tarjota nykyistä
     var item=document.createElement('div');
     item.className='eise-move-item';
     item.setAttribute('role','menuitem');
     item.tabIndex=0;
-    var dot=document.createElement('span');
-    dot.className='eise-move-dot';
-    dot.style.background=quadColors[q];
+    var dot=mkQuadMark(q,'eise-move-dot');
     var lbl=document.createElement('span');
-    lbl.textContent='→ '+quadLabels[q];
+    lbl.textContent='→ '+QL[q];
     item.appendChild(dot);
     item.appendChild(lbl);
     item.onkeydown=function(e){
@@ -6539,20 +7081,6 @@ function fe(v){if(v===0)return'⚡';if(v===.5)return'½';var w=Math.floor(v),h=v
 
 // ── SVG ICONS ──
 
-// T1: filled tomato (queue button)
-function svgTomatoFilled(size){
-  size=size||20;
-  var s=document.createElementNS('http://www.w3.org/2000/svg','svg');
-  s.setAttribute('width',size);s.setAttribute('height',size);
-  s.setAttribute('viewBox','0 0 28 32');
-  s.setAttribute('aria-hidden','true');
-  s.style.display='block';
-  s.innerHTML='<ellipse cx="14" cy="20" rx="12" ry="11" fill="#a84c28"/>'
-    +'<ellipse cx="9" cy="15" rx="3" ry="2" fill="rgba(255,255,255,.15)" transform="rotate(-20 9 15)"/>'
-    +'<path d="M10,9 Q13,3 16,8 Q14,6 12,9Z" fill="#2d5a3d"/>'
-    +'<line x1="14" y1="6" x2="14" y2="9.5" stroke="#2d5a3d" stroke-width="1.8" stroke-linecap="round"/>';
-  return s;
-}
 
 // T2: outline tomato (pip - full)
 function svgTomatoOutline(size){
@@ -6568,25 +7096,6 @@ function svgTomatoOutline(size){
   return s;
 }
 
-// T1 half: left half of filled tomato
-function svgTomatoFilledHalf(size){
-  size=size||16;
-  var s=document.createElementNS('http://www.w3.org/2000/svg','svg');
-  s.setAttribute('width',Math.round(size/2));
-  s.setAttribute('height',size);
-  s.setAttribute('viewBox','0 0 14 32');
-  s.setAttribute('aria-hidden','true');
-  s.style.display='inline-block';s.style.verticalAlign='middle';
-  var id='fhclip'+Math.random().toString(36).slice(2,7);
-  s.innerHTML='<defs><clipPath id="'+id+'"><rect x="0" y="0" width="14" height="32"/></clipPath></defs>'
-    +'<g clip-path="url(#'+id+')">'
-    +'<ellipse cx="14" cy="20" rx="12" ry="11" fill="#a84c28"/>'
-    +'<ellipse cx="9" cy="15" rx="3" ry="2" fill="rgba(255,255,255,.15)" transform="rotate(-20 9 15)"/>'
-    +'<path d="M10,9 Q13,3 16,8 Q14,6 12,9Z" fill="#2d5a3d"/>'
-    +'<line x1="14" y1="6" x2="14" y2="9.5" stroke="#2d5a3d" stroke-width="1.8" stroke-linecap="round"/>'
-    +'</g>';
-  return s;
-}
 function svgTomatoHalf(size, filled){
   size=size||14;
   var s=document.createElementNS('http://www.w3.org/2000/svg','svg');
@@ -6625,20 +7134,6 @@ function svgTomatoDone(size){
   return s;
 }
 
-// Tiimalasi — Odottaa-tila
-function svgHourglass(size){
-  size=size||18;
-  var s=document.createElementNS('http://www.w3.org/2000/svg','svg');
-  s.setAttribute('width',size);s.setAttribute('height',size);
-  s.setAttribute('viewBox','0 0 22 22');
-  s.setAttribute('aria-hidden','true');
-  s.style.display='inline-block';s.style.verticalAlign='middle';
-  s.innerHTML='<path d="M5,2 L17,2 L11,11 L17,20 L5,20 L11,11 Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>'
-    +'<line x1="5" y1="2" x2="17" y2="2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
-    +'<line x1="5" y1="20" x2="17" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
-    +'<path d="M8,16 Q11,14 14,16" fill="currentColor" opacity=".5"/>';
-  return s;
-}
 
 // Tärkeä — kultainen huutomerkki pyöristetyssä ympyrässä
 function svgImportant(size, active){
@@ -6753,39 +7248,7 @@ function clearWaiting(id){
   save();render();
   notify('Palautettu vuoroon');
 }
-function svgFrogOutline(size){
-  size=size||20;
-  var s=document.createElementNS('http://www.w3.org/2000/svg','svg');
-  s.setAttribute('width',size);s.setAttribute('height',Math.round(size*.93));
-  s.setAttribute('viewBox','0 0 28 26');
-  s.setAttribute('aria-hidden','true');
-  s.style.display='block';
-  s.innerHTML='<ellipse cx="14" cy="17" rx="11" ry="8" fill="none" stroke="#4a6e22" stroke-width="2"/>'
-    +'<circle cx="8" cy="9" r="4" fill="none" stroke="#4a6e22" stroke-width="2"/>'
-    +'<circle cx="20" cy="9" r="4" fill="none" stroke="#4a6e22" stroke-width="2"/>'
-    +'<circle cx="8.5" cy="9.2" r="1.3" fill="#4a6e22"/>'
-    +'<circle cx="20.5" cy="9.2" r="1.3" fill="#4a6e22"/>';
-  return s;
-}
 
-// S1: filled frog (selected)
-function svgFrogFilled(size){
-  size=size||20;
-  var s=document.createElementNS('http://www.w3.org/2000/svg','svg');
-  s.setAttribute('width',size);s.setAttribute('height',Math.round(size*.93));
-  s.setAttribute('viewBox','0 0 28 26');
-  s.setAttribute('aria-hidden','true');
-  s.style.display='block';
-  s.innerHTML='<ellipse cx="14" cy="17" rx="11" ry="8" fill="#4a6e22"/>'
-    +'<circle cx="8" cy="9" r="4.5" fill="#4a6e22"/>'
-    +'<circle cx="20" cy="9" r="4.5" fill="#4a6e22"/>'
-    +'<circle cx="8" cy="8.5" r="2.2" fill="white"/>'
-    +'<circle cx="20" cy="8.5" r="2.2" fill="white"/>'
-    +'<circle cx="8.7" cy="9" r="1.1" fill="#1a1c18"/>'
-    +'<circle cx="20.7" cy="9" r="1.1" fill="#1a1c18"/>'
-    +'<ellipse cx="10" cy="15" rx="2.5" ry="1.5" fill="rgba(255,255,255,.12)" transform="rotate(-15 10 15)"/>';
-  return s;
-}
 
 // mkPips: now uses SVG tomatoes
 function mkPips(e,d,sm){
@@ -6826,7 +7289,6 @@ function totalQueueEst(){
     return sum+(t?t.est||1:0);
   },0);
 }
-
 
 /* ══════════════════════════════════════════════════════════════
    TAVAT: 2 min -saanto, 1-3-5 paivan budjetti, keskeytysparkki
@@ -7462,7 +7924,13 @@ function openEditModal(id){
   if(schedRow&&schedTxt){
     var st=fmtSchedule(t);
     schedRow.style.display=st?'flex':'none';
-    schedTxt.textContent=st;
+    /* Merkki tulee glyfina eika emojina (vaihe 5): fmtSchedule palauttaa
+       pelkan tekstin, ikonin nimi luetaan schedIconista. */
+    schedTxt.textContent='';
+    if(st){
+      schedTxt.appendChild(_tcgSvgIcon(iconId(schedIcon(t))));
+      schedTxt.appendChild(document.createTextNode(' '+st));
+    }
   }
   document.getElementById('edit-link').value=t.linkki||'';
 
@@ -7639,7 +8107,6 @@ document.addEventListener('keydown',function(e){
     closeEditModal();
   }
 });
-
 
 function buildProfileContext(){
   var p=loadProfile();
@@ -9096,7 +9563,6 @@ function doNext(){
   save();render();
 }
 
-
 // ── TIMER ──
 /* Ajastimen tila → UI. Yksi totuuden lähde, kutsutaan jokaisesta siirtymästä.
    - fokustila (paneelit + käsi piiloon) on päällä aina kun ajastin käy — sekä
@@ -9567,141 +10033,256 @@ window._useCardUI = true; // vaihe 6a: uusi korttinäkymä oletuksena
 
 // Vaihe 9.6: helper joka palauttaa SVG-stringin verbi-spritestä
 // Käyttää 1em-kokoa → perii parent-elementin font-sizen, ei CSS-muutoksia.
-function svgVerbIcon(id){
-  return '<svg viewBox="0 0 24 24" aria-hidden="true" style="width:1em;height:1em;display:block"><use href="#'+id+'"/></svg>';
+function svgVerbIcon(ref){
+  /* ref on joko valmis '#g-soita' (verbIcon) tai paljas id. Merkkijono
+     tulee aina rekisterista, ei kayttajan syotteesta — innerHTML on
+     siksi turvallinen tassa. */
+  var href = ref.charAt(0)==='#' ? ref : '#'+ref;
+  return '<svg viewBox="0 0 24 24" aria-hidden="true" style="width:1em;height:1em;display:block"><use href="'+href+'"/></svg>';
 }
-
-var VERB_ICONS = {
-  // Pääverbit (UI:n napit, käskymuoto) — Vaihe 9.6: custom SVG-ikonit
-  'Soita':svgVerbIcon('verb-i-soita'),
-  'Sovi':svgVerbIcon('verb-i-sovi'),
-  'Kirjaa':svgVerbIcon('verb-i-kirjaa'),
-  'Tee':svgVerbIcon('verb-i-tee'),
-  'Selvitä':svgVerbIcon('verb-i-selvita'),
-  'Vie':svgVerbIcon('verb-i-vie'),
-  'Tarkista':svgVerbIcon('verb-i-tarkista'),
-  'Aikatauluta':svgVerbIcon('verb-i-sovi'),
-  'Varaa':svgVerbIcon('verb-i-varaa'),
-  'Lue':'📖',
-  'Lähetä':svgVerbIcon('verb-i-vie'),
-  'Muu':'✦',
-  // Yleisiä custom-verbejä (käskymuoto)
-  'Etsi':svgVerbIcon('verb-i-selvita'),
-  'Vahvista':svgVerbIcon('verb-i-tarkista'),
-  'Kirjoita':svgVerbIcon('verb-i-kirjaa'),
-  'Vastaa':'💬',
-  'Kysy':'❓',
-  'Neuvo':'💡',
-  'Ohjaa':'🤝',
-  'Suunnittele':'🗺️',
-  'Valmistele':'🛠️',
-  'Tapaa':'👥',
-  'Osallistu':'🎟️',
-  'Pidä':'🎤',
-  'Esitä':'📊',
-  'Päätä':'✔️',
-  'Hyväksy':'👍',
-  'Maksa':'💳',
-  'Tilaa':'🛒',
-  'Osta':'🛍️',
-  'Korjaa':'🔧',
-  'Asenna':'⚙️',
-  'Päivitä':'🔄',
-  'Siivoa':'🧹',
-  'Pakkaa':'📦',
-  'Toimita':'🚚',
-  'Hae':'🥾',
-  'Käy':'🚶',
-  'Aja':'🚗',
-  'Lataa':'⬇️',
-  'Tallenna':'💾',
-  'Jaa':'🔗',
-  'Lue läpi':'📖',
-  'Mieti':'🤔',
-  'Arvioi':'⚖️',
-  'Ilmoita':'📣',
-  'Muistuta':'⏰',
-  'Peruuta':'🚫',
-  'Sulje':'🔒',
-  'Avaa':'🔓',
-  'Aloita':'▶️',
-  'Lopeta':'⏹️'
-};
 
 // Joustava verbi→ikoni-haku: case-insensitive + perusmuotojen tunnistus
 
-/* TCG mana-helmet (pyöreät) — käytetään tcg-card__cost:ssa */
-function mkCostPips(est){
-  var wrap=document.createElement('div');
-  wrap.className='tcg-card__cost';
-  wrap.setAttribute('aria-label',(est||0)+' pomodoro');
-  wrap.setAttribute('role','img');
-  if(est>4){
-    var p=document.createElement('div');p.className='tcg-card__pip';wrap.appendChild(p);
-    var x=document.createElement('span');x.className='tcg-card__pip-x';x.textContent='×'+est;wrap.appendChild(x);
-    return wrap;
+/* Kustannusmittari — korvaa mana-helmet (mkCostPips).
+   est 0    → salama (pikatehtava, 2 min -saanto)
+   est 0.5  → puolikas segmentti
+   est n    → n segmenttia, ylin korostettu
+   Ei romautusta: kun mitta on pituus eika lukumaara, 8 segmenttia
+   mahtuu palstaan ja vanha "1 pallo + ×N" -erikoistapaus jaa pois. */
+function mkCostMeter(est){
+  if(!est || est<=0){
+    var q=document.createElement('span');
+    q.className='idx__quick';
+    q.title='Pikatehtava — alle 2 minuuttia';
+    q.setAttribute('role','img');
+    q.setAttribute('aria-label','Pikatehtava, alle 2 minuuttia');
+    q.appendChild(_tcgSvgIcon(iconId('pika')));
+    return q;
   }
-  var full=Math.floor(est),half=(est%1)>=0.5;
-  for(var i=0;i<full;i++){var p2=document.createElement('div');p2.className='tcg-card__pip';wrap.appendChild(p2);}
-  if(half){var h=document.createElement('div');h.className='tcg-card__pip tcg-card__pip--half';wrap.appendChild(h);}
+  var wrap=document.createElement('span');
+  wrap.className='idx__cost';
+  wrap.setAttribute('role','img');
+  wrap.setAttribute('aria-label',est+' pomodoroa');
+  var full=Math.floor(est),half=(est%1)>=0.5,i;
+  for(i=0;i<full;i++){
+    var seg=document.createElement('i');
+    seg.className='seg'+((i===full-1&&!half)?' seg--hi':'');
+    wrap.appendChild(seg);
+  }
+  if(half){
+    var h=document.createElement('i');
+    h.className='seg seg--half seg--hi';
+    wrap.appendChild(h);
+  }
   return wrap;
+}
+
+/* Listarivin kustannusmittari (vaihe 6). Kortin mkCostMeter nayttaa vain
+   arvion; listarivi nayttaa myos tehdyt, joten segmentti on kaksitilainen.
+   Pikahaara on puolustava: matriisirivi nappaa pikatehtavan jo aiemmin
+   omaan siruunsa, mutta tyhja mittari olisi hiljainen vaara vastaus. */
+function mkCostBar(est, pomos){
+  if(!est || est<=0){
+    var q=document.createElement('span');
+    q.className='cost-bar__quick';
+    q.title='Pikatehtava — alle 2 minuuttia';
+    q.setAttribute('role','img');
+    q.setAttribute('aria-label','Pikatehtava, alle 2 minuuttia');
+    q.appendChild(_tcgSvgIcon(iconId('pika'),12));
+    return q;
+  }
+  var w=document.createElement('span');
+  w.className='cost-bar';
+  w.setAttribute('role','img');
+  w.setAttribute('aria-label',(pomos||0)+' / '+est+' pomodoroa tehty');
+  var full=Math.floor(est),half=(est%1)>=0.5,d=pomos||0,i;
+  for(i=0;i<full;i++){
+    var s=document.createElement('i');
+    if(i<d)s.className='done';
+    w.appendChild(s);
+  }
+  if(half){
+    var h=document.createElement('i');
+    h.className='half'+(d>full?' done':'');
+    w.appendChild(h);
+  }
+  return w;
+}
+
+/* Indeksipalsta. Sisalto ylhaalta alas: kvadranttimerkki →
+   kustannusmittari → verbiglyfi. pos: 'tl' | 'br'. */
+function mkIndexCol(t, pos){
+  var col=document.createElement('div');
+  col.className='tcg-card__idx tcg-card__idx--'+pos;
+  col.setAttribute('aria-hidden','true'); /* kortin aria-label kertoo saman */
+  var quad=document.createElement('span');
+  quad.className='idx__quad';
+  quad.title={q1:'TEE HETI',q2:'AIKATAULUTA',q3:'DELEGOI',q4:'POISTA'}[t.quad]||'';
+  quad.appendChild(_tcgSvgIcon('q-'+(t.quad||'q4')));
+  col.appendChild(quad);
+  col.appendChild(mkCostMeter(t.est));
+  var verb=document.createElement('span');
+  verb.className='idx__verb';
+  if(t.verbi)verb.title=t.verbi;
+  verb.appendChild(_tcgSvgIcon(verbIcon(t.verbi)));
+  col.appendChild(verb);
+  return col;
+}
+
+/* ── Kvadranttimerkki listoille (vaihe 6) ──────────────────────────
+   Vari ei saa olla ainoa tiedon kantaja. Pakassa kvadrantti oli
+   kirjainlappu ('Q1') varitettyna, odottavissa ja siirtovalikossa
+   pelkka varipallo — harmaatulosteessa ja varisokealle ne ovat sama
+   merkki. Muoto tulee samasta sarjasta kuin kortin indeksipalstassa
+   (#q-q1…#q-q4), joten pakan ja kortin merkit ovat sama kieli.
+
+   Vari jaa mukaan vahvistuksena, mutta se tulee luokasta eika
+   inline-tyylista: kolme kutsupaikkaa asetti sen aiemmin JS:sta, ja
+   yhdessa niista arvot olivat kovakoodattuja hexeja. */
+function quadMarkHtml(quad, cls){
+  var q = ['q1','q2','q3','q4'].indexOf(quad) !== -1 ? quad : 'q4';
+  return '<span class="' + cls + ' ' + cls + '--' + q + '" role="img"'
+    + ' aria-label="' + esc(QL[q]) + '" title="' + esc(QL[q]) + '">'
+    + '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#q-' + q + '"/></svg>'
+    + '</span>';
+}
+function mkQuadMark(quad, cls){
+  var wrap = document.createElement('span');
+  wrap.innerHTML = quadMarkHtml(quad, cls);
+  return wrap.firstChild;
+}
+
+/* ── Listojen tilamerkit (vaihe 6) ─────────────────────────────────
+   Sammakko, odottaa ja jonossa piirrettiin listoissa omilla
+   JS-piirtajilla (svgFrogFilled / svgHourglass / svgTomatoFilled) —
+   neljas rinnakkainen ikonirekisteri sen jalkeen kun kolme yhdistettiin
+   vaiheessa 2. Sama tila nayttaytyi siis kortilla glyfina ja listassa
+   toisen kadenjaljen taytettyna muotona.
+
+   Vari tulee luokasta: piirtajien sisalla oli kovakoodattuja hexeja
+   (#a84c28, #3a6b8a) ja kutsupaikoissa inline-tyyleja, jotka voittavat
+   teemalohkot. */
+/* Glyfi merkkijonona (vaihe 6). renderInventory rakentaa korttinsa
+   yhtena innerHTML-potkuna, joten DOM-apurit eivat kelpaa siella. */
+function icoHtml(name, size, cls){
+  return '<svg class="' + (cls || '') + '" width="' + size + '" height="' + size
+    + '" viewBox="0 0 24 24" aria-hidden="true"><use href="#g-' + name + '"/></svg>';
+}
+
+function mkListMark(name, kind, size, title){
+  var s = document.createElement('span');
+  s.className = 'list-mark list-mark--' + kind;
+  if (title) { s.title = title; s.setAttribute('role','img'); s.setAttribute('aria-label',title); }
+  s.appendChild(_tcgSvgIcon('#g-' + name, size));
+  return s;
 }
 
 /* Pienen tomaatti-rivin rakennus (ääriviivat) */
 
 /* Tärkeä-symboli pienempänä (kultainen ! ympyrässä) */
-function mkImpBadge(active){
-  var btn=document.createElement('button');
-  btn.className='card-new__btn'+(active?' imp-on':'');
-  btn.title='Tärkeä';
-  btn.setAttribute('aria-label','Tärkeä'+(active?' (aktiivinen)':''));
-  // SVG: kultainen huutomerkki ympyrässä
-  var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-  svg.setAttribute('width','16');svg.setAttribute('height','16');
-  svg.setAttribute('viewBox','0 0 16 16');svg.setAttribute('fill','none');
-  var c=document.createElementNS('http://www.w3.org/2000/svg','circle');
-  c.setAttribute('cx','8');c.setAttribute('cy','8');c.setAttribute('r','7');
-  c.setAttribute('stroke',active?'#c49a3a':'currentColor');
-  c.setAttribute('stroke-width','1.5');
-  var line=document.createElementNS('http://www.w3.org/2000/svg','line');
-  line.setAttribute('x1','8');line.setAttribute('y1','4.5');
-  line.setAttribute('x2','8');line.setAttribute('y2','9');
-  line.setAttribute('stroke',active?'#c49a3a':'currentColor');
-  line.setAttribute('stroke-width','1.8');line.setAttribute('stroke-linecap','round');
-  var dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
-  dot.setAttribute('cx','8');dot.setAttribute('cy','11.5');dot.setAttribute('r','1');
-  dot.setAttribute('fill',active?'#c49a3a':'currentColor');
-  svg.appendChild(c);svg.appendChild(line);svg.appendChild(dot);
-  btn.appendChild(svg);
-  return btn;
-}
 
 /* Kiireinen-symboli (terrakotta kolmio) */
-function mkUrgBadge(active){
-  var btn=document.createElement('button');
-  btn.className='card-new__btn'+(active?' urg-on':'');
-  btn.title='Kiireinen';
-  btn.setAttribute('aria-label','Kiireinen'+(active?' (aktiivinen)':''));
-  var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-  svg.setAttribute('width','15');svg.setAttribute('height','15');
-  svg.setAttribute('viewBox','0 0 15 15');svg.setAttribute('fill','none');
-  var poly=document.createElementNS('http://www.w3.org/2000/svg','polygon');
-  poly.setAttribute('points','7.5,2 14,13 1,13');
-  poly.setAttribute('stroke',active?'#a84c28':'currentColor');
-  poly.setAttribute('stroke-width','1.5');
-  poly.setAttribute('stroke-linejoin','round');
-  if(active)poly.setAttribute('fill','rgba(168,76,40,.18)');
-  svg.appendChild(poly);
-  btn.appendChild(svg);
-  return btn;
+
+/* ── Ikonirekisteri (vaihe 2) ────────────────────────────────
+   Yksi kartta korvaa kolme. Aiemmin sama verbi tarvitsi merkinnan
+   kolmeen paikkaan eri kirjoitusasuissa — _TCG_VERB_ID kaskymuodolla
+   ('Soita'), INV_VERB_ICONS nominalisaatiolla ('soittaminen') ja
+   VERB_ICONS omallaan — eivatka ne pysyneet synkassa: VERB_ICONS oli
+   ehtinyt kuolla kokonaan (maaritelty, ei yhtaan lukupaikkaa).
+   VERB_ALIAS pitaa molemmat kirjoitusasut avaimina.
+
+   Avaimet ovat aakkosettomia ja lookup normalisoi syotteen: 'Selvita'
+   ja 'selvita' osuvat samaan glyfiin (#g-selvita), joten aakkoset
+   eivat voi karata id:hen. */
+var ICON = {};
+('soita sovi kirjaa tee selvita vie tarkista laheta lue etsi kirjoita '
++'vastaa tapaa valmistele aikatauluta varaa tehty odottaa linkki muokkaa '
++'poista jonoon pika sammakko aamu paiva ilta pomodoro ajastettu toistuva '
++'lisatiedot palauta jatkokortti aloita seis tarkea kiire tahti pakka').split(' ')
+  .forEach(function(n){ICON[n]=1;});
+
+var ICON_FALLBACK = 'tee';
+
+var VERB_ALIAS = {
+  soita:'soita', soittaminen:'soita', yhteydenotto:'soita',
+  sovi:'sovi', sopiminen:'sovi',
+  kirjaa:'kirjaa', kirjaaminen:'kirjaa', tayttaminen:'kirjaa',
+  dokumentointi:'kirjaa',
+  tee:'tee', tekeminen:'tee', toteuttaminen:'tee', paivittaminen:'tee',
+  korjaaminen:'tee', muu:'tee',
+  selvita:'selvita', selvittaminen:'selvita', tutkiminen:'selvita',
+  vie:'vie', vieminen:'vie', toimittaminen:'vie',
+  tarkista:'tarkista', tarkistaminen:'tarkista', arvioiminen:'tarkista',
+  vahvista:'tarkista', vahvistaminen:'tarkista',
+  laheta:'laheta', lahettaminen:'laheta',
+  lue:'lue', lukeminen:'lue', perehtyminen:'lue',
+  etsi:'etsi', etsiminen:'etsi',
+  kirjoita:'kirjoita', kirjoittaminen:'kirjoita',
+  vastaa:'vastaa', vastaaminen:'vastaa', kysy:'vastaa', neuvo:'vastaa',
+  neuvominen:'vastaa', ohjaa:'vastaa', ohjaaminen:'vastaa',
+  tukeminen:'vastaa', keskusteleminen:'vastaa',
+  tapaa:'tapaa', tapaaminen:'tapaa', osallistu:'tapaa',
+  osallistuminen:'tapaa', kayminen:'tapaa', pida:'tapaa',
+  valmistele:'valmistele', valmisteleminen:'valmistele',
+  suunnittele:'valmistele', suunnitteleminen:'valmistele',
+  jarjestaminen:'valmistele', organisoiminen:'valmistele',
+  aikatauluta:'aikatauluta', aikatauluttaminen:'aikatauluta',
+  varaa:'varaa', varaaminen:'varaa',
+  /* Substantiivimuodot: kayttaja kirjoittaa usein 'Soitto Virtaselle'
+     eika 'Soita Virtaselle'. Naita ei tavoita osittainen tasmays, koska
+     'soitto' ei ole 'soita'n prefiksi kumpaankaan suuntaan. */
+  soitto:'soita', kirjaus:'kirjaa', tarkistus:'tarkista',
+  odottava:'odottaa', odottaminen:'odottaa',
+  varaus:'varaa', lahetys:'laheta', haku:'etsi', vastaus:'vastaa',
+  sopimus:'sovi', valmistelu:'valmistele'
+};
+
+/* Aakkoset pois ja pienelle — 'Lähetä' → 'laheta'. */
+function _iconNorm(s){
+  return String(s||'').trim().toLowerCase()
+    .replace(/[\u00e4\u00e5]/g,'a').replace(/\u00f6/g,'o');
 }
 
-/* ── TCG-kortin verb→sprite-id -kartta ─────────────────────── */
-var _TCG_VERB_ID = {
-  'Soita':'verb-i-soita','Sovi':'verb-i-sovi','Kirjaa':'verb-i-kirjaa',
-  'Tee':'verb-i-tee','Selvitä':'verb-i-selvita','Vie':'verb-i-vie',
-  'Tarkista':'verb-i-tarkista','Varaa':'verb-i-varaa'
-};
+/* Verbi → kanoninen ikoninimi. Osittainen tasmays on fallback, koska
+   kayttaja voi kirjoittaa oman verbinsa ('soitto', 'tarkistus'). */
+function verbName(verbi){
+  var v=_iconNorm(verbi);
+  if(!v) return ICON_FALLBACK;
+  /* Nimi voi olla suoraan setissa ilman aliasta — kayttaja kirjoittaa
+     'Odottava', ja #g-odottaa on olemassa. Ilman tata tarkistusta
+     jokainen toimintonimi olisi pitanyt toistaa VERB_ALIASissa. */
+  if(ICON[v]) return v;
+  if(VERB_ALIAS[v]) return VERB_ALIAS[v];
+  for(var k in VERB_ALIAS){
+    if(v.indexOf(k)===0 || k.indexOf(v)===0) return VERB_ALIAS[k];
+  }
+  return ICON_FALLBACK;
+}
+
+/* Sigil-nimet (#s-<nimi>): TYHJA TARKOITUKSELLA, ei keskeneraisyytta.
+   Sigil-taso mitattiin 2026-08-15 ja hylattiin:
+   - Mekaaninen tayttö tuhoaa 8/15 verbiglyfista. Ontto muoto ON niissa
+     merkitys: taytetty aikatauluta = musta ympyra, tarkista menettaa
+     checkin kilven sisalta, laheta = suorakaide. Osat 2-3 -> 1.
+   - Ei ole kokoa jossa glyfi pettaisi: muste-% ja osamaara ovat
+     vakioita 40->80px jokaisella ikonilla. Sigil ei siis toisi isossa
+     koossa yhtaan uutta erottuvaa osaa, vain massaa.
+   - Sama mittaus kumosi jo sovin kaksi tiheytta vaiheessa 2.
+   Kartta jaa olemaan koukkuna: kuva-alue saa aikanaan omat piirretyt
+   ikoninsa, ja ne tulevat tanne. Se on ainoa syy pitaa tama tyhjana —
+   jos suunnitelma kuolee, poista koko tier-koneisto. */
+var ICON_S = {};
+
+/* tier: 'g' glyfi (oletus) | 's' isot koot (kuva-alue 168px, verb-bg
+   80px). Tier 's' putoaa glyfiin aina kun nimi ei ole ICON_S:ssa —
+   nyt siis aina. Kutsupaikat saavat silti merkita tierinsa, jotta
+   tuleva kuva-aluesetti kytkeytyy ilman kutsupaikkojen muutoksia. */
+function iconId(name, tier){
+  var n = ICON[name] ? name : ICON_FALLBACK;
+  return (tier==='s' && ICON_S[n]) ? '#s-'+n : '#g-'+n;
+}
+function verbIcon(verbi, tier){ return iconId(verbName(verbi), tier); }
+
 /* Rarity = tärkeys (Eisenhower): kortisto opettaa metodologiaa */
 function rarityOf(t){
   if(!t)return 'common';
@@ -9710,20 +10291,15 @@ function rarityOf(t){
   if(t.quad==='q3')return 'uncommon';
   return 'common';
 }
-function _tcgIconId(verbi){
-  if(!verbi) return 'verb-i-tee';
-  if(_TCG_VERB_ID[verbi]) return _TCG_VERB_ID[verbi];
-  var low=verbi.toLowerCase();
-  for(var k in _TCG_VERB_ID){if(k.toLowerCase()===low||low.indexOf(k.toLowerCase())===0)return _TCG_VERB_ID[k];}
-  return 'verb-i-tee';
-}
 function _tcgSvgIcon(id, size){
   var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
   svg.setAttribute('viewBox','0 0 24 24');
   svg.setAttribute('aria-hidden','true');
   if(size){svg.setAttribute('width',size);svg.setAttribute('height',size);}
   var u=document.createElementNS('http://www.w3.org/2000/svg','use');
-  u.setAttribute('href','#'+id);
+  /* verbIcon palauttaa valmiin '#g-nimi'; vanhat kutsut antavat
+     paljaan id:n ('frog-glyph'). Hyvaksytaan molemmat. */
+  u.setAttribute('href', id.charAt(0)==='#' ? id : '#'+id);
   svg.appendChild(u);
   return svg;
 }
@@ -9734,7 +10310,7 @@ function renderArenaCard(t, container, anyFrog, mode){
   mode = mode || 'arena';
   var q = t.quad && {q1:'Tee heti',q2:'Aikatauluta',q3:'Delegoi',q4:'Poista'}[t.quad];
   var qc = t.quad && {'q1':'var(--q1)','q2':'var(--q2)','q3':'var(--q3)','q4':'var(--q4)'}[t.quad] || 'var(--q4)';
-  var iconId = _tcgIconId(t.verbi);
+  var vIcon = verbIcon(t.verbi);
 
   var card=document.createElement('div');
   // 'lane' = radan kortti: sama kompakti runko kuin kadessa, oma luokka
@@ -9751,11 +10327,10 @@ function renderArenaCard(t, container, anyFrog, mode){
   card.setAttribute('aria-label',_albl);
   card.dataset.taskId=t.id;
 
-  // Mana-kustannus (abs. oikea yläkulma)
-  if(t.est&&t.est>0) card.appendChild(mkCostPips(t.est));
-
-  // Sammakko-sinetti (abs. vasen yläkulma)
-  if(t.frog){
+  // Sammakko-sinetti (abs. vasen ylakulma) — vain areenakortilla.
+  // Kadessa ja radalla sinetti peittaisi TL-indeksin; siella sammakon
+  // merkki on indeksipalstan kultareunus.
+  if(t.frog && mode==='arena'){
     var seal=document.createElement('div');
     seal.className='tcg-card__frog-seal';
     seal.appendChild(_tcgSvgIcon('frog-glyph','16'));
@@ -9776,18 +10351,22 @@ function renderArenaCard(t, container, anyFrog, mode){
   qart.appendChild(qsvg);
   plate.appendChild(qart);
 
+  // Kaksoisindeksi: TL kattaa viuhkan rajauksen, BR radan.
+  // BR piiloutuu areenakortilla CSS:lla (nurkka on toimintojen aluetta).
+  plate.appendChild(mkIndexCol(t,'tl'));
+  plate.appendChild(mkIndexCol(t,'br'));
+
   // Kuva-alue (verbi-rintakuva)
   var art=document.createElement('div');
   art.className='tcg-card__art';
-  art.appendChild(_tcgSvgIcon(iconId,'56%'));
+  art.appendChild(_tcgSvgIcon(vIcon,'56%'));
   plate.appendChild(art);
 
   // Tyyppipalkki
   var tl=document.createElement('div');
   tl.className='tcg-card__typeline';
-  tl.appendChild(_tcgSvgIcon(iconId));
+  tl.appendChild(_tcgSvgIcon(vIcon));
   if(t.verbi){var vs=document.createElement('span');vs.textContent=t.verbi;tl.appendChild(vs);}
-  if(q){var qs=document.createElement('span');qs.className='tl-quad';qs.textContent=q;tl.appendChild(qs);}
   var setEl=document.createElement('span');
   setEl.className='tcg-card__set tcg-card__set--'+rar;
   var wsName='';
@@ -9817,7 +10396,8 @@ function renderArenaCard(t, container, anyFrog, mode){
     if(schedTxt){
       var sline=document.createElement('em');
       sline.className='tcg-card__sched';
-      sline.textContent=schedTxt;
+      sline.appendChild(_tcgSvgIcon(iconId(schedIcon(t))));
+      sline.appendChild(document.createTextNode(' '+schedTxt));
       notes.appendChild(sline);
     }
     if(t.lisatiedot&&t.lisatiedot.trim()){
@@ -9849,105 +10429,110 @@ function renderArenaCard(t, container, anyFrog, mode){
 
   if(compact){ card.appendChild(plate); if(container) container.appendChild(card); return card; }
 
-  // Stats-rivi: tärkeä/kiireinen/sammakko vasen | odottaa/linkki/muokkaa oikea
-  var stats=document.createElement('div');
-  stats.className='tcg-card__stats';
-  var sLeft=document.createElement('div');sLeft.className='tcg-card__stats-left';
-  var sRight=document.createElement('div');sRight.className='tcg-card__stats-right';
+  // ── Radiaalinen toimintorypas (vaihe 4b) ────────────────────────
+  // Korvaa entisen stats-rivin ja alarivin. Suunnat = mobiilin eleet,
+  // jotta lihasmuisti on sama laitteesta riippumatta.
+  var rad=document.createElement('div');
+  rad.className='tcg-card__radial';
+  var hit=document.createElement('span');hit.className='rad-hit';rad.appendChild(hit);
+  var veil=document.createElement('span');veil.className='rad-veil';rad.appendChild(veil);
 
-  var impBtn=mkImpBadge(!!t.important);
-  impBtn.onclick=(function(i){return function(e){e.stopPropagation();setFlag(i,'important');};})(t.id);
-  sLeft.appendChild(impBtn);
-
-  var urgBtn=mkUrgBadge(!!t.urgent);
-  urgBtn.onclick=(function(i){return function(e){e.stopPropagation();setFlag(i,'urgent');};})(t.id);
-  sLeft.appendChild(urgBtn);
-
-  if(!anyFrog||t.frog){
-    var fb=document.createElement('button');
-    fb.className='card-new__btn'+(t.frog?' frog-on':'');
-    fb.title='Sammakko';
-    fb.setAttribute('aria-label',t.frog?'Poista sammakko':'Aseta sammakoksi');
-    fb.appendChild(t.frog?svgFrogFilled(16):svgFrogOutline(16));
-    fb.onclick=(function(i){return function(e){e.stopPropagation();toggleFrog(i);};})(t.id);
-    sLeft.appendChild(fb);
+  function mkSat(cls,glyph,label,extraCls){
+    var b=document.createElement('button');
+    b.className='rad rad--sat rad--'+cls+(extraCls?' '+extraCls:'');
+    b.type='button';
+    b.title=label;b.setAttribute('aria-label',label);
+    b.appendChild(_tcgSvgIcon(iconId(glyph)));
+    return b;
   }
 
-  var wBtn=document.createElement('button');
-  wBtn.className='card-new__action-btn'+(t.waiting?' wait-on':'');
-  wBtn.title=t.waiting?'Odottaa — palauta aktiiviseksi':'Merkitse odottavaksi';
-  var wSpan=document.createElement('span');wSpan.className='emoji';wSpan.textContent='⏳';wBtn.appendChild(wSpan);
-  wBtn.onclick=(function(i,task){return function(e){e.stopPropagation();if(task.waiting)clearWaiting(i);else setWaiting(i);};})(t.id,t);
-  sRight.appendChild(wBtn);
+  // Sisarengas — mobiilin eleet (oikea tehty, vasen odottaa, ylos seuraava),
+  // alas muokkaa. Napit kutsuvat samoja funktioita kuin eleet.
+  var bNext=mkSat('jonoon','jonoon','Seuraava tehtava');
+  bNext.onclick=function(e){e.stopPropagation();if(turn.length>0)doNext();};
+  rad.appendChild(bNext);
 
+  var bDone=mkSat('tehty','tehty','Merkitse tehdyksi');
+  // doneActive, EI markDone: vain se nostaa findChainNextin jonon karkeen.
+  bDone.onclick=function(e){e.stopPropagation();doneActive();};
+  rad.appendChild(bDone);
+
+  var bEdit=mkSat('muokkaa','muokkaa','Muokkaa');
+  bEdit.onclick=(function(tid){return function(e){e.stopPropagation();openEditModal(tid);};})(t.id);
+  rad.appendChild(bEdit);
+
+  var bWait=mkSat('odottaa','odottaa',t.waiting?'Odottaa — palauta aktiiviseksi':'Merkitse odottavaksi');
+  bWait.onclick=(function(i,task){return function(e){
+    e.stopPropagation();
+    if(task.waiting)clearWaiting(i);else waitActive();
+  };})(t.id,t);
+  rad.appendChild(bWait);
+
+  // Ulkorengas. Tarkea ja kiireinen EIVAT ole rypaassa: ne ovat tehtavan
+  // ominaisuuksia ja jo muokkausmodaalissa, ja kortti kertoo niiden
+  // yhteistuloksen indeksin kvadranttimerkilla.
+  var bFrog=mkSat('sammakko','sammakko',t.frog?'Poista sammakko':'Aseta sammakoksi',
+                  'rad--outer'+(t.frog?' is-on':''));
+  bFrog.onclick=(function(i){return function(e){e.stopPropagation();toggleFrog(i);};})(t.id);
+  rad.appendChild(bFrog);
+
+  var bLink=mkSat('linkki','linkki',t.linkki?('Avaa linkki: '+t.linkki):'Ei linkkia',
+                  'rad--outer'+(t.linkki?'':' is-off'));
   if(t.linkki){
-    var lnkBtn=document.createElement('button');
-    lnkBtn.className='card-new__action-btn active';
-    lnkBtn.title='Avaa linkki: '+t.linkki;
-    var lSpan=document.createElement('span');lSpan.className='emoji';lSpan.textContent='🔗';lnkBtn.appendChild(lSpan);
-    lnkBtn.onclick=(function(url){return function(e){
+    bLink.onclick=(function(url){return function(e){
       e.stopPropagation();
       if(!/^https?:\/\//i.test(url)){notify('Vain http(s)-linkit sallittu');return;}
       window.open(url,'_blank','noopener');
     };})(t.linkki);
-    sRight.appendChild(lnkBtn);
+  }else{
+    bLink.disabled=true;
   }
+  rad.appendChild(bLink);
 
-  var editBtn=document.createElement('button');
-  editBtn.className='card-new__action-btn';
-  editBtn.title='Muokkaa';
-  var eSpan=document.createElement('span');eSpan.className='emoji';eSpan.textContent='✏';editBtn.appendChild(eSpan);
-  editBtn.onclick=(function(tid){return function(e){e.stopPropagation();openEditModal(tid);};})(t.id);
-  sRight.appendChild(editBtn);
+  var bDel=mkSat('poista','poista','Poista (kumottavissa 5s)','rad--outer');
+  bDel.onclick=(function(i){return function(e){e.stopPropagation();delUndoable(i);};})(t.id);
+  rad.appendChild(bDel);
 
-  stats.appendChild(sLeft);stats.appendChild(sRight);
-  plate.appendChild(stats);
-
-  // Toimintonapit: ▶ Aloita | ✓ Tehty | del
-  var acts=document.createElement('div');
-  acts.className='tcg-card__actions-tcg';
-
-  var startBtn=document.createElement('button');
-  startBtn.className='act-start';
+  // Keskus: aloita/lopeta. Aamusuunnittelukortti ei ole pomodoro-tehtava,
+  // joten sen keskinappi avaa velhon.
+  var mainBtn=document.createElement('button');
+  mainBtn.className='rad rad--main';
+  mainBtn.type='button';
   if(isMorningTask(t)){
-    // Aamusuunnittelukortti ei ole pomodoro-tehtävä: sen nappi avaa velhon.
-    startBtn.textContent='\u2600 Aloita suunnittelu';
-    startBtn.setAttribute('aria-label','Avaa aamusuunnittelu');
-    startBtn.onclick=function(e){e.stopPropagation();openAamu();};
+    mainBtn.title='Avaa aamusuunnittelu';
+    mainBtn.setAttribute('aria-label','Avaa aamusuunnittelu');
+    mainBtn.appendChild(_tcgSvgIcon(iconId('aamu')));
+    mainBtn.onclick=function(e){e.stopPropagation();openAamu();};
   }else{
     var timerRunning=(tmr!==null&&phase==='work');
-    startBtn.textContent=timerRunning?'■ Lopeta':'▶ Aloita';
-    if(timerRunning) startBtn.classList.add('act-start--running');
-    startBtn.onclick=function(e){e.stopPropagation();toggleTimer();};
+    if(timerRunning) mainBtn.classList.add('is-running');
+    mainBtn.title=timerRunning?'Lopeta':'Aloita';
+    mainBtn.setAttribute('aria-label',timerRunning?'Lopeta pomodoro':'Aloita pomodoro');
+    // Play ja seis molemmat DOM:issa, luokka valitsee.
+    mainBtn.appendChild(_tcgSvgIcon(iconId('aloita')));
+    mainBtn.appendChild(_tcgSvgIcon(iconId('seis')));
+    mainBtn.onclick=function(e){
+      e.stopPropagation();
+      // Kaynnistys kutsuu render()n (kortti rakentuu uudelleen), mutta
+      // luokka vaihdetaan silti heti: nappi ei saa jaada vaaraan tilaan
+      // jos render() jostain syysta ei aja.
+      mainBtn.classList.toggle('is-running');
+      toggleTimer();
+    };
   }
-  acts.appendChild(startBtn);
+  rad.appendChild(mainBtn);
+  plate.appendChild(rad);
 
-  if(t.quad){
-    var doneBtn=document.createElement('button');
-    doneBtn.textContent='✓ Tehty';
-    doneBtn.setAttribute('aria-label','Merkitse tehdyksi');
-    doneBtn.onclick=(function(i){return function(e){e.stopPropagation();markDone(i);};})(t.id);
-    acts.appendChild(doneBtn);
+  // Kosketuslaitteella ei ole hoveria: napautus kortin taustaan avaa ja
+  // sulkee rypaan. Ele vaatii liiketta yli LOCKin, joten napautus ei
+  // varasta pyyhkaisya.
+  if(window.matchMedia && window.matchMedia('(hover:none)').matches){
+    card.addEventListener('click',function(e){
+      if(e.target.closest('button,a,input,textarea,select'))return;
+      rad.classList.toggle('is-open');
+    });
   }
 
-  var delBtn=document.createElement('button');
-  delBtn.title='Poista (kumottavissa 5s)';
-  delBtn.setAttribute('aria-label','Poista tehtävä');
-  var delSvg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-  delSvg.setAttribute('width','13');delSvg.setAttribute('height','13');
-  delSvg.setAttribute('viewBox','0 0 12 12');delSvg.setAttribute('fill','none');
-  var l1=document.createElementNS('http://www.w3.org/2000/svg','line');
-  l1.setAttribute('x1','1.5');l1.setAttribute('y1','1.5');l1.setAttribute('x2','10.5');l1.setAttribute('y2','10.5');
-  l1.setAttribute('stroke','currentColor');l1.setAttribute('stroke-width','1.6');l1.setAttribute('stroke-linecap','round');
-  var l2=document.createElementNS('http://www.w3.org/2000/svg','line');
-  l2.setAttribute('x1','10.5');l2.setAttribute('y1','1.5');l2.setAttribute('x2','1.5');l2.setAttribute('y2','10.5');
-  l2.setAttribute('stroke','currentColor');l2.setAttribute('stroke-width','1.6');l2.setAttribute('stroke-linecap','round');
-  delSvg.appendChild(l1);delSvg.appendChild(l2);
-  delBtn.appendChild(delSvg);
-  delBtn.onclick=(function(i){return function(e){e.stopPropagation();delUndoable(i);};})(t.id);
-  acts.appendChild(delBtn);
-
-  plate.appendChild(acts);
   card.appendChild(plate);
 
   // Jatkokortti-nappi siirretty muokkausmodaaliin (edit-modal footer) — vapauttaa areenan lattiatilan
@@ -10529,13 +11114,10 @@ function renderWaitingPanel(inbox){
   var tabCountEl=document.getElementById('waiting-tab-count');
   if(tabCountEl)tabCountEl.textContent=waiting.length;
   if(emptyEl)emptyEl.style.display=waiting.length?'none':'block';
-  var quadColors={q1:'#c49a3a',q2:'#2d8a52',q3:'var(--muted)',q4:'var(--muted)'};
   waiting.forEach(function(t){
     var row=document.createElement('div');
     row.className='waiting-item';
-    var dot=document.createElement('span');
-    dot.className='waiting-item__quad';
-    dot.style.background=quadColors[t.quad]||'var(--muted)';
+    var dot=mkQuadMark(t.quad,'waiting-item__quad');
     var txt=document.createElement('span');
     txt.className='waiting-item__text';
     txt.textContent=t.text;
@@ -10543,7 +11125,7 @@ function renderWaitingPanel(inbox){
     btn.className='waiting-item__restore';
     btn.title='Palauta käteen';
     btn.setAttribute('aria-label','Palauta tehtävä käteen');
-    btn.textContent='↩';
+    btn.appendChild(_tcgSvgIcon('#g-palauta',12));
     btn.addEventListener('click',(function(id){return function(){clearWaiting(id);};})(t.id));
     row.appendChild(dot);
     row.appendChild(txt);
@@ -10766,23 +11348,25 @@ function render(){
       var handle=document.createElement('span');handle.className='drag-handle';handle.textContent='⠿';handle.title='Raahaa järjestääksesi';
       // Frog indicator — show SVG if frog task
       if(t.frog){
-        var fi=document.createElement('span');fi.style.cssText='flex-shrink:0;display:flex;align-items:center';
-        fi.appendChild(svgFrogFilled(14));
-        item.appendChild(handle);item.appendChild(fi);
+        item.appendChild(handle);item.appendChild(mkListMark('sammakko','frog',14,'Sammakko'));
       } else {
         item.appendChild(handle);
       }
       // Tomato: always visible, dimmed when not in queue
       var qb=document.createElement('button');qb.className='qqb'+(isQ?' on':'');
       qb.style.cssText='background:none;border:none;cursor:pointer;padding:.1rem;flex-shrink:0;opacity:'+(isQ?'1':'.25');
-      qb.appendChild(svgTomatoFilled(14));
+      qb.appendChild(_tcgSvgIcon('#g-pomodoro',14));
       qb.onclick=(function(i){return function(){tqToggle(i)}})(t.id);
       var nm=document.createElement('span');nm.className='qtin';nm.textContent=t.text;
       // Waiting indicator in matrix
-      if(t.waiting){var wi=document.createElement('span');wi.style.cssText='font-size:.6rem;color:#3a6b8a;flex-shrink:0';wi.appendChild(svgHourglass(10));nm.appendChild(wi);}
+      if(t.waiting){nm.appendChild(mkListMark('odottaa','wait',11,'Odottaa'));}
       var ps;
-      if(isQuick(t)){ ps=document.createElement('span'); ps.className='pika-chip'; ps.textContent='⚡ 2min'; }
-      else { ps=mkPips(t.est==null?1:t.est,t.pomos||0,true); }
+      if(isQuick(t)){
+        ps=document.createElement('span'); ps.className='pika-chip';
+        ps.appendChild(_tcgSvgIcon('#g-pika',10));
+        ps.appendChild(document.createTextNode(' 2 min'));
+      }
+      else { ps=mkCostBar(t.est==null?1:t.est,t.pomos||0); }
       var db=document.createElement('button');db.className='qdnb';db.textContent='Tehty';
       db.onclick=(function(i){return function(){markDone(i)}})(t.id);
       item.appendChild(handle);item.appendChild(qb);item.appendChild(nm);item.appendChild(ps);item.appendChild(db);
@@ -11076,6 +11660,15 @@ function fmtSchedDays(days){
           .map(function(x){return SCHED_DAY_NAMES[x===7?0:x];}).join(', ');
 }
 
+// Ikonin NIMI erikseen tekstistä: fmtSchedule palauttaa merkkijonon, joka
+// menee textContentiin, eikä SVG kulje siinä. Kutsuja päättää näyttääkö se
+// ikonin — sillä on eri keinot eri paikoissa (kortin sched-rivi, pakan
+// tiivis rivi, aamun lista). Aiemmin merkki oli emojina tekstin seassa.
+function schedIcon(t){
+  if(!t||!t.schedule)return '';
+  return t.schedule.type==='repeat' ? 'toistuva' : 'ajastettu';
+}
+
 // short=true pakkakortille, jossa rivi on 8px ja ~125px leveä.
 function fmtSchedule(t,short){
   if(!t||!t.schedule)return '';
@@ -11083,14 +11676,14 @@ function fmtSchedule(t,short){
   if(s.type==='once'){
     var pvm=fmtSchedDate(s.date);
     var when=pvm+' klo '+s.time;
-    if(s.triggered)return '📅 Ilmestyi '+(short?pvm:when);
+    if(s.triggered)return 'Ilmestyi '+(short?pvm:when);
     // Erääntynyt mutta yhä piilossa: minuuttitarkistus ei ole vielä ehtinyt
     // ajaa. Kerrotaan se, ettei kortti näytä syyttä jumittavan.
     var myohassa=t.scheduled_hidden&&scheduleDue(s,new Date(),t.schedLast||null);
-    return '📅 '+(short?'':'Ajastettu ')+when+(myohassa?' — myöhässä':'');
+    return (short?'':'Ajastettu ')+when+(myohassa?' — myöhässä':'');
   }
   if(s.type==='repeat'){
-    return '🔁 '+fmtSchedDays(s.days)+' klo '+s.time;
+    return fmtSchedDays(s.days)+' klo '+s.time;
   }
   return '';
 }
@@ -11162,7 +11755,6 @@ function checkScheduledTasks(){
 // Run every minute
 setInterval(checkScheduledTasks,60000);
 checkScheduledTasks();
-
 
 function renderSummary(){
   var wsEl=document.getElementById('wsum');
@@ -11677,7 +12269,6 @@ function renderWsSwitcher(){
   if(el) makeAddBtn(el);
   if(elHam) makeAddBtn(elHam);
 }
-
 
 // ── TEHTÄVÄPOHJAT — tallennusfunktiot (Vaihe 11) ─────────────────
 function savePresets(){
@@ -12375,7 +12966,6 @@ function setSplitChain(chain) {
 }
 // ── /JAKO ────────────────────────────────────────────────────────
 
-
 // ══ TEHTÄVÄPOHJAT — UI-funktiot (Vaihe 11) ══════════════════════
 
 var _selectedPresetId = null;
@@ -12651,7 +13241,6 @@ function _fetchPublicPresetByCode(code){
   };
   doQuery();
 }
-
 
 function openPresetEditor(id){
   _editingPreset = id ? JSON.parse(JSON.stringify(presets.find(function(p){return p.id===id;})||{})) : {
@@ -12973,7 +13562,6 @@ function closeChainView(){
   document.getElementById('chain-view-panel').style.display='none';
 }
 // ── /KETJUNÄKYMÄ ─────────────────────────────────────────────────
-
 
 </script>
 
@@ -13866,9 +14454,8 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 </script>
 
-
 <!-- ── TEHTÄVÄPAKKA INVENTAARIO (Vaihe 7) ── -->
-<button id="inv-btn" onclick="openInventory()" aria-label="Tehtäväpakka" title="Tehtäväpakka (kaikki tehtävät)">📦</button>
+<button id="inv-btn" onclick="openInventory()" aria-label="Tehtäväpakka" title="Tehtäväpakka (kaikki tehtävät)"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><use href="#g-pakka"/></svg></button>
 
 <div id="inv-modal" role="dialog" aria-modal="true" aria-label="Tehtäväpakka">
   <!-- Yläpalkki -->
@@ -13886,8 +14473,11 @@ document.addEventListener('DOMContentLoaded', function(){
       Piilota aktiiviset
     </label>
     <span id="inv-count"></span>
-    <button id="inv-star-filtered" onclick="starFilteredToHand()" title="Lisää suodatetut tähtikorteiksi käteen" aria-label="Lisää suodatetut käteen">⭐ Käteen</button>
-    <button id="inv-clear-hand" onclick="clearHand()" title="Poista kaikki tähtikortit" aria-label="Tyhjennä käsi">🧹</button>
+    <button id="inv-star-filtered" onclick="starFilteredToHand()" title="Lisää suodatetut tähtikorteiksi käteen" aria-label="Lisää suodatetut käteen"><svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><use href="#g-tahti"/></svg> Käteen</button>
+    <!-- Harjaemojille ei ole vastinetta setissa, eika samaa tahtea voi
+         antaa kahdelle vastakkaiselle toiminnolle. Teksti on tassa
+         tarkempi kuin kuva: nappi on tekstinapin vieressa. -->
+    <button id="inv-clear-hand" onclick="clearHand()" title="Poista kaikki tähtikortit" aria-label="Tyhjennä käsi">Tyhjennä</button>
     <button id="inv-close" onclick="closeInventory()" aria-label="Sulje tehtäväpakka">×</button>
   </div>
 
@@ -13915,24 +14505,6 @@ var invState = {
   search: ''
 };
 
-var INV_VERB_ICONS = {
-  // Vaihe 9.6: pääverbit custom SVG, muut emojeina
-  'etsiminen':svgVerbIcon('verb-i-selvita'),'selvittäminen':svgVerbIcon('verb-i-selvita'),'tutkiminen':'🔬',
-  'kirjaaminen':svgVerbIcon('verb-i-kirjaa'),'kirjoittaminen':svgVerbIcon('verb-i-kirjaa'),'täyttäminen':svgVerbIcon('verb-i-kirjaa'),'dokumentointi':svgVerbIcon('verb-i-kirjaa'),
-  'soittaminen':svgVerbIcon('verb-i-soita'),'yhteydenotto':svgVerbIcon('verb-i-soita'),
-  'sopiminen':svgVerbIcon('verb-i-sovi'),'aikatauluttaminen':svgVerbIcon('verb-i-sovi'),
-  'ohjaaminen':'🤝','neuvominen':'💬','tukeminen':'💬','keskusteleminen':'💬',
-  'suunnitteleminen':'🗓️','järjestäminen':'🗂️','organisoiminen':'🗂️',
-  'varaaminen':svgVerbIcon('verb-i-varaa'),
-  'lähettäminen':svgVerbIcon('verb-i-vie'),'toimittaminen':svgVerbIcon('verb-i-vie'),'vieminen':svgVerbIcon('verb-i-vie'),
-  'lukeminen':'📖','perehtyminen':'📖',
-  'tekeminen':svgVerbIcon('verb-i-tee'),'toteuttaminen':svgVerbIcon('verb-i-tee'),
-  'tarkistaminen':svgVerbIcon('verb-i-tarkista'),'arvioiminen':svgVerbIcon('verb-i-tarkista'),'vahvistaminen':svgVerbIcon('verb-i-tarkista'),
-  'päivittäminen':'🔄','korjaaminen':'🔧',
-  'osallistuminen':'🎯','käyminen':'🚶'
-};
-var INV_VERB_FALLBACK = '📋';
-
 function getVerbFromTask(t){
   if(t.verbi && t.verbi.trim()) return t.verbi.trim();
   // heuristiikka: parsii nimestä -minen/-iminen/-aminen -päätteen
@@ -13940,15 +14512,14 @@ function getVerbFromTask(t){
   return m ? m[1].toLowerCase() : '';
 }
 
-function getVerbIconFromText(verb){
-  if(!verb) return INV_VERB_FALLBACK;
-  var v = verb.toLowerCase();
-  if(INV_VERB_ICONS[v]) return INV_VERB_ICONS[v];
-  // osittainen täsmäytys
-  for(var k in INV_VERB_ICONS){
-    if(v.indexOf(k)===0 || k.indexOf(v)===0) return INV_VERB_ICONS[k];
-  }
-  return INV_VERB_FALLBACK;
+function getVerbIconFromText(verb, tier){
+  /* Pakan ikoni tulee nyt samasta rekisterista kuin kortin. Aiemmin
+     tassa oli oma kartta nominalisaatioavaimilla ('soittaminen') ja
+     puolet arvoista oli emojeja — sama verbi saattoi nayttaa kortilla
+     SVG:lta ja pakassa emojilta.
+     tier 's' = isojen kokojen luokka (verb-bg on 80px). Putoaa glyfiin,
+     koska ICON_S on tyhja — ks. sen kommentti. */
+  return svgVerbIcon(verbIcon(verb, tier));
 }
 
 function getAllVerbs(taskList){
@@ -14148,11 +14719,9 @@ function renderInventory(){
   var frag = document.createDocumentFragment();
   sorted.forEach(function(t){
     var verb = getVerbFromTask(t);
-    var icon = getVerbIconFromText(verb);
+    var icon = getVerbIconFromText(verb, 's');   /* .inv-card__verb-bg on 80px */
     var isActive = isTaskActive(t);
     var safeQuad = ['q1','q2','q3','q4'].indexOf(t.quad) !== -1 ? t.quad : 'q4';
-    var qLabel = safeQuad.toUpperCase();
-    var qClass = 'inv-card__q--'+safeQuad;
 
     var card = document.createElement('div');
     card.className = 'inv-card'+(isActive?' inv-card--active':'')+(t.done?' inv-card--done':'')+(t.handForced?' inv-card--star':'');
@@ -14162,9 +14731,14 @@ function renderInventory(){
     };
 
     var html = '<div class="inv-card__verb-bg">'+icon+'</div>';
-    html += '<div class="inv-card__q '+qClass+'">'+qLabel+'</div>';
-    if(isActive) html += '<div class="inv-card__active-badge">★</div>';
-    if(t.handForced && !isActive) html += '<div class="inv-card__star-badge" title="Tähtikortti — pakotettu käteen">⭐</div>';
+    html += quadMarkHtml(safeQuad, 'inv-card__q');
+    /* Aktiivinen kortti sai ★:n ja tahtikortti ⭐:n — sama merkki kahdessa
+       merkityksessa. Aktiivinen = jonossa oleva, joten sen merkki on nyt
+       pomodoro, sama kuin matriisin jononapissa. */
+    if(isActive) html += '<div class="inv-card__active-badge" title="Jonossa">'
+      + icoHtml('pomodoro',10) + '</div>';
+    if(t.handForced && !isActive) html += '<div class="inv-card__star-badge" title="Tähtikortti — pakotettu käteen">'
+      + icoHtml('tahti',12) + '</div>';
     html += '<div class="inv-card__name">'+esc(t.text||'')+'</div>';
     if(verb) html += '<div class="inv-card__verb">'+esc(verb)+'</div>';
     html += '<div class="inv-card__meta">';
@@ -14172,16 +14746,26 @@ function renderInventory(){
     // joka muualla sovelluksessa, ja sama symboli kahdessa merkityksess\u00e4
     // luki pakassa v\u00e4\u00e4rin. 'pom' on sama kieli kuin isolla kortilla.
     if(t.est) html += t.est+' pom';
-    if(t.pomos) html += ' \u00b7 \ud83c\udf45'+t.pomos;
+    if(t.pomos) html += ' \u00b7 ' + icoHtml('pomodoro',9,'inv-card__pom') + t.pomos;
     html += '</div>';
     // Pakka on ainoa n\u00e4kym\u00e4 jossa piilotettu ajastettu kortti n\u00e4kyy, joten
     // sen on kerrottava my\u00f6s milloin kortti ilmestyy.
     var invSched = fmtSchedule(t, true);
-    if(invSched) html += '<div class="inv-card__sched">'+esc(invSched)+'</div>';
+    /* Glyfi emojin tilalle (vaihe 5). Koko on kiinteä 9px: rivi on
+       pakassa 8px korkea, eikä em-mitoitus osuisi siihen. */
+    if(invSched) html += '<div class="inv-card__sched"><svg width="9" height="9" '
+      + 'style="vertical-align:-1px;margin-right:2px" aria-hidden="true"><use href="#g-'
+      + schedIcon(t) + '"/></svg>'+esc(invSched)+'</div>';
     if(!t.done){
-      html += '<button class="inv-card__star-btn" title="'+(t.handForced?'Poista käden tähtikortti':'Nosta käteen tähtikorttina')+'">'+(t.handForced?'⭐':'☆')+'</button>';
+      /* Yksi symboli, tila varissa (⭐/☆ oli kaksi merkkia) — sama sopimus
+         kuin radiaalirypaan sammakolla. */
+      html += '<button class="inv-card__star-btn" aria-pressed="'+(t.handForced?'true':'false')
+        + '" title="'+(t.handForced?'Poista käden tähtikortti':'Nosta käteen tähtikorttina')
+        + '" aria-label="'+(t.handForced?'Poista käden tähtikortti':'Nosta käteen tähtikorttina')+'">'
+        + icoHtml('tahti',13) + '</button>';
     }
-    if(t.done) html += '<button class="inv-card__restore-btn" title="Palauta teht\u00e4v\u00e4listalle">\u21a9 Palauta</button>';
+    if(t.done) html += '<button class="inv-card__restore-btn" title="Palauta teht\u00e4v\u00e4listalle">'
+      + icoHtml('palauta',10,'inv-card__restore-ico') + ' Palauta</button>';
 
     card.innerHTML = html;
 
